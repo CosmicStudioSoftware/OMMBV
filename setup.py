@@ -38,7 +38,7 @@ numpy.distutils.core.setup(
     packages = ['pysatMagVect','pysatMagVect.tests'],
     description= ''.join(('Calculates geomagnetic unit vectors (field aligned, zonal, and meridional) '
                  'and includes supporting routines for characterizing the motion of ionospheric plasma.')),
-    cmdclass={'sdist': sdist},
+    # cmdclass={'sdist': sdist},
    
     # Author details
     author='Russell Stoneback',
