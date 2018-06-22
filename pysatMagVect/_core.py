@@ -338,7 +338,7 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 
 def field_line_trace(init, date, direction, height, steps=None,
-                     max_steps=1E5, step_size=1.E-3):
+                     max_steps=1E5, step_size=5):
     """Perform field line tracing.
     
     """
@@ -357,7 +357,7 @@ def field_line_trace(init, date, direction, height, steps=None,
 
     return trace_north
 
-def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.0001,
+def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
                                     method='auto', ref_height=120.):
     """Add unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
@@ -671,7 +671,7 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.0001,
     return
 
 
-def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.0001,
+def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.5,
                                method='auto'):
     """Add unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
@@ -679,7 +679,8 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.0001,
     """
 
     # vectors are returned in geo/ecef coordinate system
-    add_mag_drift_unit_vectors_ecef(inst)
+    add_mag_drift_unit_vectors_ecef(inst, max_steps=max_steps, step_size=step_size,
+                                    method=method)
 
     # convert them to S/C using transformation supplied by OA
     inst['unit_zon_x'] = inst['unit_zon_ecef_x'] * inst['sc_xhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_xhat_y'] + \
@@ -915,7 +916,7 @@ def scaler_for_footpoint_e_fields(glats, glons, alts, dates):
     import pandas
     from . import instruments
 
-    step_size = 0.0001
+    step_size = 0.5
     max_steps = 40000
     steps = np.arange(max_steps)
 
