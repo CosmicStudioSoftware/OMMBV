@@ -106,18 +106,21 @@ class TestCore():
         diff_n_lon = (omni['n_long'] - trace_n['long'])[4:-4]
         diff_s_lat = (omni['s_lat'] - trace_s['lat'])[4:-4]
         diff_s_lon = (omni['s_long'] - trace_s['long'])[4:-4]
-
-        f = plt.figure()
-        plt.plot(omni['n_long'], omni['n_lat'], 'r.', label='omni')
-        plt.plot(omni['s_long'], omni['s_lat'], 'r.', label='_omni')
-        plt.plot(trace_n['long'], trace_n['lat'], 'b.', label='UTD')
-        plt.plot(trace_s['long'], trace_s['lat'], 'b.', label='_UTD')
-        plt.title('Comparison of Magnetic Footpoints for Field Lines through 20 Lat, 550 km')
-        plt.xlabel('Geographic Longitude')
-        plt.ylabel('Geographic Latitude')
-        plt.legend(loc=0)
-        plt.xlim((0,360.))
-        plt.savefig('magnetic_footpoint_comparison.png')
+        
+        try:
+            f = plt.figure()
+            plt.plot(omni['n_long'], omni['n_lat'], 'r.', label='omni')
+            plt.plot(omni['s_long'], omni['s_lat'], 'r.', label='_omni')
+            plt.plot(trace_n['long'], trace_n['lat'], 'b.', label='UTD')
+            plt.plot(trace_s['long'], trace_s['lat'], 'b.', label='_UTD')
+            plt.title('Comparison of Magnetic Footpoints for Field Lines through 20 Lat, 550 km')
+            plt.xlabel('Geographic Longitude')
+            plt.ylabel('Geographic Latitude')
+            plt.legend(loc=0)
+            plt.xlim((0,360.))
+            plt.savefig('magnetic_footpoint_comparison.png')
+        except:
+            pass
         
         # better than 0.5 km accuracy expected for settings above
         assert np.all(np.std(diff_n_lat) < .5)
@@ -241,13 +244,16 @@ class TestCore():
         y = np.log10(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
         z = np.log10(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
         
-        plt.figure()
-        plt.plot(np.log10(steps_goal[1:]) ,x)
-        plt.plot(np.log10(steps_goal[1:]), y)
-        plt.plot(np.log10(steps_goal[1:]),z)
-        plt.xlabel('Log Step Size (Re)')
-        plt.ylabel('Log Change in Foot Point Position (km)')
-        plt.savefig('Footpoint_position_vs_step_size.png' )
+        try:
+            plt.figure()
+            plt.plot(np.log10(steps_goal[1:]) ,x)
+            plt.plot(np.log10(steps_goal[1:]), y)
+            plt.plot(np.log10(steps_goal[1:]),z)
+            plt.xlabel('Log Step Size (Re)')
+            plt.ylabel('Log Change in Foot Point Position (km)')
+            plt.savefig('Footpoint_position_vs_step_size.png' )
+        except:
+            pass
                            
                                                                   
     def test_unit_vector_plots(self):
@@ -269,7 +275,11 @@ class TestCore():
         for i,p_lat in enumerate(p_lats):
 
             trace_s = []
-            fig = plt.figure()
+            try:
+                fig = plt.figure()
+            except:
+                assert True
+                return
             ax = fig.add_subplot(111, projection='3d')
 
             #
