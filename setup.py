@@ -8,13 +8,6 @@ import sys
 import numpy as np
 
 from numpy.distutils.misc_util import Configuration
-from distutils.command.sdist import sdist
-
-
-#import setuptools
-
-# setup fortran extensions 
-
 
 config = Configuration('pysatMagVect')
 
