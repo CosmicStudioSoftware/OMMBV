@@ -515,8 +515,8 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
     zvx_north, zvy_north, zvz_north = cross_product(inst['north_x'], inst['north_y'], inst['north_z'],
                                                     bx, by, bz)
     # getting zonal vector utilizing magnetic field vector instead and southern point
-    zvx_south, zvy_south, zvz_south = cross_product(inst['south_x'], inst['south_y'], inst['south_z'],
-                                                    bx, by, bz)
+    zvx_south, zvy_south, zvz_south = cross_product(bx, by, bz,
+                                                    inst['south_x'], inst['south_y'], inst['south_z'])
     # normalize the vectors
     norm_foot = np.sqrt(zvx_foot ** 2 + zvy_foot ** 2 + zvz_foot ** 2)
     norm_north = np.sqrt(zvx_north ** 2 + zvy_north ** 2 + zvz_north ** 2)
