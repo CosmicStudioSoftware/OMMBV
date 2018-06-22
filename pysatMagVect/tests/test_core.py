@@ -248,10 +248,10 @@ class TestCore():
         
         try:
             plt.figure()
-            plt.plot(np.log10(steps_goal[1:]) ,x)
+            plt.plot(np.log10(steps_goal[1:]), x)
             plt.plot(np.log10(steps_goal[1:]), y)
-            plt.plot(np.log10(steps_goal[1:]),z)
-            plt.xlabel('Log Step Size (Re)')
+            plt.plot(np.log10(steps_goal[1:]), z)
+            plt.xlabel('Log Step Size (km)')
             plt.ylabel('Log Change in Foot Point Position (km)')
             plt.savefig('Footpoint_position_vs_step_size.png' )
         except:
