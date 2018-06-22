@@ -5,6 +5,7 @@ import nose.tools
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pds
+import datetime
 
 import pysatMagVect as pymv
 
@@ -81,9 +82,10 @@ class TestCore():
                                                   omni['p_alt'])
         trace_n = []
         trace_s = []
+        date = datetime.datetime(2000, 1, 1)
         for x,y,z in zip(ecf_x,ecf_y,ecf_z):
-            trace_n.append(pymv.field_line_trace(np.array([x,y,z]), 2000., 1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
-            trace_s.append(pymv.field_line_trace(np.array([x,y,z]), 2000., -1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
+            trace_n.append(pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
+            trace_s.append(pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
         trace_n = pds.DataFrame(trace_n, columns = ['x', 'y', 'z'])
         trace_n['lat'], trace_n['long'], trace_n['altitude'] = pymv.ecef_to_geocentric(trace_n['x'], trace_n['y'], trace_n['z'])
         trace_s = pds.DataFrame(trace_s, columns = ['x', 'y', 'z'])
@@ -226,11 +228,11 @@ class TestCore():
         max_steps_goal = 1.E2*6371./steps_goal
 
         out = []
-
+        date = datetime.datetime(2000, 1, 1)
         for steps, max_steps in zip(steps_goal, max_steps_goal):
             #print ' '
             #print steps, max_steps
-            trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), 2000., 1., 0., 
+            trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
                                                step_size=steps, 
                                                max_steps=max_steps)  
 
@@ -260,8 +262,7 @@ class TestCore():
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
         import os
-        on_rtd = os.environ.get('ONTRAVIS') == 'True'
-        print (on_rtd)
+        on_travis = os.environ.get('ONTRAVIS') == 'True'
         
         # convert OMNI position to ECEF
         p_long = np.arange(0.,360.,12.)
@@ -278,23 +279,24 @@ class TestCore():
         for i,p_lat in enumerate(p_lats):
 
             trace_s = []
-            if not on_rtd:
+            if not on_travis:
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection='3d')
 
             #
+            date = datetime.datetime(2000,1,1)
             ecef_x,ecef_y,ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
             for j,(x,y,z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
 
                 # perform field line traces
-                trace_n = pymv.field_line_trace(np.array([x,y,z]), 2000., 1., 0., step_size=0.5, max_steps=1.E6)
-                trace_s = pymv.field_line_trace(np.array([x,y,z]), 2000., -1., 0., step_size=0.5, max_steps=1.E6)
+                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=0.5, max_steps=1.E6)
+                trace_s = pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=0.5, max_steps=1.E6)
                 # combine together, S/C position is first for both
                 # reverse first array and join so plotting makes sense
                 trace = np.vstack((trace_n[::-1], trace_s))
                 trace = pds.DataFrame(trace, columns=['x','y','z'])
                 # plot field-line
-                if not on_rtd:
+                if not on_travis:
                     ax.plot(trace['x'],trace['y'],trace['z'] , 'b')
                     plt.xlabel('X')
                     plt.ylabel('Y')
@@ -321,7 +323,9 @@ class TestCore():
                 self.inst[:,'sc_xhat_x'], self.inst[:,'sc_xhat_y'], self.inst[:,'sc_xhat_z'] = 1., 0., 0.
                 self.inst[:,'sc_yhat_x'], self.inst[:,'sc_yhat_y'], self.inst[:,'sc_yhat_z'] = 0., 1., 0.
                 self.inst[:,'sc_zhat_x'], self.inst[:,'sc_zhat_y'], self.inst[:,'sc_zhat_z'] = 0., 0., 1.
-                
+                self.inst.data.index = pysat.utils.season_date_range(pysat.datetime(2000,1,1),
+                                                                    pysat.datetime(2000,1,1)+pds.DateOffset(seconds=len(self.inst.data)-1),
+                                                                    freq='S')
                 pymv.add_mag_drift_unit_vectors(self.inst)
                 
                 #if i % 2 == 0:
@@ -329,7 +333,7 @@ class TestCore():
                 vx = self.inst['unit_zon_x']
                 vy = self.inst['unit_zon_y']
                 vz = self.inst['unit_zon_z']
-                if not on_rtd:
+                if not on_travis:
                     ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
                                 self.inst['z'] + length*vz, vx, vy,vz, length=500.,
                                 color='green') #, pivot='tail')
@@ -337,7 +341,7 @@ class TestCore():
                 vx = self.inst['unit_fa_x']
                 vy = self.inst['unit_fa_y']
                 vz = self.inst['unit_fa_z']
-                if not on_rtd:
+                if not on_travis:
                     ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
                                 self.inst['z'] + length*vz, vx, vy,vz, length=500.,
                                 color='purple') #, pivot='tail')
@@ -345,7 +349,7 @@ class TestCore():
                 vx = self.inst['unit_mer_x']
                 vy = self.inst['unit_mer_y']
                 vz = self.inst['unit_mer_z']
-                if not on_rtd:
+                if not on_travis:
                     ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
                                 self.inst['z'] + length*vz, vx, vy,vz, length=500.,
                                 color='red') #, pivot='tail')
@@ -365,7 +369,7 @@ class TestCore():
                 #print np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2)#, dot2, dot3
                 truthiness.append(flag1 & flag2 & flag3 & mag1 & mag2 & mag3)
         
-            if not on_rtd:
+            if not on_travis:
                 plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.png')))
         ## plot Earth
         #u = np.linspace(0, 2 * np.pi, 100)
