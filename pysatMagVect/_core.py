@@ -536,7 +536,7 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
         zvx -= dot_fa * bx
         zvy -= dot_fa * by
         zvz -= dot_fa * bz
-        zvx, zny, zvz = normalize_vector(zvx, zvy, zvz)
+        zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
 
     # compute meridional vector
     # cross product of zonal and magnetic unit vector
