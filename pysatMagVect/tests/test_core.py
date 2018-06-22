@@ -259,7 +259,9 @@ class TestCore():
     def test_unit_vector_plots(self):
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
-
+        import os
+        on_rtd = os.environ.get('READTHEDOCS') == 'True'
+        
         # convert OMNI position to ECEF
         p_long = np.arange(0.,360.,12.)
         p_lat = 0.*p_long
@@ -275,12 +277,9 @@ class TestCore():
         for i,p_lat in enumerate(p_lats):
 
             trace_s = []
-            try:
+            if not on_rtd:
                 fig = plt.figure()
-            except:
-                assert True
-                return
-            ax = fig.add_subplot(111, projection='3d')
+                ax = fig.add_subplot(111, projection='3d')
 
             #
             ecef_x,ecef_y,ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
@@ -294,10 +293,11 @@ class TestCore():
                 trace = np.vstack((trace_n[::-1], trace_s))
                 trace = pds.DataFrame(trace, columns=['x','y','z'])
                 # plot field-line
-                ax.plot(trace['x'],trace['y'],trace['z'] , 'b')
-                plt.xlabel('X')
-                plt.ylabel('Y')
-                ax.set_zlabel('Z')
+                if not on_rtd:
+                    ax.plot(trace['x'],trace['y'],trace['z'] , 'b')
+                    plt.xlabel('X')
+                    plt.ylabel('Y')
+                    ax.set_zlabel('Z')
                 # clear stored data
                 self.inst.data = pds.DataFrame()
                 # downselect, reduce number of points
@@ -328,23 +328,26 @@ class TestCore():
                 vx = self.inst['unit_zon_x']
                 vy = self.inst['unit_zon_y']
                 vz = self.inst['unit_zon_z']
-                ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
-                            self.inst['z'] + length*vz, vx, vy,vz, length=500.,
-                            color='green') #, pivot='tail')
+                if not on_rtd:
+                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
+                                self.inst['z'] + length*vz, vx, vy,vz, length=500.,
+                                color='green') #, pivot='tail')
                 length = 500
                 vx = self.inst['unit_fa_x']
                 vy = self.inst['unit_fa_y']
                 vz = self.inst['unit_fa_z']
-                ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
-                            self.inst['z'] + length*vz, vx, vy,vz, length=500.,
-                            color='purple') #, pivot='tail')
+                if not on_rtd:
+                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
+                                self.inst['z'] + length*vz, vx, vy,vz, length=500.,
+                                color='purple') #, pivot='tail')
                 length = 500
                 vx = self.inst['unit_mer_x']
                 vy = self.inst['unit_mer_y']
                 vz = self.inst['unit_mer_z']
-                ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
-                            self.inst['z'] + length*vz, vx, vy,vz, length=500.,
-                            color='red') #, pivot='tail')
+                if not on_rtd:
+                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
+                                self.inst['z'] + length*vz, vx, vy,vz, length=500.,
+                                color='red') #, pivot='tail')
     
                 # check that vectors norm to 1
                 mag1 = np.all(np.sqrt(self.inst['unit_zon_x']**2 + self.inst['unit_zon_y']**2 + self.inst['unit_zon_z']**2) > 0.999999)
@@ -361,7 +364,8 @@ class TestCore():
                 #print np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2)#, dot2, dot3
                 truthiness.append(flag1 & flag2 & flag3 & mag1 & mag2 & mag3)
         
-            plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.png')))
+            if not on_rtd:
+                plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.png')))
         ## plot Earth
         #u = np.linspace(0, 2 * np.pi, 100)
         #v = np.linspace(60.*np.pi/180., 120.*np.pi/180., 100)
