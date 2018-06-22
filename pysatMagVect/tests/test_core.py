@@ -261,6 +261,7 @@ class TestCore():
         from mpl_toolkits.mplot3d import Axes3D
         import os
         on_rtd = os.environ.get('READTHEDOCS') == 'True'
+        print (on_rtd)
         
         # convert OMNI position to ECEF
         p_long = np.arange(0.,360.,12.)
