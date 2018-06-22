@@ -1,4 +1,8 @@
 # pysatMagVect
+[![Build Status](https://travis-ci.org/rstoneback/pysatMagVect.svg?branch=master)](https://travis-ci.org/rstoneback/pysatMagVect)
+[![Coverage Status](https://coveralls.io/repos/github/rstoneback/pysatMagVect/badge.svg?branch=master)](https://coveralls.io/github/rstoneback/pysatMagVectCDF?branch=master)
+[![DOI](https://zenodo.org/badge/51764432.svg)](https://zenodo.org/badge/latestdoi/51764432)
+
 Calculates geomagnetic unit vectors (field aligned, zonal, and meridional) and includes supporting routines for characterizing the motion of ionospheric plasma
 
 # Geomagnetic Unit Vectors
