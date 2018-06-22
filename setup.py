@@ -12,7 +12,7 @@ from numpy.distutils.misc_util import Configuration
 config = Configuration('pysatMagVect')
 
 # create extension for calling IGRF
-config.add_extension(name='pysatMagVect.igrf',
+config.add_extension(name='igrf',
     sources = [os.path.join('pysatMagVect', 'igrf12.f')]
     )
 
