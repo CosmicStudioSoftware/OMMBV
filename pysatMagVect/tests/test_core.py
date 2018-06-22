@@ -82,8 +82,8 @@ class TestCore():
         trace_n = []
         trace_s = []
         for x,y,z in zip(ecf_x,ecf_y,ecf_z):
-            trace_n.append(pymv.field_line_trace(np.array([x,y,z]), 2000., 1., 0., step_size=1.E-5, max_steps=1.E7)[-1,:])
-            trace_s.append(pymv.field_line_trace(np.array([x,y,z]), 2000., -1., 0., step_size=1.E-5, max_steps=1.E7)[-1,:])
+            trace_n.append(pymv.field_line_trace(np.array([x,y,z]), 2000., 1., 0., step_size=1.E-4, max_steps=1.E6)[-1,:])
+            trace_s.append(pymv.field_line_trace(np.array([x,y,z]), 2000., -1., 0., step_size=1.E-4, max_steps=1.E6)[-1,:])
         trace_n = pds.DataFrame(trace_n, columns = ['x', 'y', 'z'])
         trace_n['lat'], trace_n['long'], trace_n['altitude'] = pymv.ecef_to_geocentric(trace_n['x'], trace_n['y'], trace_n['z'])
         trace_s = pds.DataFrame(trace_s, columns = ['x', 'y', 'z'])
