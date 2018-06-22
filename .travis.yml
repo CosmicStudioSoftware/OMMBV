@@ -33,8 +33,8 @@ before_install:
 install:
   - source activate test-environment
   - pip install coveralls
-  - pip install pysatCDF >/dev/null
-  - pip install pysat
+  #- pip install pysatCDF >/dev/null
+  #- pip install pysat
   - "python setup.py install"
 # command to run tests
 script: 
