@@ -513,8 +513,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     zvx_north, zvy_north, zvz_north = cross_product(north_x, north_y, north_z,
                                                     bx, by, bz)
     # getting zonal vector utilizing magnetic field vector instead and southern point
-    zvx_south, zvy_south, zvz_south = cross_product(bx, by, bz,
-                                                    south_x, south_y, south_z)
+    zvx_south, zvy_south, zvz_south = cross_product(south_x, south_y, south_z,
+                                                    bx, by, bz)
     # normalize the vectors
     norm_foot = np.sqrt(zvx_foot ** 2 + zvy_foot ** 2 + zvz_foot ** 2)
     norm_north = np.sqrt(zvx_north ** 2 + zvy_north ** 2 + zvz_north ** 2)
