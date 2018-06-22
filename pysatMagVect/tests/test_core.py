@@ -82,8 +82,8 @@ class TestCore():
         trace_n = []
         trace_s = []
         for x,y,z in zip(ecf_x,ecf_y,ecf_z):
-            trace_n.append(pymv.field_line_trace(np.array([x,y,z]), 2000., 1., 0., step_size=1.E-4, max_steps=1.E6)[-1,:])
-            trace_s.append(pymv.field_line_trace(np.array([x,y,z]), 2000., -1., 0., step_size=1.E-4, max_steps=1.E6)[-1,:])
+            trace_n.append(pymv.field_line_trace(np.array([x,y,z]), 2000., 1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
+            trace_s.append(pymv.field_line_trace(np.array([x,y,z]), 2000., -1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
         trace_n = pds.DataFrame(trace_n, columns = ['x', 'y', 'z'])
         trace_n['lat'], trace_n['long'], trace_n['altitude'] = pymv.ecef_to_geocentric(trace_n['x'], trace_n['y'], trace_n['z'])
         trace_s = pds.DataFrame(trace_s, columns = ['x', 'y', 'z'])
@@ -222,7 +222,7 @@ class TestCore():
         x,y,z = pymv.geocentric_to_ecef(np.array([20.]), np.array([0.]), np.array([550.]))
         
         steps_goal = np.array([1., 3.3E-1, 1.E-1, 3.3E-2,  1.E-2, 3.3E-3, 1.E-3, 3.3E-4, 
-                               1.E-4]) #, 3.3E-5, 1.E-5, 3.3E-6, 1.E-6, 3.3E-7])
+                               1.E-4])*6371. #, 3.3E-5, 1.E-5, 3.3E-6, 1.E-6, 3.3E-7])
         max_steps_goal = 1.E2/steps_goal
 
         out = []
@@ -287,8 +287,8 @@ class TestCore():
             for j,(x,y,z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
 
                 # perform field line traces
-                trace_n = pymv.field_line_trace(np.array([x,y,z]), 2000., 1., 0., step_size=1.E-4, max_steps=1.E6)
-                trace_s = pymv.field_line_trace(np.array([x,y,z]), 2000., -1., 0., step_size=1.E-4, max_steps=1.E6)
+                trace_n = pymv.field_line_trace(np.array([x,y,z]), 2000., 1., 0., step_size=0.5, max_steps=1.E6)
+                trace_s = pymv.field_line_trace(np.array([x,y,z]), 2000., -1., 0., step_size=0.5, max_steps=1.E6)
                 # combine together, S/C position is first for both
                 # reverse first array and join so plotting makes sense
                 trace = np.vstack((trace_n[::-1], trace_s))
