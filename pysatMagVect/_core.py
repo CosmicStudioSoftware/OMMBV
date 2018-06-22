@@ -739,27 +739,6 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.5,
                                                                                                 inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
                                                                                                 inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
 
-#     inst['unit_zon_x'] = inst['unit_zon_ecef_x'] * inst['sc_xhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_xhat_y'] + \
-#                          inst['unit_zon_ecef_z'] * inst['sc_xhat_z']
-#     inst['unit_zon_y'] = inst['unit_zon_ecef_x'] * inst['sc_yhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_yhat_y'] + \
-#                          inst['unit_zon_ecef_z'] * inst['sc_yhat_z']
-#     inst['unit_zon_z'] = inst['unit_zon_ecef_x'] * inst['sc_zhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_zhat_y'] + \
-#                          inst['unit_zon_ecef_z'] * inst['sc_zhat_z']
-# 
-#     inst['unit_fa_x'] = inst['unit_fa_ecef_x'] * inst['sc_xhat_x'] + inst['unit_fa_ecef_y'] * inst['sc_xhat_y'] + \
-#                         inst['unit_fa_ecef_z'] * inst['sc_xhat_z']
-#     inst['unit_fa_y'] = inst['unit_fa_ecef_x'] * inst['sc_yhat_x'] + inst['unit_fa_ecef_y'] * inst['sc_yhat_y'] + \
-#                         inst['unit_fa_ecef_z'] * inst['sc_yhat_z']
-#     inst['unit_fa_z'] = inst['unit_fa_ecef_x'] * inst['sc_zhat_x'] + inst['unit_fa_ecef_y'] * inst['sc_zhat_y'] + \
-#                         inst['unit_fa_ecef_z'] * inst['sc_zhat_z']
-# 
-#     inst['unit_mer_x'] = inst['unit_mer_ecef_x'] * inst['sc_xhat_x'] + inst['unit_mer_ecef_y'] * inst['sc_xhat_y'] + \
-#                          inst['unit_mer_ecef_z'] * inst['sc_xhat_z']
-#     inst['unit_mer_y'] = inst['unit_mer_ecef_x'] * inst['sc_yhat_x'] + inst['unit_mer_ecef_y'] * inst['sc_yhat_y'] + \
-#                          inst['unit_mer_ecef_z'] * inst['sc_yhat_z']
-#     inst['unit_mer_z'] = inst['unit_mer_ecef_x'] * inst['sc_zhat_x'] + inst['unit_mer_ecef_y'] * inst['sc_zhat_y'] + \
-#                          inst['unit_mer_ecef_z'] * inst['sc_zhat_z']
-
     inst.meta['unit_zon_x'] = { 'long_name':'Zonal direction along IVM-x',
                                 'desc': 'Unit vector for the zonal geomagnetic direction.',
                                 'label': 'Zonal Unit Vector: IVM-X component',
