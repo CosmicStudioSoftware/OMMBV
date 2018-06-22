@@ -397,9 +397,37 @@ def field_line_trace(init, date, direction, height, steps=None,
 
 def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
                                     method='auto', ref_height=120.):
-    """Add unit vectors expressing the ion drift coordinate system
+    """Adds unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
-    in S/C coordinates.
+    in ECEF coordinates.
+    
+    Parameters
+    ----------
+    inst : pysat.Instrument
+        Instrument object that will get unit vectors
+    max_steps : int
+        Maximum number of steps allowed for field line tracing
+    step_size : float
+        Maximum step size (km) allowed when field line tracing
+    method : str ('auto' 'foot_field', 'cross_foot')
+        Delineates between different methods of determining the zonal vector
+        'cross_foot' uses the cross product of vectors pointing from location 
+        to the footpoints in both hemispheres. 'field_foot' uses the cross
+        product of vectors pointing along the field and one pointing to
+        the field line footpoint. 'auto' does both calculations but uses 
+        whichever method produces the larger unit cross product.
+    ref_height : float
+        Altitude used as cutoff for labeling a field line location a footpoint
+        
+    Returns
+    -------
+    None
+        unit vectors are added to the passed Instrument object with a naming 
+        scheme:
+            'unit_zon_ecef_*' : unit zonal vector, component along ECEF-(X,Y,or Z)
+            'unit_fa_ecef_*' : unit field-aligned vector, component along ECEF-(X,Y,or Z)
+            'unit_mer_ecef_*' : unit meridional vector, component along ECEF-(X,Y,or Z)
+            
     """
 
     steps = np.arange(max_steps)
@@ -684,33 +712,53 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.5,
     """Add unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in S/C coordinates.
+    
+    Interally, routine calls add_mag_drift_unit_vectors_ecef. 
+    See function for input parameter description.
+    Requires the orientation of the S/C basis vectors in ECEF using naming,
+    'sc_xhat_x' where *hat (*=x,y,z) is the S/C basis vector and _* (*=x,y,z)
+    is the ECEF direction. 
+    
+    
     """
 
     # vectors are returned in geo/ecef coordinate system
     add_mag_drift_unit_vectors_ecef(inst, max_steps=max_steps, step_size=step_size,
                                     method=method)
-
     # convert them to S/C using transformation supplied by OA
-    inst['unit_zon_x'] = inst['unit_zon_ecef_x'] * inst['sc_xhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_xhat_y'] + \
-                         inst['unit_zon_ecef_z'] * inst['sc_xhat_z']
-    inst['unit_zon_y'] = inst['unit_zon_ecef_x'] * inst['sc_yhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_yhat_y'] + \
-                         inst['unit_zon_ecef_z'] * inst['sc_yhat_z']
-    inst['unit_zon_z'] = inst['unit_zon_ecef_x'] * inst['sc_zhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_zhat_y'] + \
-                         inst['unit_zon_ecef_z'] * inst['sc_zhat_z']
+    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = project_ecef_vector_onto_basis(inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
+                                                                                                inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
+                                                                                                inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
+                                                                                                inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
+    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = project_ecef_vector_onto_basis(inst['unit_fa_ecef_x'], inst['unit_fa_ecef_y'], inst['unit_fa_ecef_z'],
+                                                                                                inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
+                                                                                                inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
+                                                                                                inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
+    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = project_ecef_vector_onto_basis(inst['unit_mer_ecef_x'], inst['unit_mer_ecef_y'], inst['unit_mer_ecef_z'],
+                                                                                                inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
+                                                                                                inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
+                                                                                                inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
 
-    inst['unit_fa_x'] = inst['unit_fa_ecef_x'] * inst['sc_xhat_x'] + inst['unit_fa_ecef_y'] * inst['sc_xhat_y'] + \
-                        inst['unit_fa_ecef_z'] * inst['sc_xhat_z']
-    inst['unit_fa_y'] = inst['unit_fa_ecef_x'] * inst['sc_yhat_x'] + inst['unit_fa_ecef_y'] * inst['sc_yhat_y'] + \
-                        inst['unit_fa_ecef_z'] * inst['sc_yhat_z']
-    inst['unit_fa_z'] = inst['unit_fa_ecef_x'] * inst['sc_zhat_x'] + inst['unit_fa_ecef_y'] * inst['sc_zhat_y'] + \
-                        inst['unit_fa_ecef_z'] * inst['sc_zhat_z']
-
-    inst['unit_mer_x'] = inst['unit_mer_ecef_x'] * inst['sc_xhat_x'] + inst['unit_mer_ecef_y'] * inst['sc_xhat_y'] + \
-                         inst['unit_mer_ecef_z'] * inst['sc_xhat_z']
-    inst['unit_mer_y'] = inst['unit_mer_ecef_x'] * inst['sc_yhat_x'] + inst['unit_mer_ecef_y'] * inst['sc_yhat_y'] + \
-                         inst['unit_mer_ecef_z'] * inst['sc_yhat_z']
-    inst['unit_mer_z'] = inst['unit_mer_ecef_x'] * inst['sc_zhat_x'] + inst['unit_mer_ecef_y'] * inst['sc_zhat_y'] + \
-                         inst['unit_mer_ecef_z'] * inst['sc_zhat_z']
+#     inst['unit_zon_x'] = inst['unit_zon_ecef_x'] * inst['sc_xhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_xhat_y'] + \
+#                          inst['unit_zon_ecef_z'] * inst['sc_xhat_z']
+#     inst['unit_zon_y'] = inst['unit_zon_ecef_x'] * inst['sc_yhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_yhat_y'] + \
+#                          inst['unit_zon_ecef_z'] * inst['sc_yhat_z']
+#     inst['unit_zon_z'] = inst['unit_zon_ecef_x'] * inst['sc_zhat_x'] + inst['unit_zon_ecef_y'] * inst['sc_zhat_y'] + \
+#                          inst['unit_zon_ecef_z'] * inst['sc_zhat_z']
+# 
+#     inst['unit_fa_x'] = inst['unit_fa_ecef_x'] * inst['sc_xhat_x'] + inst['unit_fa_ecef_y'] * inst['sc_xhat_y'] + \
+#                         inst['unit_fa_ecef_z'] * inst['sc_xhat_z']
+#     inst['unit_fa_y'] = inst['unit_fa_ecef_x'] * inst['sc_yhat_x'] + inst['unit_fa_ecef_y'] * inst['sc_yhat_y'] + \
+#                         inst['unit_fa_ecef_z'] * inst['sc_yhat_z']
+#     inst['unit_fa_z'] = inst['unit_fa_ecef_x'] * inst['sc_zhat_x'] + inst['unit_fa_ecef_y'] * inst['sc_zhat_y'] + \
+#                         inst['unit_fa_ecef_z'] * inst['sc_zhat_z']
+# 
+#     inst['unit_mer_x'] = inst['unit_mer_ecef_x'] * inst['sc_xhat_x'] + inst['unit_mer_ecef_y'] * inst['sc_xhat_y'] + \
+#                          inst['unit_mer_ecef_z'] * inst['sc_xhat_z']
+#     inst['unit_mer_y'] = inst['unit_mer_ecef_x'] * inst['sc_yhat_x'] + inst['unit_mer_ecef_y'] * inst['sc_yhat_y'] + \
+#                          inst['unit_mer_ecef_z'] * inst['sc_yhat_z']
+#     inst['unit_mer_z'] = inst['unit_mer_ecef_x'] * inst['sc_zhat_x'] + inst['unit_mer_ecef_y'] * inst['sc_zhat_y'] + \
+#                          inst['unit_mer_ecef_z'] * inst['sc_zhat_z']
 
     inst.meta['unit_zon_x'] = { 'long_name':'Zonal direction along IVM-x',
                                 'desc': 'Unit vector for the zonal geomagnetic direction.',
