@@ -119,11 +119,11 @@ class TestCore():
         plt.xlim((0,360.))
         plt.savefig('magnetic_footpoint_comparison.png')
         
-                        
-        assert np.all(np.std(diff_n_lat) < .05)
-        assert np.all(np.std(diff_n_lon) < .05)
-        assert np.all(np.std(diff_s_lat) < .05)
-        assert np.all(np.std(diff_s_lon) < .05)
+        # better than 0.5 km accuracy expected for settings above
+        assert np.all(np.std(diff_n_lat) < .5)
+        assert np.all(np.std(diff_n_lon) < .5)
+        assert np.all(np.std(diff_s_lat) < .5)
+        assert np.all(np.std(diff_s_lon) < .5)
 
         
                 
