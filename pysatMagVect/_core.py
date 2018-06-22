@@ -12,6 +12,7 @@ calculation, the functions are formatted more traditionally.
 import scipy
 import scipy.integrate
 import numpy as np
+import datetime
 
 # import reference IGRF fortran code within the package
 from . import igrf
@@ -338,12 +339,48 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 
 def field_line_trace(init, date, direction, height, steps=None,
-                     max_steps=1E5, step_size=5):
-    """Perform field line tracing.
+                     max_steps=1E5, step_size=5.):
+    """Perform field line tracing using IGRF and scipy.integrate.odeint.
+    
+    Parameters
+    ----------
+    init : array-like of floats
+        Position to begin field line tracing from in ECEF (x,y,z) km
+    date : datetime or float
+        Date to perform tracing on (year + day/365 + hours/24. + etc.)
+        Accounts for leap year if datetime provided.
+    direction : int
+         1 : field aligned, generally south to north. 
+        -1 : anti-field aligned, generally north to south.
+    height : float
+        Altitude to terminate trace, geodetic WGS84 (km)
+    steps : array-like of ints or floats
+        Number of steps along field line when field line trace positions should 
+        be reported. By default, each step is reported; steps=np.arange(max_steps).
+    max_steps : float
+        Maximum number of steps along field line that should be taken
+    step_size : float
+        Distance in km for each large integration step. Multiple substeps
+        are taken as determined by scipy.integrate.odeint
+        
+    Returns
+    -------
+    numpy array
+        2D array. [0,:] has the x,y,z location for initial point
+        [:,0] is the x positions over the integration.
+        Positions are reported in ECEF (km).
+        
     
     """
+    
     if steps is None:
         steps = np.arange(max_steps)
+    # recast from datetime to float, as required by IGRF12 code
+    doy = (date - datetime.datetime(date.year,1,1)).days
+    # number of days in year, works for leap years
+    num_doy_year = (datetime.datetime(date.year+1,1,1) - datetime.datetime(date.year,1,1)).days
+    date = date.year + float(doy)/float(num_doy_year) + (date.hour + date.minute/60. + date.second/3600.)/24.  
+      
     trace_north = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                          steps,
                                          args=(date, step_size, direction, height),
@@ -382,21 +419,26 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
     be = [];
     bd = []
 
-    for x, y, z, alt, colat, elong in zip(ecef_x, ecef_y, ecef_z, geo_alt, np.deg2rad(90. - geo_lat),
-                                          np.deg2rad(geo_long)):
+    for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z, geo_alt, np.deg2rad(90. - geo_lat),
+                                          np.deg2rad(geo_long), inst.data.index):
         init = np.array([x, y, z])
-        date = inst.yr + inst.doy / 366.
-        trace_north = field_line_trace(init, date, 1., ref_height, steps=steps,
+        # date = inst.yr + inst.doy / 366.
+        trace_north = field_line_trace(init, time, 1., ref_height, steps=steps,
                                        step_size=step_size, max_steps=max_steps)
-        trace_south = field_line_trace(init, date, -1., ref_height, steps=steps,
+        trace_south = field_line_trace(init, time, -1., ref_height, steps=steps,
                                        step_size=step_size, max_steps=max_steps)
         # store final location
         trace_north = trace_north[-1, :]
         trace_south = trace_south[-1, :]
         # magnetic field at spacecraft location, using geocentric inputs
         # to get magnetic field in geocentric output
-        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, inst.yr + inst.doy / 366., 1,
-                                              alt, colat, elong)
+        # recast from datetime to float, as required by IGRF12 code
+        doy = (time - datetime.datetime(time.year,1,1)).days
+        # number of days in year, works for leap years
+        num_doy_year = (datetime.datetime(time.year+1,1,1) - datetime.datetime(time.year,1,1)).days
+        date = time.year + float(doy)/float(num_doy_year) + (time.hour + time.minute/60. + time.second/3600.)/24.
+        # get IGRF field components
+        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 1, alt, colat, elong)
 
         south_x.append(trace_south[0])
         south_y.append(trace_south[1])
