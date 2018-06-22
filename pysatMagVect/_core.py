@@ -420,6 +420,7 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
     be = [];
     bd = []
 
+    out = []
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z, geo_alt, np.deg2rad(90. - geo_lat),
                                           np.deg2rad(geo_long), inst.data.index):
         init = np.array([x, y, z])
@@ -466,54 +467,28 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
     inst['north_x'] = north_x - ecef_x
     inst['north_y'] = north_y - ecef_y
     inst['north_z'] = north_z - ecef_z
-    norm = np.sqrt(inst['north_x'] ** 2 + inst['north_y'] ** 2 + inst['north_z'] ** 2)
-    inst['north_x'] /= norm
-    inst['north_y'] /= norm
-    inst['north_z'] /= norm
-
+    inst['north_x'], inst['north_y'], inst['north_z'] = normalize_vector(inst['north_x'],
+                                                                         inst['north_y'],
+                                                                         inst['north_z'])
     inst['south_x'] = south_x - ecef_x
     inst['south_y'] = south_y - ecef_y
     inst['south_z'] = south_z - ecef_z
-    norm = np.sqrt(inst['south_x'] ** 2 + inst['south_y'] ** 2 + inst['south_z'] ** 2)
-    inst['south_x'] /= norm
-    inst['south_y'] /= norm
-    inst['south_z'] /= norm
-
+    inst['south_x'], inst['south_y'], inst['south_z'] = normalize_vector(inst['south_x'],
+                                                                         inst['south_y'],
+                                                                         inst['south_z'])
     # calculate magnetic unit vector
-    # need to rotate from North, East, Down into ECEF
-    colat = np.deg2rad(90. - geo_lat)
-    elong = np.deg2rad(geo_long)
-    # colat = np.arccos(ecef_z/np.sqrt(ecef_x**2+ecef_y**2+ecef_z**2))
-    # elong = np.arctan2(ecef_y, ecef_x)
-
-    # idx, = np.where(elong < 0)
-    # elong[idx] += 2.*np.pi
-    # need to be able to convert this to (ECEF) fixed geocentric 
-    # using values provided from OA
-    # bx = -inst['b_d']*np.sin(colat)*np.cos(elong) - inst['b_n']*np.cos(colat)*np.cos(elong) - inst['b_e']*np.sin(elong)
-    # by = -inst['b_d']*np.sin(colat)*np.sin(elong) - inst['b_n']*np.cos(colat)*np.sin(elong) + inst['b_e']*np.cos(elong)
-    # bz = -inst['b_d']*np.cos(colat) + inst['b_n']*np.sin(colat)
-    bx = -bd * np.sin(colat) * np.cos(elong) - bn * np.cos(colat) * np.cos(elong) - be * np.sin(elong)
-    by = -bd * np.sin(colat) * np.sin(elong) - bn * np.cos(colat) * np.sin(elong) + be * np.cos(elong)
-    bz = -bd * np.cos(colat) + bn * np.sin(colat)
-    norm = np.sqrt(bx ** 2 + by ** 2 + bz ** 2)
-    bx /= norm
-    by /= norm
-    bz /= norm
-
-    ## take cross product of northward and southward vectors to get the zonal vector
-    ## north cross south points west, so a factor of -1 will need to be added 
-    zvx_foot = (inst['north_y'] * inst['south_z'] - inst['north_z'] * inst['south_y'])  # vny*vsz - vnz*vsy
-    zvy_foot = (inst['north_z'] * inst['south_x'] - inst['north_x'] * inst['south_z'])  # vnz*vsx - vnx*vsz
-    zvz_foot = (inst['north_x'] * inst['south_y'] - inst['north_y'] * inst['south_x'])  # vnx*vsy - vny*vsx
+    bx, by, bz = enu_to_ecef_vector(be, bn, -bd, geo_long, geo_lat)
+    bx, by, bz = normalize_vector(bx, by, bz)
+    
+    # take cross product of southward and northward vectors to get the zonal vector
+    zvx_foot, zvy_foot, zvz_foot = cross_product(inst['south_x'], inst['south_y'], inst['south_z'],
+                                                 inst['north_x'], inst['north_y'], inst['north_z'])  
     # getting zonal vector utilizing magnetic field vector instead
-    zvx_north = -(inst['north_y'] * bz - inst['north_z'] * by)  # -(vny*bz - vnz*by)
-    zvy_north = -(inst['north_z'] * bx - inst['north_x'] * bz)  # -(vnz*bx - vnx*bz)
-    zvz_north = -(inst['north_x'] * by - inst['north_y'] * bx)  # -(vnx*by - vny*bx)
+    zvx_north, zvy_north, zvz_north = cross_product(inst['north_x'], inst['north_y'], inst['north_z'],
+                                                    bx, by, bz)
     # getting zonal vector utilizing magnetic field vector instead and southern point
-    zvx_south = -(inst['south_y'] * bz - inst['south_z'] * by)  # -(vny*bz - vnz*by)
-    zvy_south = -(inst['south_z'] * bx - inst['south_x'] * bz)  # -(vnz*bx - vnx*bz)
-    zvz_south = -(inst['south_x'] * by - inst['south_y'] * bx)  # -(vnx*by - vny*bx)
+    zvx_south, zvy_south, zvz_south = cross_product(inst['south_x'], inst['south_y'], inst['south_z'],
+                                                    bx, by, bz)
     # normalize the vectors
     norm_foot = np.sqrt(zvx_foot ** 2 + zvy_foot ** 2 + zvz_foot ** 2)
     norm_north = np.sqrt(zvx_north ** 2 + zvy_north ** 2 + zvz_north ** 2)
@@ -521,62 +496,52 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
 
     # pick the method with the largest cross product vector
     # should have largest numerical accuracy
-    # add in the negative so positive points east and norm
     if method == 'foot_field':
         # use the magnetic field explicitly 
-        zvx = -zvx_north / norm_north
-        zvy = -zvy_north / norm_north
-        zvz = -zvz_north / norm_north
+        zvx, zvy, zvz = normalize_vector(zvx_north, zvy_north, zvz_north)
         # south
         idx, = np.where(norm_south > norm_north)
-        zvx.iloc[idx] = -zvx_south.iloc[idx] / norm_south.iloc[idx]
-        zvy.iloc[idx] = -zvy_south.iloc[idx] / norm_south.iloc[idx]
-        zvz.iloc[idx] = -zvz_south.iloc[idx] / norm_south.iloc[idx]
+        zvx.iloc[idx] = zvx_south.iloc[idx] / norm_south.iloc[idx]
+        zvy.iloc[idx] = zvy_south.iloc[idx] / norm_south.iloc[idx]
+        zvz.iloc[idx] = zvz_south.iloc[idx] / norm_south.iloc[idx]
     elif method == 'cross_foot':
-        zvx = -zvx_foot / norm_foot
-        zvy = -zvy_foot / norm_foot
-        zvz = -zvz_foot / norm_foot
+        zvx = zvx_foot / norm_foot
+        zvy = zvy_foot / norm_foot
+        zvz = zvz_foot / norm_foot
         # remove any field aligned component to the zonal vector
         dot_fa = zvx * bx + zvy * by + zvz * bz
         zvx -= dot_fa * bx
         zvy -= dot_fa * by
         zvz -= dot_fa * bz
-        norm_zv = np.sqrt(zvx ** 2 + zvy ** 2 + zvz ** 2)
-        zvx /= norm_zv
-        zvy /= norm_zv
-        zvz /= norm_zv
+        zvx, zny, zvz = normalize_vector(zvx, zvy, zvz)
     elif method == 'auto':
         # use the magnetic field explicitly 
-        zvx = -zvx_north / norm_north
-        zvy = -zvy_north / norm_north
-        zvz = -zvz_north / norm_north
+        zvx = zvx_north / norm_north
+        zvy = zvy_north / norm_north
+        zvz = zvz_north / norm_north
         full_norm = norm_north
         # south
         idx, = np.where(norm_south > full_norm)
-        zvx.iloc[idx] = -zvx_south.iloc[idx] / norm_south.iloc[idx]
-        zvy.iloc[idx] = -zvy_south.iloc[idx] / norm_south.iloc[idx]
-        zvz.iloc[idx] = -zvz_south.iloc[idx] / norm_south.iloc[idx]
+        zvx.iloc[idx] = zvx_south.iloc[idx] / norm_south.iloc[idx]
+        zvy.iloc[idx] = zvy_south.iloc[idx] / norm_south.iloc[idx]
+        zvz.iloc[idx] = zvz_south.iloc[idx] / norm_south.iloc[idx]
         full_norm.iloc[idx] = norm_south.iloc[idx]
         # foot cross
         idx, = np.where(norm_foot > full_norm)
-        zvx.iloc[idx] = -zvx_foot.iloc[idx] / norm_foot.iloc[idx]
-        zvy.iloc[idx] = -zvy_foot.iloc[idx] / norm_foot.iloc[idx]
-        zvz.iloc[idx] = -zvz_foot.iloc[idx] / norm_foot.iloc[idx]
+        zvx.iloc[idx] = zvx_foot.iloc[idx] / norm_foot.iloc[idx]
+        zvy.iloc[idx] = zvy_foot.iloc[idx] / norm_foot.iloc[idx]
+        zvz.iloc[idx] = zvz_foot.iloc[idx] / norm_foot.iloc[idx]
         # remove any field aligned component to the zonal vector
         dot_fa = zvx * bx + zvy * by + zvz * bz
         zvx -= dot_fa * bx
         zvy -= dot_fa * by
         zvz -= dot_fa * bz
-        norm_zv = np.sqrt(zvx ** 2 + zvy ** 2 + zvz ** 2)
-        zvx /= norm_zv
-        zvy /= norm_zv
-        zvz /= norm_zv
+        zvx, zny, zvz = normalize_vector(zvx, zvy, zvz)
 
     # compute meridional vector
     # cross product of zonal and magnetic unit vector
-    mx = zvy * bz - zvz * by
-    my = zvz * bx - zvx * bz
-    mz = zvx * by - zvy * bx
+    mx, my, mz = cross_product(zvx, zvy, zvz,
+                               bx, by, bz)
 
     # add unit vectors for magnetic drifts in ecef coordinates
     inst['unit_zon_ecef_x'] = zvx
