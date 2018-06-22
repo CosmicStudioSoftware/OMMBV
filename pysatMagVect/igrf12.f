@@ -76,9 +76,9 @@ Cf2py intent(out) out
       if (scalar.lt.0) then 
         scalar = 0.
       end if
-      out(1) = dir*scalar*6371.*bx/bm
-      out(2) = dir*scalar*6371.*by/bm
-      out(3) = dir*scalar*6371.*bz/bm
+      out(1) = dir*scalar*bx/bm
+      out(2) = dir*scalar*by/bm
+      out(3) = dir*scalar*bz/bm
       
       !write(*,*) sqrt(bn**2+be**2+bd**2)/bm
       !write(*,*) sqrt(bx**2+by**2+bz**2)/bm      
