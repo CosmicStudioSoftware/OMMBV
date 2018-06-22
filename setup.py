@@ -43,7 +43,7 @@ numpy.distutils.core.setup(
     # Author details
     author='Russell Stoneback',
     author_email='rstoneba@utdallas.edu',
-    package_data={'pysatMagVect': ['version.txt'],},
+    package_data={'pysatMagVect': ['version.txt', 'igrf12.f'],},
     include_package_data=True,
     
     ext_modules = config.todict()['ext_modules'],
