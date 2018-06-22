@@ -260,7 +260,7 @@ class TestCore():
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
         import os
-        on_rtd = os.environ.get('READTHEDOCS') == 'True'
+        on_rtd = os.environ.get('ONTRAVIS') == 'True'
         print (on_rtd)
         
         # convert OMNI position to ECEF
