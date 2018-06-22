@@ -219,7 +219,7 @@ class TestCore():
         x,y,z = pymv.geocentric_to_ecef(np.array([20.]), np.array([0.]), np.array([550.]))
         
         steps_goal = np.array([1., 3.3E-1, 1.E-1, 3.3E-2,  1.E-2, 3.3E-3, 1.E-3, 3.3E-4, 
-                               1.E-4, 3.3E-5, 1.E-5, 3.3E-6, 1.E-6, 3.3E-7])
+                               1.E-4]) #, 3.3E-5, 1.E-5, 3.3E-6, 1.E-6, 3.3E-7])
         max_steps_goal = 1.E2/steps_goal
 
         out = []
