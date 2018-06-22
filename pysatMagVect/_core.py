@@ -375,11 +375,12 @@ def field_line_trace(init, date, direction, height, steps=None,
     
     if steps is None:
         steps = np.arange(max_steps)
-    # recast from datetime to float, as required by IGRF12 code
-    doy = (date - datetime.datetime(date.year,1,1)).days
-    # number of days in year, works for leap years
-    num_doy_year = (datetime.datetime(date.year+1,1,1) - datetime.datetime(date.year,1,1)).days
-    date = date.year + float(doy)/float(num_doy_year) + (date.hour + date.minute/60. + date.second/3600.)/24.  
+    if not isinstance(date, float):
+        # recast from datetime to float, as required by IGRF12 code
+        doy = (date - datetime.datetime(date.year,1,1)).days
+        # number of days in year, works for leap years
+        num_doy_year = (datetime.datetime(date.year+1,1,1) - datetime.datetime(date.year,1,1)).days
+        date = date.year + float(doy)/float(num_doy_year) + (date.hour + date.minute/60. + date.second/3600.)/24.  
       
     trace_north = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                          steps,
