@@ -38,7 +38,7 @@ install:
   - "python setup.py develop"
 # command to run tests
 script: 
-  - nosetests  --with-coverage --cover-package=pysatMagVect
+  - nosetests  -vs --with-coverage --cover-package=pysatMagVect
   #coverage run --source=pysat setup.py test
 after_success:
   coveralls
