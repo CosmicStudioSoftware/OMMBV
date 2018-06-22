@@ -28,7 +28,7 @@ numpy.distutils.core.setup(
 
     name = 'pysatMagVect',
     version = version,        
-    packages = ['pysatMagVect','pysatMagVect.tests'],
+    packages = ['pysatMagVect','pysatMagVect.tests', 'pysatMagVect.igrf'],
     description= ''.join(('Calculates geomagnetic unit vectors (field aligned, zonal, and meridional) '
                  'and includes supporting routines for characterizing the motion of ionospheric plasma.')),
     # cmdclass={'sdist': sdist},
