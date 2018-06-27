@@ -19,7 +19,7 @@ config.add_extension(name='igrf',
 here = os.path.abspath(os.path.dirname(__file__))
 #with open(path.join(here, 'description.txt'), encoding='utf-8') as f:
 #    long_description = f.read()
-with open(os.path.join(here, 'pysatMagVect', 'version.txt')) as version_file:
+with open(os.path.join(here, 'version.txt')) as version_file:
     version = version_file.read().strip()
 
 # call setup
