@@ -2,6 +2,6 @@
 API
 ===
 
-.. autoclass:: pysatMagVect.core
+.. autoclass:: pysatMagVect
    :members:
 
