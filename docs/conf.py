@@ -255,13 +255,13 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'pysat.tex', u'Python Satellite Data Analysis Toolkit (pysat) Documentation',
+  (master_doc, 'pysatMagVect.tex', u'Python Magnetic Vectors Documentation',
    u'Russell Stoneback', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-latex_logo = '../logo.png'
+# latex_logo = '../logo.png'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
@@ -285,7 +285,7 @@ latex_logo = '../logo.png'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pysat', u'pysat Documentation',
+    (master_doc, 'pysat', u'pysatMagVect Documentation',
      [author], 1)
 ]
 
@@ -299,8 +299,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'pysat', u'pysat Documentation',
-   author, 'pysat', 'One line description of project.',
+  (master_doc, 'pysatMagVect', u'pysatMagVect Documentation',
+   author, 'pysatMagVect', 'One line description of project.',
    'Miscellaneous'),
 ]
 
