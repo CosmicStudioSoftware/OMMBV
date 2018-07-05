@@ -758,7 +758,23 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.5,
     'sc_xhat_x' where *hat (*=x,y,z) is the S/C basis vector and _* (*=x,y,z)
     is the ECEF direction. 
     
+    Parameters
+    ----------
+    inst : pysat.Instrument object
+        Instrument object to be modified
+    max_steps : int
+        Maximum number of steps taken for field line integration
+    step_size : float
+        Maximum step size (km) allowed for field line tracer
+    method : see add_mag_drift_unit_vectors_ecef
     
+    Returns
+    -------
+    None
+        Modifies instrument object in place. Adds 'unit_zon_*' where * = x,y,z
+        'unit_fa_*' and 'unit_mer_*' for zonal, field aligned, and meridional
+        directions. Note that vector components are expressed in the S/C basis.
+        
     """
 
     # vectors are returned in geo/ecef coordinate system
@@ -908,6 +924,27 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.5,
 
 
 def add_mag_drifts(inst):
+    """Adds ion drifts in magnetic coordinates using ion drifts in S/C coordinates
+    along with pre-calculated unit vectors for magnetic coordinates.
+    
+    Note
+    ----
+        Requires ion drifts under labels 'iv_*' where * = (x,y,z) along with
+        unit vectors labels 'unit_zonal_*', 'unit_fa_*', and 'unit_mer_*',
+        where the unit vectors are expressed in S/C coordinates. These
+        vectors are calculated by add_mag_drift_unit_vectors.
+    
+    Parameters
+    ----------
+    inst : pysat.Instrument
+        Instrument object will be modified to include new ion drift magnitudes
+        
+    Returns
+    -------
+    None
+        Instrument object modified in place
+    
+    """
     
     inst['iv_zon'] = {'data':inst['unit_zon_x'] * inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
                       'units':'m/s',
@@ -959,43 +996,229 @@ def add_mag_drifts(inst):
     return
 
 
-def add_footpoint_drifts(inst):
-    """Translates S/C ion velocities to those at footpoints and magnetic equator.
+def add_footpoint_and_equatorial_drifts(inst):
+    """Translates geomagnetic ion velocities to those at footpoints and magnetic equator.
 
-    Presumes scalar values for mapping ion velocities are already in the inst, labeled
-    by north_footpoint_zon_drift, north_footpoint_mer_drift, equ_mer_drift, equ_zon_drift.
+    Note
+    ----
+        Presumes scalar values for mapping ion velocities are already in the inst, labeled
+        by north_footpoint_zon_drift, north_footpoint_mer_drift, equ_mer_drift, equ_zon_drift.
+    
+        Also presumes that ion motions in the geomagnetic system are present and labeled
+        as 'iv_mer' and 'iv_zon' for meridional and zonal ion motions.
+        
+        This naming scheme is used by the other pysat oriented routines
+        in this package.
+    
+    Parameters
+    ----------
+    inst : pysat.Instrument
+    
+    Returns
+    -------
+    None
+        Modifies pysat.Instrument object in place. Drifts mapped to the magnetic equator
+        are labeled 'equ_mer_drift' and 'equ_zon_drift'. Mappings to the northern
+        and southern footpoints are labeled 'south_footpoint_mer_drift' and
+        'south_footpoint_zon_drift'. Similarly for the northern hemisphere.
 
     """
 
-    inst['equ_mer_drift'] = inst['equ_mer_drift']*inst['iv_mer']
-    # inst.meta['equ_mer_drift'] = {'Var_Notes':'Meridionl ion drift at magnetic equator.',
-    #                               'CatDesc': 'Meridionl ion drift at magnetic equator.'}
-    inst['equ_zon_drift'] = inst['equ_zon_drift']*inst['iv_mer']
-    # inst.meta['equ_zon_drift'] = {'Var_Notes':'Zonal ion drift at magnetic equator.',
-    #                               'CatDesc': 'Zonal ion drift at magnetic equator.'}
+    inst['equ_mer_drift'] = inst['equ_mer_drifts_scalar']*inst['iv_mer']
+    inst['equ_zon_drift'] = inst['equ_zon_drifts_scalar']*inst['iv_zon']
 
-    inst['south_footpoint_mer_drift'] = inst['south_footpoint_mer_drift']*inst['iv_mer']
-    inst['south_footpoint_zon_drift'] = inst['south_footpoint_zon_drift']*inst['iv_zon']
+    inst['south_footpoint_mer_drift'] = inst['south_footpoint_mer_drifts_scalar']*inst['iv_mer']
+    inst['south_footpoint_zon_drift'] = inst['south_footpoint_zon_drifts_scalar']*inst['iv_zon']
 
-    inst['north_footpoint_mer_drift'] = inst['north_footpoint_mer_drift']*inst['iv_mer']
-    inst['north_footpoint_zon_drift'] = inst['north_footpoint_zon_drift']*inst['iv_zon']
+    inst['north_footpoint_mer_drift'] = inst['north_footpoint_mer_drifts_scalar']*inst['iv_mer']
+    inst['north_footpoint_zon_drift'] = inst['north_footpoint_zon_drifts_scalar']*inst['iv_zon']
 
+    inst['equ_mer_drift'] = {
+                            'units':'m/s',
+                            'long_name':'Equatorial meridional ion velocity',
+                            'notes':('Velocity along meridional direction, perpendicular '
+                                    'to field and within meridional plane, scaled to '
+                                    'magnetic equator. Positive is up at magnetic equator. '
+                                    'Velocity obtained using ion velocities relative '
+                                    'to co-rotation in the instrument frame along '
+                                    'with the corresponding unit vectors expressed in '
+                                    'the instrument frame. Field-line mapping and '
+                                    'the assumption of equi-potential field lines '
+                                    'is used to translate the locally measured ion '
+                                    'motion to the magnetic equator. The mapping '
+                                    'is used to determine the change in magnetic '
+                                    'field line distance, which, under assumption of '
+                                    'equipotential field lines, in turn alters '
+                                    'the electric field at that location (E=V/d). '),
+                            'label':'Equatorial Meridional Ion Velocity',
+                            'axis':'Equatorial Meridional Ion Velocity',
+                            'desc':'Equatorial Meridional Ion Velocity',
+                            'scale':'Linear',
+                            'value_min':-500., 
+                            'value_max':500.}
 
+    inst['equ_zon_drift'] = {
+                            'units':'m/s',
+                            'long_name':'Equatorial zonal ion velocity',
+                            'notes':('Velocity along zonal direction, perpendicular '
+                                    'to field and the meridional plane, scaled to '
+                                    'magnetic equator. Positive is generally eastward. '
+                                    'Velocity obtained using ion velocities relative '
+                                    'to co-rotation in the instrument frame along '
+                                    'with the corresponding unit vectors expressed in '
+                                    'the instrument frame. Field-line mapping and '
+                                    'the assumption of equi-potential field lines '
+                                    'is used to translate the locally measured ion '
+                                    'motion to the magnetic equator. The mapping '
+                                    'is used to determine the change in magnetic '
+                                    'field line distance, which, under assumption of '
+                                    'equipotential field lines, in turn alters '
+                                    'the electric field at that location (E=V/d). '),
+                            'label':'Equatorial Zonal Ion Velocity',
+                            'axis':'Equatorial Zonal Ion Velocity',
+                            'desc':'Equatorial Zonal Ion Velocity',
+                            'scale':'Linear',
+                            'value_min':-500., 
+                            'value_max':500.}
 
+    inst['south_footpoint_mer_drift'] = {
+                            'units':'m/s',
+                            'long_name':'Southern meridional ion velocity',
+                            'notes':('Velocity along meridional direction, perpendicular '
+                                    'to field and within meridional plane, scaled to '
+                                    'southern footpoint. Positive is up at magnetic equator. '
+                                    'Velocity obtained using ion velocities relative '
+                                    'to co-rotation in the instrument frame along '
+                                    'with the corresponding unit vectors expressed in '
+                                    'the instrument frame. Field-line mapping and '
+                                    'the assumption of equi-potential field lines '
+                                    'is used to translate the locally measured ion '
+                                    'motion to the magnetic footpoint. The mapping '
+                                    'is used to determine the change in magnetic '
+                                    'field line distance, which, under assumption of '
+                                    'equipotential field lines, in turn alters '
+                                    'the electric field at that location (E=V/d). '),
+                            'label':'Southern Meridional Ion Velocity',
+                            'axis':'Southern Meridional Ion Velocity',
+                            'desc':'Southern Meridional Ion Velocity',
+                            'scale':'Linear',
+                            'value_min':-500., 
+                            'value_max':500.}
 
-def scaler_for_footpoint_e_fields(glats, glons, alts, dates):
+    inst['south_footpoint_zon_drift'] = {
+                            'units':'m/s',
+                            'long_name':'Southern zonal ion velocity',
+                            'notes':('Velocity along zonal direction, perpendicular '
+                                    'to field and the meridional plane, scaled to '
+                                    'southern footpoint. Positive is generally eastward. '
+                                    'Velocity obtained using ion velocities relative '
+                                    'to co-rotation in the instrument frame along '
+                                    'with the corresponding unit vectors expressed in '
+                                    'the instrument frame. Field-line mapping and '
+                                    'the assumption of equi-potential field lines '
+                                    'is used to translate the locally measured ion '
+                                    'motion to the southern footpoint. The mapping '
+                                    'is used to determine the change in magnetic '
+                                    'field line distance, which, under assumption of '
+                                    'equipotential field lines, in turn alters '
+                                    'the electric field at that location (E=V/d). '),
+                            'label':'Southern Zonal Ion Velocity',
+                            'axis':'Southern Zonal Ion Velocity',
+                            'desc':'Southern Zonal Ion Velocity',
+                            'scale':'Linear',
+                            'value_min':-500., 
+                            'value_max':500.}
+
+    inst['north_footpoint_mer_drift'] = {
+                            'units':'m/s',
+                            'long_name':'Northern meridional ion velocity',
+                            'notes':('Velocity along meridional direction, perpendicular '
+                                    'to field and within meridional plane, scaled to '
+                                    'northern footpoint. Positive is up at magnetic equator. '
+                                    'Velocity obtained using ion velocities relative '
+                                    'to co-rotation in the instrument frame along '
+                                    'with the corresponding unit vectors expressed in '
+                                    'the instrument frame. Field-line mapping and '
+                                    'the assumption of equi-potential field lines '
+                                    'is used to translate the locally measured ion '
+                                    'motion to the magnetic footpoint. The mapping '
+                                    'is used to determine the change in magnetic '
+                                    'field line distance, which, under assumption of '
+                                    'equipotential field lines, in turn alters '
+                                    'the electric field at that location (E=V/d). '),
+                            'label':'Northern Meridional Ion Velocity',
+                            'axis':'Northern Meridional Ion Velocity',
+                            'desc':'Northern Meridional Ion Velocity',
+                            'scale':'Linear',
+                            'value_min':-500., 
+                            'value_max':500.}
+
+    inst['north_footpoint_zon_drift'] = {
+                            'units':'m/s',
+                            'long_name':'Northern zonal ion velocity',
+                            'notes':('Velocity along zonal direction, perpendicular '
+                                    'to field and the meridional plane, scaled to '
+                                    'northern footpoint. Positive is generally eastward. '
+                                    'Velocity obtained using ion velocities relative '
+                                    'to co-rotation in the instrument frame along '
+                                    'with the corresponding unit vectors expressed in '
+                                    'the instrument frame. Field-line mapping and '
+                                    'the assumption of equi-potential field lines '
+                                    'is used to translate the locally measured ion '
+                                    'motion to the northern footpoint. The mapping '
+                                    'is used to determine the change in magnetic '
+                                    'field line distance, which, under assumption of '
+                                    'equipotential field lines, in turn alters '
+                                    'the electric field at that location (E=V/d). '),
+                            'label':'Northern Zonal Ion Velocity',
+                            'axis':'Northern Zonal Ion Velocity',
+                            'desc':'Northern Zonal Ion Velocity',
+                            'scale':'Linear',
+                            'value_min':-500., 
+                            'value_max':500.}
+
+def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
     """
+    Calculates scalars for translating ion motions at position
+    glat, glon, and alt, for date, to the footpoints of the field line
+    as well as at the magnetic equator.
+    
+    All inputs are assumed to be 1D arrays.
+    
+    Note
+    ----
+        Directions refer to the ion motion direction e.g. the zonal
+        scalar applies to zonal ion motions (meridional E field assuming ExB ion motion)
+    
+    Parameters
+    ----------
+    glats : list-like of floats (degrees)
+        Geodetic (WGS84) latitude
+    glons : list-like of floats (degrees)
+        Geodetic (WGS84) longitude 
+    alts : list-like of floats (km)
+        Geodetic (WGS84) altitude, height above surface
+    dates : list-like of datetimes
+        Date and time for determination of scalars
+        
+    Returns
+    -------
+    dict
+        array-like of scalars for translating electric field. Keys are,
+        'north_zonal_drifts_scalar', 'north_mer_drifts_scalar', and similarly
+        for southern locations. 'equator_mer_drifts_scalar' and 
+        'equator_zonal_drifts_scalar' cover the mappings to the equator.
+    
     """
+    
     import pysat
     import pandas
-    from . import instruments
 
     step_size = 0.5
     max_steps = 40000
     steps = np.arange(max_steps)
 
-    ivm = pysat.Instrument(inst_module=instruments.icon_ivm,
-                           tag='level_2', sat_id='a', update_files=False)
+    ivm = pysat.Instrument('pysat', 'testing')
 
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
@@ -1008,8 +1231,9 @@ def scaler_for_footpoint_e_fields(glats, glons, alts, dates):
     eq_zon_drifts_scalar = []
     eq_mer_drifts_scalar = []
 
-    for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys,
-                                                             ecef_zs, glats, glons, alts, dates):
+    for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs, 
+                                                             glats, glons, alts, 
+                                                             dates):
         ivm.date = date
         ivm.yr, ivm.doy = pysat.utils.getyrdoy(date)
         double_date = ivm.yr + ivm.doy / 366.
@@ -1219,11 +1443,11 @@ def scaler_for_footpoint_e_fields(glats, glons, alts, dates):
         # print north_ftpnt_zon_drifts_scalar, south_ftpnt_zon_drifts_scalar, north_ftpnt_mer_drifts_scalar, south_ftpnt_mer_drifts_scalar, eq_zon_drifts_scalar, eq_mer_drifts_scalar
 
     out = {}
-    out['north_zonal_drifts'] = north_ftpnt_zon_drifts_scalar
-    out['south_zonal_drifts'] = south_ftpnt_zon_drifts_scalar
-    out['north_mer_drifts'] = north_ftpnt_mer_drifts_scalar
-    out['south_mer_drifts'] = south_ftpnt_mer_drifts_scalar
-    out['equator_zonal_drifts'] = eq_zon_drifts_scalar
-    out['equator_mer_drifts'] = eq_mer_drifts_scalar
+    out['north_zonal_drifts_scalar'] = north_ftpnt_zon_drifts_scalar
+    out['south_zonal_drifts_scalar'] = south_ftpnt_zon_drifts_scalar
+    out['north_mer_drifts_scalar'] = north_ftpnt_mer_drifts_scalar
+    out['south_mer_drifts_scalar'] = south_ftpnt_mer_drifts_scalar
+    out['equator_zonal_drifts_scalar'] = eq_zon_drifts_scalar
+    out['equator_mer_drifts_scalar'] = eq_mer_drifts_scalar
 
     return out
