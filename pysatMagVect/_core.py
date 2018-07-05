@@ -996,13 +996,21 @@ def add_mag_drifts(inst):
     return
 
 
-def add_footpoint_and_equatorial_drifts(inst):
+def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_scalar',
+                                              equ_zonal_scalar='equ_zon_drifts_scalar',
+                                              north_mer_scalar='north_footpoint_mer_drifts_scalar',
+                                              north_zon_scalar='north_footpoint_zon_drifts_scalar',
+                                              south_mer_scalar='south_footpoint_mer_drifts_scalar',
+                                              south_zon_scalar='south_footpoint_zon_drifts_scalar',
+                                              mer_drift='iv_mer',
+                                              zon_drift='iv_zon'):
     """Translates geomagnetic ion velocities to those at footpoints and magnetic equator.
 
     Note
     ----
         Presumes scalar values for mapping ion velocities are already in the inst, labeled
-        by north_footpoint_zon_drift, north_footpoint_mer_drift, equ_mer_drift, equ_zon_drift.
+        by north_footpoint_zon_drifts_scalar, north_footpoint_mer_drifts_scalar,
+        equ_mer_drifts_scalar, equ_zon_drifts_scalar.
     
         Also presumes that ion motions in the geomagnetic system are present and labeled
         as 'iv_mer' and 'iv_zon' for meridional and zonal ion motions.
@@ -1013,7 +1021,23 @@ def add_footpoint_and_equatorial_drifts(inst):
     Parameters
     ----------
     inst : pysat.Instrument
-    
+    equ_mer_scalar : string
+        Label used to identify equatorial scalar for meridional ion drift
+    equ_zon_scalar : string
+        Label used to identify equatorial scalar for zonal ion drift
+    north_mer_scalar : string
+        Label used to identify northern footpoint scalar for meridional ion drift
+    north_zon_scalar : string
+        Label used to identify northern footpoint scalar for zonal ion drift
+    south_mer_scalar : string
+        Label used to identify northern footpoint scalar for meridional ion drift
+    south_zon_scalar : string
+        Label used to identify southern footpoint scalar for zonal ion drift
+    mer_drift : string
+        Label used to identify meridional ion drifts within inst
+    zon_drift : string
+        Label used to identify zonal ion drifts within inst
+        
     Returns
     -------
     None
@@ -1024,14 +1048,14 @@ def add_footpoint_and_equatorial_drifts(inst):
 
     """
 
-    inst['equ_mer_drift'] = inst['equ_mer_drifts_scalar']*inst['iv_mer']
-    inst['equ_zon_drift'] = inst['equ_zon_drifts_scalar']*inst['iv_zon']
+    inst['equ_mer_drift'] = inst[equ_mer_scalar]*inst[mer_drift]
+    inst['equ_zon_drift'] = inst[equ_zonal_scalar]*inst[zon_drift]
 
-    inst['south_footpoint_mer_drift'] = inst['south_footpoint_mer_drifts_scalar']*inst['iv_mer']
-    inst['south_footpoint_zon_drift'] = inst['south_footpoint_zon_drifts_scalar']*inst['iv_zon']
+    inst['south_footpoint_mer_drift'] = inst[south_mer_scalar]*inst[mer_drift]
+    inst['south_footpoint_zon_drift'] = inst[south_zon_scalar]*inst[zon_drift]
 
-    inst['north_footpoint_mer_drift'] = inst['north_footpoint_mer_drifts_scalar']*inst['iv_mer']
-    inst['north_footpoint_zon_drift'] = inst['north_footpoint_zon_drifts_scalar']*inst['iv_zon']
+    inst['north_footpoint_mer_drift'] = inst[north_mer_scalar]*inst[mer_drift]
+    inst['north_footpoint_zon_drift'] = inst[north_zon_scalar]*inst[zon_drift]
 
     inst['equ_mer_drift'] = {
                             'units':'m/s',
