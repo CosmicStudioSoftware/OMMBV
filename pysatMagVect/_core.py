@@ -1048,16 +1048,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
 
     """
 
-    inst['equ_mer_drift'] = inst[equ_mer_scalar]*inst[mer_drift]
-    inst['equ_zon_drift'] = inst[equ_zonal_scalar]*inst[zon_drift]
-
-    inst['south_footpoint_mer_drift'] = inst[south_mer_scalar]*inst[mer_drift]
-    inst['south_footpoint_zon_drift'] = inst[south_zon_scalar]*inst[zon_drift]
-
-    inst['north_footpoint_mer_drift'] = inst[north_mer_scalar]*inst[mer_drift]
-    inst['north_footpoint_zon_drift'] = inst[north_zon_scalar]*inst[zon_drift]
-
-    inst['equ_mer_drift'] = {
+    inst['equ_mer_drift'] = {'data' : inst[equ_mer_scalar]*inst[mer_drift],
                             'units':'m/s',
                             'long_name':'Equatorial meridional ion velocity',
                             'notes':('Velocity along meridional direction, perpendicular '
@@ -1081,7 +1072,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'value_min':-500., 
                             'value_max':500.}
 
-    inst['equ_zon_drift'] = {
+    inst['equ_zon_drift'] = {'data' : inst[equ_zonal_scalar]*inst[zon_drift],
                             'units':'m/s',
                             'long_name':'Equatorial zonal ion velocity',
                             'notes':('Velocity along zonal direction, perpendicular '
@@ -1105,7 +1096,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'value_min':-500., 
                             'value_max':500.}
 
-    inst['south_footpoint_mer_drift'] = {
+    inst['south_footpoint_mer_drift'] = {'data' : inst[south_mer_scalar]*inst[mer_drift],
                             'units':'m/s',
                             'long_name':'Southern meridional ion velocity',
                             'notes':('Velocity along meridional direction, perpendicular '
@@ -1129,7 +1120,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'value_min':-500., 
                             'value_max':500.}
 
-    inst['south_footpoint_zon_drift'] = {
+    inst['south_footpoint_zon_drift'] = {'data':inst[south_zon_scalar]*inst[zon_drift],
                             'units':'m/s',
                             'long_name':'Southern zonal ion velocity',
                             'notes':('Velocity along zonal direction, perpendicular '
@@ -1153,7 +1144,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'value_min':-500., 
                             'value_max':500.}
 
-    inst['north_footpoint_mer_drift'] = {
+    inst['north_footpoint_mer_drift'] = {'data':inst[north_mer_scalar]*inst[mer_drift],
                             'units':'m/s',
                             'long_name':'Northern meridional ion velocity',
                             'notes':('Velocity along meridional direction, perpendicular '
@@ -1177,7 +1168,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'value_min':-500., 
                             'value_max':500.}
 
-    inst['north_footpoint_zon_drift'] = {
+    inst['north_footpoint_zon_drift'] = {'data':inst[north_zon_scalar]*inst[zon_drift],
                             'units':'m/s',
                             'long_name':'Northern zonal ion velocity',
                             'notes':('Velocity along zonal direction, perpendicular '
