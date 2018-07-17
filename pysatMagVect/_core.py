@@ -250,7 +250,7 @@ def ecef_to_enu_vector(x, y, z, glat, glong):
     
     east = -x*np.sin(rlat) + y*np.cos(rlat)
     north = -x*np.cos(rlat)*np.sin(rlon) - y*np.sin(rlat)*np.sin(rlon) + z*np.cos(rlon)
-    up = x*np.cos(rlat)*np.sin(rlon) + y*np.sin(rlat)*np.cos(rlon)+ z*np.sin(rlon)
+    up = x*np.cos(rlat)*np.cos(rlon) + y*np.sin(rlat)*np.cos(rlon)+ z*np.sin(rlon)
 
     return east, north, up
 
