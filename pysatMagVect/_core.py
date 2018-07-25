@@ -211,9 +211,9 @@ def enu_to_ecef_vector(east, north, up, glat, glong):
     rlat = np.radians(glat)
     rlon = np.radians(glong)
     
-    x = -east*np.sin(rlat) - north*np.cos(rlat)*np.sin(rlon) + up*np.cos(rlat)*np.cos(rlon)
-    y = east*np.cos(rlat) - north*np.sin(rlat)*np.sin(rlon) + up*np.sin(rlat)*np.cos(rlon)
-    z = north*np.cos(rlon) + up*np.sin(rlon)
+    x = -east*np.sin(rlon) - north*np.cos(rlon)*np.sin(rlat) + up*np.cos(rlon)*np.cos(rlat)
+    y = east*np.cos(rlon) - north*np.sin(rlon)*np.sin(rlat) + up*np.sin(rlon)*np.cos(rlat)
+    z = north*np.cos(rlat) + up*np.sin(rlat)
 
     return x, y, z
 
@@ -248,9 +248,9 @@ def ecef_to_enu_vector(x, y, z, glat, glong):
     rlat = np.radians(glat)
     rlon = np.radians(glong)
     
-    east = -x*np.sin(rlat) + y*np.cos(rlat)
-    north = -x*np.cos(rlat)*np.sin(rlon) - y*np.sin(rlat)*np.sin(rlon) + z*np.cos(rlon)
-    up = x*np.cos(rlat)*np.sin(rlon) + y*np.sin(rlat)*np.cos(rlon)+ z*np.sin(rlon)
+    east = -x*np.sin(rlon) + y*np.cos(rlon)
+    north = -x*np.cos(rlon)*np.sin(rlat) - y*np.sin(rlon)*np.sin(rlat) + z*np.cos(rlat)
+    up = x*np.cos(rlon)*np.cos(rlat) + y*np.sin(rlon)*np.cos(rlat)+ z*np.sin(rlat)
 
     return east, north, up
 

@@ -5,8 +5,11 @@ import setuptools
 import numpy.distutils.core
 import os
 
+
 from numpy.distutils.misc_util import Configuration
 # from numpy.distutils.command.bdist import bdist as bdist
+# from numpy.distutils.command.sdist import sdist as sdist
+from distutils.command.sdist import sdist
 
 config = Configuration('pysatMagVect')
 
@@ -32,7 +35,7 @@ numpy.distutils.core.setup(
     description= ''.join(('Calculates geomagnetic unit vectors (field aligned, zonal, and meridional) '
                  'and includes supporting routines for characterizing the motion of ionospheric plasma.')),
     url='http://github.com/rstoneback/pysatMagVect',
-    # cmdclass={'bdist': bdist},
+    cmdclass={'sdist': sdist},
    
     # Author details
     author='Russell Stoneback',

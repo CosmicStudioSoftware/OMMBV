@@ -1,5 +1,6 @@
 from nose.tools import assert_raises, raises
 import nose.tools
+from nose.tools import assert_almost_equals as asseq
 
 
 import numpy as np
@@ -381,7 +382,152 @@ class TestCore():
         #plt.savefig('magnetic_unit_vectors_w_globe.png')
         #print truthiness
         assert np.all(truthiness)
+        
+        
+    def test_basic_ecef_to_enu_rotations(self):
+        # test basic transformations first
+        # vector pointing along ecef y at 0, 0 is east
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 1., 0., 0., 0.)
+        # print ('{:9f}, {:9f}, {:9f}'.format(ve, vn, vu))
+        asseq(ve, 1.0, 6)
+        asseq(vn, 0, 6)
+        asseq(vu, 0, 6)
+        # vector pointing along ecef x at 0, 0 is up
+        ve, vn, vu = pymv.ecef_to_enu_vector(1., 0., 0., 0., 0.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, 0.0, 6)
+        asseq(vu, 1.0, 6)
+        # vector pointing along ecef z at 0, 0 is north
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 0., 1., 0., 0.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, 1.0, 6)
+        asseq(vu, 0.0, 6)
+
+        # vector pointing along ecef x at 0, 90 long is west
+        ve, vn, vu = pymv.ecef_to_enu_vector(1., 0., 0., 0., 90.)
+        # print ('{:9f}, {:9f}, {:9f}'.format(ve, vn, vu))
+        asseq(ve, -1.0, 6)
+        asseq(vn, 0.0, 6)
+        asseq(vu, 0.0, 6)
+        # vector pointing along ecef y at 0, 90 long is up
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 1., 0., 0., 90.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, 0.0, 6)
+        asseq(vu, 1.0, 6)
+        # vector pointing along ecef z at 0, 90 long is north
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 0., 1., 0., 90.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, 1.0, 6)
+        asseq(vu, 0.0, 6)
+
+        # vector pointing along ecef y at 0, 180 is west
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 1., 0., 0., 180.)
+        asseq(ve, -1.0, 6)
+        asseq(vn, 0.0, 6)
+        asseq(vu, 0.0, 6)
+        # vector pointing along ecef x at 0, 180 is down
+        ve, vn, vu = pymv.ecef_to_enu_vector(1., 0., 0., 0., 180.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, 0.0, 6)
+        asseq(vu, -1.0, 6)
+        # vector pointing along ecef z at 0, 0 is north
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 0., 1., 0., 180.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, 1.0, 6)
+        asseq(vu, 0.0, 6)
+
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 1., 0., 45., 0.)
+        # print ('{:9f}, {:9f}, {:9f}'.format(ve, vn, vu))
+        asseq(ve, 1.0, 6)
+        asseq(vn, 0, 6)
+        asseq(vu, 0, 6)
+        # vector pointing along ecef x at 0, 0 is south/up
+        ve, vn, vu = pymv.ecef_to_enu_vector(1., 0., 0., 45., 0.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, -np.cos(np.pi/4), 6)
+        asseq(vu, np.cos(np.pi/4), 6)
+        # vector pointing along ecef z at 45, 0 is north/up
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 0., 1., 45., 0.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, np.cos(np.pi/4), 6)
+        asseq(vu, np.cos(np.pi/4), 6)
 
 
+    def test_basic_enu_to_ecef_rotations(self):
+        # test basic transformations first
+        # vector pointing east at 0, 0 is along y
+        vx, vy, vz = pymv.enu_to_ecef_vector(1., 0., 0., 0., 0.)
+        # print ('{:9f}, {:9f}, {:9f}'.format(vx, vy, vz))
+        asseq(vx, 0.0, 6)
+        asseq(vy, 1.0, 6)
+        asseq(vz, 0.0, 6)
+        # vector pointing up at 0, 0 is along x
+        vx, vy, vz = pymv.enu_to_ecef_vector(0., 0., 1., 0., 0.)
+        asseq(vx, 1.0, 6)
+        asseq(vy, 0.0, 6)
+        asseq(vz, 0.0, 6)
+        # vector pointing north at 0, 0 is along z
+        vx, vy, vz = pymv.enu_to_ecef_vector(0., 1., 0., 0., 0.)
+        asseq(vx, 0.0, 6)
+        asseq(vy, 0.0, 6)
+        asseq(vz, 1.0, 6)
 
+        # east vector at 0, 90 long points along -x
+        vx, vy, vz = pymv.enu_to_ecef_vector(1., 0., 0., 0., 90.)
+        # print ('{:9f}, {:9f}, {:9f}'.format(vx, vy, vz))
+        asseq(vx, -1.0, 6)
+        asseq(vy, 0.0, 6)
+        asseq(vz, 0.0, 6)
+        # vector pointing up at 0, 90 is along y
+        vx, vy, vz = pymv.enu_to_ecef_vector(0., 0., 1., 0., 90.)
+        asseq(vx, 0.0, 6)
+        asseq(vy, 1.0, 6)
+        asseq(vz, 0.0, 6)
+        # vector pointing north at 0, 90 is along z
+        vx, vy, vz = pymv.enu_to_ecef_vector(0., 1., 0., 0., 90.)
+        asseq(vx, 0.0, 6)
+        asseq(vy, 0.0, 6)
+        asseq(vz, 1.0, 6)
 
+        # vector pointing east at 0, 0 is along y
+        vx, vy, vz = pymv.enu_to_ecef_vector(1., 0., 0., 0., 180.)
+        # print ('{:9f}, {:9f}, {:9f}'.format(vx, vy, vz))
+        asseq(vx, 0.0, 6)
+        asseq(vy, -1.0, 6)
+        asseq(vz, 0.0, 6)
+        # vector pointing up at 0, 180 is along -x
+        vx, vy, vz = pymv.enu_to_ecef_vector(0., 0., 1., 0., 180.)
+        asseq(vx, -1.0, 6)
+        asseq(vy, 0.0, 6)
+        asseq(vz, 0.0, 6)
+        # vector pointing north at 0, 180 is along z
+        vx, vy, vz = pymv.enu_to_ecef_vector(0., 1., 0., 0., 180.)
+        asseq(vx, 0.0, 6)
+        asseq(vy, 0.0, 6)
+        asseq(vz, 1.0, 6)
+
+    def test_ecef_to_enu_back_to_ecef(self):
+        
+        vx = 0.9
+        vy = 0.1
+        vz = np.sqrt(1. - vx**2+vy**2)
+
+        for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
+            vxx, vyy, vzz = pymv.ecef_to_enu_vector(vx, vy, vz, lat, lon)
+            vxx, vyy, vzz = pymv.enu_to_ecef_vector(vxx, vyy, vzz, lat, lon)
+            asseq(vx, vxx, 6)
+            asseq(vy, vyy, 6)
+            asseq(vz, vzz, 6)
+        
+    def test_enu_to_ecef_back_to_enu(self):
+        
+        vx = 0.9
+        vy = 0.1
+        vz = np.sqrt(1. - vx**2+vy**2)
+
+        for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
+            vxx, vyy, vzz = pymv.enu_to_ecef_vector(vx, vy, vz, lat, lon)
+            vxx, vyy, vzz = pymv.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
+            asseq(vx, vxx, 6)
+            asseq(vy, vyy, 6)
+            asseq(vz, vzz, 6)
