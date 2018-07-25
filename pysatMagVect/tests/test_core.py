@@ -436,6 +436,22 @@ class TestCore():
         asseq(vn, 1.0, 6)
         asseq(vu, 0.0, 6)
 
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 1., 0., 45., 0.)
+        # print ('{:9f}, {:9f}, {:9f}'.format(ve, vn, vu))
+        asseq(ve, 1.0, 6)
+        asseq(vn, 0, 6)
+        asseq(vu, 0, 6)
+        # vector pointing along ecef x at 0, 0 is south/up
+        ve, vn, vu = pymv.ecef_to_enu_vector(1., 0., 0., 45., 0.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, -np.cos(np.pi/4), 6)
+        asseq(vu, np.cos(np.pi/4), 6)
+        # vector pointing along ecef z at 45, 0 is north/up
+        ve, vn, vu = pymv.ecef_to_enu_vector(0., 0., 1., 45., 0.)
+        asseq(ve, 0.0, 6)
+        asseq(vn, np.cos(np.pi/4), 6)
+        asseq(vu, np.cos(np.pi/4), 6)
+
 
     def test_basic_enu_to_ecef_rotations(self):
         # test basic transformations first
