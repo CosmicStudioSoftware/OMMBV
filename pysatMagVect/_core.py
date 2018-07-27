@@ -503,7 +503,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     south_z = south_z - ecef_z
     south_x, south_y, south_z = normalize_vector(south_x, south_y, south_z)
     # calculate magnetic unit vector
-    bx, by, bz = enu_to_ecef_vector(be, bn, -bd, geo_long, geo_lat)
+    bx, by, bz = enu_to_ecef_vector(be, bn, -bd, geo_lat, geo_long)
     bx, by, bz = normalize_vector(bx, by, bz)
     
     # take cross product of southward and northward vectors to get the zonal vector
