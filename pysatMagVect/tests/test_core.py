@@ -629,7 +629,7 @@ class TestCore():
             asseq(vz, vzz, 9)
             
     def test_igrf_enu_to_ecef_back_to_enu(self):
-        import pdb    
+        #import pdb    
         vx = 0.9
         vy = 0.1
         vz = np.sqrt(1. - vx**2+vy**2)
@@ -638,10 +638,9 @@ class TestCore():
         for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
             #print(vx, vy, vz, lat, lon)
             #pdb.set_trace()
-            vxx, vyy, vzz = pymv.test_igrf_end_to_ECEF(vx, vy, vz, lat, lon)
+            vxx, vyy, vzz = pymv.igrf_end_to_ECEF(vx, vy, vz, lat, lon)
             vxx, vyy, vzz = pymv.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
             vzz = -vzz
-            print(vxx, vyy, vzz)
             asseq(vx, vxx, 9)
             asseq(vy, vyy, 9)
             asseq(vz, vzz, 9)
@@ -655,7 +654,7 @@ class TestCore():
         for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x,ecf_y,
                            ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
             pos = np.array([ecef_x, ecef_y, ecef_z])
-            lat, elong, alt = pymv.test_igrf_ecef_to_geodetic(pos)
+            lat, elong, alt = pymv.igrf_ecef_to_geodetic(pos)
         
             if (elong < 0):
                 elong = elong + 360.
@@ -668,5 +667,4 @@ class TestCore():
             assert np.all(np.abs(d_long) < 1.E-5)
             assert np.all(np.abs(d_alt) < 1.E-5)
             
-        
         

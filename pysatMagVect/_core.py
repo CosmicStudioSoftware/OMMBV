@@ -1239,6 +1239,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
 
     step_size = 5.
     max_steps = 4000000
+    #max_steps = 5000000
     steps = np.arange(max_steps)
 
     ivm = pysat.Instrument('pysat', 'testing')
@@ -1478,19 +1479,19 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
 
 
 
-def test_igrf_ecef_to_magnetic_field_points(position):
+def igrf_ecef_to_magnetic_field_points(position):
     # position = [x,y,z] ecef positions
     radial_distance, colatitude, longitude = igrf.ecef_to_long_colat_r(position)
     
     return radial_distance, colatitude, longitude
 
 
-def test_igrf_ecef_to_geodetic(position):
+def igrf_ecef_to_geodetic(position):
     latitude, lon, alt = igrf.ecef_to_geodetic(position)
     return latitude, lon, alt
 
 
-def test_igrf_end_to_ECEF(be,bn,bd,colat,elong):
+def igrf_end_to_ECEF(be,bn,bd,colat,elong):
     #print dir(igrf)
     bx,by,bz = igrf.dne_to_ecef(be,bn,bd,colat,elong)
     return bx,by,bz
