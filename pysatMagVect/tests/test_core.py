@@ -668,3 +668,15 @@ class TestCore():
             assert np.all(np.abs(d_alt) < 1.E-5)
             
         
+    def test_igrf_ecef_to_magnetic_field_line_points(self):
+        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
+                                                  omni['p_long'],
+                                                  omni['p_alt'])
+        for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x,ecf_y,
+                           ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
+            pos = np.array([ecef_x, ecef_y, ecef_z])
+            
+            r, colat, lon = pymv.igrf_ecef_to_magnetic_field_points(pos)
+        
+            print(r, colat, lon)
