@@ -372,7 +372,6 @@ def field_line_trace(init, date, direction, height, steps=None,
         
     
     """
-    
     if steps is None:
         steps = np.arange(max_steps)
     if not isinstance(date, float):
@@ -381,7 +380,6 @@ def field_line_trace(init, date, direction, height, steps=None,
         # number of days in year, works for leap years
         num_doy_year = (datetime.datetime(date.year+1,1,1) - datetime.datetime(date.year,1,1)).days
         date = date.year + float(doy)/float(num_doy_year) + (date.hour + date.minute/60. + date.second/3600.)/24.  
-      
     trace_north = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                          steps,
                                          args=(date, step_size, direction, height),
@@ -1477,3 +1475,27 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
     out['equator_mer_drifts_scalar'] = eq_mer_drifts_scalar
 
     return out
+
+
+
+def test_igrf_ecef_to_magnetic_field_points(position):
+    # position = [x,y,z] ecef positions
+    radial_distance, colatitude, longitude = igrf.ecef_to_long_colat_r(position)
+    
+    return radial_distance, colatitude, longitude
+
+
+def test_igrf_ecef_to_geodetic(position):
+    latitude, lon, alt = igrf.ecef_to_geodetic(position)
+    return latitude, lon, alt
+
+
+def test_igrf_end_to_ECEF(be,bn,bd,colat,elong):
+    #print dir(igrf)
+    bx,by,bz = igrf.dne_to_ecef(be,bn,bd,colat,elong)
+    return bx,by,bz
+
+
+
+
+    
