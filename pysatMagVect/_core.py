@@ -390,7 +390,7 @@ def field_line_trace(init, date, direction, height, steps=None,
     # ,
     # rtol = 1.E-10,
     # atol = 1.E-10)
-    
+    '''
     # check we reached final altitude
     check = trace_north[-1, :]
     x, y, z = ecef_to_geodetic(*check)
@@ -401,6 +401,7 @@ def field_line_trace(init, date, direction, height, steps=None,
     if z > check_height*1.01:
         print ('Made it to ', check, x, y, z, check_height)
         raise ValueError("Didn't reach target altitude. Try increasing the number of steps.")
+    '''
     return trace_north
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
@@ -1237,8 +1238,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
     import pysat
     import pandas
 
-    step_size = 5.
-    max_steps = 4000000
+    step_size = 0.5
+    max_steps = 40000
     #max_steps = 5000000
     steps = np.arange(max_steps)
 
@@ -1283,7 +1284,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         frame_input['altitude'] = [north_ftpnt[2], south_ftpnt[2], alt]
         input_frame = pandas.DataFrame.from_records(frame_input)
         ivm.data = input_frame
-        ivm.data.index = [date]*len(ivm.data.index)
+        #ivm.data.index = [date]*len(ivm.data.index)
         add_mag_drift_unit_vectors_ecef(ivm, ref_height=0.)
 
         # trace_north back in ECEF
@@ -1297,14 +1298,14 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         # take step
         north_plus_mer = north_ftpnt + 25. * unit_x * ivm[0, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[0, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[0, 'unit_mer_ecef_z']
         # trace this back to southern footpoint
-        trace_south_plus_mer = field_line_trace(north_plus_mer, double_date, -1., 1., steps=steps,
+        trace_south_plus_mer = field_line_trace(north_plus_mer, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
 
         # take half step from northern along - meridional direction
         # take step
         north_minus_mer = north_ftpnt - 25. * unit_x * ivm[0, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[0, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[0, 'unit_mer_ecef_z']
         # trace this back to southern footpoint
-        trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 1., steps=steps,
+        trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + meridional direction
@@ -1344,14 +1345,14 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         # take step
         south_plus_mer = south_ftpnt + 25. * unit_x * ivm[1, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[1, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[1, 'unit_mer_ecef_z']
         # trace this back to northern footpoint
-        trace_north_plus_mer = field_line_trace(south_plus_mer, double_date, 1., 1., steps=steps,
+        trace_north_plus_mer = field_line_trace(south_plus_mer, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
 
         # take half step from southern along - meridional direction
         # take step
         south_minus_mer = south_ftpnt - 25. * unit_x * ivm[1, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[1, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[1, 'unit_mer_ecef_z']
         # trace this back to northern footpoint
-        trace_north_minus_mer = field_line_trace(south_minus_mer, double_date, 1., 1., steps=steps,
+        trace_north_minus_mer = field_line_trace(south_minus_mer, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + meridional direction
@@ -1384,14 +1385,14 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         # take half step along + zonal direction
         north_plus_zon = north_ftpnt + 25. * unit_x * ivm[0, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[0, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[0, 'unit_zon_ecef_z']
         # trace this back to southern footpoint
-        trace_south_plus_zon = field_line_trace(north_plus_zon, double_date, -1., 1., steps=steps,
+        trace_south_plus_zon = field_line_trace(north_plus_zon, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
 
         # take half step from northern along - zonal direction
         # take step
         north_minus_zon = north_ftpnt - 25. * unit_x * ivm[0, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[0, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[0, 'unit_zon_ecef_z']
         # trace this back to southern footpoint
-        trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 1., steps=steps,
+        trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + zonal direction
@@ -1431,14 +1432,14 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         # take step
         south_plus_zon = south_ftpnt + 25. * unit_x * ivm[1, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[1, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[1, 'unit_zon_ecef_z']
         # trace this back to northern footpoint
-        trace_north_plus_zon = field_line_trace(south_plus_zon, double_date, 1., 1., steps=steps,
+        trace_north_plus_zon = field_line_trace(south_plus_zon, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
 
         # take half step from southern along - zonal direction
         # take step
         south_minus_zon = south_ftpnt - 25. * unit_x * ivm[1, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[1, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[1, 'unit_zon_ecef_z']
         # trace this back to northern footpoint
-        trace_north_minus_zon = field_line_trace(south_minus_zon, double_date, 1., 1., steps=steps,
+        trace_north_minus_zon = field_line_trace(south_minus_zon, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + zonal direction
@@ -1480,9 +1481,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
 
 
 def igrf_ecef_to_magnetic_field_points(position):
-    # position = [x,y,z] ecef positions
     radial_distance, colatitude, longitude = igrf.ecef_to_long_colat_r(position)
-    
     return radial_distance, colatitude, longitude
 
 
@@ -1492,11 +1491,10 @@ def igrf_ecef_to_geodetic(position):
 
 
 def igrf_end_to_ECEF(be,bn,bd,colat,elong):
-    #print dir(igrf)
     bx,by,bz = igrf.dne_to_ecef(be,bn,bd,colat,elong)
     return bx,by,bz
 
 
 
 
-    
+

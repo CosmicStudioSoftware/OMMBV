@@ -28,15 +28,18 @@ Cf2py intent(out) out
       
       ! calculate longitude, colatitude, and altitude from ECEF position
       ! altitude should be radial distance from center of earth
-      r = dsqrt(pos(1)**2+pos(2)**2+pos(3)**2)
-      colat = dacos(pos(3)/r) 
-      elong = datan(pos(2)/pos(1))
-      if (pos(1).lt.0) then
-        if (pos(2).lt.0) elong=elong+pi
-        if (pos(2).gt.0) elong=elong+pi
-      else if (pos(2).lt.0) then
-        elong = elong + 2.d0*pi
-      end if
+      call ecef_to_long_colat_r(pos,r,colat,elong)
+      
+      !r = dsqrt(pos(1)**2+pos(2)**2+pos(3)**2)
+      !colat = dacos(pos(3)/r) 
+      !elong = datan(pos(2)/pos(1))
+      !if (pos(1).lt.0) then
+      !  if (pos(2).lt.0) elong=elong+pi
+      !  if (pos(2).gt.0) elong=elong+pi
+      !else if (pos(2).lt.0) then
+      !  elong = elong + 2.d0*pi
+      !end if
+      
       call igrf12syn(0,date,2,r,colat,elong,bn,be,bd,bm)
 
       ! convert the mag field in spherical unit vectors to ECEF
@@ -770,12 +773,19 @@ Cf2py intent(out)  r, colat, elong
       r = dsqrt(pos(1)**2+pos(2)**2+pos(3)**2)
       colat = dacos(pos(3)/r) 
       elong = datan(pos(2)/pos(1))
+      
+      ! Based on values from atan2() from Python
       if (pos(1).lt.0) then
-        if (pos(2).lt.0) elong=elong+pi
-        if (pos(2).gt.0) elong=elong+pi
-      else if (pos(2).lt.0) then
-        elong = elong + 2.d0*pi
+         if (pos(2).lt.0) elong=elong-pi
+         if (pos(2).ge.0) elong=elong+pi
       end if
+      
+      !if (pos(1).lt.0) then
+      !  if (pos(2).lt.0) elong=elong+pi
+      !  if (pos(2).gt.0) elong=elong+pi
+      !else if (pos(2).lt.0) then
+      !  elong = elong + 2.d0*pi
+      !end if
       
       return
       end
@@ -828,9 +838,11 @@ cf2py intent(in) be, bn, bd, colat, elong
 Cf2py intent(out)  bx, by, bz         
       
       ! convert the mag field in spherical unit vectors to ECEF
-      bx=-bd*dsin(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
+      !bx=-bd*dsin(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
+      ! Changing the code so that conversions are same as Python code
+      bx=-bd*dcos(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
       bx=bx-be*dsin(elong)
-      by=-bd*dsin(colat)*dsin(elong)-bn*dcos(colat)*dsin(elong)
+      by=-bd*dsin(colat)*dsin(elong)-bn*dsin(colat)*dsin(elong)
       by=by+be*dcos(elong)
       bz=-bd*dcos(colat)+bn*dsin(colat)
       
