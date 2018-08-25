@@ -627,3 +627,56 @@ class TestCore():
             asseq(vx, vxx, 9)
             asseq(vy, vyy, 9)
             asseq(vz, vzz, 9)
+            
+    def test_igrf_enu_to_ecef_back_to_enu(self):
+        #import pdb    
+        vx = 0.9
+        vy = 0.1
+        vz = np.sqrt(1. - vx**2+vy**2)
+        vz = -vz
+
+        for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
+            #print(vx, vy, vz, lat, lon)
+            #pdb.set_trace()
+            vxx, vyy, vzz = pymv.igrf_end_to_ECEF(vx, vy, vz, lat, lon)
+            vxx, vyy, vzz = pymv.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
+            vzz = -vzz
+            asseq(vx, vxx, 9)
+            asseq(vy, vyy, 9)
+            asseq(vz, vzz, 9)
+
+
+    def test_igrf_ecef_to_geodetic_back_to_ecef(self):
+        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
+                                                  omni['p_long'],
+                                                  omni['p_alt'])
+        for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x,ecf_y,
+                           ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
+            pos = np.array([ecef_x, ecef_y, ecef_z])
+            lat, elong, alt = pymv.igrf_ecef_to_geodetic(pos)
+        
+            if (elong < 0):
+                elong = elong + 360.
+    
+            d_lat = lat - geo_lat
+            d_long = elong - geo_lon
+            d_alt = alt - geo_alt
+            
+            assert np.all(np.abs(d_lat) < 1.E-5)
+            assert np.all(np.abs(d_long) < 1.E-5)
+            assert np.all(np.abs(d_alt) < 1.E-5)
+            
+        
+    def test_igrf_ecef_to_magnetic_field_line_points(self):
+        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
+                                                  omni['p_long'],
+                                                  omni['p_alt'])
+        for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x,ecf_y,
+                           ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
+            pos = np.array([ecef_x, ecef_y, ecef_z])
+            
+            r, colat, lon = pymv.igrf_ecef_to_magnetic_field_points(pos)
+        
+            print(r, colat, lon)
