@@ -384,13 +384,13 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          steps,
                                          args=(date, step_size, direction, height),
                                          full_output=False,
-                                         printmessg=False,
-                                         ixpr=False,
+                                         printmessg=True,
+                                         ixpr=True,
                                          mxstep=500)
-    # ,
+    # ,SS
     # rtol = 1.E-10,
     # atol = 1.E-10)
-    '''
+    
     # check we reached final altitude
     check = trace_north[-1, :]
     x, y, z = ecef_to_geodetic(*check)
@@ -399,10 +399,22 @@ def field_line_trace(init, date, direction, height, steps=None,
     else:
         check_height = height
     if z > check_height*1.01:
-        print ('Made it to ', check, x, y, z, check_height)
-        raise ValueError("Didn't reach target altitude. Try increasing the number of steps.")
-    '''
-    return trace_north
+        '''
+        if (max_steps < 1E5):
+            steps = max_steps + 1E4
+            # Both ways used - increasing max steps and also starting from check location for the next trace
+            trace_north = field_line_trace(check, date, direction, height,
+                                           step_size=step_size, max_steps=max_steps)
+            return trace_north     
+        else:
+            raise ValueError("max_steps reached 1E5 while increasing the number of steps.")       
+        '''
+        trace_north = field_line_trace(check, date, direction, height,
+                                           step_size=step_size, max_steps=max_steps)
+        return trace_north            
+        
+    else:
+        return trace_north
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           max_steps=40000, step_size=0.5,
