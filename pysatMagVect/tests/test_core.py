@@ -258,7 +258,7 @@ class TestCore():
         except:
             pass
                            
-                                                                  
+    '''                                                              
     def test_unit_vector_plots(self):
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
@@ -547,7 +547,7 @@ class TestCore():
         asseq(ve, 0.0, 9)
         asseq(vn, np.cos(np.pi/4), 9)
         asseq(vu, np.cos(np.pi/4), 9)
-
+        '''
 
     def test_basic_enu_to_ecef_rotations(self):
         # test basic transformations first
