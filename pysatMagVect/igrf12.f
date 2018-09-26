@@ -28,6 +28,7 @@ Cf2py intent(out) out
       
       ! calculate longitude, colatitude, and altitude from ECEF position
       ! altitude should be radial distance from center of earth
+      ! Here, r, colat & elong are in radians
       call ecef_to_long_colat_r(pos,r,colat,elong)
       
       !r = dsqrt(pos(1)**2+pos(2)**2+pos(3)**2)

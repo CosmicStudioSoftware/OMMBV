@@ -13,7 +13,7 @@ import scipy
 import scipy.integrate
 import numpy as np
 import datetime
-
+import pysat
 # import reference IGRF fortran code within the package
 from . import igrf
 
@@ -384,8 +384,8 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          steps,
                                          args=(date, step_size, direction, height),
                                          full_output=False,
-                                         printmessg=True,
-                                         ixpr=True,
+                                         printmessg=False,
+                                         ixpr=False,
                                          mxstep=500)
     # ,SS
     # rtol = 1.E-10,
@@ -459,8 +459,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # also get position in geocentric coordinates
     geo_lat, geo_long, geo_alt = ecef_to_geocentric(ecef_x, ecef_y, ecef_z, ref_height=0.)
     idx, = np.where(geo_long < 0)
-    geo_long += 360.
-
+    #geo_long += 360.
+    geo_long[idx,] = geo_long[idx,] + 360.
+    
     north_x = [];
     north_y = [];
     north_z = []
@@ -471,7 +472,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     be = [];
     bd = []
 
-    out = []
+    # TODO: Check if datetimes is an array with the same dimension as alt/ lat/ lon (TIEGCM)
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z, geo_alt, np.deg2rad(90. - geo_lat),
                                           np.deg2rad(geo_long), datetimes):
         init = np.array([x, y, z])
@@ -595,7 +596,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 
 def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
-                                    method='auto', ref_height=120.):
+                                    method='auto', ref_height=120., isTiegcm = False,
+                                    tiegcm_dict = None):
     """Adds unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -630,8 +632,14 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
     """
 
     # add unit vectors for magnetic drifts in ecef coordinates
-    zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(inst['latitude'], inst['longitude'], inst['altitude'], inst.data.index,
+    if not isTiegcm:
+        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(inst['latitude'], inst['longitude'], inst['altitude'], inst.data.index,
                                                                                   max_steps=max_steps, step_size=step_size, method=method, ref_height=ref_height)
+    else:
+        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(tiegcm_dict['geodetic_lat'],
+            tiegcm_dict['geodetic_lon'], tiegcm_dict['geodetic_alt'], tiegcm_dict['dates'],
+            max_steps=max_steps, step_size=step_size, method=method, ref_height=ref_height)
+    
     inst['unit_zon_ecef_x'] = zvx
     inst['unit_zon_ecef_y'] = zvy
     inst['unit_zon_ecef_z'] = zvz
@@ -944,7 +952,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.5,
     return
 
 
-def add_mag_drifts(inst):
+def add_mag_drifts(inst, isTiegcm = False):
     """Adds ion drifts in magnetic coordinates using ion drifts in S/C coordinates
     along with pre-calculated unit vectors for magnetic coordinates.
     
@@ -967,7 +975,8 @@ def add_mag_drifts(inst):
     
     """
     
-    inst['iv_zon'] = {'data':inst['unit_zon_x'] * inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
+    if not isTiegcm:
+       inst['iv_zon'] = {'data':inst['unit_zon_x'] * inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
                       'units':'m/s',
                       'long_name':'Zonal ion velocity',
                       'notes':('Ion velocity relative to co-rotation along zonal '
@@ -983,7 +992,7 @@ def add_mag_drifts(inst):
                       'value_min':-500., 
                       'value_max':500.}
                       
-    inst['iv_fa'] = {'data':inst['unit_fa_x'] * inst['iv_x'] + inst['unit_fa_y'] * inst['iv_y'] + inst['unit_fa_z'] * inst['iv_z'],
+       inst['iv_fa'] = {'data':inst['unit_fa_x'] * inst['iv_x'] + inst['unit_fa_y'] * inst['iv_y'] + inst['unit_fa_z'] * inst['iv_z'],
                       'units':'m/s',
                       'long_name':'Field-Aligned ion velocity',
                       'notes':('Ion velocity relative to co-rotation along magnetic field line. Positive along the field. ',
@@ -998,7 +1007,7 @@ def add_mag_drifts(inst):
                       'value_min':-500., 
                       'value_max':500.}
 
-    inst['iv_mer'] = {'data':inst['unit_mer_x'] * inst['iv_x'] + inst['unit_mer_y']*inst['iv_y'] + inst['unit_mer_z']*inst['iv_z'],
+        inst['iv_mer'] = {'data':inst['unit_mer_x'] * inst['iv_x'] + inst['unit_mer_y']*inst['iv_y'] + inst['unit_mer_z']*inst['iv_z'],
                       'units':'m/s',
                       'long_name':'Meridional ion velocity',
                       'notes':('Velocity along meridional direction, perpendicular '
@@ -1013,6 +1022,62 @@ def add_mag_drifts(inst):
                       'scale':'Linear',
                       'value_min':-500., 
                       'value_max':500.}
+    
+    else:
+        # TIEGCM Drifts are in cm/s. Converting them to m/s
+        inst['iv_zon'] = {'data':inst['unit_zon_enu_x'].to_series()[0] * inst['ExB_zonal']/100 + 
+        inst['unit_zon_enu_y'].to_series()[0] * inst['ExB_fa']/100 + 
+        inst['unit_zon_enu_z'].to_series()[0] * inst['ExB_mer']/100, 
+        'meta':{'units':'m/s',
+                      'long_name':'Zonal ion velocity',
+                      'notes':('Ion velocity relative to co-rotation along zonal '
+                               'direction, normal to meridional plane. Positive east. '
+                               'Velocity obtained using ion velocities relative '
+                               'to co-rotation in the instrument frame along '
+                               'with the corresponding unit vectors expressed in '
+                               'the instrument frame. '),
+                      'label': 'Zonal Ion Velocity',
+                      'axis': 'Zonal Ion Velocity',
+                      'desc': 'Zonal ion velocity',
+                      'scale': 'Linear',
+                      'value_min':-500., 
+                      'value_max':500.}}
+                      
+        inst['iv_fa'] = {'data':inst['unit_fa_enu_x'].to_series()[0] * inst['ExB_zonal']/100 + 
+        inst['unit_fa_enu_y'].to_series()[0] * inst['ExB_fa']/100 + 
+        inst['unit_fa_enu_z'].to_series()[0] * inst['ExB_mer']/100,
+                      'meta':{'units':'m/s',
+                      'long_name':'Field-Aligned ion velocity',
+                      'notes':('Ion velocity relative to co-rotation along magnetic field line. Positive along the field. ',
+                               'Velocity obtained using ion velocities relative '
+                               'to co-rotation in the instrument frame along '
+                               'with the corresponding unit vectors expressed in '
+                               'the instrument frame. '),
+                      'label':'Field-Aligned Ion Velocity',
+                      'axis':'Field-Aligned Ion Velocity',
+                      'desc':'Field-Aligned Ion Velocity',
+                      'scale':'Linear',
+                      'value_min':-500., 
+                      'value_max':500.}}
+
+        inst['iv_mer'] = {'data':inst['unit_mer_enu_x'].to_series()[0] * inst['ExB_zonal']/100 + 
+        inst['unit_mer_enu_y'].to_series()[0] * inst['ExB_fa']/100 + 
+        inst['unit_mer_enu_z'].to_series()[0] * inst['ExB_mer']/100,
+                     'meta':{ 'units':'m/s',
+                      'long_name':'Meridional ion velocity',
+                      'notes':('Velocity along meridional direction, perpendicular '
+                               'to field and within meridional plane. Positive is up at magnetic equator. ',
+                               'Velocity obtained using ion velocities relative '
+                               'to co-rotation in the instrument frame along '
+                               'with the corresponding unit vectors expressed in '
+                               'the instrument frame. '),
+                      'label':'Meridional Ion Velocity',
+                      'axis':'Meridional Ion Velocity',
+                      'desc':'Meridional Ion Velocity',
+                      'scale':'Linear',
+                      'value_min':-500., 
+                      'value_max':500.}}
+    
     
     return
 
@@ -1213,7 +1278,8 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'value_min':-500., 
                             'value_max':500.}
 
-def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
+def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, tiegcm_hour = 0, 
+                                   isTiegcm = False):
     """
     Calculates scalars for translating ion motions at position
     glat, glon, and alt, for date, to the footpoints of the field line
@@ -1236,6 +1302,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         Geodetic (WGS84) altitude, height above surface
     dates : list-like of datetimes
         Date and time for determination of scalars
+    tiegcm_hour : If using TIEGCM model data, then pass the data's hour information
+    isTiegcm : Boolen variable to check if TIEGCM model is being used 
         
     Returns
     -------
@@ -1247,17 +1315,16 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
     
     """
     
-    import pysat
     import pandas
 
     step_size = 0.5
     max_steps = 40000
     #max_steps = 5000000
     steps = np.arange(max_steps)
-
-    ivm = pysat.Instrument('pysat', 'testing')
-
-    # use spacecraft location to get ECEF
+    
+    # A new pysat instrument object with no data
+    ivm = pysat.Instrument(platform = 'pysat', name = 'tiegcm', tag = 'try', update_files=False)
+    # use spacecraft/ model location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
     # prepare output
@@ -1274,6 +1341,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         ivm.date = date
         ivm.yr, ivm.doy = pysat.utils.getyrdoy(date)
         double_date = ivm.yr + ivm.doy / 366.
+        # TODO: Get the correct value for date_array
+        date_array = np.array([ivm.doy, tiegcm_hour, 0])
+
 
         # trace to northern footpoint
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
@@ -1288,40 +1358,92 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         # convert to geodetic coordinates
         north_ftpnt = ecef_to_geodetic(*north_ftpnt)
         south_ftpnt = ecef_to_geodetic(*south_ftpnt)
-
+        # TODO: Keeping sc_root in geodetic for further calculations. Right?
+        sc_root = [glat, glon, alt]
+        
         # add magnetic unit vectors
         frame_input = {}
         frame_input['latitude'] = [north_ftpnt[0], south_ftpnt[0], glat]
         frame_input['longitude'] = [north_ftpnt[1], south_ftpnt[1], glon]
         frame_input['altitude'] = [north_ftpnt[2], south_ftpnt[2], alt]
-        input_frame = pandas.DataFrame.from_records(frame_input)
-        ivm.data = input_frame
-        #ivm.data.index = [date]*len(ivm.data.index)
-        add_mag_drift_unit_vectors_ecef(ivm, ref_height=0.)
-
-        # trace_north back in ECEF
-        north_ftpnt = geodetic_to_ecef(*north_ftpnt)
-        south_ftpnt = geodetic_to_ecef(*south_ftpnt)
-
+        
+        if not isTiegcm:
+            ivm_data_pandas = pandas.DataFrame.from_records(frame_input)
+            ivm.data = ivm_data_pandas
+            ivm.data.index = [date]*len(ivm.data.index)
+            
+            add_mag_drift_unit_vectors_ecef(ivm, ref_height=0.)
+            
+            # trace_north back in ECEF
+            north_ftpnt = geodetic_to_ecef(*north_ftpnt)
+            south_ftpnt = geodetic_to_ecef(*south_ftpnt)
+            
+            unit_mer_x = unit_mer_ecef_x
+            unit_mer_y = unit_mer_ecef_y
+            unit_mer_z = unit_mer_ecef_z
+            
+            unit_zon_x = unit_zon_ecef_x
+            unit_zon_y = unit_zon_ecef_y
+            unit_zon_z = unit_zon_ecef_z
+            
+            
+        else:
+            ivm['latitude'] = frame_input['latitude']
+            ivm['longitude'] = frame_input['longitude']
+            ivm['altitude'] = frame_input['altitude']
+            
+            # Dict
+            tiegcm_temp_dict = {}
+            tiegcm_temp_dict['geodetic_lat'] = frame_input['latitude']
+            tiegcm_temp_dict['geodetic_lon'] = frame_input['longitude']
+            tiegcm_temp_dict['geodetic_alt'] = frame_input['altitude']
+            tiegcm_temp_dict['dates'] = date_array
+    
+            add_mag_drift_unit_vectors_ecef(ivm, isTiegcm = True, tiegcm_dict = tiegcm_temp_dict, 
+                                        ref_height=0.)
+            
+            add_mag_drift_unit_vectors_enu(ivm, frame_input['latitude'], frame_input['longitude'])
+            
+            # Convert data to pandas 
+            ivm_data_pandas = ivm.data.to_dataframe()
+            
+            unit_mer_x = unit_mer_enu_x
+            unit_mer_y = unit_mer_enu_y
+            unit_mer_z = unit_mer_enu_z
+            
+            unit_zon_x = unit_zon_enu_x
+            unit_zon_y = unit_zon_enu_y
+            unit_zon_z = unit_zon_enu_z
+            
+            ? FA ?
+            unit_zon_x = unit_zon_enu_x
+            unit_zon_y = unit_zon_enu_y
+            unit_zon_z = unit_zon_enu_z
+            
+            
         # take half step along + meridional direction
         unit_x = np.array([1, 0, 0])
         unit_y = np.array([0, 1, 0])
         unit_z = np.array([0, 0, 1])
+        
         # take step
-        north_plus_mer = north_ftpnt + 25. * unit_x * ivm[0, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[0, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[0, 'unit_mer_ecef_z']
+        north_plus_mer = north_ftpnt + 25. * unit_x * ivm_data_pandas.loc[0, unit_mer_x]
+        + 25. * unit_y * ivm_data_pandas.loc[0, unit_mer_y] + 25. * unit_z * ivm_data_pandas.loc[0, unit_mer_z]
         # trace this back to southern footpoint
         trace_south_plus_mer = field_line_trace(north_plus_mer, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
 
         # take half step from northern along - meridional direction
         # take step
-        north_minus_mer = north_ftpnt - 25. * unit_x * ivm[0, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[0, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[0, 'unit_mer_ecef_z']
+        north_minus_mer = north_ftpnt - 25. * unit_x * ivm_data_pandas.loc[0, unit_mer_x] 
+        - 25. * unit_y * ivm_data_pandas.loc[0, unit_mer_y] - 25. * unit_z * ivm_data_pandas.loc[0, unit_mer_z]
         # trace this back to southern footpoint
         trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + meridional direction
-        sc_plus_mer = sc_root + 25. * unit_x * ivm[2, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[2, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[2, 'unit_mer_ecef_z']
+        sc_plus_mer = sc_root + 25. * unit_x * ivm_data_pandas.loc[2, unit_mer_x]
+        + 25. * unit_y * ivm_data_pandas.loc[2, unit_mer_y] + 25. * unit_z * ivm_data_pandas.loc[2, unit_mer_z]
         # find closest point along + field line trace
         diff_plus_mer = trace_south_plus_mer - sc_plus_mer
         diff_plus_mer_mag = np.sqrt((diff_plus_mer ** 2).sum(axis=1))
@@ -1331,7 +1453,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         pos_mer_step_size = np.sqrt(pos_mer_step_size.sum())
 
         # take half step from S/C along - meridional direction (may not reach field line trace)
-        sc_minus_mer = sc_root - 25. * unit_x * ivm[2, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[2, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[2, 'unit_mer_ecef_z']
+        sc_minus_mer = sc_root - 25. * unit_x * ivm_data_pandas.loc[2, unit_mer_x]
+        - 25. * unit_y * ivm_data_pandas.loc[2, unit_mer_y] - 25. * unit_z * ivm_data_pandas.loc[2, unit_mer_z]
         # find closest point along - field line trace
         diff_minus_mer = trace_south_minus_mer - sc_minus_mer
         diff_minus_mer_mag = np.sqrt((diff_minus_mer ** 2).sum(axis=1))
@@ -1355,20 +1478,23 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         # Now it is time to do the same calculation for the southern footpoint
         # scalar
         # take step
-        south_plus_mer = south_ftpnt + 25. * unit_x * ivm[1, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[1, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[1, 'unit_mer_ecef_z']
+        south_plus_mer = south_ftpnt + 25. * unit_x * ivm_data_pandas.loc[1, unit_mer_x]
+        + 25. * unit_y * ivm_data_pandas.loc[1, unit_mer_y] + 25. * unit_z * ivm_data_pandas.loc[1, unit_mer_z]
         # trace this back to northern footpoint
         trace_north_plus_mer = field_line_trace(south_plus_mer, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
 
         # take half step from southern along - meridional direction
         # take step
-        south_minus_mer = south_ftpnt - 25. * unit_x * ivm[1, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[1, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[1, 'unit_mer_ecef_z']
+        south_minus_mer = south_ftpnt - 25. * unit_x * ivm_data_pandas.loc[1, unit_mer_x]
+        - 25. * unit_y * ivm_data_pandas.loc[1, unit_mer_y] - 25. * unit_z * ivm_data_pandas.loc[1, unit_mer_z]
         # trace this back to northern footpoint
         trace_north_minus_mer = field_line_trace(south_minus_mer, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + meridional direction
-        sc_plus_mer = sc_root + 25. * unit_x * ivm[2, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[2, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[2, 'unit_mer_ecef_z']
+        sc_plus_mer = sc_root + 25. * unit_x * ivm_data_pandas.loc[2, unit_mer_x]
+        + 25. * unit_y * ivm_data_pandas.loc[2, unit_mer_y] + 25. * unit_z * ivm_data_pandas.loc[2, unit_mer_z]
         # find closest point along + field line trace
         diff_plus_mer = trace_north_plus_mer - sc_plus_mer
         diff_plus_mer_mag = np.sqrt((diff_plus_mer ** 2).sum(axis=1))
@@ -1378,7 +1504,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         pos_mer_step_size = np.sqrt(pos_mer_step_size.sum())
 
         # take half step from S/C along - meridional direction (may not reach field line trace)
-        sc_minus_mer = sc_root - 25. * unit_x * ivm[2, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[2, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[2, 'unit_mer_ecef_z']
+        sc_minus_mer = sc_root - 25. * unit_x * ivm_data_pandas.loc[2, unit_mer_x]
+        - 25. * unit_y * ivm_data_pandas.loc[2, unit_mer_y] - 25. * unit_z * ivm_data_pandas.loc[2, unit_mer_z]
         # find closest point along - field line trace
         diff_minus_mer = trace_north_minus_mer - sc_minus_mer
         diff_minus_mer_mag = np.sqrt((diff_minus_mer ** 2).sum(axis=1))
@@ -1395,20 +1522,23 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         #############
 
         # take half step along + zonal direction
-        north_plus_zon = north_ftpnt + 25. * unit_x * ivm[0, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[0, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[0, 'unit_zon_ecef_z']
+        north_plus_zon = north_ftpnt + 25. * unit_x * ivm_data_pandas.loc[0, unit_zon_x]
+        + 25. * unit_y * ivm_data_pandas.loc[0, unit_zon_y] + 25. * unit_z * ivm_data_pandas.loc[0, unit_zon_z]
         # trace this back to southern footpoint
         trace_south_plus_zon = field_line_trace(north_plus_zon, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
 
         # take half step from northern along - zonal direction
         # take step
-        north_minus_zon = north_ftpnt - 25. * unit_x * ivm[0, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[0, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[0, 'unit_zon_ecef_z']
+        north_minus_zon = north_ftpnt - 25. * unit_x * ivm_data_pandas.loc[0, unit_zon_x]
+        - 25. * unit_y * ivm_data_pandas.loc[0, unit_zon_y] - 25. * unit_z * ivm_data_pandas.loc[0, unit_zon_z]
         # trace this back to southern footpoint
         trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + zonal direction
-        sc_plus_zon = sc_root + 25. * unit_x * ivm[2, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[2, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[2, 'unit_zon_ecef_z']
+        sc_plus_zon = sc_root + 25. * unit_x * ivm_data_pandas.loc[2, unit_zon_x]
+        + 25. * unit_y * ivm_data_pandas.loc[2, unit_zon_y] + 25. * unit_z * ivm_data_pandas.loc[2, unit_zon_z]
         # find closest point along + field line trace
         diff_plus_zon = trace_south_plus_zon - sc_plus_zon
         diff_plus_zon_mag = np.sqrt((diff_plus_zon ** 2).sum(axis=1))
@@ -1418,7 +1548,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         pos_zon_step_size = np.sqrt(pos_zon_step_size.sum())
 
         # take half step from S/C along - zonal direction (may not reach field line trace)
-        sc_minus_zon = sc_root - 25. * unit_x * ivm[2, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[2, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[2, 'unit_zon_ecef_z']
+        sc_minus_zon = sc_root - 25. * unit_x * ivm_data_pandas.loc[2, unit_zon_x]
+        - 25. * unit_y * ivm_data_pandas.loc[2, unit_zon_y] - 25. * unit_z * ivm_data_pandas.loc[2, unit_zon_z]
         # find closest point along - field line trace
         diff_minus_zon = trace_south_minus_zon - sc_minus_zon
         diff_minus_zon_mag = np.sqrt((diff_minus_zon ** 2).sum(axis=1))
@@ -1442,20 +1573,23 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         # Now it is time to do the same calculation for the southern footpoint
         # scalar
         # take step
-        south_plus_zon = south_ftpnt + 25. * unit_x * ivm[1, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[1, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[1, 'unit_zon_ecef_z']
+        south_plus_zon = south_ftpnt + 25. * unit_x * ivm_data_pandas.loc[1, unit_zon_x]
+        + 25. * unit_y * ivm_data_pandas.loc[1, unit_zon_y] + 25. * unit_z * ivm_data_pandas.loc[1, unit_zon_z]
         # trace this back to northern footpoint
         trace_north_plus_zon = field_line_trace(south_plus_zon, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
 
         # take half step from southern along - zonal direction
         # take step
-        south_minus_zon = south_ftpnt - 25. * unit_x * ivm[1, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[1, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[1, 'unit_zon_ecef_z']
+        south_minus_zon = south_ftpnt - 25. * unit_x * ivm_data_pandas.loc[1, unit_zon_x]
+        - 25. * unit_y * ivm_data_pandas.loc[1, unit_zon_y] - 25. * unit_z * ivm_data_pandas.loc[1, unit_zon_z]
         # trace this back to northern footpoint
         trace_north_minus_zon = field_line_trace(south_minus_zon, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + zonal direction
-        sc_plus_zon = sc_root + 25. * unit_x * ivm[2, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[2, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[2, 'unit_zon_ecef_z']
+        sc_plus_zon = sc_root + 25. * unit_x * ivm_data_pandas.loc[2, unit_zon_x]
+        + 25. * unit_y * ivm_data_pandas.loc[2, unit_zon_y] + 25. * unit_z * ivm_data_pandas.loc[2, unit_zon_z]
         # find closest point along + field line trace
         diff_plus_zon = trace_north_plus_zon - sc_plus_zon
         diff_plus_zon_mag = np.sqrt((diff_plus_zon ** 2).sum(axis=1))
@@ -1465,7 +1599,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         pos_zon_step_size = np.sqrt(pos_zon_step_size.sum())
 
         # take half step from S/C along - zonal direction (may not reach field line trace)
-        sc_minus_zon = sc_root - 25. * unit_x * ivm[2, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[2, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[2, 'unit_zon_ecef_z']
+        sc_minus_zon = sc_root - 25. * unit_x * ivm_data_pandas.loc[2, unit_zon_x]
+        - 25. * unit_y * ivm_data_pandas.loc[2, unit_zon_y] - 25. * unit_z * ivm_data_pandas.loc[2, unit_zon_z]
         # find closest point along - field line trace
         diff_minus_zon = trace_north_minus_zon - sc_minus_zon
         diff_minus_zon_mag = np.sqrt((diff_minus_zon ** 2).sum(axis=1))
@@ -1487,11 +1622,13 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
     out['south_mer_drifts_scalar'] = south_ftpnt_mer_drifts_scalar
     out['equator_zonal_drifts_scalar'] = eq_zon_drifts_scalar
     out['equator_mer_drifts_scalar'] = eq_mer_drifts_scalar
+    
+   # TODO: Check backward compatibility of this return statement with old code.
+   # Else, add all the needed values from ivm to out for isTiegcm
+    return out, ivm
 
-    return out
 
-
-
+'''
 def igrf_ecef_to_magnetic_field_points(position):
     radial_distance, colatitude, longitude = igrf.ecef_to_long_colat_r(position)
     return radial_distance, colatitude, longitude
@@ -1505,8 +1642,209 @@ def igrf_ecef_to_geodetic(position):
 def igrf_end_to_ECEF(be,bn,bd,colat,elong):
     bx,by,bz = igrf.dne_to_ecef(be,bn,bd,colat,elong)
     return bx,by,bz
+'''
+
+
+def add_mag_drift_unit_vectors_enu(inst, geodetic_lat, geodetic_lon):
+    """Adds unit vectors expressing the ion drift coordinate system
+    organized by the geomagnetic field. Converts vectors from ECEF to ENU.
+    Unit vectors are expressed in ENU (East-North-Up) coordinates.
+    
+    Parameters
+    ----------
+    inst : pysat.Instrument
+        Instrument object that will get unit vectors
+    geodetic_lat : float or array_like
+        Geodetic or geocentric latitude (degrees)
+    geodetic_lon : float or array_like
+        Geodetic or geocentric longitude (degrees)
+    
+        
+    Returns
+    -------
+    None
+        unit vectors are added to the passed Instrument object with a naming 
+        scheme:
+            'unit_zon_enu_*' : unit zonal vector, component along ENU-(X,Y,or Z)
+            'unit_fa_enu_*' : unit field-aligned vector, component along ENU-(X,Y,or Z)
+            'unit_mer_enu_*' : unit meridional vector, component along ENU-(X,Y,or Z)
+            
+    """
+    print("Checkpoint 3")
+    ze, zn, zu = ecef_to_enu_vector(inst['unit_zon_ecef_x'].to_series(), inst['unit_zon_ecef_y'].to_series(),
+                                    inst['unit_zon_ecef_z'].to_series(), geodetic_lat, geodetic_lon)
+    
+    be, bn, bu = ecef_to_enu_vector(inst['unit_fa_ecef_x'].to_series(), inst['unit_fa_ecef_y'].to_series(),
+                                    inst['unit_fa_ecef_z'].to_series(), geodetic_lat, geodetic_lon)
+    
+    me, mn, mu = ecef_to_enu_vector(inst['unit_mer_ecef_x'].to_series(), inst['unit_mer_ecef_y'].to_series(),
+                                    inst['unit_mer_ecef_z'].to_series(), geodetic_lat, geodetic_lon)
+    
+    inst['unit_zon_enu_x'] = ze
+    inst['unit_zon_enu_y'] = zn
+    inst['unit_zon_enu_z'] = zu
+
+    inst['unit_fa_enu_x'] = be
+    inst['unit_fa_enu_y'] = bn
+    inst['unit_fa_enu_z'] = bu
+
+    inst['unit_mer_enu_x'] = me
+    inst['unit_mer_enu_y'] = mn
+    inst['unit_mer_enu_z'] = mu
+    
+    inst.meta['unit_zon_enu_x'] = {'long_name': 'Zonal unit vector along ENU-x',
+                                    'desc': 'Zonal unit vector along ENU-x',
+                                    'label': 'Zonal unit vector along ENU-x',
+                                    'axis': 'Zonal unit vector along ENU-x',
+                                    'value_min': -1.,
+                                    'value_max': 1.,
+                                    }
+    inst.meta['unit_zon_enu_y'] = {'long_name': 'Zonal unit vector along ENU-y',
+                                    'desc': 'Zonal unit vector along ENU-y',
+                                    'label': 'Zonal unit vector along ENU-y',
+                                    'axis': 'Zonal unit vector along ENU-y',
+                                    'value_min': -1.,
+                                    'value_max': 1.,
+                                    }
+    inst.meta['unit_zon_enu_z'] = {'long_name': 'Zonal unit vector along ENU-z',
+                                    'desc': 'Zonal unit vector along ENU-z',
+                                    'label': 'Zonal unit vector along ENU-z',
+                                    'axis': 'Zonal unit vector along ENU-z',
+                                    'value_min': -1.,
+                                    'value_max': 1.,
+                                    }
+
+    inst.meta['unit_fa_enu_x'] = {'long_name': 'Field-aligned unit vector along ENU-x',
+                                    'desc': 'Field-aligned unit vector along ENU-x',
+                                    'label': 'Field-aligned unit vector along ENU-x',
+                                    'axis': 'Field-aligned unit vector along ENU-x',
+                                    'value_min': -1.,
+                                    'value_max': 1.,
+                                    }
+    inst.meta['unit_fa_enu_y'] = {'long_name': 'Field-aligned unit vector along ENU-y',
+                                    'desc': 'Field-aligned unit vector along ENU-y',
+                                    'label': 'Field-aligned unit vector along ENU-y',
+                                    'axis': 'Field-aligned unit vector along ENU-y',
+                                    'value_min': -1.,
+                                    'value_max': 1.,
+                                    }
+    inst.meta['unit_fa_enu_z'] = {'long_name': 'Field-aligned unit vector along ENU-z',
+                                    'desc': 'Field-aligned unit vector along ENU-z',
+                                    'label': 'Field-aligned unit vector along ENU-z',
+                                    'axis': 'Field-aligned unit vector along ENU-z',
+                                    'value_min': -1.,
+                                    'value_max': 1.,
+                                    }
+
+    inst.meta['unit_mer_enu_x'] = {'long_name': 'Meridional unit vector along ENU-x',
+                                    'desc': 'Meridional unit vector along ENU-x',
+                                    'label': 'Meridional unit vector along ENU-x',
+                                    'axis': 'Meridional unit vector along ENU-x',
+                                    'value_min': -1.,
+                                    'value_max': 1.,
+                                    }
+    inst.meta['unit_mer_enu_y'] = {'long_name': 'Meridional unit vector along ENU-y',
+                                    'desc': 'Meridional unit vector along ENU-y',
+                                    'label': 'Meridional unit vector along ENU-y',
+                                    'axis': 'Meridional unit vector along ENU-y',
+                                    'value_min': -1.,
+                                    'value_max': 1.,
+                                    }
+    inst.meta['unit_mer_enu_z'] = {'long_name': 'Meridional unit vector along ENU-z',
+                                    'desc': 'Meridional unit vector along ENU-z',
+                                    'label': 'Meridional unit vector along ENU-z',
+                                    'axis': 'Meridional unit vector along ENU-z',
+                                    'value_min': -1.,
+                                    'value_max': 1.,
+                                    }
+    return
 
 
 
-
-
+def find_geomagnetic_coords_from_tiegcm_data(tiegcm_data, date, ref_height = 120.0):
+    
+    '''
+    New method for finding field line tracing & other parameters for 
+    getting TIEGCM data and C/NOFS data in the same basis for comparison.
+    
+    Parameters:
+    -----------
+    tiegcm_data : xarray
+        Data read from TIEGCM file. This data includes the interpolated data
+        that is closest to satellite location.
+    date : tiegcm_data's datetime.datetime instance
+    '''
+    
+    ivm = pysat.Instrument(platform = 'pysat', name = 'tiegcm', tag = 'try', update_files=False)
+    ivm.data = tiegcm_data
+    
+    glats_geographic = tiegcm_data['lat_interpolated']
+    glons_geographic = tiegcm_data['lon_interpolated']
+    alts_geographic = tiegcm_data['Z_interpolated']
+    
+    
+    # 0) Convert TIEGCM data to 1D array. tiegcm_data is restricted to single 
+    # location that is closest to the satellite.
+    # TODO: Need to smoothen and resample satellite data so as to use those 
+    # values as filter conditions for TIEGCM data
+     
+    
+    # 1) Convert from geographic locations to geodetic
+    # use geographic location to get ECEF
+    ecef_xs, ecef_ys, ecef_zs = geocentric_to_ecef(glats_geographic, glons_geographic, alts_geographic)
+    
+    # Use ECEF location to get geodetic location
+    glats, glons, alts = ecef_to_geodetic(ecef_xs, ecef_ys, ecef_zs)
+    
+    #date = datetime.datetime(2009, 5, 29, 6, 00)
+    ivm.date = date
+    
+    date_series = ivm['mtime'].to_series()
+    ivm.yr = ivm['time'].initial_year
+    ivm.doy = date_series[0]
+    
+    # Convert values to array - Geodetic lat, lon and alt arrays
+    # TODO: Need to check if glats is an array already
+    glats_arr = [glats.values]
+    glons_arr = [glons.values]
+    alts_arr = [alts.values]
+    
+    print("Checkpoint 1")
+    
+    tiegcm_temp_dict = {}
+    tiegcm_temp_dict['geodetic_lat'] = glats_arr
+    tiegcm_temp_dict['geodetic_lon'] = glons_arr
+    tiegcm_temp_dict['geodetic_alt'] = alts_arr
+    tiegcm_temp_dict['dates'] = date_series
+    
+    # Needs data resampling of TIEGCM data, say every 10 mins or so?
+    # 2) At the TIECGM geodetic locations, calculate the magnetic unit vectors in ecef
+    add_mag_drift_unit_vectors_ecef(ivm, ref_height = ref_height, isTiegcm = True, 
+                                    tiegcm_dict = tiegcm_temp_dict)
+    
+    # 3) TIEGCM electric fields (ion drifts) are expressed in an east, north, up basis (ENU).
+    # Take the unit vectors from 2) and convert them to ENU.
+    add_mag_drift_unit_vectors_enu(ivm, glats_arr, glons_arr)
+    
+    # Convert ion drifts to geomagnetic basis (Vector is not ecef in this case, just the name of method is)
+    # 4) Take the dot product of each unit vector with the full TIEGCM vector to get drifts in the geomagnetic system.
+    zon, fa, mer = project_ecef_vector_onto_basis(ivm['UI_ExB_interpolated'],
+                    ivm['VI_ExB_interpolated'],ivm['WI_ExB_interpolated'],
+                    ivm['unit_zon_enu_x'], ivm['unit_zon_enu_y'], ivm['unit_zon_enu_z'],
+                    ivm['unit_fa_enu_x'], ivm['unit_fa_enu_y'], ivm['unit_fa_enu_z'], 
+                    ivm['unit_mer_enu_x'], ivm['unit_mer_enu_y'], ivm['unit_mer_enu_z'])
+    
+    ivm['ExB_zonal'] = zon
+    ivm['ExB_fa'] = fa
+    ivm['ExB_mer'] = mer
+    
+    #5) Compute the scalars for mapping ion drifts. The outputs give the scalars
+    # that translate meridional and zonal ion drifts to the magnetic equator (and footpoints).
+    #scalar_dict = scalars_for_mapping_ion_drifts(glats_arr, glons_arr, alts_arr, [date])
+    
+    #print(scalar_dict)
+    
+    #return ivm, scalar_dict
+    return ivm
+    
+    
