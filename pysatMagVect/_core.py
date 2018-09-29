@@ -959,7 +959,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.5,
     return
 
 
-def add_mag_drifts(inst, isTiegcm = False):
+def add_mag_drifts(inst):
     """Adds ion drifts in magnetic coordinates using ion drifts in S/C coordinates
     along with pre-calculated unit vectors for magnetic coordinates.
     
@@ -982,8 +982,7 @@ def add_mag_drifts(inst, isTiegcm = False):
     
     """
     
-    if not isTiegcm:
-        inst['iv_zon'] = {'data':inst['unit_zon_x'] * inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
+    inst['iv_zon'] = {'data':inst['unit_zon_x'] * inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
                       'units':'m/s',
                       'long_name':'Zonal ion velocity',
                       'notes':('Ion velocity relative to co-rotation along zonal '
@@ -999,7 +998,7 @@ def add_mag_drifts(inst, isTiegcm = False):
                       'value_min':-500., 
                       'value_max':500.}
                       
-        inst['iv_fa'] = {'data':inst['unit_fa_x'] * inst['iv_x'] + inst['unit_fa_y'] * inst['iv_y'] + inst['unit_fa_z'] * inst['iv_z'],
+    inst['iv_fa'] = {'data':inst['unit_fa_x'] * inst['iv_x'] + inst['unit_fa_y'] * inst['iv_y'] + inst['unit_fa_z'] * inst['iv_z'],
                       'units':'m/s',
                       'long_name':'Field-Aligned ion velocity',
                       'notes':('Ion velocity relative to co-rotation along magnetic field line. Positive along the field. ',
@@ -1014,7 +1013,7 @@ def add_mag_drifts(inst, isTiegcm = False):
                       'value_min':-500., 
                       'value_max':500.}
 
-        inst['iv_mer'] = {'data':inst['unit_mer_x'] * inst['iv_x'] + inst['unit_mer_y']*inst['iv_y'] + inst['unit_mer_z']*inst['iv_z'],
+    inst['iv_mer'] = {'data':inst['unit_mer_x'] * inst['iv_x'] + inst['unit_mer_y']*inst['iv_y'] + inst['unit_mer_z']*inst['iv_z'],
                       'units':'m/s',
                       'long_name':'Meridional ion velocity',
                       'notes':('Velocity along meridional direction, perpendicular '
@@ -1029,62 +1028,6 @@ def add_mag_drifts(inst, isTiegcm = False):
                       'scale':'Linear',
                       'value_min':-500., 
                       'value_max':500.}
-    
-    else:
-        # TIEGCM Drifts are in cm/s. Converting them to m/s
-        inst['iv_zon'] = {'data':inst['unit_zon_enu_x'].to_series()[0] * inst['ExB_zonal']/100 + 
-        inst['unit_zon_enu_y'].to_series()[0] * inst['ExB_fa']/100 + 
-        inst['unit_zon_enu_z'].to_series()[0] * inst['ExB_mer']/100, 
-        'meta':{'units':'m/s',
-                      'long_name':'Zonal ion velocity',
-                      'notes':('Ion velocity relative to co-rotation along zonal '
-                               'direction, normal to meridional plane. Positive east. '
-                               'Velocity obtained using ion velocities relative '
-                               'to co-rotation in the instrument frame along '
-                               'with the corresponding unit vectors expressed in '
-                               'the instrument frame. '),
-                      'label': 'Zonal Ion Velocity',
-                      'axis': 'Zonal Ion Velocity',
-                      'desc': 'Zonal ion velocity',
-                      'scale': 'Linear',
-                      'value_min':-500., 
-                      'value_max':500.}}
-                      
-        inst['iv_fa'] = {'data':inst['unit_fa_enu_x'].to_series()[0] * inst['ExB_zonal']/100 + 
-        inst['unit_fa_enu_y'].to_series()[0] * inst['ExB_fa']/100 + 
-        inst['unit_fa_enu_z'].to_series()[0] * inst['ExB_mer']/100,
-                      'meta':{'units':'m/s',
-                      'long_name':'Field-Aligned ion velocity',
-                      'notes':('Ion velocity relative to co-rotation along magnetic field line. Positive along the field. ',
-                               'Velocity obtained using ion velocities relative '
-                               'to co-rotation in the instrument frame along '
-                               'with the corresponding unit vectors expressed in '
-                               'the instrument frame. '),
-                      'label':'Field-Aligned Ion Velocity',
-                      'axis':'Field-Aligned Ion Velocity',
-                      'desc':'Field-Aligned Ion Velocity',
-                      'scale':'Linear',
-                      'value_min':-500., 
-                      'value_max':500.}}
-
-        inst['iv_mer'] = {'data':inst['unit_mer_enu_x'].to_series()[0] * inst['ExB_zonal']/100 + 
-        inst['unit_mer_enu_y'].to_series()[0] * inst['ExB_fa']/100 + 
-        inst['unit_mer_enu_z'].to_series()[0] * inst['ExB_mer']/100,
-                     'meta':{ 'units':'m/s',
-                      'long_name':'Meridional ion velocity',
-                      'notes':('Velocity along meridional direction, perpendicular '
-                               'to field and within meridional plane. Positive is up at magnetic equator. ',
-                               'Velocity obtained using ion velocities relative '
-                               'to co-rotation in the instrument frame along '
-                               'with the corresponding unit vectors expressed in '
-                               'the instrument frame. '),
-                      'label':'Meridional Ion Velocity',
-                      'axis':'Meridional Ion Velocity',
-                      'desc':'Meridional Ion Velocity',
-                      'scale':'Linear',
-                      'value_min':-500., 
-                      'value_max':500.}}
-    
     
     return
 
@@ -1283,8 +1226,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'value_min':-500., 
                             'value_max':500.}
 
-def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, tiegcm_hour = 0, 
-                                   isTiegcm = False):
+def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
     """
     Calculates scalars for translating ion motions at position
     glat, glon, and alt, for date, to the footpoints of the field line
