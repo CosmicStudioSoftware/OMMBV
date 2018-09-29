@@ -219,7 +219,27 @@ class TestCore():
         flag2 = np.all(np.abs(d_long) < 1.E-5)
         flag3 = np.all(np.abs(d_alt) < 1.E-5)
         assert flag1 & flag2 & flag3
+        
+    def test_geocentric_to_ecef_to_geodetic_to_ecef_to_geocentric(self):
 
+        ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(90, 0, 500)
+        geo_lat, geo_long, geo_alt = pymv.ecef_to_geodetic(ecf_x,ecf_y,ecf_z)
+        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(geo_lat, geo_long, geo_alt)
+        
+        geo_lat, geo_long, geo_alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
+
+        if (geo_long < 0):
+            geo_long = geo_long + 360.
+        
+        d_lat = geo_lat - 90
+        d_long = geo_long - 0
+        d_alt = geo_alt - 500
+        
+        flag1 = np.all(np.abs(d_lat) < 1.E-5)
+        flag2 = np.all(np.abs(d_long) < 1.E-5)
+        flag3 = np.all(np.abs(d_alt) < 1.E-5)
+        assert flag1 & flag2 & flag3
 
     def test_tracing_accuracy(self):
         x,y,z = pymv.geocentric_to_ecef(np.array([20.]), np.array([0.]), np.array([550.]))
