@@ -28,12 +28,12 @@ Cf2py intent(out) out
       
       ! calculate longitude, colatitude, and altitude from ECEF position
       ! altitude should be radial distance from center of earth
-      call ecef_to_long_colat_r(pos,r,colat,elong)
+      call ecef_to_colat_long_r(pos,r,colat,elong)
       
       call igrf12syn(0,date,2,r,colat,elong,bn,be,bd,bm)
       
       ! convert the mag field in spherical unit vectors to ECEF
-      call dne_vector_to_ecef(be,bn,bd,colat,elong,bx,by,bz)
+      call end_vector_to_ecef(be,bn,bd,colat,elong,bx,by,bz)
       
       call ecef_to_geodetic(pos, latitude, theta, h)
       ! stop moving position if we go below height
@@ -110,30 +110,34 @@ Cf2py intent(out)  latitude, lon, h
       end
       
       
-      subroutine dne_vector_to_ecef(be,bn,bd,colat,elong,bx,by,bz)
-      
+      subroutine end_vector_to_ecef(be,bn,bd,colat,elong,bx,by,bz)
+      ! inputs are east, north, and down components
+      ! colatitude (radians, 0 at northern pole)
+      ! longitude (radians)
       ! mag field values
-      real*8 colat,elong,bn,be,bd
+      real*8 colat,elong,bn,be,bd,lat
       ! position values of point
       real*8 bx,by,bz
+      real*8 pi
       
 cf2py intent(in) be, bn, bd, colat, elong
 Cf2py intent(out)  bx, by, bz         
       
+      pi = 4.D0*DATAN(1.D0)
+      lat = colat+pi/2.D0
       ! convert the mag field in spherical unit vectors to ECEF
       !bx=-bd*dsin(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
-      ! Changing the code so that conversions are same as Python code
-      bx=-bd*dcos(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
+      bx=-bd*dcos(lat)*dcos(elong)-bn*dsin(lat)*dcos(elong)
       bx=bx-be*dsin(elong)
-      by=-bd*dsin(colat)*dsin(elong)-bn*dsin(colat)*dsin(elong)
+      by=-bd*dcos(lat)*dsin(elong)-bn*dsin(lat)*dsin(elong)
       by=by+be*dcos(elong)
-      bz=-bd*dcos(colat)+bn*dsin(colat)
+      bz=-bd*dsin(lat)+bn*dcos(lat)
       
       return
       end
 
 
-      subroutine ecef_to_long_colat_r(pos, r, colat, elong)
+      subroutine ecef_to_colat_long_r(pos, colat, elong, r)
       ! pos is (x,y,z) in ECEF coordinates
       real*8, dimension(3) :: pos
       ! position values of point
@@ -143,7 +147,7 @@ Cf2py intent(out)  bx, by, bz
       pi = 4.D0*DATAN(1.D0)
 
 cf2py intent(in) pos
-Cf2py intent(out)  r, colat, elong      
+Cf2py intent(out) colat, elong, r      
       
       ! calculate longitude, colatitude, and altitude from ECEF position
       ! altitude should be radial distance from center of earth
@@ -152,9 +156,14 @@ Cf2py intent(out)  r, colat, elong
       elong = datan(pos(2)/pos(1))
       
       ! Based on values from atan2() from Python
+      ! Based on values from atan2() from Python
       if (pos(1).lt.0) then
          if (pos(2).lt.0) elong=elong-pi
          if (pos(2).ge.0) elong=elong+pi
+      end if
+      if (pos(1).eq.0) then
+         if (pos(2).gt.0) elong=elong+pi/2.D0
+         if (pos(2).lt.0) elong=elong-pi/2.D0
       end if
       
       return
