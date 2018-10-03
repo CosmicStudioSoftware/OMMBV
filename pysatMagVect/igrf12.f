@@ -58,15 +58,22 @@ Cf2py intent(out) out
       end
 
       subroutine ecef_to_geodetic(pos, latitude, lon, h)
+      ! converts from ECEF coordinates to Geodetic
+      ! pos is the 3 element array of positions in km
+      ! latitude returned in Radians
+      ! longitude returned in Radians
+      ! h is the geodetic altitude, returned in km
       
       ! pos is (x,y,z) in ECEF coordinates
       real*8, dimension(3) :: pos
       real*8 a,b,ellip,e2,p,e_prime,theta,latitude,r_n,h
       real*8 lon
+      real*8 pi
       
 cf2py intent(in) pos
 Cf2py intent(out)  latitude, lon, h 
-      
+
+      pi = 4.D0*DATAN(1.D0)
       ! interpret height as geodetic limit
       ! take current position in lat,lon, and final height
       ! convert to ECEF and use as a limit
@@ -93,6 +100,10 @@ Cf2py intent(out)  latitude, lon, h
       if (pos(1).lt.0) then
          if (pos(2).lt.0) lon=lon-pi
          if (pos(2).ge.0) lon=lon+pi
+      end if
+      if (pos(1).eq.0) then
+         if (pos(2).gt.0) lon=lon+pi/2.D0
+         if (pos(2).lt.0) lon=lon-pi/2.D0
       end if
       
       return
