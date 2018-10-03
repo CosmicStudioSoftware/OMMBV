@@ -33,7 +33,7 @@ Cf2py intent(out) out
       call igrf12syn(0,date,2,r,colat,elong,bn,be,bd,bm)
       
       ! convert the mag field in spherical unit vectors to ECEF
-      call dne_to_ECEF(be,bn,bd,colat,elong,bx,by,bz)
+      call dne_vector_to_ecef(be,bn,bd,colat,elong,bx,by,bz)
       
       call ecef_to_geodetic(pos, latitude, theta, h)
       ! stop moving position if we go below height
@@ -57,6 +57,97 @@ Cf2py intent(out) out
       return
       end
 
+      subroutine ecef_to_geodetic(pos, latitude, lon, h)
+      
+      ! pos is (x,y,z) in ECEF coordinates
+      real*8, dimension(3) :: pos
+      real*8 a,b,ellip,e2,p,e_prime,theta,latitude,r_n,h
+      real*8 lon
+      
+cf2py intent(in) pos
+Cf2py intent(out)  latitude, lon, h 
+      
+      ! interpret height as geodetic limit
+      ! take current position in lat,lon, and final height
+      ! convert to ECEF and use as a limit
+      ! equivalent geocentric height
+      ! closed form solution  
+      b = 6356.75231424518d0
+      a = 6378.1370d0
+      ellip = dsqrt(1.d0-b**2/a**2)
+      ! first eccentricity squared
+      e2 = ellip**2 !6.6943799901377997E-3        
+      ! radial position from z, think rho and cylindrical coords   
+      p = dsqrt(pos(1)**2+pos(2)**2)
+      e_prime = dsqrt((a**2-b**2)/b**2)
+      theta = datan(pos(3)*a/(p*b))
+      latitude = datan( (pos(3)+e_prime**2*b*dsin(theta)**3)/
+     &(p-ellip**2*a*dcos(theta)**3))
+
+      r_n = a/dsqrt(1.d0-ellip**2*dsin(latitude)**2)
+      ! geodetic height
+      h = p/dcos(latitude) - r_n
+
+      lon = datan(pos(2)/pos(1))
+      ! Based on values from atan2() from Python
+      if (pos(1).lt.0) then
+         if (pos(2).lt.0) lon=lon-pi
+         if (pos(2).ge.0) lon=lon+pi
+      end if
+      
+      return
+      end
+      
+      
+      subroutine dne_vector_to_ecef(be,bn,bd,colat,elong,bx,by,bz)
+      
+      ! mag field values
+      real*8 colat,elong,bn,be,bd
+      ! position values of point
+      real*8 bx,by,bz
+      
+cf2py intent(in) be, bn, bd, colat, elong
+Cf2py intent(out)  bx, by, bz         
+      
+      ! convert the mag field in spherical unit vectors to ECEF
+      !bx=-bd*dsin(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
+      ! Changing the code so that conversions are same as Python code
+      bx=-bd*dcos(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
+      bx=bx-be*dsin(elong)
+      by=-bd*dsin(colat)*dsin(elong)-bn*dsin(colat)*dsin(elong)
+      by=by+be*dcos(elong)
+      bz=-bd*dcos(colat)+bn*dsin(colat)
+      
+      return
+      end
+
+
+      subroutine ecef_to_long_colat_r(pos, r, colat, elong)
+      ! pos is (x,y,z) in ECEF coordinates
+      real*8, dimension(3) :: pos
+      ! position values of point
+      real*8 r, colat, elong
+      ! height to stop integration at
+      real*8 pi
+      pi = 4.D0*DATAN(1.D0)
+
+cf2py intent(in) pos
+Cf2py intent(out)  r, colat, elong      
+      
+      ! calculate longitude, colatitude, and altitude from ECEF position
+      ! altitude should be radial distance from center of earth
+      r = dsqrt(pos(1)**2+pos(2)**2+pos(3)**2)
+      colat = dacos(pos(3)/r) 
+      elong = datan(pos(2)/pos(1))
+      
+      ! Based on values from atan2() from Python
+      if (pos(1).lt.0) then
+         if (pos(2).lt.0) elong=elong-pi
+         if (pos(2).ge.0) elong=elong+pi
+      end if
+      
+      return
+      end
 
 
       subroutine igrf12syn (isv,date,itype,alt,colat,elong,x,y,z,f)
@@ -720,96 +811,11 @@ c
       
       
       
-      subroutine ecef_to_long_colat_r(pos, r, colat, elong)
-      ! pos is (x,y,z) in ECEF coordinates
-      real*8, dimension(3) :: pos
-      ! position values of point
-      real*8 r, colat, elong
-      ! height to stop integration at
-      real*8 pi
-      pi = 4.D0*DATAN(1.D0)
 
-cf2py intent(in) pos
-Cf2py intent(out)  r, colat, elong      
-      
-      ! calculate longitude, colatitude, and altitude from ECEF position
-      ! altitude should be radial distance from center of earth
-      r = dsqrt(pos(1)**2+pos(2)**2+pos(3)**2)
-      colat = dacos(pos(3)/r) 
-      elong = datan(pos(2)/pos(1))
-      
-      ! Based on values from atan2() from Python
-      if (pos(1).lt.0) then
-         if (pos(2).lt.0) elong=elong-pi
-         if (pos(2).ge.0) elong=elong+pi
-      end if
-      
-      !if (pos(1).lt.0) then
-      !  if (pos(2).lt.0) elong=elong+pi
-      !  if (pos(2).gt.0) elong=elong+pi
-      !else if (pos(2).lt.0) then
-      !  elong = elong + 2.d0*pi
-      !end if
-      
-      return
-      end
 
 
 
 
       
-      subroutine ecef_to_geodetic(pos, latitude, theta, h)
-      
-      ! pos is (x,y,z) in ECEF coordinates
-      real*8, dimension(3) :: pos
-      real*8 a,b,ellip,e2,p,e_prime,theta,latitude,r_n,h
-      
-cf2py intent(in) pos
-Cf2py intent(out)  latitude, theta, h 
-      
-      ! interpret height as geodetic limit
-      ! take current position in lat,lon, and final height
-      ! convert to ECEF and use as a limit
-      ! equivalent geocentric height
-      ! closed form solution  
-      b = 6356.75231424518d0
-      a = 6378.1370d0
-      ellip = dsqrt(1.d0-b**2/a**2)
-      ! first eccentricity squared
-      e2 = ellip**2 !6.6943799901377997E-3        
-      ! radial position from z, think rho and cylindrical coords   
-      p = dsqrt(pos(1)**2+pos(2)**2)
-      e_prime = dsqrt((a**2-b**2)/b**2)
-      theta = datan(pos(3)*a/(p*b))
-      latitude = datan( (pos(3)+e_prime**2*b*dsin(theta)**3)/
-     &(p-ellip**2*a*dcos(theta)**3))
 
-      r_n = a/dsqrt(1.d0-ellip**2*dsin(latitude)**2)
-      h = p/dcos(latitude) - r_n
-      
-      return
-      end
-      
-      
-      subroutine dne_to_ecef(be,bn,bd,colat,elong,bx,by,bz)
-      
-      ! mag field values
-      real*8 colat,elong,bn,be,bd
-      ! position values of point
-      real*8 bx,by,bz
-      
-cf2py intent(in) be, bn, bd, colat, elong
-Cf2py intent(out)  bx, by, bz         
-      
-      ! convert the mag field in spherical unit vectors to ECEF
-      !bx=-bd*dsin(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
-      ! Changing the code so that conversions are same as Python code
-      bx=-bd*dcos(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
-      bx=bx-be*dsin(elong)
-      by=-bd*dsin(colat)*dsin(elong)-bn*dsin(colat)*dsin(elong)
-      by=by+be*dcos(elong)
-      bz=-bd*dcos(colat)+bn*dsin(colat)
-      
-      return
-      end
       
