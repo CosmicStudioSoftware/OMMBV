@@ -9,6 +9,7 @@ import pandas as pds
 import datetime
 
 import pysatMagVect as pymv
+from pysatMagVect import igrf
 
 import pysat
 
@@ -628,7 +629,7 @@ class TestCore():
             asseq(vy, vyy, 9)
             asseq(vz, vzz, 9)
             
-    def test_igrf_enu_to_ecef_back_to_enu(self):
+    def test_igrf_end_to_ecef_back_to_end(self):
         #import pdb    
         vx = 0.9
         vy = 0.1
@@ -638,9 +639,19 @@ class TestCore():
         for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
             #print(vx, vy, vz, lat, lon)
             #pdb.set_trace()
-            vxx, vyy, vzz = pymv.igrf_end_to_ECEF(vx, vy, vz, lat, lon)
+            # input here is co-latitude, not latitude
+            # inputs to fortran are in radians
+            vxx, vyy, vzz = igrf.end_vector_to_ecef(vx, vy, vz, np.deg2rad(lat-90.), np.deg2rad(lon))
+            vx2, vy2, vz2 = pymv.enu_to_ecef_vector(vx, vy, -vz, lat, lon)
+            # print ('end check ', vxx, vyy, vzz, vx2, vy2, vz2)
+            asseq(vxx, vx2, 9)
+            asseq(vyy, vy2, 9)
+            asseq(vzz, vz2, 9)
+            
             vxx, vyy, vzz = pymv.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
+            # convert upward component back to down
             vzz = -vzz
+            # compare original inputs to outputs
             asseq(vx, vxx, 9)
             asseq(vy, vyy, 9)
             asseq(vz, vzz, 9)
@@ -654,8 +665,9 @@ class TestCore():
         for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x,ecf_y,
                            ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
             pos = np.array([ecef_x, ecef_y, ecef_z])
-            lat, elong, alt = pymv.igrf_ecef_to_geodetic(pos)
-        
+            lat, elong, alt = igrf.ecef_to_geodetic(pos)
+            lat = np.rad2deg(lat)
+            elong = np.rad2deg(elong)
             if (elong < 0):
                 elong = elong + 360.
     
@@ -663,12 +675,15 @@ class TestCore():
             d_long = elong - geo_lon
             d_alt = alt - geo_alt
             
+            # print ('Word', ecef_x, ecef_y, ecef_z)
+            # print (geo_lat, geo_lon, geo_alt)
+            # print (lat, elong, alt)
             assert np.all(np.abs(d_lat) < 1.E-5)
             assert np.all(np.abs(d_long) < 1.E-5)
             assert np.all(np.abs(d_alt) < 1.E-5)
             
         
-    def test_igrf_ecef_to_magnetic_field_line_points(self):
+    def test_igrf_ecef_to_geographic_with_colatitude(self):
         
         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
                                                   omni['p_long'],
@@ -677,6 +692,14 @@ class TestCore():
                            ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
             pos = np.array([ecef_x, ecef_y, ecef_z])
             
-            r, colat, lon = pymv.igrf_ecef_to_magnetic_field_points(pos)
+            colat, lon, r = igrf.ecef_to_colat_long_r(pos)
+            # results are returned in radians
+            lat = 90. - np.rad2deg(colat) 
+            lon = np.rad2deg(lon)
+            
+            lat2, lon2, h2 = pymv.ecef_to_geocentric(*pos, ref_height=0)
         
-            print(r, colat, lon)
+            print(lat, lon, r, lat2, lon2, h2)
+            asseq(r, h2, 9)
+            asseq(lat, lat2, 9)
+            asseq(lon, lon2, 9)
