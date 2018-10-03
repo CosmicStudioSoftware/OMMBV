@@ -1505,17 +1505,17 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
 
 
 
-def igrf_ecef_to_magnetic_field_points(position):
-    radial_distance, colatitude, longitude = igrf.ecef_to_long_colat_r(position)
-    return radial_distance, colatitude, longitude
-
-
-def igrf_ecef_to_geodetic(position):
-    latitude, lon, alt = igrf.ecef_to_geodetic(position)
-    return latitude, lon, alt
-
-
-def igrf_end_to_ECEF(be,bn,bd,colat,elong):
-    bx,by,bz = igrf.dne_to_ecef(be,bn,bd,colat,elong)
-    return bx,by,bz
-
+# def igrf_ecef_to_magnetic_field_points(position):
+#     radial_distance, colatitude, longitude = igrf.ecef_to_long_colat_r(position)
+#     return radial_distance, colatitude, longitude
+# 
+# 
+# def igrf_ecef_to_geodetic(position):
+#     latitude, lon, alt = igrf.ecef_to_geodetic(position)
+#     return latitude, lon, alt
+# 
+# 
+# def igrf_end_to_ECEF(be,bn,bd,colat,elong):
+#     bx,by,bz = igrf.dne_vector_to_ecef(be,bn,bd,colat,elong)
+#     return bx,by,bz
+# 
