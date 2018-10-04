@@ -28,14 +28,15 @@ Cf2py intent(out) out
       
       ! calculate longitude, colatitude, and altitude from ECEF position
       ! altitude should be radial distance from center of earth
-      call ecef_to_colat_long_r(pos,r,colat,elong)
+      call ecef_to_colat_long_r(pos,colat,elong,r)
       
       call igrf12syn(0,date,2,r,colat,elong,bn,be,bd,bm)
       
-      ! convert the mag field in spherical unit vectors to ECEF
+      ! convert the mag field in spherical unit vectors to ECEF vectors
       call end_vector_to_ecef(be,bn,bd,colat,elong,bx,by,bz)
-      
-      call ecef_to_geodetic(pos, latitude, theta, h)
+      ! get updated geodetic position, we need to know
+      ! when to terminate
+      call ecef_to_geodetic(pos, latitude, elong, h)
       ! stop moving position if we go below height
       if (h.le.(height+10.)) then
         !scalar=scalar*exp(r-(6371.+height))
@@ -124,7 +125,7 @@ cf2py intent(in) be, bn, bd, colat, elong
 Cf2py intent(out)  bx, by, bz         
       
       pi = 4.D0*DATAN(1.D0)
-      lat = colat+pi/2.D0
+      lat = pi/2.D0 - colat
       ! convert the mag field in spherical unit vectors to ECEF
       !bx=-bd*dsin(colat)*dcos(elong)-bn*dcos(colat)*dcos(elong)
       bx=-bd*dcos(lat)*dcos(elong)-bn*dsin(lat)*dcos(elong)

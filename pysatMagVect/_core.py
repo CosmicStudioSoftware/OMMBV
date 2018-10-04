@@ -337,7 +337,8 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 
 def field_line_trace(init, date, direction, height, steps=None,
-                     max_steps=1E5, step_size=5., recursive_loop_count = None, isTIEGCM = False):
+                     max_steps=1E5, step_size=5., recursive_loop_count=None):#, 
+                     # isTIEGCM=False):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
     
     Parameters
@@ -371,19 +372,21 @@ def field_line_trace(init, date, direction, height, steps=None,
     
     """
     
-    if isTIEGCM is False:
+    # if isTIEGCM is False:
+    #     recursive_loop_count = 0
+    if recursive_loop_count is None:  #if TIEGCM and recursive loop count is not set
         recursive_loop_count = 0
-    elif recursive_loop_count is None:  #if TIEGCM and recursive loop count is not set
-        recursive_loop_count = 100
-        
+    #     
     if steps is None:
         steps = np.arange(max_steps)
     if not isinstance(date, float):
+        # print (type(date))
         # recast from datetime to float, as required by IGRF12 code
         doy = (date - datetime.datetime(date.year,1,1)).days
         # number of days in year, works for leap years
         num_doy_year = (datetime.datetime(date.year+1,1,1) - datetime.datetime(date.year,1,1)).days
-        date = date.year + float(doy)/float(num_doy_year) + (date.hour + date.minute/60. + date.second/3600.)/24.  
+        date = float(date.year) + float(doy)/float(num_doy_year) + float(date.hour + date.minute/60. + date.second/3600.)/24.
+          
     trace_north = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                          steps,
                                          args=(date, step_size, direction, height),
@@ -404,23 +407,30 @@ def field_line_trace(init, date, direction, height, steps=None,
         check_height = height
         
         
-        if z > check_height*1.01:
-            if (recursive_loop_count < 100):
-                # When we have not reached the reference height, call field_line_trace 
-                # again by taking check value as init - recursive call
-                # A way to avoid maximum recursion depth reached error - 
-                # can keep count of the number of loops and if the loop count reaches 500,
-                # then return the function with the value. And call the same function again iteratively 
-                # till footpoint location is reached. This also didn't help. Can be tested again
-                recursive_loop_count = recursive_loop_count + 1
-                trace_north = field_line_trace(check, date, direction, height,
-                                                   step_size=step_size, max_steps=max_steps,
-                                                   recursive_loop_count=recursive_loop_count, isTIEGCM = True)
-                return trace_north
-            else:
-                return trace_north
+    if z > check_height*1.01:
+        # print ('checking ', z, check_height)
+        if (recursive_loop_count < 10):
+            # When we have not reached the reference height, call field_line_trace 
+            # again by taking check value as init - recursive call
+            # A way to avoid maximum recursion depth reached error - 
+            # can keep count of the number of loops and if the loop count reaches 500,
+            # then return the function with the value. And call the same function again iteratively 
+            # till footpoint location is reached. This also didn't help. Can be tested again
+            recursive_loop_count = recursive_loop_count + 1
+            trace_north = field_line_trace(check, date, direction, height,
+                                                step_size=step_size, max_steps=max_steps,
+                                                recursive_loop_count=recursive_loop_count)#, isTIEGCM = True)
+            # return trace_north
+        #     raise RuntimeError("Didn't reach target altitude")
         else:
-            return trace_north
+            raise RuntimeError("After 10 iterations couldn't reach target altitude")
+        # raise RuntimeError("Didn't reach target altitude")
+        print (init, trace_north[-1,:], recursive_loop_count)
+        return trace_north
+    else:
+        # return results if we make it to the target altitude
+        print ('normal')
+        return trace_north
     
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           max_steps=40000, step_size=0.5,
@@ -465,7 +475,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # also get position in geocentric coordinates
     geo_lat, geo_long, geo_alt = ecef_to_geocentric(ecef_x, ecef_y, ecef_z, ref_height=0.)
     idx, = np.where(geo_long < 0)
-    geo_long[idx,] = geo_long[idx,] + 360.
+    geo_long[idx] = geo_long[idx] + 360.
     
     north_x = [];
     north_y = [];
@@ -1264,7 +1274,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
     
     import pandas
 
-    step_size = 0.5
+    step_size = 5.
     max_steps = 40000
     steps = np.arange(max_steps)
 
@@ -1286,7 +1296,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
                                                              dates):
         ivm.date = date
         ivm.yr, ivm.doy = pysat.utils.getyrdoy(date)
-        double_date = ivm.yr + ivm.doy / 366.
+        double_date = float(ivm.yr) + float(ivm.doy) / 366.
 
         # trace to northern footpoint
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
@@ -1309,8 +1319,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         frame_input['altitude'] = [north_ftpnt[2], south_ftpnt[2], alt]
         input_frame = pandas.DataFrame.from_records(frame_input)
         ivm.data = input_frame
-        #ivm.data.index = [date]*len(ivm.data.index)
-        add_mag_drift_unit_vectors_ecef(ivm, ref_height=0.)
+        ivm.data.index = [date]*len(ivm.data.index)
+        # use all of this info to get the unit vectors at this location
+        add_mag_drift_unit_vectors_ecef(ivm, ref_height=0., max_steps=max_steps, step_size=step_size )
 
         # trace_north back in ECEF
         north_ftpnt = geodetic_to_ecef(*north_ftpnt)
