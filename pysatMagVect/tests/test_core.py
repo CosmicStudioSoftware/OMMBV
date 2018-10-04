@@ -439,7 +439,7 @@ class TestCore():
         if not on_travis:
             fig = plt.figure()
             # ax = fig.add_subplot(111)
-            plt.imshow(eq_zonal, origin='lower', vmin=0, vmax=2)
+            plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
             plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
@@ -447,7 +447,7 @@ class TestCore():
             plt.close()
               
             fig = plt.figure()
-            plt.imshow(eq_mer, origin='lower', vmin=0, vmax=1.)
+            plt.imshow(eq_mer, origin='lower')#, vmin=0, vmax=1.)
             plt.colorbar()
             plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
             plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
@@ -455,7 +455,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(north_zonal, origin='lower', vmin=0, vmax=2)
+            plt.imshow(north_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
             plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
@@ -463,7 +463,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(north_mer, origin='lower', vmin=0, vmax=2)
+            plt.imshow(north_mer, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
             plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
@@ -472,7 +472,7 @@ class TestCore():
 
 
             fig = plt.figure()
-            plt.imshow(south_zonal, origin='lower', vmin=0, vmax=2)
+            plt.imshow(south_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
             plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
@@ -480,7 +480,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(south_mer, origin='lower', vmin=0, vmax=2)
+            plt.imshow(south_mer, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
             plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
