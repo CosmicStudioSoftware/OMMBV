@@ -260,146 +260,146 @@ class TestCore():
             pass
                            
                                                                   
-#     def test_unit_vector_plots(self):
-#         import matplotlib.pyplot as plt
-#         from mpl_toolkits.mplot3d import Axes3D
-#         import os
-#         on_travis = os.environ.get('ONTRAVIS') == 'True'
-#         
-#         # convert OMNI position to ECEF
-#         p_long = np.arange(0.,360.,12.)
-#         p_lat = 0.*p_long
-#         #p_lat = np.hstack((p_lat+5., p_lat+20.))
-#         #p_long = np.hstack((p_long, p_long))
-#         p_alt = 0*p_long + 550.
-#         
-#         p_lats = [ 5., 10., 15., 20., 25., 30.]
-#         
-#         #ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
-# 
-#         truthiness = []
-#         for i,p_lat in enumerate(p_lats):
-# 
-#             trace_s = []
-#             if not on_travis:
-#                 fig = plt.figure()
-#                 ax = fig.add_subplot(111, projection='3d')
-# 
-#             #
-#             date = datetime.datetime(2000,1,1)
-#             ecef_x,ecef_y,ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
-#             for j,(x,y,z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
-# 
-#                 # perform field line traces
-#                 trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=0.5, max_steps=1.E6)
-#                 trace_s = pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=0.5, max_steps=1.E6)
-#                 # combine together, S/C position is first for both
-#                 # reverse first array and join so plotting makes sense
-#                 trace = np.vstack((trace_n[::-1], trace_s))
-#                 trace = pds.DataFrame(trace, columns=['x','y','z'])
-#                 # plot field-line
-#                 if not on_travis:
-#                     ax.plot(trace['x'],trace['y'],trace['z'] , 'b')
-#                     plt.xlabel('X')
-#                     plt.ylabel('Y')
-#                     ax.set_zlabel('Z')
-#                 # clear stored data
-#                 self.inst.data = pds.DataFrame()
-#                 # downselect, reduce number of points
-#                 trace = trace.ix[::1000,:]
-#                 
-#                 # compute magnetic field vectors
-#                 # need to provide alt, latitude, and longitude in geodetic coords
-#                 latitude, longitude, altitude = pymv.ecef_to_geodetic(trace['x'], trace['y'], trace['z'])
-#                 self.inst[:,'latitude'] = latitude
-#                 self.inst[:,'longitude'] = longitude
-#                 self.inst[:,'altitude'] = altitude
-#                 # store values for plotting locations for vectors
-#                 self.inst[:,'x'] = trace['x'].values
-#                 self.inst[:,'y'] = trace['y'].values
-#                 self.inst[:,'z'] = trace['z'].values
-#                 self.inst.data = self.inst[self.inst['altitude'] > 250.]
-#                 
-#                 # also need to provide transformation from ECEF to S/C
-#                 # going to leave that a null transformation so we can plot in ECF
-#                 self.inst[:,'sc_xhat_x'], self.inst[:,'sc_xhat_y'], self.inst[:,'sc_xhat_z'] = 1., 0., 0.
-#                 self.inst[:,'sc_yhat_x'], self.inst[:,'sc_yhat_y'], self.inst[:,'sc_yhat_z'] = 0., 1., 0.
-#                 self.inst[:,'sc_zhat_x'], self.inst[:,'sc_zhat_y'], self.inst[:,'sc_zhat_z'] = 0., 0., 1.
-#                 self.inst.data.index = pysat.utils.season_date_range(pysat.datetime(2000,1,1),
-#                                                                     pysat.datetime(2000,1,1)+pds.DateOffset(seconds=len(self.inst.data)-1),
-#                                                                     freq='S')
-#                 pymv.add_mag_drift_unit_vectors(self.inst)
-#                 
-#                 #if i % 2 == 0:
-#                 length = 500
-#                 vx = self.inst['unit_zon_x']
-#                 vy = self.inst['unit_zon_y']
-#                 vz = self.inst['unit_zon_z']
-#                 if not on_travis:
-#                     ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
-#                                 self.inst['z'] + length*vz, vx, vy,vz, length=500.,
-#                                 color='green') #, pivot='tail')
-#                 length = 500
-#                 vx = self.inst['unit_fa_x']
-#                 vy = self.inst['unit_fa_y']
-#                 vz = self.inst['unit_fa_z']
-#                 if not on_travis:
-#                     ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
-#                                 self.inst['z'] + length*vz, vx, vy,vz, length=500.,
-#                                 color='purple') #, pivot='tail')
-#                 length = 500
-#                 vx = self.inst['unit_mer_x']
-#                 vy = self.inst['unit_mer_y']
-#                 vz = self.inst['unit_mer_z']
-#                 if not on_travis:
-#                     ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
-#                                 self.inst['z'] + length*vz, vx, vy,vz, length=500.,
-#                                 color='red') #, pivot='tail')
-#     
-#                 # check that vectors norm to 1
-#                 mag1 = np.all(np.sqrt(self.inst['unit_zon_x']**2 + self.inst['unit_zon_y']**2 + self.inst['unit_zon_z']**2) > 0.999999)
-#                 mag2 = np.all(np.sqrt(self.inst['unit_fa_x']**2 + self.inst['unit_fa_y']**2 + self.inst['unit_fa_z']**2) > 0.999999)
-#                 mag3 = np.all(np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2) > 0.999999)
-#                 # confirm vectors are mutually orthogonal
-#                 dot1 =  self.inst['unit_zon_x']*self.inst['unit_fa_x'] + self.inst['unit_zon_y']*self.inst['unit_fa_y']  + self.inst['unit_zon_z']*self.inst['unit_fa_z']
-#                 dot2 =  self.inst['unit_zon_x']*self.inst['unit_mer_x'] + self.inst['unit_zon_y']*self.inst['unit_mer_y']  + self.inst['unit_zon_z']*self.inst['unit_mer_z']
-#                 dot3 =  self.inst['unit_fa_x']*self.inst['unit_mer_x'] + self.inst['unit_fa_y']*self.inst['unit_mer_y']  + self.inst['unit_fa_z']*self.inst['unit_mer_z']
-#                 flag1 = np.all(np.abs(dot1) < 1.E-3)
-#                 flag2 = np.all(np.abs(dot2) < 1.E-3)
-#                 flag3 = np.all(np.abs(dot3) < 1.E-3)
-#                 #print mag1, mag2, mag3, flag1, flag2, flag3
-#                 #print np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2)#, dot2, dot3
-#                 truthiness.append(flag1 & flag2 & flag3 & mag1 & mag2 & mag3)
-#                 
-#                 # ensure that zonal vector is generally eastward
-#                 ones = np.ones(len(self.inst.data.index))
-#                 zeros = np.zeros(len(self.inst.data.index))
-#                 ex, ey, ez = pymv.enu_to_ecef_vector(ones, zeros, zeros, self.inst['latitude'], self.inst['longitude'])
-#                 nx, ny, nz = pymv.enu_to_ecef_vector(zeros, ones, zeros, self.inst['latitude'], self.inst['longitude'])
-#                 ux, uy, uz = pymv.enu_to_ecef_vector(zeros, zeros, ones, self.inst['latitude'], self.inst['longitude'])
-#                 
-#                 dot1 =  self.inst['unit_zon_x']*ex + self.inst['unit_zon_y']*ey  + self.inst['unit_zon_z']*ez
-#                 assert np.all(dot1 > 0.)
-# 
-#                 dot1 =  self.inst['unit_fa_x']*nx + self.inst['unit_fa_y']*ny  + self.inst['unit_fa_z']*nz
-#                 assert np.all(dot1 > 0.)
-#                 
-#                 dot1 =  self.inst['unit_mer_x']*ux + self.inst['unit_mer_y']*uy  + self.inst['unit_mer_z']*uz
-#                 assert np.all(dot1 > 0.)
-# 
-#                 
-#             if not on_travis:
-#                 plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.png')))
-#         ## plot Earth
-#         #u = np.linspace(0, 2 * np.pi, 100)
-#         #v = np.linspace(60.*np.pi/180., 120.*np.pi/180., 100)
-#         #xx = 6371. * np.outer(np.cos(u), np.sin(v))
-#         #yy = 6371. * np.outer(np.sin(u), np.sin(v))
-#         #zz = 6371. * np.outer(np.ones(np.size(u)), np.cos(v))
-#         #ax.plot_surface(xx, yy, zz, rstride=4, cstride=4, color='darkgray')
-#         #plt.savefig('magnetic_unit_vectors_w_globe.png')
-#         #print truthiness
-#         assert np.all(truthiness)
+    def test_unit_vector_plots(self):
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        import os
+        on_travis = os.environ.get('ONTRAVIS') == 'True'
+        
+        # convert OMNI position to ECEF
+        p_long = np.arange(0.,360.,12.)
+        p_lat = 0.*p_long
+        #p_lat = np.hstack((p_lat+5., p_lat+20.))
+        #p_long = np.hstack((p_long, p_long))
+        p_alt = 0*p_long + 550.
+        
+        p_lats = [ 5., 10., 15., 20., 25., 30.]
+        
+        #ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
+
+        truthiness = []
+        for i,p_lat in enumerate(p_lats):
+
+            trace_s = []
+            if not on_travis:
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
+
+            #
+            date = datetime.datetime(2000,1,1)
+            ecef_x,ecef_y,ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
+            for j,(x,y,z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
+
+                # perform field line traces
+                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=0.5, max_steps=1.E6)
+                trace_s = pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=0.5, max_steps=1.E6)
+                # combine together, S/C position is first for both
+                # reverse first array and join so plotting makes sense
+                trace = np.vstack((trace_n[::-1], trace_s))
+                trace = pds.DataFrame(trace, columns=['x','y','z'])
+                # plot field-line
+                if not on_travis:
+                    ax.plot(trace['x'],trace['y'],trace['z'] , 'b')
+                    plt.xlabel('X')
+                    plt.ylabel('Y')
+                    ax.set_zlabel('Z')
+                # clear stored data
+                self.inst.data = pds.DataFrame()
+                # downselect, reduce number of points
+                trace = trace.ix[::1000,:]
+                
+                # compute magnetic field vectors
+                # need to provide alt, latitude, and longitude in geodetic coords
+                latitude, longitude, altitude = pymv.ecef_to_geodetic(trace['x'], trace['y'], trace['z'])
+                self.inst[:,'latitude'] = latitude
+                self.inst[:,'longitude'] = longitude
+                self.inst[:,'altitude'] = altitude
+                # store values for plotting locations for vectors
+                self.inst[:,'x'] = trace['x'].values
+                self.inst[:,'y'] = trace['y'].values
+                self.inst[:,'z'] = trace['z'].values
+                self.inst.data = self.inst[self.inst['altitude'] > 250.]
+                
+                # also need to provide transformation from ECEF to S/C
+                # going to leave that a null transformation so we can plot in ECF
+                self.inst[:,'sc_xhat_x'], self.inst[:,'sc_xhat_y'], self.inst[:,'sc_xhat_z'] = 1., 0., 0.
+                self.inst[:,'sc_yhat_x'], self.inst[:,'sc_yhat_y'], self.inst[:,'sc_yhat_z'] = 0., 1., 0.
+                self.inst[:,'sc_zhat_x'], self.inst[:,'sc_zhat_y'], self.inst[:,'sc_zhat_z'] = 0., 0., 1.
+                self.inst.data.index = pysat.utils.season_date_range(pysat.datetime(2000,1,1),
+                                                                    pysat.datetime(2000,1,1)+pds.DateOffset(seconds=len(self.inst.data)-1),
+                                                                    freq='S')
+                pymv.add_mag_drift_unit_vectors(self.inst)
+                
+                #if i % 2 == 0:
+                length = 500
+                vx = self.inst['unit_zon_x']
+                vy = self.inst['unit_zon_y']
+                vz = self.inst['unit_zon_z']
+                if not on_travis:
+                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
+                                self.inst['z'] + length*vz, vx, vy,vz, length=500.,
+                                color='green') #, pivot='tail')
+                length = 500
+                vx = self.inst['unit_fa_x']
+                vy = self.inst['unit_fa_y']
+                vz = self.inst['unit_fa_z']
+                if not on_travis:
+                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
+                                self.inst['z'] + length*vz, vx, vy,vz, length=500.,
+                                color='purple') #, pivot='tail')
+                length = 500
+                vx = self.inst['unit_mer_x']
+                vy = self.inst['unit_mer_y']
+                vz = self.inst['unit_mer_z']
+                if not on_travis:
+                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy, 
+                                self.inst['z'] + length*vz, vx, vy,vz, length=500.,
+                                color='red') #, pivot='tail')
+    
+                # check that vectors norm to 1
+                mag1 = np.all(np.sqrt(self.inst['unit_zon_x']**2 + self.inst['unit_zon_y']**2 + self.inst['unit_zon_z']**2) > 0.999999)
+                mag2 = np.all(np.sqrt(self.inst['unit_fa_x']**2 + self.inst['unit_fa_y']**2 + self.inst['unit_fa_z']**2) > 0.999999)
+                mag3 = np.all(np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2) > 0.999999)
+                # confirm vectors are mutually orthogonal
+                dot1 =  self.inst['unit_zon_x']*self.inst['unit_fa_x'] + self.inst['unit_zon_y']*self.inst['unit_fa_y']  + self.inst['unit_zon_z']*self.inst['unit_fa_z']
+                dot2 =  self.inst['unit_zon_x']*self.inst['unit_mer_x'] + self.inst['unit_zon_y']*self.inst['unit_mer_y']  + self.inst['unit_zon_z']*self.inst['unit_mer_z']
+                dot3 =  self.inst['unit_fa_x']*self.inst['unit_mer_x'] + self.inst['unit_fa_y']*self.inst['unit_mer_y']  + self.inst['unit_fa_z']*self.inst['unit_mer_z']
+                flag1 = np.all(np.abs(dot1) < 1.E-3)
+                flag2 = np.all(np.abs(dot2) < 1.E-3)
+                flag3 = np.all(np.abs(dot3) < 1.E-3)
+                #print mag1, mag2, mag3, flag1, flag2, flag3
+                #print np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2)#, dot2, dot3
+                truthiness.append(flag1 & flag2 & flag3 & mag1 & mag2 & mag3)
+                
+                # ensure that zonal vector is generally eastward
+                ones = np.ones(len(self.inst.data.index))
+                zeros = np.zeros(len(self.inst.data.index))
+                ex, ey, ez = pymv.enu_to_ecef_vector(ones, zeros, zeros, self.inst['latitude'], self.inst['longitude'])
+                nx, ny, nz = pymv.enu_to_ecef_vector(zeros, ones, zeros, self.inst['latitude'], self.inst['longitude'])
+                ux, uy, uz = pymv.enu_to_ecef_vector(zeros, zeros, ones, self.inst['latitude'], self.inst['longitude'])
+                
+                dot1 =  self.inst['unit_zon_x']*ex + self.inst['unit_zon_y']*ey  + self.inst['unit_zon_z']*ez
+                assert np.all(dot1 > 0.)
+
+                dot1 =  self.inst['unit_fa_x']*nx + self.inst['unit_fa_y']*ny  + self.inst['unit_fa_z']*nz
+                assert np.all(dot1 > 0.)
+                
+                dot1 =  self.inst['unit_mer_x']*ux + self.inst['unit_mer_y']*uy  + self.inst['unit_mer_z']*uz
+                assert np.all(dot1 > 0.)
+
+                
+            if not on_travis:
+                plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.png')))
+        ## plot Earth
+        #u = np.linspace(0, 2 * np.pi, 100)
+        #v = np.linspace(60.*np.pi/180., 120.*np.pi/180., 100)
+        #xx = 6371. * np.outer(np.cos(u), np.sin(v))
+        #yy = 6371. * np.outer(np.sin(u), np.sin(v))
+        #zz = 6371. * np.outer(np.ones(np.size(u)), np.cos(v))
+        #ax.plot_surface(xx, yy, zz, rstride=4, cstride=4, color='darkgray')
+        #plt.savefig('magnetic_unit_vectors_w_globe.png')
+        #print truthiness
+        assert np.all(truthiness)
         
     def test_geomag_drift_scalars_plots(self):
         import matplotlib.pyplot as plt
