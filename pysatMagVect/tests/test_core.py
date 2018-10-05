@@ -239,7 +239,7 @@ class TestCore():
                                                max_steps=max_steps)  
 
             #print trace_n
-            pt = trace_n[1,:]
+            pt = trace_n[-1,:]
             out.append(pt)
             #out.append(pymv.ecef_to_geocentric(pt[0], pt[1], pt[2]))
 
@@ -259,6 +259,41 @@ class TestCore():
         except:
             pass
                            
+    def test_tracing_accuracy_w_recursion(self):
+        x,y,z = pymv.geocentric_to_ecef(np.array([50.]), np.array([0.]), np.array([550.]))
+        
+        steps_goal = np.array([5., 5., 5., 5., 5., 5.]) #, .005, .003, .001])
+        max_steps_goal = np.array([1000000., 100000., 10000., 1000., 100., 10.])
+
+        out = []
+        date = datetime.datetime(2000, 1, 1)
+        for steps, max_steps in zip(steps_goal, max_steps_goal):
+            #print ' '
+            #print steps, max_steps
+            trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
+                                               step_size=steps, 
+                                               max_steps=max_steps)  
+
+            #print trace_n
+            pt = trace_n[-1,:]
+            out.append(pt)
+            print(pymv.ecef_to_geocentric(*pt) )
+
+        final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+        x = np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1])
+        y = np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1])
+        z = np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1])
+        
+        try:
+            plt.figure()
+            plt.plot(np.log10(max_steps_goal[1:]), x)
+            plt.plot(np.log10(max_steps_goal[1:]), y)
+            plt.plot(np.log10(max_steps_goal[1:]), z)
+            plt.xlabel('Log Number of Steps per Run')
+            plt.ylabel('Log Change in Foot Point Position (km)')
+            plt.savefig('Footpoint_position_vs_step_size_vs_recursion.png' )
+        except:
+            pass
                                                                   
     def test_unit_vector_plots(self):
         import matplotlib.pyplot as plt
@@ -427,7 +462,7 @@ class TestCore():
         for i,p_lat in enumerate(p_lats):
             for j, p_long in enumerate(p_longs):
                 # print (i,j, date) 
-              
+                # print (p_lat, p_long, p_alt)
                 scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date])
                 north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
                 north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
