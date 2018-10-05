@@ -337,7 +337,7 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 
 def field_line_trace(init, date, direction, height, steps=None,
-                     max_steps=1E5, step_size=5., recursive_loop_count=None):#, 
+                     max_steps=1E5, step_size=10., recursive_loop_count=None):#, 
                      # isTIEGCM=False):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
     
@@ -400,16 +400,15 @@ def field_line_trace(init, date, direction, height, steps=None,
     
     # check we reached final altitude
     check = trace_north[-1, :]
-    x, y, z = ecef_to_geodetic(*check)
+    x, y, z = ecef_to_geodetic(*check)        
     if height == 0:
         check_height = 1.
     else:
-        check_height = height
-        
-        
-    if z > check_height*1.01:
+        check_height = height    
+    if z > check_height:
+        # raise RuntimeError("Couldn't reach target altitude in single iteration")
         # print ('checking ', z, check_height)
-        if (recursive_loop_count < 10):
+        if (recursive_loop_count < 100):
             # When we have not reached the reference height, call field_line_trace 
             # again by taking check value as init - recursive call
             # A way to avoid maximum recursion depth reached error - 
@@ -419,21 +418,24 @@ def field_line_trace(init, date, direction, height, steps=None,
             recursive_loop_count = recursive_loop_count + 1
             trace_north = field_line_trace(check, date, direction, height,
                                                 step_size=step_size, max_steps=max_steps,
-                                                recursive_loop_count=recursive_loop_count)#, isTIEGCM = True)
+                                                recursive_loop_count=recursive_loop_count,
+                                                steps=steps)#, isTIEGCM = True)
             # return trace_north
         #     raise RuntimeError("Didn't reach target altitude")
         else:
-            raise RuntimeError("After 10 iterations couldn't reach target altitude")
+            raise RuntimeError("After 100 iterations couldn't reach target altitude")
         # raise RuntimeError("Didn't reach target altitude")
-        print (init, trace_north[-1,:], recursive_loop_count)
+        # xx, yy, zz = ecef_to_geodetic(*trace_north[-1,:]) 
+        # print ('recurse ', z, trace_north[-1,:], xx, yy, zz, recursive_loop_count)
         return trace_north
     else:
         # return results if we make it to the target altitude
-        print ('normal')
+        # xx, yy, zz = ecef_to_geodetic(*trace_north[-1,:])
+        # print ('normal  ', z, trace_north[-1,:], xx, yy, zz, recursive_loop_count)
         return trace_north
     
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          max_steps=40000, step_size=0.5,
+                                          steps=None, max_steps=40000, step_size=10.,
                                           method='auto', ref_height=120., isTiegcm = False):
     """Calculates unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
@@ -469,7 +471,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             
     """
 
-    steps = np.arange(max_steps)
+    if steps is None:
+        steps = np.arange(max_steps)
     # calculate satellite position in ECEF coordinates
     ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
     # also get position in geocentric coordinates
@@ -611,7 +614,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     return zvx, zvy, zvz, bx, by, bz, mx, my, mz
 
 
-def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
+def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size=10.,
                                     method='auto', ref_height=120., isTiegcm = False,
                                     tiegcm_dict = None):
     """Adds unit vectors expressing the ion drift coordinate system
@@ -651,7 +654,7 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
     if not isTiegcm:
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(inst['latitude'], 
                                                                 inst['longitude'], inst['altitude'], inst.data.index,
-                                                                max_steps=max_steps, step_size=step_size, method=method, ref_height=ref_height)
+                                                                steps=steps, max_steps=max_steps, step_size=step_size, method=method, ref_height=ref_height)
     else:
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(tiegcm_dict['geodetic_lat'],
             tiegcm_dict['geodetic_lon'], tiegcm_dict['geodetic_alt'], tiegcm_dict['dates'],
@@ -792,7 +795,7 @@ def add_mag_drift_unit_vectors_ecef(inst, max_steps=40000, step_size=0.5,
     return
 
 
-def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=0.5,
+def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.,
                                method='auto'):
     """Add unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
@@ -1274,7 +1277,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
     
     import pandas
 
-    step_size = 5.
+    step_size = 10.
     max_steps = 40000
     steps = np.arange(max_steps)
 
@@ -1302,9 +1305,12 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
         trace_north = field_line_trace(sc_root, double_date, 1., 120., steps=steps,
                                        step_size=step_size, max_steps=max_steps)
+        # print ('bloop ', trace_north[-1, :])
         # southern tracing
         trace_south = field_line_trace(sc_root, double_date, -1., 120., steps=steps,
                                        step_size=step_size, max_steps=max_steps)
+        # print ('bleep ', trace_south[-1, :])
+        
         # footpoint location
         north_ftpnt = trace_north[-1, :]
         south_ftpnt = trace_south[-1, :]
@@ -1321,7 +1327,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         ivm.data = input_frame
         ivm.data.index = [date]*len(ivm.data.index)
         # use all of this info to get the unit vectors at this location
-        add_mag_drift_unit_vectors_ecef(ivm, ref_height=0., max_steps=max_steps, step_size=step_size )
+        add_mag_drift_unit_vectors_ecef(ivm, ref_height=0., steps=steps, max_steps=max_steps, step_size=step_size)
 
         # trace_north back in ECEF
         north_ftpnt = geodetic_to_ecef(*north_ftpnt)
