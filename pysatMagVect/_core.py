@@ -1254,7 +1254,7 @@ def intersection_field_line_and_unit_vector_projection(pos, ux, uy, uz, field_li
     last_min_dist = 2500000.
     scalar = 0.
     repeat=True
-    # first=True
+    first=True
     factor = 4
     while repeat: 
         pos_step = pos + scalar * ux + scalar * uy + scalar * uz
@@ -1262,14 +1262,18 @@ def intersection_field_line_and_unit_vector_projection(pos, ux, uy, uz, field_li
         diff = field_copy - pos_step
         diff_mag = np.sqrt((diff ** 2).sum(axis=1))
         min_idx = np.argmin(diff_mag)
-        # if first:
+        if first:
         # make a high resolution field trace?
-        #     field_copy =
+            field_copy = field_copy[min_idx-100:min_idx+100, :]
+            diff = field_copy - pos_step
+            diff_mag = np.sqrt((diff ** 2).sum(axis=1))
+            min_idx = np.argmin(diff_mag)
+            first = False
         # calculate distance of that point from S/C location
         min_dist = (field_copy[min_idx, :] - pos) ** 2
         min_dist = diff_mag[min_idx]
         if min_dist > last_min_dist:
-            if factor > 10:
+            if factor > 16:
                 repeat = False
             else:
                 factor = factor + 1.
@@ -1280,8 +1284,8 @@ def intersection_field_line_and_unit_vector_projection(pos, ux, uy, uz, field_li
             # print ('scalar ', scalar, min_dist, last_min_dist, pos_step, field_copy[min_idx, :], min_idx)
             last_min_dist = min_dist.copy()
             # field_copy = field_copy[min_idx-1000:min_idx+1000, :]
-            
-    return scalar, pos_step
+    # return magnitude of step
+    return scalar/sign, pos_step
 
 def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, max_steps=None):
     """
@@ -1322,7 +1326,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
     import pandas
 
     if step_size is None:
-        step_size = 1.
+        step_size = .1
     if max_steps is None:
         max_steps = 100000
     steps = np.arange(max_steps)
@@ -1413,7 +1417,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
                                                                                     unit_z*ivm[2, 'unit_mer_ecef_z'], 
                                                                                     trace_south_minus_mer,
                                                                                     -1)
-
+        print (pos_mer_step_size, minus_mer_step_size)
         # scalar for the northern footpoint
         full_mer_sc_step = pos_mer_step_size + minus_mer_step_size
         north_ftpnt_zon_drifts_scalar.append((full_mer_sc_step) / 50.)
