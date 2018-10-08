@@ -394,18 +394,16 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          printmessg=False,
                                          ixpr=False,
                                          mxstep=500)
-    # ,SS
-    # rtol = 1.E-10,
-    # atol = 1.E-10)
     
-    # check we reached final altitude
+    # check that we reached final altitude
     check = trace_north[-1, :]
     x, y, z = ecef_to_geodetic(*check)        
     if height == 0:
         check_height = 1.
     else:
-        check_height = height    
-    if z > check_height:
+        check_height = height
+    # fortran integration gets close to target height        
+    if z > check_height*1.000001:
         # raise RuntimeError("Couldn't reach target altitude in single iteration")
         # print ('checking ', z, check_height)
         if (recursive_loop_count < 100):
@@ -415,8 +413,9 @@ def field_line_trace(init, date, direction, height, steps=None,
             # can keep count of the number of loops and if the loop count reaches 500,
             # then return the function with the value. And call the same function again iteratively 
             # till footpoint location is reached. This also didn't help. Can be tested again
+            # print ('checking ', z, check_height)
             recursive_loop_count = recursive_loop_count + 1
-            trace_north = field_line_trace(check, date, direction, height,
+            trace_north1 = field_line_trace(check, date, direction, height,
                                                 step_size=step_size, max_steps=max_steps,
                                                 recursive_loop_count=recursive_loop_count,
                                                 steps=steps)#, isTIEGCM = True)
@@ -427,7 +426,7 @@ def field_line_trace(init, date, direction, height, steps=None,
         # raise RuntimeError("Didn't reach target altitude")
         # xx, yy, zz = ecef_to_geodetic(*trace_north[-1,:]) 
         # print ('recurse ', z, trace_north[-1,:], xx, yy, zz, recursive_loop_count)
-        return trace_north
+        return np.vstack((trace_north, trace_north1))
     else:
         # return results if we make it to the target altitude
         # xx, yy, zz = ecef_to_geodetic(*trace_north[-1,:])
@@ -435,7 +434,7 @@ def field_line_trace(init, date, direction, height, steps=None,
         return trace_north
     
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          steps=None, max_steps=40000, step_size=10.,
+                                          steps=None, max_steps=10000, step_size=10.,
                                           method='auto', ref_height=120., isTiegcm = False):
     """Calculates unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
@@ -1239,7 +1238,52 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'value_min':-500., 
                             'value_max':500.}
 
-def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
+
+def intersection_field_line_and_unit_vector_projection(pos, ux, uy, uz, field_line, sign):
+    
+    # steps = np.arange(len(field_line[0,:]))
+    # interpx = interp1d(field_line[0,:], steps)
+    # interpy = interp1d(field_line[1,:], steps)
+    # interpz = interp1d(field_line[2,:], steps)
+    
+    # simple things first
+    # take distance for all points from test
+    # then keep search down, moving along projection line
+
+    field_copy = field_line.copy()
+    last_min_dist = 2500000.
+    scalar = 0.
+    repeat=True
+    # first=True
+    factor = 4
+    while repeat: 
+        pos_step = pos + scalar * ux + scalar * uy + scalar * uz
+        # find closest point along + field line trace
+        diff = field_copy - pos_step
+        diff_mag = np.sqrt((diff ** 2).sum(axis=1))
+        min_idx = np.argmin(diff_mag)
+        # if first:
+        # make a high resolution field trace?
+        #     field_copy =
+        # calculate distance of that point from S/C location
+        min_dist = (field_copy[min_idx, :] - pos) ** 2
+        min_dist = diff_mag[min_idx]
+        if min_dist > last_min_dist:
+            if factor > 10:
+                repeat = False
+            else:
+                factor = factor + 1.
+        else:
+            # increment scalar, but only by a fraction
+            # don't want to overshoot
+            scalar = scalar + sign*min_dist/factor
+            # print ('scalar ', scalar, min_dist, last_min_dist, pos_step, field_copy[min_idx, :], min_idx)
+            last_min_dist = min_dist.copy()
+            # field_copy = field_copy[min_idx-1000:min_idx+1000, :]
+            
+    return scalar, pos_step
+
+def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, max_steps=None):
     """
     Calculates scalars for translating ion motions at position
     glat, glon, and alt, for date, to the footpoints of the field line
@@ -1277,8 +1321,10 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
     
     import pandas
 
-    step_size = 10.
-    max_steps = 40000
+    if step_size is None:
+        step_size = .01
+    if max_steps is None:
+        max_steps = 100000
     steps = np.arange(max_steps)
 
     ivm = pysat.Instrument('pysat', 'testing')
@@ -1349,26 +1395,24 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         # trace this back to southern footpoint
         trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
-
-        # take half step from S/C along + meridional direction
-        sc_plus_mer = sc_root + 25. * unit_x * ivm[2, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[2, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[2, 'unit_mer_ecef_z']
-        # find closest point along + field line trace
-        diff_plus_mer = trace_south_plus_mer - sc_plus_mer
-        diff_plus_mer_mag = np.sqrt((diff_plus_mer ** 2).sum(axis=1))
-        min_plus_idx = np.argmin(diff_plus_mer_mag)
-        # calculate distance of that point from S/C location
-        pos_mer_step_size = (trace_south_plus_mer[min_plus_idx, :] - sc_root) ** 2
-        pos_mer_step_size = np.sqrt(pos_mer_step_size.sum())
-
+       
+        # need to determine where the intersection of field line coming back from north footpoint + mer is
+        # in relation to the meridional direction from the s/c location.
+        # s/c loc, dir_x, dir_y, dir_z and intersection with field line trace
+        # create a function that interpolates along field line and gets field line location with minimum distance
+        # to meridional line from s/c  
+        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
+                                                                                    trace_south_plus_mer,
+                                                                                    1)
+        
         # take half step from S/C along - meridional direction (may not reach field line trace)
-        sc_minus_mer = sc_root - 25. * unit_x * ivm[2, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[2, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[2, 'unit_mer_ecef_z']
-        # find closest point along - field line trace
-        diff_minus_mer = trace_south_minus_mer - sc_minus_mer
-        diff_minus_mer_mag = np.sqrt((diff_minus_mer ** 2).sum(axis=1))
-        min_minus_idx = np.argmin(diff_minus_mer_mag)
-        # calculate distance of that point from S/C location
-        minus_mer_step_size = (trace_south_minus_mer[min_minus_idx, :] - sc_root) ** 2
-        minus_mer_step_size = np.sqrt(minus_mer_step_size.sum())
+        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
+                                                                                    trace_south_minus_mer,
+                                                                                    -1)
 
         # scalar for the northern footpoint
         full_mer_sc_step = pos_mer_step_size + minus_mer_step_size
@@ -1397,25 +1441,17 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         trace_north_minus_mer = field_line_trace(south_minus_mer, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
-        # take half step from S/C along + meridional direction
-        sc_plus_mer = sc_root + 25. * unit_x * ivm[2, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[2, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[2, 'unit_mer_ecef_z']
-        # find closest point along + field line trace
-        diff_plus_mer = trace_north_plus_mer - sc_plus_mer
-        diff_plus_mer_mag = np.sqrt((diff_plus_mer ** 2).sum(axis=1))
-        min_plus_idx = np.argmin(diff_plus_mer_mag)
-        # calculate distance of that point from S/C location
-        pos_mer_step_size = (trace_north_plus_mer[min_plus_idx, :] - sc_root) ** 2
-        pos_mer_step_size = np.sqrt(pos_mer_step_size.sum())
+        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
+                                                                                    trace_north_plus_mer,
+                                                                                    1)
 
-        # take half step from S/C along - meridional direction (may not reach field line trace)
-        sc_minus_mer = sc_root - 25. * unit_x * ivm[2, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[2, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[2, 'unit_mer_ecef_z']
-        # find closest point along - field line trace
-        diff_minus_mer = trace_north_minus_mer - sc_minus_mer
-        diff_minus_mer_mag = np.sqrt((diff_minus_mer ** 2).sum(axis=1))
-        min_minus_idx = np.argmin(diff_minus_mer_mag)
-        # calculate distance of that point from S/C location
-        minus_mer_step_size = (trace_north_minus_mer[min_minus_idx, :] - sc_root) ** 2
-        minus_mer_step_size = np.sqrt(minus_mer_step_size.sum())
+        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
+                                                                                    trace_north_minus_mer,
+                                                                                    -1)
 
         # scalar for the southern footpoint
         south_ftpnt_zon_drifts_scalar.append((pos_mer_step_size + minus_mer_step_size) / 50.)
@@ -1437,25 +1473,17 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
         trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
-        # take half step from S/C along + zonal direction
-        sc_plus_zon = sc_root + 25. * unit_x * ivm[2, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[2, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[2, 'unit_zon_ecef_z']
-        # find closest point along + field line trace
-        diff_plus_zon = trace_south_plus_zon - sc_plus_zon
-        diff_plus_zon_mag = np.sqrt((diff_plus_zon ** 2).sum(axis=1))
-        min_plus_idx = np.argmin(diff_plus_zon_mag)
-        # calculate distance of that point from S/C location
-        pos_zon_step_size = (trace_south_plus_zon[min_plus_idx, :] - sc_root) ** 2
-        pos_zon_step_size = np.sqrt(pos_zon_step_size.sum())
+        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
+                                                                                    trace_south_plus_zon,
+                                                                                    1)
 
-        # take half step from S/C along - zonal direction (may not reach field line trace)
-        sc_minus_zon = sc_root - 25. * unit_x * ivm[2, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[2, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[2, 'unit_zon_ecef_z']
-        # find closest point along - field line trace
-        diff_minus_zon = trace_south_minus_zon - sc_minus_zon
-        diff_minus_zon_mag = np.sqrt((diff_minus_zon ** 2).sum(axis=1))
-        min_minus_idx = np.argmin(diff_minus_zon_mag)
-        # calculate distance of that point from S/C location
-        minus_zon_step_size = (trace_south_minus_zon[min_minus_idx, :] - sc_root) ** 2
-        minus_zon_step_size = np.sqrt(minus_zon_step_size.sum())
+        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
+                                                                                    trace_south_minus_zon,
+                                                                                    -1)
 
         # scalar for the northern footpoint
         full_zonal_sc_step = pos_zon_step_size + minus_zon_step_size
@@ -1485,24 +1513,18 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates):
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + zonal direction
-        sc_plus_zon = sc_root + 25. * unit_x * ivm[2, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[2, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[2, 'unit_zon_ecef_z']
-        # find closest point along + field line trace
-        diff_plus_zon = trace_north_plus_zon - sc_plus_zon
-        diff_plus_zon_mag = np.sqrt((diff_plus_zon ** 2).sum(axis=1))
-        min_plus_idx = np.argmin(diff_plus_zon_mag)
-        # calculate distance of that point from S/C location
-        pos_zon_step_size = (trace_north_plus_zon[min_plus_idx, :] - sc_root) ** 2
-        pos_zon_step_size = np.sqrt(pos_zon_step_size.sum())
+        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
+                                                                                    trace_north_plus_zon,
+                                                                                    1)
 
-        # take half step from S/C along - zonal direction (may not reach field line trace)
-        sc_minus_zon = sc_root - 25. * unit_x * ivm[2, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[2, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[2, 'unit_zon_ecef_z']
-        # find closest point along - field line trace
-        diff_minus_zon = trace_north_minus_zon - sc_minus_zon
-        diff_minus_zon_mag = np.sqrt((diff_minus_zon ** 2).sum(axis=1))
-        min_minus_idx = np.argmin(diff_minus_zon_mag)
-        # calculate distance of that point from S/C location
-        minus_zon_step_size = (trace_north_minus_zon[min_minus_idx, :] - sc_root) ** 2
-        minus_zon_step_size = np.sqrt(minus_zon_step_size.sum())
+        # take half step from S/C along - zonal direction
+        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
+                                                                                    trace_north_minus_zon,
+                                                                                    -1)
 
         # scalar for the southern footpoint
         south_ftpnt_mer_drifts_scalar.append((pos_zon_step_size + minus_zon_step_size) / 50.)
