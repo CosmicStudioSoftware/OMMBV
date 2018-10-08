@@ -225,9 +225,8 @@ class TestCore():
     def test_tracing_accuracy(self):
         x,y,z = pymv.geocentric_to_ecef(np.array([20.]), np.array([0.]), np.array([550.]))
         
-        steps_goal = np.array([1., 3.3E-1, 1.E-1, 3.3E-2,  1.E-2, 3.3E-3, 1.E-3, 3.3E-4, 
-                               1.E-4])*6371. #, 3.3E-5, 1.E-5, 3.3E-6, 1.E-6, 3.3E-7])
-        max_steps_goal = 1.E2*6371./steps_goal
+        steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
+        max_steps_goal = steps_goal*0+1E7
 
         out = []
         date = datetime.datetime(2000, 1, 1)
@@ -241,12 +240,13 @@ class TestCore():
             #print trace_n
             pt = trace_n[-1,:]
             out.append(pt)
+            # print ('yo yo ', pt)
             #out.append(pymv.ecef_to_geocentric(pt[0], pt[1], pt[2]))
 
         final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-        x = np.log10(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-        y = np.log10(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-        z = np.log10(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+        x = np.log10(np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1]))
+        y = np.log10(np.abs(final_pt.ix[:, 'y'].values[1:] - final_pt.ix[:,'y'].values[:-1]))
+        z = np.log10(np.abs(final_pt.ix[:, 'z'].values[1:] - final_pt.ix[:,'z'].values[:-1]))
         
         try:
             plt.figure()
@@ -262,8 +262,8 @@ class TestCore():
     def test_tracing_accuracy_w_recursion(self):
         x,y,z = pymv.geocentric_to_ecef(np.array([50.]), np.array([0.]), np.array([550.]))
         
-        steps_goal = np.array([5., 5., 5., 5., 5., 5.]) #, .005, .003, .001])
-        max_steps_goal = np.array([1000000., 100000., 10000., 1000., 100., 10.])
+        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5., 5., 5.]) #, .005, .003, .001])
+        max_steps_goal = np.array([1000000., 100000., 10000., 3000., 1000., 300., 100., 30., 10., 3.])
 
         out = []
         date = datetime.datetime(2000, 1, 1)
@@ -272,8 +272,42 @@ class TestCore():
             #print steps, max_steps
             trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
                                                step_size=steps, 
-                                               max_steps=max_steps)  
+                                               max_steps=max_steps) 
+            #print trace_n
+            pt = trace_n[-1,:]
+            out.append(pt)
+            print(pymv.ecef_to_geocentric(*pt), pt )
 
+        final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+        x = np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1])
+        y = np.abs(final_pt.ix[:, 'y'].values[1:] - final_pt.ix[:,'y'].values[:-1])
+        z = np.abs(final_pt.ix[:, 'z'].values[1:] - final_pt.ix[:,'z'].values[:-1])
+        
+        try:
+            plt.figure()
+            plt.plot(np.log10(max_steps_goal[1:]), x)
+            plt.plot(np.log10(max_steps_goal[1:]), y)
+            plt.plot(np.log10(max_steps_goal[1:]), z)
+            plt.xlabel('Log Number of Steps per Run')
+            plt.ylabel('Log Change in Foot Point Position (km)')
+            plt.savefig('Footpoint_position_vs_max_steps_vs_recursion.png' )
+        except:
+            pass
+
+    def test_tracing_accuracy_w_recursion_step_size(self):
+        x,y,z = pymv.geocentric_to_ecef(np.array([50.]), np.array([0.]), np.array([550.]))
+        
+        steps_goal = np.array([.01, .05, .1, .5, 1., 5., 10., 50., 100., 500.]) #, .005, .003, .001])
+        max_steps_goal = np.array([1000000., 1000000., 1000000., 1000000., 1000000., 1000000., 1000000., 1000000., 1000000., 1000000.])
+
+        out = []
+        date = datetime.datetime(2000, 1, 1)
+        for steps, max_steps in zip(steps_goal, max_steps_goal):
+            #print ' '
+            #print steps, max_steps
+            trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
+                                               step_size=steps, 
+                                               max_steps=max_steps) 
             #print trace_n
             pt = trace_n[-1,:]
             out.append(pt)
@@ -286,15 +320,37 @@ class TestCore():
         
         try:
             plt.figure()
-            plt.plot(np.log10(max_steps_goal[1:]), x)
-            plt.plot(np.log10(max_steps_goal[1:]), y)
-            plt.plot(np.log10(max_steps_goal[1:]), z)
-            plt.xlabel('Log Number of Steps per Run')
+            plt.plot(np.log10(steps_goal[1:]), x)
+            plt.plot(np.log10(steps_goal[1:]), y)
+            plt.plot(np.log10(steps_goal[1:]), z)
+            plt.xlabel('Log Step Size')
             plt.ylabel('Log Change in Foot Point Position (km)')
             plt.savefig('Footpoint_position_vs_step_size_vs_recursion.png' )
         except:
             pass
+
+
+#     def test_unit_vector_accuracy(self):
+#         import matplotlib.pyplot as plt
+#         from mpl_toolkits.mplot3d import Axes3D
+#         import os
+#         on_travis = os.environ.get('ONTRAVIS') == 'True'
+#         
+#         # convert OMNI position to ECEF
+#         p_long = np.arange(0.,360.,12.)
+#         p_alt = 0*p_long + 550.        
+#         p_lat = [ 5., 10., 15., 20., 25., 30.]
+#         
+#         #ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
+#         for i,step in enumerate(step_sizes):
+# 
+#             #
+#             calculate_mag_drift_unit_vectors_ecef(p_lat, p_long, p_alt, times, step_size=step)
+#             date = datetime.datetime(2000,1,1)
+#             ecef_x,ecef_y,ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
+            
                                                                   
+                                                                                                                                                                                                      
     def test_unit_vector_plots(self):
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
@@ -303,11 +359,7 @@ class TestCore():
         
         # convert OMNI position to ECEF
         p_long = np.arange(0.,360.,12.)
-        p_lat = 0.*p_long
-        #p_lat = np.hstack((p_lat+5., p_lat+20.))
-        #p_long = np.hstack((p_long, p_long))
-        p_alt = 0*p_long + 550.
-        
+        p_alt = 0*p_long + 550.        
         p_lats = [ 5., 10., 15., 20., 25., 30.]
         
         #ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
@@ -323,11 +375,12 @@ class TestCore():
             #
             date = datetime.datetime(2000,1,1)
             ecef_x,ecef_y,ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
+            
             for j,(x,y,z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
-
+                print (p_lat, j)
                 # perform field line traces
-                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=0.5, max_steps=1.E6)
-                trace_s = pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=0.5, max_steps=1.E6)
+                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=.5, max_steps=1.E6)
+                trace_s = pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=.5, max_steps=1.E6)
                 # combine together, S/C position is first for both
                 # reverse first array and join so plotting makes sense
                 trace = np.vstack((trace_n[::-1], trace_s))
@@ -392,19 +445,16 @@ class TestCore():
                                 color='red') #, pivot='tail')
     
                 # check that vectors norm to 1
-                mag1 = np.all(np.sqrt(self.inst['unit_zon_x']**2 + self.inst['unit_zon_y']**2 + self.inst['unit_zon_z']**2) > 0.999999)
-                mag2 = np.all(np.sqrt(self.inst['unit_fa_x']**2 + self.inst['unit_fa_y']**2 + self.inst['unit_fa_z']**2) > 0.999999)
-                mag3 = np.all(np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2) > 0.999999)
+                assert np.all(np.sqrt(self.inst['unit_zon_x']**2 + self.inst['unit_zon_y']**2 + self.inst['unit_zon_z']**2) > 0.999999)
+                assert np.all(np.sqrt(self.inst['unit_fa_x']**2 + self.inst['unit_fa_y']**2 + self.inst['unit_fa_z']**2) > 0.999999)
+                assert np.all(np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2) > 0.999999)
                 # confirm vectors are mutually orthogonal
                 dot1 =  self.inst['unit_zon_x']*self.inst['unit_fa_x'] + self.inst['unit_zon_y']*self.inst['unit_fa_y']  + self.inst['unit_zon_z']*self.inst['unit_fa_z']
                 dot2 =  self.inst['unit_zon_x']*self.inst['unit_mer_x'] + self.inst['unit_zon_y']*self.inst['unit_mer_y']  + self.inst['unit_zon_z']*self.inst['unit_mer_z']
                 dot3 =  self.inst['unit_fa_x']*self.inst['unit_mer_x'] + self.inst['unit_fa_y']*self.inst['unit_mer_y']  + self.inst['unit_fa_z']*self.inst['unit_mer_z']
-                flag1 = np.all(np.abs(dot1) < 1.E-3)
-                flag2 = np.all(np.abs(dot2) < 1.E-3)
-                flag3 = np.all(np.abs(dot3) < 1.E-3)
-                #print mag1, mag2, mag3, flag1, flag2, flag3
-                #print np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2)#, dot2, dot3
-                truthiness.append(flag1 & flag2 & flag3 & mag1 & mag2 & mag3)
+                assert np.all(np.abs(dot1) < 1.E-6)
+                assert np.all(np.abs(dot2) < 1.E-6)
+                assert np.all(np.abs(dot3) < 1.E-6)
                 
                 # ensure that zonal vector is generally eastward
                 ones = np.ones(len(self.inst.data.index))
@@ -435,7 +485,48 @@ class TestCore():
         #plt.savefig('magnetic_unit_vectors_w_globe.png')
         #print truthiness
         assert np.all(truthiness)
-        
+
+#     def test_geomag_drift_scalars_accuracy_vs_settings(self):
+#         import matplotlib.pyplot as plt
+#         # from mpl_toolkits.mplot3d import Axes3D
+#         import os
+#         on_travis = os.environ.get('ONTRAVIS') == 'True'
+#         
+#         delta = 10.
+#         p_lats = np.arange(-50., 50.+delta, delta)
+#         p_longs = np.arange(0.,360.,12.)
+#         p_alt = 550.
+#         
+#         step_sizes = [.01, 0.1, 1., 2., 4., 8., 16., 32., 64., 128.]
+#         
+#         north_zonal = np.zeros((len(p_lats), len(p_longs), len(step_sizes)))
+#         north_mer = north_zonal.copy()
+#         south_zonal = north_zonal.copy()
+#         south_mer = north_zonal.copy()
+#         eq_zonal = north_zonal.copy()
+#         eq_mer = north_zonal.copy()
+#         
+#         if not on_travis:
+#             fig = plt.figure()
+#             ax = fig.add_subplot(111)
+#         
+#         date = datetime.datetime(2000,1,1)
+#         for i,p_lat in enumerate(p_lats):
+#             for j, p_long in enumerate(p_longs):
+#                 for k, step_size in enumerate(step_sizes):
+#                     # print (i,j, date) 
+#                     # print (p_lat, p_long, p_alt)
+#                     scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date], step_size=step_size)
+#                     north_zonal[i,j,k] = scalars['north_zonal_drifts_scalar'][0]
+#                     north_mer[i,j,k] = scalars['north_mer_drifts_scalar'][0]
+#                     south_zonal[i,j,k] = scalars['south_zonal_drifts_scalar'][0]
+#                     south_mer[i,j,k] = scalars['south_mer_drifts_scalar'][0]
+#                     eq_zonal[i,j,k] = scalars['equator_zonal_drifts_scalar'][0]
+#                     eq_mer[i,j,k] = scalars['equator_mer_drifts_scalar'][0]
+#         
+#         n_z_diff = north_zonal[:,:,1:] - north_zonal[:,:,:-1]
+#         n_z_diff.mean(axis=0).mean(axis=0) 
+#                                 
     def test_geomag_drift_scalars_plots(self):
         import matplotlib.pyplot as plt
         # from mpl_toolkits.mplot3d import Axes3D
