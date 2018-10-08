@@ -533,9 +533,16 @@ class TestCore():
         import os
         on_travis = os.environ.get('ONTRAVIS') == 'True'
         
-        delta = 2.5
+        
+        if not on_travis:
+            delta = 2.5
+            p_longs = np.arange(0.,360.,12.)
+        else:
+            # reduced resolution
+            delta = 25.
+            p_longs = np.arange(0.,360.,120.)
+            
         p_lats = np.arange(-50., 50.+delta, delta)
-        p_longs = np.arange(0.,360.,12.)
         p_alt = 550.
         
         north_zonal = np.zeros((len(p_lats), len(p_longs)))

@@ -1322,7 +1322,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
     import pandas
 
     if step_size is None:
-        step_size = .01
+        step_size = 1.
     if max_steps is None:
         max_steps = 100000
     steps = np.arange(max_steps)
