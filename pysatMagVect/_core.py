@@ -1401,16 +1401,16 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         # s/c loc, dir_x, dir_y, dir_z and intersection with field line trace
         # create a function that interpolates along field line and gets field line location with minimum distance
         # to meridional line from s/c  
-        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[0, 'unit_mer_ecef_x'], 
-                                                                                    unit_y*ivm[0, 'unit_mer_ecef_y'], 
-                                                                                    unit_z*ivm[0, 'unit_mer_ecef_z'], 
+        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
                                                                                     trace_south_plus_mer,
                                                                                     1)
         
         # take half step from S/C along - meridional direction (may not reach field line trace)
-        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[0, 'unit_mer_ecef_x'], 
-                                                                                    unit_y*ivm[0, 'unit_mer_ecef_y'], 
-                                                                                    unit_z*ivm[0, 'unit_mer_ecef_z'], 
+        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
                                                                                     trace_south_minus_mer,
                                                                                     -1)
 
@@ -1441,15 +1441,15 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         trace_north_minus_mer = field_line_trace(south_minus_mer, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
-        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[1, 'unit_mer_ecef_x'], 
-                                                                                    unit_y*ivm[1, 'unit_mer_ecef_y'], 
-                                                                                    unit_z*ivm[1, 'unit_mer_ecef_z'], 
+        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
                                                                                     trace_north_plus_mer,
                                                                                     1)
 
-        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[1, 'unit_mer_ecef_x'], 
-                                                                                    unit_y*ivm[1, 'unit_mer_ecef_y'], 
-                                                                                    unit_z*ivm[1, 'unit_mer_ecef_z'], 
+        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
                                                                                     trace_north_minus_mer,
                                                                                     -1)
 
@@ -1473,15 +1473,15 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
-        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[0, 'unit_zon_ecef_x'], 
-                                                                                    unit_y*ivm[0, 'unit_zon_ecef_y'], 
-                                                                                    unit_z*ivm[0, 'unit_zon_ecef_z'], 
+        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
                                                                                     trace_south_plus_zon,
                                                                                     1)
 
-        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[0, 'unit_zon_ecef_x'], 
-                                                                                    unit_y*ivm[0, 'unit_zon_ecef_y'], 
-                                                                                    unit_z*ivm[0, 'unit_zon_ecef_z'], 
+        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
                                                                                     trace_south_minus_zon,
                                                                                     -1)
 
@@ -1513,16 +1513,16 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + zonal direction
-        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[1, 'unit_zon_ecef_x'], 
-                                                                                    unit_y*ivm[1, 'unit_zon_ecef_y'], 
-                                                                                    unit_z*ivm[1, 'unit_zon_ecef_z'], 
+        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
                                                                                     trace_north_plus_zon,
                                                                                     1)
 
         # take half step from S/C along - zonal direction
-        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[1, 'unit_zon_ecef_x'], 
-                                                                                    unit_y*ivm[1, 'unit_zon_ecef_y'], 
-                                                                                    unit_z*ivm[1, 'unit_zon_ecef_z'], 
+        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
+                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
+                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
                                                                                     trace_north_minus_zon,
                                                                                     -1)
 
