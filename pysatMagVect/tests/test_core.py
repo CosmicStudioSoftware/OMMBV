@@ -231,17 +231,12 @@ class TestCore():
         out = []
         date = datetime.datetime(2000, 1, 1)
         for steps, max_steps in zip(steps_goal, max_steps_goal):
-            #print ' '
-            #print steps, max_steps
             trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
                                                step_size=steps, 
                                                max_steps=max_steps)  
 
-            #print trace_n
             pt = trace_n[-1,:]
             out.append(pt)
-            # print ('yo yo ', pt)
-            #out.append(pymv.ecef_to_geocentric(pt[0], pt[1], pt[2]))
 
         final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
         x = np.log10(np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1]))
@@ -268,15 +263,11 @@ class TestCore():
         out = []
         date = datetime.datetime(2000, 1, 1)
         for steps, max_steps in zip(steps_goal, max_steps_goal):
-            #print ' '
-            #print steps, max_steps
             trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
                                                step_size=steps, 
                                                max_steps=max_steps) 
-            #print trace_n
             pt = trace_n[-1,:]
             out.append(pt)
-            print(pymv.ecef_to_geocentric(*pt), pt )
 
         final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
         x = np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1])
@@ -303,15 +294,11 @@ class TestCore():
         out = []
         date = datetime.datetime(2000, 1, 1)
         for steps, max_steps in zip(steps_goal, max_steps_goal):
-            #print ' '
-            #print steps, max_steps
             trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
                                                step_size=steps, 
                                                max_steps=max_steps) 
-            #print trace_n
             pt = trace_n[-1,:]
             out.append(pt)
-            print(pymv.ecef_to_geocentric(*pt) )
 
         final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
         x = np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1])
@@ -377,7 +364,6 @@ class TestCore():
             ecef_x,ecef_y,ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
             
             for j,(x,y,z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
-                print (p_lat, j)
                 # perform field line traces
                 trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=.5, max_steps=1.E6)
                 trace_s = pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=.5, max_steps=1.E6)
@@ -416,7 +402,7 @@ class TestCore():
                 self.inst.data.index = pysat.utils.season_date_range(pysat.datetime(2000,1,1),
                                                                     pysat.datetime(2000,1,1)+pds.DateOffset(seconds=len(self.inst.data)-1),
                                                                     freq='S')
-                pymv.add_mag_drift_unit_vectors(self.inst)
+                pymv.satellite.add_mag_drift_unit_vectors(self.inst)
                 
                 #if i % 2 == 0:
                 length = 500
@@ -559,8 +545,6 @@ class TestCore():
         date = datetime.datetime(2000,1,1)
         for i,p_lat in enumerate(p_lats):
             for j, p_long in enumerate(p_longs):
-                # print (i,j, date) 
-                # print (p_lat, p_long, p_alt)
                 scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date])
                 north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
                 north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
@@ -571,7 +555,6 @@ class TestCore():
 
         if not on_travis:
             fig = plt.figure()
-            # ax = fig.add_subplot(111)
             plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
