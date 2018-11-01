@@ -598,7 +598,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 
 
-def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, direction=None):    
+def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, direction=None,
+                                                       unit_steps=1.):    
     # simple things first
     # take distance for all points from test
     # then keep search down, moving along projection line
@@ -611,7 +612,7 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
     factor = 1
     while repeat:
         pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
-                                              num_steps=3, step_size=scalar/3.) 
+                                              num_steps=unit_steps, step_size=scalar/unit_steps) 
         # pos_step = pos + scalar * ux + scalar * uy + scalar * uz
         # find closest point along + field line trace
         diff = field_copy - pos_step
@@ -646,7 +647,7 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
                 scalar = scalar - sign*last_min_dist/(2*factor)
                 # calculate latest position
                 pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
-                                        num_steps=3, step_size=scalar/3.) 
+                                        num_steps=unit_steps, step_size=scalar/unit_steps) 
             else:
                 # undo increment to last total distance
                 scalar = scalar - sign*last_min_dist/(2*factor)
@@ -665,7 +666,7 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
     return scalar/sign, pos_step, min_dist
 
 
-def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=3, step_size=8.3333333, scalar=1):
+def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1, step_size=25., scalar=1): #num_steps=3, step_size=8.3333333, scalar=1):
     """
     Move along 'lines' formed by following the magnetic unit vector directions.
 
@@ -802,7 +803,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         ivm.yr, ivm.doy = pysat.utils.getyrdoy(date)
         double_date = float(ivm.yr) + float(ivm.doy) / 366.
 
-        # print (glat, glon, alt)
+        print (glat, glon, alt)
         # trace to northern footpoint
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
         trace_north = field_line_trace(sc_root, double_date, 1., 120., steps=steps,
@@ -845,11 +846,36 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
 
 
         # calculate scalar for the equator
-        # get furthest point for both pos and minus traces, get distance
+        # get furthest point for both pos and minus traces, get distance between furthest points
+        # first find coarse max distance, then do high resolution trace to improve
+        # positive step
         max_plus_idx = np.argmax(np.sqrt((trace_south_plus_mer ** 2).sum(axis=1)))
+        init = trace_south_plus_mer[max_plus_idx, :]
+        high_res_trace = field_line_trace(init, date, 1., 0.,
+                                        step_size=0.01, max_steps=step_size/.01,
+                                        recurse=False)
+        high_res_trace2 = field_line_trace(init, date, -1., 0.,
+                                                step_size=0.01, max_steps=step_size/.01,
+                                                recurse=False)
+        # combine together
+        high_plus = np.vstack((high_res_trace[::-1], high_res_trace2))
+        max_plus_idx = np.argmax(np.sqrt((high_plus ** 2).sum(axis=1)))
+        
+        # negative step
         max_minus_idx = np.argmax(np.sqrt((trace_south_minus_mer ** 2).sum(axis=1)))
+        init = trace_south_minus_mer[max_minus_idx, :]
+        high_res_trace = field_line_trace(init, date, 1., 0.,
+                                        step_size=0.01, max_steps=step_size/.01,
+                                        recurse=False)
+        high_res_trace2 = field_line_trace(init, date, -1., 0.,
+                                                step_size=0.01, max_steps=step_size/.01,
+                                                recurse=False)
+        # combine together
+        high_minus = np.vstack((high_res_trace[::-1], high_res_trace2))
+        max_minus_idx = np.argmax(np.sqrt((high_minus ** 2).sum(axis=1)))
+        
         step_zon_apex = np.sqrt(
-            ((trace_south_plus_mer[max_plus_idx, :] - trace_south_minus_mer[max_minus_idx, :]) ** 2).sum())
+            ((high_plus[max_plus_idx, :] - high_minus[max_minus_idx, :]) ** 2).sum())
         eq_zon_drifts_scalar.append(full_mer_sc_step / step_zon_apex)
         
 
@@ -903,13 +929,48 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         full_zonal_sc_step = pos_zon_step_size + minus_zon_step_size
         north_ftpnt_mer_drifts_scalar.append((full_zonal_sc_step) / 50.)
 
+        # # calculate scalar for the equator
+        # # get furthest point for both pos and minus traces, get distance
+        # max_plus_idx = np.argmax(np.sqrt((trace_south_plus_zon ** 2).sum(axis=1)))
+        # max_minus_idx = np.argmax(np.sqrt((trace_south_minus_zon ** 2).sum(axis=1)))
+        # step_zon_apex = np.sqrt(
+        #     ((trace_south_plus_zon[max_plus_idx, :] - trace_south_minus_zon[max_minus_idx, :]) ** 2).sum())
+        # eq_mer_drifts_scalar.append(full_zonal_sc_step / step_zon_apex)
+
+
         # calculate scalar for the equator
-        # get furthest point for both pos and minus traces, get distance
+        # get furthest point for both pos and minus traces, get distance between furthest points
+        # first find coarse max distance, then do high resolution trace to improve
+        # positive step
         max_plus_idx = np.argmax(np.sqrt((trace_south_plus_zon ** 2).sum(axis=1)))
+        init = trace_south_plus_zon[max_plus_idx, :]
+        high_res_trace = field_line_trace(init, date, 1., 0.,
+                                        step_size=0.01, max_steps=1000,
+                                        recurse=False)
+        high_res_trace2 = field_line_trace(init, date, -1., 0.,
+                                                step_size=0.01, max_steps=step_size/.01,
+                                                recurse=False)
+        # combine together
+        high_plus = np.vstack((high_res_trace[::-1], high_res_trace2))
+        max_plus_idx = np.argmax(np.sqrt((high_plus ** 2).sum(axis=1)))
+        
+        # negative step
         max_minus_idx = np.argmax(np.sqrt((trace_south_minus_zon ** 2).sum(axis=1)))
+        init = trace_south_minus_zon[max_minus_idx, :]
+        high_res_trace = field_line_trace(init, date, 1., 0.,
+                                        step_size=0.01, max_steps=1000,
+                                        recurse=False)
+        high_res_trace2 = field_line_trace(init, date, -1., 0.,
+                                                step_size=0.01, max_steps=step_size/.01,
+                                                recurse=False)
+        # combine together
+        high_minus = np.vstack((high_res_trace[::-1], high_res_trace2))
+        max_minus_idx = np.argmax(np.sqrt((high_minus ** 2).sum(axis=1)))
+        
         step_zon_apex = np.sqrt(
-            ((trace_south_plus_zon[max_plus_idx, :] - trace_south_minus_zon[max_minus_idx, :]) ** 2).sum())
+            ((high_plus[max_plus_idx, :] - high_minus[max_minus_idx, :]) ** 2).sum())
         eq_mer_drifts_scalar.append(full_zonal_sc_step / step_zon_apex)
+
 
         # Now it is time to do the same calculation for the southern footpoint
         # scalar
