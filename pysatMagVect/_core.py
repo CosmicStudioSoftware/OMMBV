@@ -666,6 +666,40 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
 
 
 def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=3, step_size=8.3333333, scalar=1):
+    """
+    Move along 'lines' formed by following the magnetic unit vector directions.
+
+    Moving along the field is effectively the same as a field line trace though
+    extended movement along a field should use the specific field_line_trace method.
+        
+    
+    Parameters
+    ----------
+    x : ECEF-x (km)
+        Location to step from in ECEF (km). Scalar input.
+    y : ECEF-y (km)
+        Location to step from in ECEF (km). Scalar input.
+    z : ECEF-z (km)
+        Location to step from in ECEF (km). Scalar input.
+    date : list-like of datetimes
+        Date and time for magnetic field
+    direction : string
+        String identifier for which unit vector directino to move along.
+        Supported inputs, 'meridional', 'zonal', 'aligned'
+    num_steps : int
+        Number of steps to take along unit vector direction
+    step_size = float
+        Distance taken for each step (km)
+    scalar : int
+        Scalar modifier for step size distance. Input a -1 to move along negative
+        unit vector direction.
+        
+    Returns
+    -------
+    np.array
+        [x, y, z] of ECEF location after taking num_steps along direction, each step_size long.
+    
+    """
     
     
     # set parameters for the field line tracing routines
@@ -756,6 +790,14 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
     for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs, 
                                                              glats, glons, alts, 
                                                              dates):
+        # going to try and form close loops via field line integration
+        # start at location of interest, map down to northern and southern footpoints
+        # then take symmetric steps along meridional and zonal directions and trace back
+        # from location of interest, step along field line directions until we intersect 
+        # or hit the distance of closest approach to the return field line
+        # with the known distances of footpoint steps, and the closet approach distance
+        # we can determine the scalar mapping of one location to another
+        
         ivm.date = date
         ivm.yr, ivm.doy = pysat.utils.getyrdoy(date)
         double_date = float(ivm.yr) + float(ivm.doy) / 366.
@@ -772,15 +814,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         # footpoint location
         north_ftpnt = trace_north[-1, :]
         south_ftpnt = trace_south[-1, :]
-        # # convert to geodetic coordinates
-        # north_ftpnt = ecef_to_geodetic(*north_ftpnt)
-        # south_ftpnt = ecef_to_geodetic(*south_ftpnt)
-        
-        # # get unit vector directions
-        # zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef([glat], [glon], [alt], [date],
-        #                                                 steps=steps, max_steps=max_steps, 
-        #                                                 step_size=step_size, 
-        #                                                 method='auto', ref_height=0.)
 
         # take step frmo northern footpoint along + meridional direction
         north_plus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='meridional')
@@ -797,7 +830,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
        
         # need to determine where the intersection of field line coming back from north footpoint + mer is
         # in relation to the meridional direction from the s/c location.
-        # s/c loc, dir_x, dir_y, dir_z and intersection with field line trace
         # create a function that interpolates along field line and gets field line location with minimum distance
         # to meridional line from s/c  
         pos_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
@@ -848,14 +880,12 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
 
         # take half step along + zonal direction
         north_plus_zon = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='zonal')
-        # north_plus_zon = north_ftpnt + 25. * unit_x * ivm[0, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[0, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[0, 'unit_zon_ecef_z']
         # trace this back to southern footpoint
         trace_south_plus_zon = field_line_trace(north_plus_zon, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
 
         # take half step from northern along - zonal direction
         # take step
-        # north_minus_zon = north_ftpnt - 25. * unit_x * ivm[0, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[0, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[0, 'unit_zon_ecef_z']
         north_minus_zon = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='zonal', scalar=-1)
         # trace this back to southern footpoint
         trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 0., steps=steps,
