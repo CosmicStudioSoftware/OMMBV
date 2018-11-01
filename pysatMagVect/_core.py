@@ -337,7 +337,7 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 
 def field_line_trace(init, date, direction, height, steps=None,
-                     max_steps=1E5, step_size=10., recursive_loop_count=None):
+                     max_steps=1E5, step_size=10., recursive_loop_count=None, recurse=True):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
     
     Parameters
@@ -389,8 +389,8 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          args=(date, step_size, direction, height),
                                          full_output=False,
                                          printmessg=False,
-                                         ixpr=False,
-                                         mxstep=500)
+                                         ixpr=False) #,
+                                         # mxstep=500)
     
     # check that we reached final altitude
     check = trace_north[-1, :]
@@ -400,7 +400,7 @@ def field_line_trace(init, date, direction, height, steps=None,
     else:
         check_height = height
     # fortran integration gets close to target height        
-    if z > check_height*1.000001:
+    if recurse & (z > check_height*1.000001):
         if (recursive_loop_count < 100):
             # When we have not reached the reference height, call field_line_trace 
             # again by taking check value as init - recursive call
@@ -598,7 +598,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 
 
-def intersection_field_line_and_unit_vector_projection(pos, ux, uy, uz, field_line, sign):    
+def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, direction=None):    
     # simple things first
     # take distance for all points from test
     # then keep search down, moving along projection line
@@ -608,45 +608,70 @@ def intersection_field_line_and_unit_vector_projection(pos, ux, uy, uz, field_li
     scalar = 0.
     repeat=True
     first=True
-    factor = 4
-    while repeat: 
-        pos_step = pos + scalar * ux + scalar * uy + scalar * uz
+    factor = 1
+    while repeat:
+        pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
+                                              num_steps=3, step_size=scalar/3.) 
+        # pos_step = pos + scalar * ux + scalar * uy + scalar * uz
         # find closest point along + field line trace
         diff = field_copy - pos_step
         diff_mag = np.sqrt((diff ** 2).sum(axis=1))
         min_idx = np.argmin(diff_mag)
         if first:
-        # make a high resolution field trace?
-            field_copy = field_copy[min_idx-100:min_idx+100, :]
+            # make a high resolution field line trace around closest distance
+            init = field_copy[min_idx,:]
+            high_res_trace = field_line_trace(init, time, 1., 0.,
+                                                    step_size=0.01, max_steps=2000,
+                                                    recurse=False)
+            high_res_trace2 = field_line_trace(init, time, -1., 0.,
+                                                    step_size=0.01, max_steps=2000,
+                                                    recurse=False)
+            # combine together
+            field_copy = np.vstack((high_res_trace[::-1], high_res_trace2))
+            # field_copy = field_copy[min_idx-100:min_idx+100, :]
             diff = field_copy - pos_step
             diff_mag = np.sqrt((diff ** 2).sum(axis=1))
             min_idx = np.argmin(diff_mag)
             first = False
-        # calculate distance of that point from S/C location
-        min_dist = (field_copy[min_idx, :] - pos) ** 2
+        # calculate distance of that point (from S/C location, old comment, doesn't make sense though)
+        # min_dist = (field_copy[min_idx, :] - pos_step) ** 2
         min_dist = diff_mag[min_idx]
+        # print (min_dist, last_min_dist)
         if min_dist > last_min_dist:
-            if factor > 16:
+            # last step we took made the solution worse
+            if factor > 4:
+                # we've tried enough, stop looping
                 repeat = False
+                # undo increment to last total distance
+                scalar = scalar - sign*last_min_dist/(2*factor)
+                # calculate latest position
+                pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
+                                        num_steps=3, step_size=scalar/3.) 
             else:
+                # undo increment to last total distance
+                scalar = scalar - sign*last_min_dist/(2*factor)
                 factor = factor + 1.
+                # try a new increment to total distance
+                scalar = scalar + sign*last_min_dist/(2*factor)
         else:
             # increment scalar, but only by a fraction
-            # don't want to overshoot
-            scalar = scalar + sign*min_dist/factor
+            scalar = scalar + sign*min_dist/(2*factor)
             # print ('scalar ', scalar, min_dist, last_min_dist, pos_step, field_copy[min_idx, :], min_idx)
             last_min_dist = min_dist.copy()
             # field_copy = field_copy[min_idx-1000:min_idx+1000, :]
-    # return magnitude of step
-    return scalar/sign, pos_step
 
-def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=100, step_size=.25, scalar=1):
+    # print (scalar/sign, pos_step, min_dist)
+    # return magnitude of step
+    return scalar/sign, pos_step, min_dist
+
+
+def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=3, step_size=8.3333333, scalar=1):
     
     
     # set parameters for the field line tracing routines
     field_step_size = 10.
-    field_max_steps = 10000
-    field_steps = np.arange(num_steps)
+    field_max_steps = 1000
+    field_steps = np.arange(field_max_steps)
     
     for i in np.arange(num_steps):
         # x, y, z in ECEF
@@ -654,7 +679,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=100, ste
         lat, lon, alt = ecef_to_geodetic(x, y, z)
 
         # get unit vector directions
-        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(lat, lon, alt, date,
+        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef([lat], [lon], [alt], [date],
                                                         steps=field_steps, max_steps=field_max_steps, 
                                                         step_size=field_step_size, 
                                                         method='auto', ref_height=0.)
@@ -667,11 +692,11 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=100, ste
             ux, uy, uz = bx, by, bz
             
         # take steps along direction
-        x = x + step_size*ux*scalar
-        y = y + step_size*uy*scalar
-        z = z + step_size*uz*scalar
+        x = x + step_size*ux[0]*scalar
+        y = y + step_size*uy[0]*scalar
+        z = z + step_size*uz[0]*scalar
             
-    return x, y, z
+    return np.array([x, y, z])
 
 def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, max_steps=None):
     """
@@ -710,9 +735,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
     import pandas
 
     if step_size is None:
-        step_size = .1
+        step_size = 10.
     if max_steps is None:
-        max_steps = 100000
+        max_steps = 1000
     steps = np.arange(max_steps)
 
     ivm = pysat.Instrument('pysat', 'testing')
@@ -735,6 +760,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         ivm.yr, ivm.doy = pysat.utils.getyrdoy(date)
         double_date = float(ivm.yr) + float(ivm.doy) / 366.
 
+        # print (glat, glon, alt)
         # trace to northern footpoint
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
         trace_north = field_line_trace(sc_root, double_date, 1., 120., steps=steps,
@@ -750,15 +776,14 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         # north_ftpnt = ecef_to_geodetic(*north_ftpnt)
         # south_ftpnt = ecef_to_geodetic(*south_ftpnt)
         
-        # get unit vector directions
-        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(glat, glon, alt, date,
-                                                        steps=steps, max_steps=max_steps, 
-                                                        step_size=step_size, 
-                                                        method='auto', ref_height=0.)
+        # # get unit vector directions
+        # zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef([glat], [glon], [alt], [date],
+        #                                                 steps=steps, max_steps=max_steps, 
+        #                                                 step_size=step_size, 
+        #                                                 method='auto', ref_height=0.)
 
         # take step frmo northern footpoint along + meridional direction
         north_plus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='meridional')
-        # north_plus_mer = north_ftpnt + 25. * unit_x * ivm[0, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[0, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[0, 'unit_mer_ecef_z']
         # trace this back to southern footpoint
         trace_south_plus_mer = field_line_trace(north_plus_mer, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
@@ -766,7 +791,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         # take half step from northern along - meridional direction
         # take step
         north_minus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='meridional', scalar=-1)
-        # north_minus_mer = north_ftpnt - 25. * unit_x * ivm[0, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[0, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[0, 'unit_mer_ecef_z']
         # trace this back to southern footpoint
         trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
@@ -776,18 +800,17 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         # s/c loc, dir_x, dir_y, dir_z and intersection with field line trace
         # create a function that interpolates along field line and gets field line location with minimum distance
         # to meridional line from s/c  
-        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, mx, my, mz,
+        pos_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                   trace_south_plus_mer,
-                                                                                  1)
-        
+                                                                                  1, date, direction='meridional')        
         # take half step from S/C along - meridional direction (may not reach field line trace)
-        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, mx, my, mz, 
+        minus_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                     trace_south_minus_mer,
-                                                                                    -1)
-        print (pos_mer_step_size, minus_mer_step_size)
+                                                                                    -1, date, direction='meridional')
         # scalar for the northern footpoint
         full_mer_sc_step = pos_mer_step_size + minus_mer_step_size
         north_ftpnt_zon_drifts_scalar.append((full_mer_sc_step) / 50.)
+
 
         # calculate scalar for the equator
         # get furthest point for both pos and minus traces, get distance
@@ -796,34 +819,28 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         step_zon_apex = np.sqrt(
             ((trace_south_plus_mer[max_plus_idx, :] - trace_south_minus_mer[max_minus_idx, :]) ** 2).sum())
         eq_zon_drifts_scalar.append(full_mer_sc_step / step_zon_apex)
+        
 
-        # Now it is time to do the same calculation for the southern footpoint
-        # scalar
-        # take step
+        # Now it is time to do the same calculation for the southern footpoint scalar
         south_plus_mer = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='meridional')
-        # south_plus_mer = south_ftpnt + 25. * unit_x * ivm[1, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[1, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[1, 'unit_mer_ecef_z']
         # trace this back to northern footpoint
         trace_north_plus_mer = field_line_trace(south_plus_mer, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
-
         # take half step from southern along - meridional direction
         # take step
         south_minus_mer = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='meridional', scalar=-1)
-        # south_minus_mer = south_ftpnt - 25. * unit_x * ivm[1, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[1, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[1, 'unit_mer_ecef_z']
         # trace this back to northern footpoint
         trace_north_minus_mer = field_line_trace(south_minus_mer, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
-
-        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, mx, my, mz, 
+        pos_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_north_plus_mer,
-                                                                                    1)
-
-        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, mx, my, mz, 
+                                                                                    1, date, direction='meridional')
+        minus_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_north_minus_mer,
-                                                                                    -1)
-
+                                                                                    -1, date, direction='meridional')
         # scalar for the southern footpoint
         south_ftpnt_zon_drifts_scalar.append((pos_mer_step_size + minus_mer_step_size) / 50.)
+
 
         #############
         # Time for scaling in the meridional drifts, the zonal electric field
@@ -844,13 +861,13 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
-        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, zvx, zvy, zvz, 
+        pos_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                     trace_south_plus_zon,
-                                                                                    1)
+                                                                                    1, date, direction='zonal')
 
-        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, zvz, zvy, zvz, 
+        minus_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_south_minus_zon,
-                                                                                    -1)
+                                                                                    -1, date, direction='zonal')
 
         # scalar for the northern footpoint
         full_zonal_sc_step = pos_zon_step_size + minus_zon_step_size
@@ -868,7 +885,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         # scalar
         # take step
         south_plus_zon = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='zonal')
-        # south_plus_zon = south_ftpnt + 25. * unit_x * ivm[1, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[1, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[1, 'unit_zon_ecef_z']
         # trace this back to northern footpoint
         trace_north_plus_zon = field_line_trace(south_plus_zon, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
@@ -876,20 +892,19 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         # take half step from southern along - zonal direction
         # take step
         south_minus_zon = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='zonal', scalar=-1)
-        # south_minus_zon = south_ftpnt - 25. * unit_x * ivm[1, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[1, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[1, 'unit_zon_ecef_z']
         # trace this back to northern footpoint
         trace_north_minus_zon = field_line_trace(south_minus_zon, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
 
         # take half step from S/C along + zonal direction
-        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, zvx, zvy, zvz, 
+        pos_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,  
                                                                                     trace_north_plus_zon,
-                                                                                    1)
+                                                                                    1, date, direction='zonal')
 
         # take half step from S/C along - zonal direction
-        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, zvx, zvy, zvz, 
+        minus_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_north_minus_zon,
-                                                                                    -1)
+                                                                                    -1, date, direction='zonal')
 
         # scalar for the southern footpoint
         south_ftpnt_mer_drifts_scalar.append((pos_zon_step_size + minus_zon_step_size) / 50.)
