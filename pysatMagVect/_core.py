@@ -337,8 +337,7 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 
 def field_line_trace(init, date, direction, height, steps=None,
-                     max_steps=1E5, step_size=10., recursive_loop_count=None):#, 
-                     # isTIEGCM=False):
+                     max_steps=1E5, step_size=10., recursive_loop_count=None):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
     
     Parameters
@@ -372,9 +371,7 @@ def field_line_trace(init, date, direction, height, steps=None,
     
     """
     
-    # if isTIEGCM is False:
-    #     recursive_loop_count = 0
-    if recursive_loop_count is None:  #if TIEGCM and recursive loop count is not set
+    if recursive_loop_count is None:  
         recursive_loop_count = 0
     #     
     if steps is None:
@@ -418,7 +415,7 @@ def field_line_trace(init, date, direction, height, steps=None,
             trace_north1 = field_line_trace(check, date, direction, height,
                                                 step_size=step_size, max_steps=max_steps,
                                                 recursive_loop_count=recursive_loop_count,
-                                                steps=steps)#, isTIEGCM = True)
+                                                steps=steps)
             # return trace_north
         #     raise RuntimeError("Didn't reach target altitude")
         else:
@@ -435,7 +432,7 @@ def field_line_trace(init, date, direction, height, steps=None,
     
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           steps=None, max_steps=10000, step_size=10.,
-                                          method='auto', ref_height=120., isTiegcm = False):
+                                          method='auto', ref_height=120.):
     """Calculates unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -614,8 +611,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 
 def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size=10.,
-                                    method='auto', ref_height=120., isTiegcm = False,
-                                    tiegcm_dict = None):
+                                    method='auto', ref_height=120.):
     """Adds unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -650,14 +646,9 @@ def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size
     """
 
     # add unit vectors for magnetic drifts in ecef coordinates
-    if not isTiegcm:
-        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(inst['latitude'], 
-                                                                inst['longitude'], inst['altitude'], inst.data.index,
-                                                                steps=steps, max_steps=max_steps, step_size=step_size, method=method, ref_height=ref_height)
-    else:
-        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(tiegcm_dict['geodetic_lat'],
-            tiegcm_dict['geodetic_lon'], tiegcm_dict['geodetic_alt'], tiegcm_dict['dates'],
-            max_steps=max_steps, step_size=step_size, method=method, ref_height=ref_height, isTiegcm=isTiegcm)
+    zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(inst['latitude'], 
+                                                            inst['longitude'], inst['altitude'], inst.data.index,
+                                                            steps=steps, max_steps=max_steps, step_size=step_size, method=method, ref_height=ref_height)
     
     inst['unit_zon_ecef_x'] = zvx
     inst['unit_zon_ecef_y'] = zvy
@@ -1310,8 +1301,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         Geodetic (WGS84) altitude, height above surface
     dates : list-like of datetimes
         Date and time for determination of scalars
-    tiegcm_hour : If using TIEGCM model data, then pass the data's hour information
-    isTiegcm : Boolen variable to check if TIEGCM model is being used 
         
     Returns
     -------
