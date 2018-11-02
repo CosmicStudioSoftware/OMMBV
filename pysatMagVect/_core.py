@@ -418,7 +418,7 @@ def field_line_trace(init, date, direction, height, steps=None,
     
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           steps=None, max_steps=10000, step_size=10.,
-                                          method='auto', ref_height=120.):
+                                          ref_height=120.):
     """Calculates unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -437,13 +437,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Maximum number of steps allowed for field line tracing
     step_size : float
         Maximum step size (km) allowed when field line tracing
-    method : str ('auto' 'foot_field', 'cross_foot')
-        Delineates between different methods of determining the zonal vector
-        'cross_foot' uses the cross product of vectors pointing from location 
-        to the footpoints in both hemispheres. 'field_foot' uses the cross
-        product of vectors pointing along the field and one pointing to
-        the field line footpoint. 'auto' does both calculations but uses 
-        whichever method produces the larger unit cross product.
     ref_height : float
         Altitude used as cutoff for labeling a field line location a footpoint
         
@@ -540,66 +533,29 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                     bx, by, bz)
     # normalize the vectors
     norm_foot = np.sqrt(zvx_foot ** 2 + zvy_foot ** 2 + zvz_foot ** 2)
-    norm_north = np.sqrt(zvx_north ** 2 + zvy_north ** 2 + zvz_north ** 2)
-    norm_south = np.sqrt(zvx_south ** 2 + zvy_south ** 2 + zvz_south ** 2)
+    # norm_north = np.sqrt(zvx_north ** 2 + zvy_north ** 2 + zvz_north ** 2)
+    # norm_south = np.sqrt(zvx_south ** 2 + zvy_south ** 2 + zvz_south ** 2)
 
-    # pick the method with the largest cross product vector
-    # should have largest numerical accuracy
-    if method == 'foot_field':
-        # use the magnetic field explicitly 
-        zvx, zvy, zvz = normalize_vector(zvx_north, zvy_north, zvz_north)
-        # south
-        idx, = np.where(norm_south > norm_north)
-        zvx[idx] = zvx_south[idx] / norm_south[idx]
-        zvy[idx] = zvy_south[idx] / norm_south[idx]
-        zvz[idx] = zvz_south[idx] / norm_south[idx]
-    elif method == 'cross_foot':
-        zvx = zvx_foot / norm_foot
-        zvy = zvy_foot / norm_foot
-        zvz = zvz_foot / norm_foot
-        # remove any field aligned component to the zonal vector
-        dot_fa = zvx * bx + zvy * by + zvz * bz
-        zvx -= dot_fa * bx
-        zvy -= dot_fa * by
-        zvz -= dot_fa * bz
-        zvx, zny, zvz = normalize_vector(zvx, zvy, zvz)
-    elif method == 'auto':
-        # use the magnetic field explicitly 
-        zvx = zvx_north / norm_north
-        zvy = zvy_north / norm_north
-        zvz = zvz_north / norm_north
-        full_norm = norm_north
-        # south
-        idx, = np.where(norm_south > full_norm)
-        zvx[idx] = zvx_south[idx] / norm_south[idx]
-        zvy[idx] = zvy_south[idx] / norm_south[idx]
-        zvz[idx] = zvz_south[idx] / norm_south[idx]
-        full_norm[idx] = norm_south[idx]
-        # foot cross
-        idx, = np.where(norm_foot > full_norm)
-        zvx[idx] = zvx_foot[idx] / norm_foot[idx]
-        zvy[idx] = zvy_foot[idx] / norm_foot[idx]
-        zvz[idx] = zvz_foot[idx] / norm_foot[idx]
-        # remove any field aligned component to the zonal vector
-        dot_fa = zvx * bx + zvy * by + zvz * bz
-        zvx -= dot_fa * bx
-        zvy -= dot_fa * by
-        zvz -= dot_fa * bz
-        zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
-
+    # calculate zonal vector
+    zvx = zvx_foot / norm_foot
+    zvy = zvy_foot / norm_foot
+    zvz = zvz_foot / norm_foot
+    # remove any field aligned component to the zonal vector
+    dot_fa = zvx * bx + zvy * by + zvz * bz
+    zvx -= dot_fa * bx
+    zvy -= dot_fa * by
+    zvz -= dot_fa * bz
+    zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
     # compute meridional vector
     # cross product of zonal and magnetic unit vector
     mx, my, mz = cross_product(zvx, zvy, zvz,
                                bx, by, bz)
-
     # add unit vectors for magnetic drifts in ecef coordinates
     return zvx, zvy, zvz, bx, by, bz, mx, my, mz
 
 
-
-
 def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, direction=None,
-                                                       unit_steps=2.):    
+                                                       unit_steps=1.):    
     # simple things first
     # take distance for all points from test
     # then keep search down, moving along projection line
@@ -666,7 +622,7 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
     return scalar/sign, pos_step, min_dist
 
 
-def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=10, step_size=2.5, scalar=1):
+def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., step_size=25., scalar=1):
     """
     Move along 'lines' formed by following the magnetic unit vector directions.
 
@@ -717,7 +673,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=10, step
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef([lat], [lon], [alt], [date],
                                                         steps=field_steps, max_steps=field_max_steps, 
                                                         step_size=field_step_size, 
-                                                        method='auto', ref_height=0.)
+                                                        ref_height=0.)
         # pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
@@ -733,7 +689,84 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=10, step
             
     return np.array([x, y, z])
 
-def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, max_steps=None):
+
+def apex_location_info(glats, glons, alts, dates):
+    """Determine the apex location for the field line passing through input point.
+    
+    Employs a two stage method. A broad step (10 km) field line trace spanning Northern/Southern
+    footpoints is used to find the location with the largest geodetic (WGS84) height.
+    A higher resolution trace (.1 km) is then used to get a better fix on this location.
+    Greatest geodetic height is once again selected.
+    
+    Parameters
+    ----------
+    glats : list-like of floats (degrees)
+        Geodetic (WGS84) latitude
+    glons : list-like of floats (degrees)
+        Geodetic (WGS84) longitude 
+    alts : list-like of floats (km)
+        Geodetic (WGS84) altitude, height above surface
+    dates : list-like of datetimes
+        Date and time for determination of scalars
+
+
+    """
+
+    # use input location and convert to ECEF
+    ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+
+    step_size = 10.
+    max_steps = 10000
+    steps = np.arange(max_steps)
+
+    # prepare output
+    out_x = []
+    out_y = []
+    out_z = []
+
+    for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs, 
+                                                             glats, glons, alts, 
+                                                             dates):
+        # to get the apex location we need to do a field line trace
+        # then find the highest point
+        # trace north, then south, and combine
+        trace_south = field_line_trace(np.array([ecef_x, ecef_y, ecef_z]), date, -1., 0., steps=steps,
+                                                step_size=step_size, max_steps=max_steps)
+        trace_north = field_line_trace(np.array([ecef_x, ecef_y, ecef_z]), date, 1., 0., steps=steps,
+                                                step_size=step_size, max_steps=max_steps)
+        trace = np.vstack((trace_north[::-1], trace_south))
+        # convert all locations to geodetic coordinates
+        tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])        
+        # determine location that is highest with respect to the geodetic Earth
+        max_idx = np.argmax(talt)
+
+        # repeat using a high resolution trace
+        trace_south = field_line_trace(np.array([trace[max_idx,0], trace[max_idx,1], trace[max_idx,2]]), date, -1., 0., 
+                                                steps=np.arange(100),
+                                                step_size=step_size/100., max_steps=100, recurse=False)
+        trace_north = field_line_trace(np.array([trace[max_idx,0], trace[max_idx,1], trace[max_idx,2]]), date, 1., 0., 
+                                                steps=np.arange(100),
+                                                step_size=step_size/100., max_steps=100, recurse=False)
+        trace = np.vstack((trace_north[::-1], trace_south))
+        # convert all locations to geodetic coordinates
+        tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
+        # determine location that is highest with respect to the geodetic Earth
+        max_idx = np.argmax(talt)
+        # collect outputs
+        out_x.append(trace[max_idx,0])
+        out_y.append(trace[max_idx,1])
+        out_z.append(trace[max_idx,2])
+        
+    out_x = np.array(out_x)
+    out_y = np.array(out_y)
+    out_z = np.array(out_z)
+    glat, glon, alt = ecef_to_geodetic(out_x, out_y, out_z)
+    
+    return out_x, out_y, out_z, glat, glon, alt
+
+
+def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, max_steps=None,
+                                   e_field_scaling_only=False):
     """
     Calculates scalars for translating ion motions at position
     glat, glon, and alt, for date, to the footpoints of the field line
@@ -756,6 +789,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         Geodetic (WGS84) altitude, height above surface
     dates : list-like of datetimes
         Date and time for determination of scalars
+    e_field_scaling_only : boolean (False)
+        If True, method only calculates the electric field scalar, ignoring 
+        changes in magnitude of B. Note ion velocity related to E/B.
         
     Returns
     -------
@@ -804,6 +840,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         double_date = float(ivm.yr) + float(ivm.doy) / 366.
 
         print (glat, glon, alt)
+        # get location of apex for s/c field line
+        apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info([glat], [glon], [alt], [date])
+
         # trace to northern footpoint
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
         trace_north = field_line_trace(sc_root, double_date, 1., 120., steps=steps,
@@ -811,103 +850,79 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         # southern tracing
         trace_south = field_line_trace(sc_root, double_date, -1., 120., steps=steps,
                                        step_size=step_size, max_steps=max_steps)
-        
         # footpoint location
         north_ftpnt = trace_north[-1, :]
+        nft_glat, nft_glon, nft_alt = ecef_to_geodetic(*north_ftpnt)
         south_ftpnt = trace_south[-1, :]
+        sft_glat, sft_glon, sft_alt = ecef_to_geodetic(*north_ftpnt)
 
-        # take step frmo northern footpoint along + meridional direction
-        north_plus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='meridional')
+        # determine scalar for zonal ion drifts (meridional electric fields)
+        # take step from northern footpoint along + meridional direction
+        north_plus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], 
+                                                    date, direction='meridional')
         # trace this back to southern footpoint
         trace_south_plus_mer = field_line_trace(north_plus_mer, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
-
         # take half step from northern along - meridional direction
-        # take step
-        north_minus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='meridional', scalar=-1)
+        north_minus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, 
+                                                     direction='meridional', scalar=-1)
         # trace this back to southern footpoint
         trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
-       
         # need to determine where the intersection of field line coming back from north footpoint + mer is
-        # in relation to the meridional direction from the s/c location.
-        # create a function that interpolates along field line and gets field line location with minimum distance
-        # to meridional line from s/c  
+        # in relation to the meridional direction from the s/c location. 
         pos_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                   trace_south_plus_mer,
                                                                                   1, date, direction='meridional')        
-        # take half step from S/C along - meridional direction (may not reach field line trace)
+        # take half step from S/C along - meridional direction 
         minus_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                     trace_south_minus_mer,
                                                                                     -1, date, direction='meridional')
-        # scalar for the northern footpoint
+        # scalar for the northern footpoint electrif field based on distances
         full_mer_sc_step = pos_mer_step_size + minus_mer_step_size
-        north_ftpnt_zon_drifts_scalar.append((full_mer_sc_step) / 50.)
+        if e_field_scaling_only:
+            north_ftpnt_zon_drifts_scalar.append(full_mer_sc_step/50.)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_nft = igrf.igrf12syn(0, double_date, 1, nft_alt, np.deg2rad(90.-nft_glat), np.deg2rad(nft_glon))
+            north_ftpnt_zon_drifts_scalar.append(full_mer_sc_step*b_sc/(50.*b_nft))
+            
 
-
-        # calculate scalar for the equator
-        # get furthest point for both pos and minus traces, get distance between furthest points
-        # first find coarse max distance, then do high resolution trace to improve
-        # positive step
-        
+        # calculate zonal scalar to map ion drifts to the equator        
         # take step from s/c along + meridional direction
-        north_plus_mer = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='meridional')
-        # obtain full field line trace
-        trace_south_plus_mer = field_line_trace(north_plus_mer, double_date, -1., 0., steps=steps,
-                                                step_size=step_size, max_steps=max_steps)
-        trace_north_plus_mer = field_line_trace(north_plus_mer, double_date, 1., 0., steps=steps,
-                                                step_size=step_size, max_steps=max_steps)
-        trace_plus_mer =np.vstack((trace_north_plus_mer[::-1], trace_south_plus_mer))
-                                                
+        # then get the apex location
+        plus_mer = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='meridional')
+        plus_mer_lat, plus_mer_lon, plus_mer_alt = ecef_to_geodetic(plus_mer[0], plus_mer[1], plus_mer[2])
+        plus_apex_x, plus_apex_y, plus_apex_z, plus_apex_lat, plus_apex_lon, plus_apex_alt = \
+                    apex_location_info([plus_mer_lat], [plus_mer_lon], [plus_mer_alt], [date])
         # take half step from s/c along - meridional direction
-        north_minus_mer = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='meridional', scalar=-1)
-        # get full field line trace
-        trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 0., steps=steps,
-                                                 step_size=step_size, max_steps=max_steps)
-        trace_north_minus_mer = field_line_trace(north_minus_mer, double_date, 1., 0., steps=steps,
-                                                 step_size=step_size, max_steps=max_steps)
-        trace_minus_mer =np.vstack((trace_north_minus_mer[::-1], trace_south_minus_mer))
-        # get index of furthest point - the apex
-        max_plus_idx = np.argmax(np.sqrt((trace_plus_mer ** 2).sum(axis=1)))
-        # use this location as center of high resolution field line trace
-        init = trace_plus_mer[max_plus_idx, :]
-        high_res_trace = field_line_trace(init, date, 1., 0.,
-                                        step_size=0.01, max_steps=step_size/.01,
-                                        recurse=False)
-        high_res_trace2 = field_line_trace(init, date, -1., 0.,
-                                                step_size=0.01, max_steps=step_size/.01,
-                                                recurse=False)
-        # combine together
-        high_plus = np.vstack((high_res_trace[::-1], high_res_trace2))
-        # get max distance location from high res trace
-        max_plus_idx = np.argmax(np.sqrt((high_plus ** 2).sum(axis=1)))
-        
-        # negative step
-        max_minus_idx = np.argmax(np.sqrt((trace_minus_mer ** 2).sum(axis=1)))
-        init = trace_minus_mer[max_minus_idx, :]
-        high_res_trace = field_line_trace(init, date, 1., 0.,
-                                        step_size=0.01, max_steps=step_size/.01,
-                                        recurse=False)
-        high_res_trace2 = field_line_trace(init, date, -1., 0.,
-                                                step_size=0.01, max_steps=step_size/.01,
-                                                recurse=False)
-        # combine together
-        high_minus = np.vstack((high_res_trace[::-1], high_res_trace2))
-        max_minus_idx = np.argmax(np.sqrt((high_minus ** 2).sum(axis=1)))
-        
-        step_zon_apex = np.sqrt(
-            ((high_plus[max_plus_idx, :] - high_minus[max_minus_idx, :]) ** 2).sum())
-        eq_zon_drifts_scalar.append(50. / step_zon_apex)
-        
+        # then get the apex location
+        minus_mer = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='meridional', scalar=-1)
+        minus_mer_lat, minus_mer_lon, minus_mer_alt = ecef_to_geodetic(minus_mer[0], minus_mer[1], minus_mer[2])
+        minus_apex_x, minus_apex_y, minus_apex_z, minus_apex_lat, minus_apex_lon, minus_apex_alt = \
+                    apex_location_info([minus_mer_lat], [minus_mer_lon], [minus_mer_alt], [date])
+        # take difference in apex locations
+        step_zon_apex = np.sqrt( (plus_apex_x-minus_apex_x)**2 + (plus_apex_y-minus_apex_y)**2 + (plus_apex_z-minus_apex_z)**2) 
+        # compare difference in step sizes vs apex locations to get electric field scalar to the equator
+        if e_field_scaling_only:
+            eq_zon_drifts_scalar.append(50./step_zon_apex)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_eq = igrf.igrf12syn(0, double_date, 1, apex_alt, np.deg2rad(90.-apex_lat), np.deg2rad(apex_lon))
+            eq_zon_drifts_scalar.append(50.*b_sc/(step_zon_apex*b_eq))
+       
 
         # Now it is time to do the same calculation for the southern footpoint scalar
-        south_plus_mer = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='meridional')
+        south_plus_mer = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], 
+                                                    date, direction='meridional')
         # trace this back to northern footpoint
         trace_north_plus_mer = field_line_trace(south_plus_mer, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
         # take half step from southern along - meridional direction
-        # take step
-        south_minus_mer = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='meridional', scalar=-1)
+        south_minus_mer = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], 
+                                                     date, direction='meridional', scalar=-1)
         # trace this back to northern footpoint
         trace_north_minus_mer = field_line_trace(south_minus_mer, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
@@ -918,8 +933,13 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
                                                                                     trace_north_minus_mer,
                                                                                     -1, date, direction='meridional')
         # scalar for the southern footpoint
-        south_ftpnt_zon_drifts_scalar.append((pos_mer_step_size + minus_mer_step_size) / 50.)
-
+        if e_field_scaling_only:
+            south_ftpnt_zon_drifts_scalar.append((pos_mer_step_size + minus_mer_step_size)/ 50.)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_sft = igrf.igrf12syn(0, double_date, 1, sft_alt, np.deg2rad(90.-sft_glat), np.deg2rad(sft_glon))
+            south_ftpnt_zon_drifts_scalar.append((pos_mer_step_size + minus_mer_step_size)*b_sc/(50.*b_sft))
 
         #############
         # Time for scaling in the meridional drifts, the zonal electric field
@@ -930,109 +950,77 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         # trace this back to southern footpoint
         trace_south_plus_zon = field_line_trace(north_plus_zon, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
-
         # take half step from northern along - zonal direction
-        # take step
         north_minus_zon = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='zonal', scalar=-1)
         # trace this back to southern footpoint
         trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
-
+        # get intersections
         pos_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                     trace_south_plus_zon,
                                                                                     1, date, direction='zonal')
-
         minus_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_south_minus_zon,
                                                                                     -1, date, direction='zonal')
-
         # scalar for the northern footpoint
         full_zonal_sc_step = pos_zon_step_size + minus_zon_step_size
-        north_ftpnt_mer_drifts_scalar.append((full_zonal_sc_step) / 50.)
+        if e_field_scaling_only:
+            north_ftpnt_mer_drifts_scalar.append((full_zonal_sc_step) / 50.)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_nft = igrf.igrf12syn(0, double_date, 1, nft_alt, np.deg2rad(90.-nft_glat), np.deg2rad(nft_glon))
+            north_ftpnt_mer_drifts_scalar.append(full_zonal_sc_step*b_sc/(50.*b_nft))
+            
 
-        # calculate scalar for the equator
-        # get furthest point for both pos and minus traces, get distance between furthest points
-        # first find coarse max distance, then do high resolution trace to improve
-        # positive step
+        # calculate meridional scalar to map ion drifts to the equator        
         # take step from s/c along + zonal direction
-        north_plus_zon = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='zonal')
-        # obtain full field line trace
-        trace_south_plus_zon = field_line_trace(north_plus_zon, double_date, -1., 0., steps=steps,
-                                                step_size=step_size, max_steps=max_steps)
-        trace_north_plus_zon = field_line_trace(north_plus_zon, double_date, 1., 0., steps=steps,
-                                                step_size=step_size, max_steps=max_steps)
-        trace_plus_zon =np.vstack((trace_north_plus_zon[::-1], trace_south_plus_zon))
-                                                
+        # then get the apex location
+        plus_zon = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='zonal')
+        plus_zon_lat, plus_zon_lon, plus_zon_alt = ecef_to_geodetic(plus_zon[0], plus_zon[1], plus_zon[2])
+        plus_apex_x, plus_apex_y, plus_apex_z, plus_apex_lat, plus_apex_lon, plus_apex_alt = apex_location_info([plus_zon_lat], [plus_zon_lon], [plus_zon_alt], [date])
         # take half step from s/c along - zonal direction
-        north_minus_zon = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='zonal', scalar=-1)
-        # get full field line trace
-        trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 0., steps=steps,
-                                                 step_size=step_size, max_steps=max_steps)
-        trace_north_minus_zon = field_line_trace(north_minus_zon, double_date, 1., 0., steps=steps,
-                                                 step_size=step_size, max_steps=max_steps)
-        trace_minus_zon =np.vstack((trace_north_minus_zon[::-1], trace_south_minus_zon))
+        # then get the apex location
+        minus_zon = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='zonal', scalar=-1)
+        minus_zon_lat, minus_zon_lon, minus_zon_alt = ecef_to_geodetic(minus_zon[0], minus_zon[1], minus_zon[2])
+        minus_apex_x, minus_apex_y, minus_apex_z, minus_apex_lat, minus_apex_lon, minus_apex_alt = apex_location_info([minus_zon_lat], [minus_zon_lon], [minus_zon_alt], [date])
+        # compare difference in step sizes vs apex locations to get electric field scalar to the equator
+        step_zon_apex = np.sqrt( (plus_apex_x-minus_apex_x)**2 + (plus_apex_y-minus_apex_y)**2 + (plus_apex_z-minus_apex_z)**2) 
 
-
-        max_plus_idx = np.argmax(np.sqrt((trace_plus_zon ** 2).sum(axis=1)))
-        init = trace_plus_zon[max_plus_idx, :]
-        high_res_trace = field_line_trace(init, date, 1., 0.,
-                                        step_size=0.01, max_steps=1000,
-                                        recurse=False)
-        high_res_trace2 = field_line_trace(init, date, -1., 0.,
-                                                step_size=0.01, max_steps=step_size/.01,
-                                                recurse=False)
-        # combine together
-        high_plus = np.vstack((high_res_trace[::-1], high_res_trace2))
-        max_plus_idx = np.argmax(np.sqrt((high_plus ** 2).sum(axis=1)))
-        
-        # negative step
-        max_minus_idx = np.argmax(np.sqrt((trace_minus_zon ** 2).sum(axis=1)))
-        init = trace_minus_zon[max_minus_idx, :]
-        high_res_trace = field_line_trace(init, date, 1., 0.,
-                                        step_size=0.01, max_steps=1000,
-                                        recurse=False)
-        high_res_trace2 = field_line_trace(init, date, -1., 0.,
-                                                step_size=0.01, max_steps=step_size/.01,
-                                                recurse=False)
-        # combine together
-        high_minus = np.vstack((high_res_trace[::-1], high_res_trace2))
-        max_minus_idx = np.argmax(np.sqrt((high_minus ** 2).sum(axis=1)))
-        
-        step_zon_apex = np.sqrt(
-            ((high_plus[max_plus_idx, :] - high_minus[max_minus_idx, :]) ** 2).sum())
-        eq_mer_drifts_scalar.append(50. / step_zon_apex)
-
+        if e_field_scaling_only:
+            eq_mer_drifts_scalar.append(50./step_zon_apex)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_eq = igrf.igrf12syn(0, double_date, 1, apex_alt, np.deg2rad(90.-apex_lat), np.deg2rad(apex_lon))
+            eq_mer_drifts_scalar.append(50.*b_sc/(step_zon_apex*b_eq))
 
         # Now it is time to do the same calculation for the southern footpoint
-        # scalar
-        # take step
         south_plus_zon = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='zonal')
         # trace this back to northern footpoint
         trace_north_plus_zon = field_line_trace(south_plus_zon, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
-
         # take half step from southern along - zonal direction
-        # take step
         south_minus_zon = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='zonal', scalar=-1)
         # trace this back to northern footpoint
         trace_north_minus_zon = field_line_trace(south_minus_zon, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
-
         # take half step from S/C along + zonal direction
         pos_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,  
                                                                                     trace_north_plus_zon,
                                                                                     1, date, direction='zonal')
-
         # take half step from S/C along - zonal direction
         minus_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_north_minus_zon,
                                                                                     -1, date, direction='zonal')
-
         # scalar for the southern footpoint
-        south_ftpnt_mer_drifts_scalar.append((pos_zon_step_size + minus_zon_step_size) / 50.)
-
-
-        # print north_ftpnt_zon_drifts_scalar, south_ftpnt_zon_drifts_scalar, north_ftpnt_mer_drifts_scalar, south_ftpnt_mer_drifts_scalar, eq_zon_drifts_scalar, eq_mer_drifts_scalar
+        if e_field_scaling_only:
+            south_ftpnt_mer_drifts_scalar.append((pos_zon_step_size + minus_zon_step_size) / 50.)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_sft = igrf.igrf12syn(0, double_date, 1, sft_alt, np.deg2rad(90.-sft_glat), np.deg2rad(sft_glon))
+            south_ftpnt_mer_drifts_scalar.append((pos_zon_step_size + minus_zon_step_size)*b_sc/(50.*b_sft))
 
     out = {}
     out['north_zonal_drifts_scalar'] = north_ftpnt_zon_drifts_scalar
