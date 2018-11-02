@@ -499,15 +499,15 @@ class TestCore():
         on_travis = os.environ.get('ONTRAVIS') == 'True'
         
         if not on_travis:
-            delta = 2.5
-            p_longs = np.arange(0.,360.,12.)
+            delta = 2.5/10.
+            p_longs = np.arange(0.,360.,12./10.)
         else:
             # reduced resolution
             delta = 25.
             p_longs = np.arange(0.,360.,120.)
             
         p_lats = np.arange(-25., 25.+delta, delta)
-        p_alt = 550.
+        p_alt = 120.
         
         apex_lat = np.zeros((len(p_lats), len(p_longs)+1))
         apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
@@ -535,7 +535,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Apex Latitude (Degrees)')
+            plt.title('Apex Latitude (Degrees) at 120 km')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_lat.png') 
@@ -546,18 +546,18 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Apex Longitude (Degrees)')
+            plt.title('Apex Longitude (Degrees) at 120 km')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_lon.png') 
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(apex_alt, origin='lower')
+            plt.imshow(np.log10(apex_alt), origin='lower')
             plt.colorbar()
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Apex Altitude (km)')
+            plt.title('Log Apex Altitude (km) at 120 km')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_alt.png') 
@@ -571,8 +571,8 @@ class TestCore():
         on_travis = os.environ.get('ONTRAVIS') == 'True'
         
         if not on_travis:
-            delta = 2.5
-            p_longs = np.arange(0.,360.,12.)
+            delta = 2.5/10.
+            p_longs = np.arange(0.,360.,12./10.)
         else:
             # reduced resolution
             delta = 25.
@@ -810,7 +810,7 @@ class TestCore():
             plt.title('Meridional Electric Field Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_mer_Field.png') 
+            plt.savefig('south_mer_field.png') 
             plt.close()
 
             fig = plt.figure()
