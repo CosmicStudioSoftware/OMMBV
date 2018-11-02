@@ -377,7 +377,6 @@ def field_line_trace(init, date, direction, height, steps=None,
     if steps is None:
         steps = np.arange(max_steps)
     if not isinstance(date, float):
-        # print (type(date))
         # recast from datetime to float, as required by IGRF12 code
         doy = (date - datetime.datetime(date.year,1,1)).days
         # number of days in year, works for leap years
@@ -415,9 +414,9 @@ def field_line_trace(init, date, direction, height, steps=None,
     else:
         # return results if we make it to the target altitude
         # filter points to terminate at point closest to target height
-        x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2]) 
-        idx = np.argmin(np.abs(check_height - z)) 
-        return trace_north[:idx+1,:]
+        # x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2]) 
+        # idx = np.argmin(np.abs(check_height - z)) 
+        return trace_north #[:idx+1,:]
     
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           steps=None, max_steps=10000, step_size=10.,
@@ -558,26 +557,75 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 
 def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, direction=None,
-                                                       unit_steps=1.):    
+                                                       unit_steps=1.):   
+    """Starting at pos, method steps along magnetic unit vector direction towards the supplied 
+    field line trace. Determines the distance of closest approach to field line.
+    
+    Routine is used when calculting the mapping of electric fields along magnetic field 
+    lines. Voltage remains constant along the field but the distance between field lines does not.
+    This routine may be used to form the last leg when trying to trace out a closed field line loop.
+    
+    Routine will create a high resolution field line trace (.01 km step size) near the location
+    of closest approach to better determine where the intersection occurs. This centered segment is 
+    40 km long, thus the input field_line trace should have a maximum step size of 20 km.
+    
+    Parameters
+    ----------
+    pos : array-like
+        X, Y, and Z ECEF locations to start from
+    field_line : array-like (:,3)
+        X, Y, and Z ECEF locations of field line trace, produced by the
+        field_line_trace method.
+    sign : int
+        if 1, move along positive unit vector. Negwtive direction for -1.
+    time : datetime or float
+        Date to perform tracing on (year + day/365 + hours/24. + etc.)
+        Accounts for leap year if datetime provided.
+    direction : string ('meridional', 'zonal', or 'aligned')
+        Which unit vector direction to move slong when trying to intersect
+        with supplied field line trace. See step_along_mag_unit_vector method
+        for more.
+    unit_steps : int
+        Number of substeps to take along direction, passed to step_along_mag_unit_vector
+        method.
+    
+    Returns
+    -------
+    (float, array, float)
+        Total distance taken along vector direction; the position after taking the step [x, y, z] in ECEF;
+        distance of closest approach from input pos towards the input field line trace.
+         
+    """ 
+                                                         
     # simple things first
     # take distance for all points from test
     # then keep search down, moving along projection line
 
+    # work on a copy, probably not needed
     field_copy = field_line.copy()
+    # set a high last minimum distance to ensure first loop does better than this
     last_min_dist = 2500000.
+    # scalar is the distance along unit vector line that we are taking
     scalar = 0.
+    # repeat boolean
     repeat=True
+    # first run boolean
     first=True
+    # factor is a divisor applied to the remaining distance between point and field line
+    # I slowly take steps towards the field line and I don't want to overshoot
+    # each time my minimum distance increases, I step back, increase factor, reducing
+    # my next step size, then I try again
     factor = 1
     while repeat:
+        # take a total step along magnetic unit vector
         pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
                                               num_steps=unit_steps, step_size=scalar/unit_steps) 
-        # pos_step = pos + scalar * ux + scalar * uy + scalar * uz
         # find closest point along + field line trace
         diff = field_copy - pos_step
         diff_mag = np.sqrt((diff ** 2).sum(axis=1))
         min_idx = np.argmin(diff_mag)
         if first:
+            # first time in while loop, create some information
             # make a high resolution field line trace around closest distance
             init = field_copy[min_idx,:]
             high_res_trace = field_line_trace(init, time, 1., 0.,
@@ -586,17 +634,19 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
             high_res_trace2 = field_line_trace(init, time, -1., 0.,
                                                     step_size=0.01, max_steps=2000,
                                                     recurse=False)
-            # combine together
+            # combine together for a complete trace
             field_copy = np.vstack((high_res_trace[::-1], high_res_trace2))
-            # field_copy = field_copy[min_idx-100:min_idx+100, :]
+            # difference with position
             diff = field_copy - pos_step
             diff_mag = np.sqrt((diff ** 2).sum(axis=1))
+            # find closest once
             min_idx = np.argmin(diff_mag)
             first = False
-        # calculate distance of that point (from S/C location, old comment, doesn't make sense though)
-        # min_dist = (field_copy[min_idx, :] - pos_step) ** 2
+        # pull out distance of closest point 
         min_dist = diff_mag[min_idx]
-        # print (min_dist, last_min_dist)
+        # check how the solution is doing
+        # if well, add more distance to the total step and recheck if we get closer
+        # if worse, step back and try a smaller step
         if min_dist > last_min_dist:
             # last step we took made the solution worse
             if factor > 4:
@@ -610,17 +660,16 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
             else:
                 # undo increment to last total distance
                 scalar = scalar - sign*last_min_dist/(2*factor)
+                # increase the divisor used to reduce the distance actually stepped per increment
                 factor = factor + 1.
                 # try a new increment to total distance
                 scalar = scalar + sign*last_min_dist/(2*factor)
         else:
             # increment scalar, but only by a fraction
             scalar = scalar + sign*min_dist/(2*factor)
-            # print ('scalar ', scalar, min_dist, last_min_dist, pos_step, field_copy[min_idx, :], min_idx)
+            # we have a new standard to judge against, set it
             last_min_dist = min_dist.copy()
-            # field_copy = field_copy[min_idx-1000:min_idx+1000, :]
 
-    # print (scalar/sign, pos_step, min_dist)
     # return magnitude of step
     return scalar/sign, pos_step, min_dist
 
@@ -671,7 +720,6 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., step
         # x, y, z in ECEF
         # convert to geodetic
         lat, lon, alt = ecef_to_geodetic(x, y, z)
-
         # get unit vector directions
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef([lat], [lon], [alt], [date],
                                                         steps=field_steps, max_steps=field_max_steps, 
@@ -712,7 +760,12 @@ def apex_location_info(glats, glons, alts, dates):
     dates : list-like of datetimes
         Date and time for determination of scalars
 
-
+    Returns
+    -------
+    (float, float, float, float, float, float)
+        ECEF X, ECEF Y, ECEF Z, Geodetic Latitude (degrees), Geodetic Longitude (degrees), 
+        Geodetic Altitude (km)
+        
     """
 
     # use input location and convert to ECEF
