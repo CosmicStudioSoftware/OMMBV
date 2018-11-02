@@ -1,7 +1,7 @@
 from . import *
 
 def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size=10.,
-                                    method='auto', ref_height=120.):
+                                    ref_height=120.):
     """Adds unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -14,13 +14,6 @@ def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size
         Maximum number of steps allowed for field line tracing
     step_size : float
         Maximum step size (km) allowed when field line tracing
-    method : str ('auto' 'foot_field', 'cross_foot')
-        Delineates between different methods of determining the zonal vector
-        'cross_foot' uses the cross product of vectors pointing from location 
-        to the footpoints in both hemispheres. 'field_foot' uses the cross
-        product of vectors pointing along the field and one pointing to
-        the field line footpoint. 'auto' does both calculations but uses 
-        whichever method produces the larger unit cross product.
     ref_height : float
         Altitude used as cutoff for labeling a field line location a footpoint
         
@@ -38,7 +31,7 @@ def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size
     # add unit vectors for magnetic drifts in ecef coordinates
     zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(inst['latitude'], 
                                                             inst['longitude'], inst['altitude'], inst.data.index,
-                                                            steps=steps, max_steps=max_steps, step_size=step_size, method=method, ref_height=ref_height)
+                                                            steps=steps, max_steps=max_steps, step_size=step_size, ref_height=ref_height)
     
     inst['unit_zon_ecef_x'] = zvx
     inst['unit_zon_ecef_y'] = zvy
@@ -175,8 +168,7 @@ def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size
     return
 
 
-def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.,
-                               method='auto'):
+def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
     """Add unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in S/C coordinates.
@@ -195,7 +187,6 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.,
         Maximum number of steps taken for field line integration
     step_size : float
         Maximum step size (km) allowed for field line tracer
-    method : see add_mag_drift_unit_vectors_ecef
     
     Returns
     -------
@@ -207,8 +198,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.,
     """
 
     # vectors are returned in geo/ecef coordinate system
-    add_mag_drift_unit_vectors_ecef(inst, max_steps=max_steps, step_size=step_size,
-                                    method=method)
+    add_mag_drift_unit_vectors_ecef(inst, max_steps=max_steps, step_size=step_size)
     # convert them to S/C using transformation supplied by OA
     inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = project_ecef_vector_onto_basis(inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
                                                                                                 inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
