@@ -414,7 +414,10 @@ def field_line_trace(init, date, direction, height, steps=None,
         return np.vstack((trace_north, trace_north1))
     else:
         # return results if we make it to the target altitude
-        return trace_north
+        # filter points to terminate at point closest to target height
+        x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2]) 
+        idx = np.argmin(np.abs(check_height - z)) 
+        return trace_north[:idx+1,:]
     
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           steps=None, max_steps=10000, step_size=10.,
