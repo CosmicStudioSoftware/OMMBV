@@ -400,7 +400,7 @@ def field_line_trace(init, date, direction, height, steps=None,
         check_height = height
     # fortran integration gets close to target height        
     if recurse & (z > check_height*1.000001):
-        if (recursive_loop_count < 100):
+        if (recursive_loop_count < 1000):
             # When we have not reached the reference height, call field_line_trace 
             # again by taking check value as init - recursive call
             recursive_loop_count = recursive_loop_count + 1
