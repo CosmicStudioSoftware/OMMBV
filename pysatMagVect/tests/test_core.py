@@ -64,6 +64,18 @@ omni_list = [[550. , 20.00   , 0.00 , 29.77,  359.31,  -9.04 ,   3.09],
    [550.  ,20.00  ,352.50  ,30.17  ,351.27 , -9.90 , 356.93]]
 omni = pds.DataFrame(omni_list, columns=['p_alt', 'p_lat', 'p_long', 'n_lat', 'n_long', 's_lat', 's_long'])
 
+def gen_data_fixed_alt(alt):
+    import itertools
+    # generate test data set
+    long_dim = np.arange(0., 360.1, .1)
+    lat_dim = np.arange(-90., 90.1, .1)
+    alt_dim = alt
+    locs = np.array(list(itertools.product(long_dim, lat_dim)))
+    # pull out lats and longs
+    lats = locs[:,1]
+    longs = locs[:,0]
+    alts = longs*0 + alt_dim
+    return lats, longs, alts 
 
 class TestCore():
 
@@ -135,18 +147,18 @@ class TestCore():
         
                 
     def test_geodetic_to_ecef_to_geodetic(self):
-            
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)
         lat, elong, alt = pymv.ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
         
         idx, = np.where(elong < 0)
         elong[idx] += 360.
 
-        d_lat = lat - omni['p_lat']
-        d_long = elong - omni['p_long']
-        d_alt = alt - omni['p_alt']
+        d_lat = lat - lats
+        d_long = elong - longs
+        d_alt = alt - alts
         
         assert np.all(np.abs(d_lat) < 1.E-5)
         assert np.all(np.abs(d_long) < 1.E-5)
@@ -154,9 +166,10 @@ class TestCore():
 
     def test_geodetic_to_ecef_to_geodetic_via_different_methods(self):
             
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)
         methods = ['closed', 'iterative']
         flags = []
         for method in methods:
@@ -166,9 +179,9 @@ class TestCore():
             idx, = np.where(elong < 0)
             elong[idx] += 360.
     
-            d_lat = lat - omni['p_lat']
-            d_long = elong - omni['p_long']
-            d_alt = alt - omni['p_alt']
+            d_lat = lat - lats
+            d_long = elong - longs
+            d_alt = alt - alts
             
             flag1 = np.all(np.abs(d_lat) < 1.E-5)
             flag2 = np.all(np.abs(d_long) < 1.E-5)
@@ -179,10 +192,10 @@ class TestCore():
 
 
     def test_geodetic_to_ecef_to_geocentric_to_ecef_to_geodetic(self):
-            
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)            
         geo_lat, geo_long, geo_alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
 
         ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
@@ -192,9 +205,9 @@ class TestCore():
         idx, = np.where(elong < 0)
         elong[idx] += 360.
 
-        d_lat = lat - omni['p_lat']
-        d_long = elong - omni['p_long']
-        d_alt = alt - omni['p_alt']
+        d_lat = lat - lats
+        d_long = elong - longs
+        d_alt = alt - alts
         
         flag1 = np.all(np.abs(d_lat) < 1.E-5)
         flag2 = np.all(np.abs(d_long) < 1.E-5)
@@ -204,17 +217,18 @@ class TestCore():
 
     def test_geocentric_to_ecef_to_geocentric(self):
             
-        ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)
         lat, elong, alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
 
         idx, = np.where(elong < 0)
         elong[idx] += 360.
         
-        d_lat = lat - omni['p_lat']
-        d_long = elong - omni['p_long']
-        d_alt = alt - omni['p_alt']
+        d_lat = lat - lats
+        d_long = elong - longs
+        d_alt = alt - alts
         
         flag1 = np.all(np.abs(d_lat) < 1.E-5)
         flag2 = np.all(np.abs(d_long) < 1.E-5)
@@ -1066,8 +1080,8 @@ class TestCore():
         vx = 0.9
         vy = 0.1
         vz = np.sqrt(1. - vx**2+vy**2)
-
-        for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        for lat, lon, alt in zip(lats, longs, alts):
             vxx, vyy, vzz = pymv.ecef_to_enu_vector(vx, vy, vz, lat, lon)
             vxx, vyy, vzz = pymv.enu_to_ecef_vector(vxx, vyy, vzz, lat, lon)
             asseq(vx, vxx, 9)
@@ -1079,8 +1093,8 @@ class TestCore():
         vx = 0.9
         vy = 0.1
         vz = np.sqrt(1. - vx**2+vy**2)
-
-        for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        for lat, lon, alt in zip(lats, longs, alts):
             vxx, vyy, vzz = pymv.enu_to_ecef_vector(vx, vy, vz, lat, lon)
             vxx, vyy, vzz = pymv.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
             asseq(vx, vxx, 9)
@@ -1093,8 +1107,8 @@ class TestCore():
         vy = 0.1
         vz = np.sqrt(1. - vx**2+vy**2)
         vz = -vz
-
-        for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        for lat, lon, alt in zip(lats, longs, alts):
             #print(vx, vy, vz, lat, lon)
             #pdb.set_trace()
             # input here is co-latitude, not latitude
@@ -1116,12 +1130,12 @@ class TestCore():
 
 
     def test_igrf_ecef_to_geodetic_back_to_ecef(self):
-        
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
         for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x,ecf_y,
-                           ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
+                           ecf_z, lats, longs, alts):
             pos = np.array([ecef_x, ecef_y, ecef_z])
             lat, elong, alt = igrf.ecef_to_geodetic(pos)
             lat = np.rad2deg(lat)
@@ -1142,12 +1156,12 @@ class TestCore():
             
         
     def test_igrf_ecef_to_geographic_with_colatitude(self):
-        
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
         for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x,ecf_y,
-                           ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
+                           ecf_z, lats, longs, alts):
             pos = np.array([ecef_x, ecef_y, ecef_z])
             
             colat, lon, r = igrf.ecef_to_colat_long_r(pos)
