@@ -69,6 +69,10 @@ def gen_data_fixed_alt(alt):
     # generate test data set
     long_dim = np.arange(0., 361., 30.)
     lat_dim = np.arange(-90., 91., 15.)
+    idx, = np.where(lat_dim == 90.)
+    lat_dim[idx] = 89.999
+    idx, = np.where(lat_dim == -90.)
+    lat_dim[idx] = -89.999
     alt_dim = alt
     locs = np.array(list(itertools.product(long_dim, lat_dim)))
     # pull out lats and longs
@@ -183,9 +187,9 @@ class TestCore():
             d_long = elong - longs
             d_alt = alt - alts
             
-            assert np.all(np.abs(d_lat) < 1.E-7)
-            assert np.all(np.abs(d_long) < 1.E-7)
-            assert np.all(np.abs(d_alt) < 1.E-7)            
+            assert np.all(np.abs(d_lat) < 1.E-5)
+            assert np.all(np.abs(d_long) < 1.E-5)
+            assert np.all(np.abs(d_alt) < 1.E-5)            
 
 
     def test_geodetic_to_ecef_to_geocentric_to_ecef_to_geodetic(self):
@@ -195,9 +199,9 @@ class TestCore():
                                                   alts)            
         geo_lat, geo_long, geo_alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
 
-        ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
+        ecfs_x,ecfs_y,ecfs_z = pymv.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
 
-        lat, elong, alt = pymv.ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
+        lat, elong, alt = pymv.ecef_to_geodetic(ecfs_x, ecfs_y, ecfs_z)
         
         idx, = np.where(elong < 0)
         elong[idx] += 360.
@@ -206,9 +210,12 @@ class TestCore():
         d_long = elong - longs
         d_alt = alt - alts
         
-        assert np.all(np.abs(d_lat) < 1.E-7)
-        assert np.all(np.abs(d_long) < 1.E-7)
-        assert np.all(np.abs(d_alt) < 1.E-7)
+        assert np.all(np.abs(d_lat) < 1.E-5)
+        assert np.all(np.abs(d_long) < 1.E-5)
+        assert np.all(np.abs(d_alt) < 1.E-5)
+        assert np.all(np.abs(ecf_x-ecfs_x) < 1.E-5)
+        assert np.all(np.abs(ecf_y-ecfs_y) < 1.E-5)
+        assert np.all(np.abs(ecf_z-ecfs_z) < 1.E-5)
 
 
     def test_geocentric_to_ecef_to_geocentric(self):
@@ -226,9 +233,9 @@ class TestCore():
         d_long = elong - longs
         d_alt = alt - alts
         
-        assert np.all(np.abs(d_lat) < 1.E-7)
-        assert np.all(np.abs(d_long) < 1.E-7)
-        assert np.all(np.abs(d_alt) < 1.E-7)
+        assert np.all(np.abs(d_lat) < 1.E-5)
+        assert np.all(np.abs(d_long) < 1.E-5)
+        assert np.all(np.abs(d_alt) < 1.E-5)
 
 
 
