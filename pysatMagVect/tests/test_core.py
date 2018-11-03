@@ -390,9 +390,9 @@ class TestCore():
                                                   longs,
                                                   alts)        
         # step size to be tried
-        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5., 5., 5.]) #, .005, .003, .001])
+        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5.])
         # max number of steps (fixed)
-        max_steps_goal = np.array([1000000., 100000., 10000., 3000., 1000., 300., 100., 30., 10., 3.])
+        max_steps_goal = np.array([100000., 30000., 10000., 3000., 1000., 300., 100., 30.])
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
@@ -441,7 +441,7 @@ class TestCore():
         # step size to be tried
         steps_goal = np.array([.01, .05, .1, .5, 1., 5., 10., 50., 100., 500.]) 
         # max number of steps (fixed)
-        max_steps_goal = np.array([1000., 1000., 1000., 1000., 1000., 1000., 1000., 1000., 1000., 1000.])
+        max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
