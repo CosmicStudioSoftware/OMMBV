@@ -183,12 +183,9 @@ class TestCore():
             d_long = elong - longs
             d_alt = alt - alts
             
-            flag1 = np.all(np.abs(d_lat) < 1.E-5)
-            flag2 = np.all(np.abs(d_long) < 1.E-5)
-            flag3 = np.all(np.abs(d_alt) < 1.E-5)
-            flags.extend([flag1, flag2, flag3])
-            
-        assert np.all(flags)
+            assert np.all(np.abs(d_lat) < 1.E-7)
+            assert np.all(np.abs(d_long) < 1.E-7)
+            assert np.all(np.abs(d_alt) < 1.E-7)            
 
 
     def test_geodetic_to_ecef_to_geocentric_to_ecef_to_geodetic(self):
@@ -209,16 +206,15 @@ class TestCore():
         d_long = elong - longs
         d_alt = alt - alts
         
-        flag1 = np.all(np.abs(d_lat) < 1.E-5)
-        flag2 = np.all(np.abs(d_long) < 1.E-5)
-        flag3 = np.all(np.abs(d_alt) < 1.E-5)
-        assert flag1 & flag2 & flag3
+        assert np.all(np.abs(d_lat) < 1.E-7)
+        assert np.all(np.abs(d_long) < 1.E-7)
+        assert np.all(np.abs(d_alt) < 1.E-7)
 
 
     def test_geocentric_to_ecef_to_geocentric(self):
             
         lats, longs, alts = gen_data_fixed_alt(550.)        
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+        ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(lats, 
                                                   longs,
                                                   alts)
         lat, elong, alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
@@ -230,10 +226,10 @@ class TestCore():
         d_long = elong - longs
         d_alt = alt - alts
         
-        flag1 = np.all(np.abs(d_lat) < 1.E-5)
-        flag2 = np.all(np.abs(d_long) < 1.E-5)
-        flag3 = np.all(np.abs(d_alt) < 1.E-5)
-        assert flag1 & flag2 & flag3
+        assert np.all(np.abs(d_lat) < 1.E-7)
+        assert np.all(np.abs(d_long) < 1.E-7)
+        assert np.all(np.abs(d_alt) < 1.E-7)
+
 
 
     def test_tracing_accuracy(self):
