@@ -543,7 +543,7 @@ class TestCore():
         ytickvals = ['-25', '-12.5', '0', '12.5', '25']
         xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
         
-        if not on_travis:
+        try:
             fig = plt.figure()
             plt.imshow(apex_lat, origin='lower')
             plt.colorbar()
@@ -576,7 +576,8 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_alt.png') 
             plt.close()
-  
+        except:
+            pass
       
     def test_unit_vector_component_plots(self):
         import matplotlib.pyplot as plt
@@ -624,7 +625,7 @@ class TestCore():
         ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
         xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
         
-        if not on_travis:
+        try:
             fig = plt.figure()
             plt.imshow(zvx, origin='lower')
             plt.colorbar()
@@ -723,7 +724,8 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('mer_up.png') 
             plt.close()
-    
+        except:
+            pass
     
     def test_geomag_efield_scalars_plots(self):
         import matplotlib.pyplot as plt
@@ -771,7 +773,7 @@ class TestCore():
         xtickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
         ytickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
         
-        if not on_travis:
+        try:
             fig = plt.figure()
             plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
@@ -837,7 +839,8 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('south_zon_field.png') 
             plt.close()
-
+        except:
+            pass
                 
     def test_geomag_ion_drift_scalars_plots(self):
         import matplotlib.pyplot as plt
@@ -886,7 +889,7 @@ class TestCore():
         xtickvals = ['-25', '-12.5', '0', '12.5', '25']
         ytickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
         
-        if not on_travis:
+        try:
             fig = plt.figure()
             plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
@@ -952,7 +955,9 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('south_mer_drift.png') 
             plt.close()
-                
+        except:
+            pass
+        
     def test_basic_ecef_to_enu_rotations(self):
         # test basic transformations first
         # vector pointing along ecef y at 0, 0 is east
