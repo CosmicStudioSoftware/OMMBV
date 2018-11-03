@@ -81,6 +81,24 @@ def gen_data_fixed_alt(alt):
     alts = longs*0 + alt_dim
     return lats, longs, alts 
 
+def gen_trace_data_fixed_alt(alt):
+    import itertools
+    # generate test data set
+    long_dim = np.arange(0., 361., 30.)
+    lat_dim = np.arange(-50., 51., 10.)
+    idx, = np.where(lat_dim == 90.)
+    lat_dim[idx] = 89.999
+    idx, = np.where(lat_dim == -90.)
+    lat_dim[idx] = -89.999
+    alt_dim = alt
+    locs = np.array(list(itertools.product(long_dim, lat_dim)))
+    # pull out lats and longs
+    lats = locs[:,1]
+    longs = locs[:,0]
+    alts = longs*0 + alt_dim
+    return lats, longs, alts 
+
+
 class TestCore():
 
     def __init__(self):
@@ -271,7 +289,7 @@ class TestCore():
 #         except:
 #             pass
 
-        lats, longs, alts = gen_data_fixed_alt(550.)        
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
                                                   longs,
                                                   alts)        
@@ -352,7 +370,7 @@ class TestCore():
 #             pass
 
 
-        lats, longs, alts = gen_data_fixed_alt(550.)        
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
                                                   longs,
                                                   alts)        
@@ -401,7 +419,7 @@ class TestCore():
             pass            
 
     def test_tracing_accuracy_w_recursion_step_size(self):
-        lats, longs, alts = gen_data_fixed_alt(550.)        
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
                                                   longs,
                                                   alts)        
