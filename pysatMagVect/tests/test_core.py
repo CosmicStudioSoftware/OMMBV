@@ -66,7 +66,15 @@ omni = pds.DataFrame(omni_list, columns=['p_alt', 'p_lat', 'p_long', 'n_lat', 'n
 
 def gen_data_fixed_alt(alt):
     import itertools
+    import os
     # generate test data set
+    on_travis = os.environ.get('ONTRAVIS') == 'True'
+    if on_travis:
+        long_dim = np.arange(0., 361., 80.)
+        lat_dim = np.arange(-50., 51., 25.)
+    else:
+        long_dim = np.arange(0., 361., 40.)
+        lat_dim = np.arange(-50., 51., 12.5)
     long_dim = np.arange(0., 361., 30.)
     lat_dim = np.arange(-90., 91., 15.)
     idx, = np.where(lat_dim == 90.)
@@ -83,9 +91,16 @@ def gen_data_fixed_alt(alt):
 
 def gen_trace_data_fixed_alt(alt):
     import itertools
+    import os
     # generate test data set
-    long_dim = np.arange(0., 361., 40.)
-    lat_dim = np.arange(-50., 51., 12.5)
+    on_travis = os.environ.get('ONTRAVIS') == 'True'
+    if on_travis:
+        long_dim = np.arange(0., 361., 80.)
+        lat_dim = np.arange(-50., 51., 25.)
+    else:
+        long_dim = np.arange(0., 361., 40.)
+        lat_dim = np.arange(-50., 51., 12.5)
+
     idx, = np.where(lat_dim == 90.)
     lat_dim[idx] = 89.999
     idx, = np.where(lat_dim == -90.)
@@ -120,6 +135,7 @@ class TestCore():
         trace_s = []
         date = datetime.datetime(2000, 1, 1)
         for x,y,z in zip(ecf_x,ecf_y,ecf_z):
+            # trace north and south, take last points
             trace_n.append(pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
             trace_s.append(pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
         trace_n = pds.DataFrame(trace_n, columns = ['x', 'y', 'z'])
@@ -193,7 +209,6 @@ class TestCore():
                                                   longs,
                                                   alts)
         methods = ['closed', 'iterative']
-        flags = []
         for method in methods:
             lat, elong, alt = pymv.ecef_to_geodetic(ecf_x, ecf_y, ecf_z,
                                                   method=method)
