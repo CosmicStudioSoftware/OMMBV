@@ -441,7 +441,7 @@ class TestCore():
         # step size to be tried
         steps_goal = np.array([.01, .05, .1, .5, 1., 5., 10., 50., 100., 500.]) 
         # max number of steps (fixed)
-        max_steps_goal = np.array([100., 100., 100., 100., 100., 100., 100., 100., 100., 100.])
+        max_steps_goal = np.array([1000., 1000., 1000., 1000., 1000., 1000., 1000., 1000., 1000., 1000.])
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
