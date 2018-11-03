@@ -84,8 +84,8 @@ def gen_data_fixed_alt(alt):
 def gen_trace_data_fixed_alt(alt):
     import itertools
     # generate test data set
-    long_dim = np.arange(0., 361., 30.)
-    lat_dim = np.arange(-50., 51., 10.)
+    long_dim = np.arange(0., 361., 40.)
+    lat_dim = np.arange(-50., 51., 12.5)
     idx, = np.where(lat_dim == 90.)
     lat_dim[idx] = 89.999
     idx, = np.where(lat_dim == -90.)
