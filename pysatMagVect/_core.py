@@ -337,7 +337,7 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 
 def field_line_trace(init, date, direction, height, steps=None,
-                     max_steps=1E5, step_size=10., recursive_loop_count=None):
+                     max_steps=1E5, step_size=10., recursive_loop_count=None, recurse=True):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
     
     Parameters
@@ -377,7 +377,6 @@ def field_line_trace(init, date, direction, height, steps=None,
     if steps is None:
         steps = np.arange(max_steps)
     if not isinstance(date, float):
-        # print (type(date))
         # recast from datetime to float, as required by IGRF12 code
         doy = (date - datetime.datetime(date.year,1,1)).days
         # number of days in year, works for leap years
@@ -389,8 +388,8 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          args=(date, step_size, direction, height),
                                          full_output=False,
                                          printmessg=False,
-                                         ixpr=False,
-                                         mxstep=500)
+                                         ixpr=False) #,
+                                         # mxstep=500)
     
     # check that we reached final altitude
     check = trace_north[-1, :]
@@ -400,39 +399,28 @@ def field_line_trace(init, date, direction, height, steps=None,
     else:
         check_height = height
     # fortran integration gets close to target height        
-    if z > check_height*1.000001:
-        # raise RuntimeError("Couldn't reach target altitude in single iteration")
-        # print ('checking ', z, check_height)
-        if (recursive_loop_count < 100):
+    if recurse & (z > check_height*1.000001):
+        if (recursive_loop_count < 1000):
             # When we have not reached the reference height, call field_line_trace 
             # again by taking check value as init - recursive call
-            # A way to avoid maximum recursion depth reached error - 
-            # can keep count of the number of loops and if the loop count reaches 500,
-            # then return the function with the value. And call the same function again iteratively 
-            # till footpoint location is reached. This also didn't help. Can be tested again
-            # print ('checking ', z, check_height)
             recursive_loop_count = recursive_loop_count + 1
             trace_north1 = field_line_trace(check, date, direction, height,
                                                 step_size=step_size, max_steps=max_steps,
                                                 recursive_loop_count=recursive_loop_count,
                                                 steps=steps)
-            # return trace_north
-        #     raise RuntimeError("Didn't reach target altitude")
         else:
             raise RuntimeError("After 100 iterations couldn't reach target altitude")
-        # raise RuntimeError("Didn't reach target altitude")
-        # xx, yy, zz = ecef_to_geodetic(*trace_north[-1,:]) 
-        # print ('recurse ', z, trace_north[-1,:], xx, yy, zz, recursive_loop_count)
         return np.vstack((trace_north, trace_north1))
     else:
         # return results if we make it to the target altitude
-        # xx, yy, zz = ecef_to_geodetic(*trace_north[-1,:])
-        # print ('normal  ', z, trace_north[-1,:], xx, yy, zz, recursive_loop_count)
-        return trace_north
+        # filter points to terminate at point closest to target height
+        # x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2]) 
+        # idx = np.argmin(np.abs(check_height - z)) 
+        return trace_north #[:idx+1,:]
     
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           steps=None, max_steps=10000, step_size=10.,
-                                          method='auto', ref_height=120.):
+                                          ref_height=120.):
     """Calculates unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -451,13 +439,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Maximum number of steps allowed for field line tracing
     step_size : float
         Maximum step size (km) allowed when field line tracing
-    method : str ('auto' 'foot_field', 'cross_foot')
-        Delineates between different methods of determining the zonal vector
-        'cross_foot' uses the cross product of vectors pointing from location 
-        to the footpoints in both hemispheres. 'field_foot' uses the cross
-        product of vectors pointing along the field and one pointing to
-        the field line footpoint. 'auto' does both calculations but uses 
-        whichever method produces the larger unit cross product.
     ref_height : float
         Altitude used as cutoff for labeling a field line location a footpoint
         
@@ -554,731 +535,294 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                     bx, by, bz)
     # normalize the vectors
     norm_foot = np.sqrt(zvx_foot ** 2 + zvy_foot ** 2 + zvz_foot ** 2)
-    norm_north = np.sqrt(zvx_north ** 2 + zvy_north ** 2 + zvz_north ** 2)
-    norm_south = np.sqrt(zvx_south ** 2 + zvy_south ** 2 + zvz_south ** 2)
+    # norm_north = np.sqrt(zvx_north ** 2 + zvy_north ** 2 + zvz_north ** 2)
+    # norm_south = np.sqrt(zvx_south ** 2 + zvy_south ** 2 + zvz_south ** 2)
 
-    # pick the method with the largest cross product vector
-    # should have largest numerical accuracy
-    if method == 'foot_field':
-        # use the magnetic field explicitly 
-        zvx, zvy, zvz = normalize_vector(zvx_north, zvy_north, zvz_north)
-        # south
-        idx, = np.where(norm_south > norm_north)
-        zvx[idx] = zvx_south[idx] / norm_south[idx]
-        zvy[idx] = zvy_south[idx] / norm_south[idx]
-        zvz[idx] = zvz_south[idx] / norm_south[idx]
-    elif method == 'cross_foot':
-        zvx = zvx_foot / norm_foot
-        zvy = zvy_foot / norm_foot
-        zvz = zvz_foot / norm_foot
-        # remove any field aligned component to the zonal vector
-        dot_fa = zvx * bx + zvy * by + zvz * bz
-        zvx -= dot_fa * bx
-        zvy -= dot_fa * by
-        zvz -= dot_fa * bz
-        zvx, zny, zvz = normalize_vector(zvx, zvy, zvz)
-    elif method == 'auto':
-        # use the magnetic field explicitly 
-        zvx = zvx_north / norm_north
-        zvy = zvy_north / norm_north
-        zvz = zvz_north / norm_north
-        full_norm = norm_north
-        # south
-        idx, = np.where(norm_south > full_norm)
-        zvx[idx] = zvx_south[idx] / norm_south[idx]
-        zvy[idx] = zvy_south[idx] / norm_south[idx]
-        zvz[idx] = zvz_south[idx] / norm_south[idx]
-        full_norm[idx] = norm_south[idx]
-        # foot cross
-        idx, = np.where(norm_foot > full_norm)
-        zvx[idx] = zvx_foot[idx] / norm_foot[idx]
-        zvy[idx] = zvy_foot[idx] / norm_foot[idx]
-        zvz[idx] = zvz_foot[idx] / norm_foot[idx]
-        # remove any field aligned component to the zonal vector
-        dot_fa = zvx * bx + zvy * by + zvz * bz
-        zvx -= dot_fa * bx
-        zvy -= dot_fa * by
-        zvz -= dot_fa * bz
-        zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
-
+    # calculate zonal vector
+    zvx = zvx_foot / norm_foot
+    zvy = zvy_foot / norm_foot
+    zvz = zvz_foot / norm_foot
+    # remove any field aligned component to the zonal vector
+    dot_fa = zvx * bx + zvy * by + zvz * bz
+    zvx -= dot_fa * bx
+    zvy -= dot_fa * by
+    zvz -= dot_fa * bz
+    zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
     # compute meridional vector
     # cross product of zonal and magnetic unit vector
     mx, my, mz = cross_product(zvx, zvy, zvz,
                                bx, by, bz)
-
     # add unit vectors for magnetic drifts in ecef coordinates
     return zvx, zvy, zvz, bx, by, bz, mx, my, mz
 
 
-def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size=10.,
-                                    method='auto', ref_height=120.):
-    """Adds unit vectors expressing the ion drift coordinate system
-    organized by the geomagnetic field. Unit vectors are expressed
-    in ECEF coordinates.
+def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, direction=None,
+                                                       unit_steps=1.):   
+    """Starting at pos, method steps along magnetic unit vector direction towards the supplied 
+    field line trace. Determines the distance of closest approach to field line.
+    
+    Routine is used when calculting the mapping of electric fields along magnetic field 
+    lines. Voltage remains constant along the field but the distance between field lines does not.
+    This routine may be used to form the last leg when trying to trace out a closed field line loop.
+    
+    Routine will create a high resolution field line trace (.01 km step size) near the location
+    of closest approach to better determine where the intersection occurs. This centered segment is 
+    40 km long, thus the input field_line trace should have a maximum step size of 20 km.
     
     Parameters
     ----------
-    inst : pysat.Instrument
-        Instrument object that will get unit vectors
-    max_steps : int
-        Maximum number of steps allowed for field line tracing
-    step_size : float
-        Maximum step size (km) allowed when field line tracing
-    method : str ('auto' 'foot_field', 'cross_foot')
-        Delineates between different methods of determining the zonal vector
-        'cross_foot' uses the cross product of vectors pointing from location 
-        to the footpoints in both hemispheres. 'field_foot' uses the cross
-        product of vectors pointing along the field and one pointing to
-        the field line footpoint. 'auto' does both calculations but uses 
-        whichever method produces the larger unit cross product.
-    ref_height : float
-        Altitude used as cutoff for labeling a field line location a footpoint
-        
-    Returns
-    -------
-    None
-        unit vectors are added to the passed Instrument object with a naming 
-        scheme:
-            'unit_zon_ecef_*' : unit zonal vector, component along ECEF-(X,Y,or Z)
-            'unit_fa_ecef_*' : unit field-aligned vector, component along ECEF-(X,Y,or Z)
-            'unit_mer_ecef_*' : unit meridional vector, component along ECEF-(X,Y,or Z)
-            
-    """
-
-    # add unit vectors for magnetic drifts in ecef coordinates
-    zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(inst['latitude'], 
-                                                            inst['longitude'], inst['altitude'], inst.data.index,
-                                                            steps=steps, max_steps=max_steps, step_size=step_size, method=method, ref_height=ref_height)
-    
-    inst['unit_zon_ecef_x'] = zvx
-    inst['unit_zon_ecef_y'] = zvy
-    inst['unit_zon_ecef_z'] = zvz
-
-    inst['unit_fa_ecef_x'] = bx
-    inst['unit_fa_ecef_y'] = by
-    inst['unit_fa_ecef_z'] = bz
-
-    inst['unit_mer_ecef_x'] = mx
-    inst['unit_mer_ecef_y'] = my
-    inst['unit_mer_ecef_z'] = mz
-
-    inst.meta['unit_zon_ecef_x'] = {'long_name': 'Zonal unit vector along ECEF-x',
-                                    'desc': 'Zonal unit vector along ECEF-x',
-                                    'label': 'Zonal unit vector along ECEF-x',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Zonal unit vector along ECEF-x',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
-    inst.meta['unit_zon_ecef_y'] = {'long_name': 'Zonal unit vector along ECEF-y',
-                                    'desc': 'Zonal unit vector along ECEF-y',
-                                    'label': 'Zonal unit vector along ECEF-y',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Zonal unit vector along ECEF-y',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
-    inst.meta['unit_zon_ecef_z'] = {'long_name': 'Zonal unit vector along ECEF-z',
-                                    'desc': 'Zonal unit vector along ECEF-z',
-                                    'label': 'Zonal unit vector along ECEF-z',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Zonal unit vector along ECEF-z',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
-
-    inst.meta['unit_fa_ecef_x'] = {'long_name': 'Field-aligned unit vector along ECEF-x',
-                                    'desc': 'Field-aligned unit vector along ECEF-x',
-                                    'label': 'Field-aligned unit vector along ECEF-x',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Field-aligned unit vector along ECEF-x',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
-    inst.meta['unit_fa_ecef_y'] = {'long_name': 'Field-aligned unit vector along ECEF-y',
-                                    'desc': 'Field-aligned unit vector along ECEF-y',
-                                    'label': 'Field-aligned unit vector along ECEF-y',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Field-aligned unit vector along ECEF-y',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
-    inst.meta['unit_fa_ecef_z'] = {'long_name': 'Field-aligned unit vector along ECEF-z',
-                                    'desc': 'Field-aligned unit vector along ECEF-z',
-                                    'label': 'Field-aligned unit vector along ECEF-z',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Field-aligned unit vector along ECEF-z',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
-
-    inst.meta['unit_mer_ecef_x'] = {'long_name': 'Meridional unit vector along ECEF-x',
-                                    'desc': 'Meridional unit vector along ECEF-x',
-                                    'label': 'Meridional unit vector along ECEF-x',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Meridional unit vector along ECEF-x',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
-    inst.meta['unit_mer_ecef_y'] = {'long_name': 'Meridional unit vector along ECEF-y',
-                                    'desc': 'Meridional unit vector along ECEF-y',
-                                    'label': 'Meridional unit vector along ECEF-y',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Meridional unit vector along ECEF-y',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
-    inst.meta['unit_mer_ecef_z'] = {'long_name': 'Meridional unit vector along ECEF-z',
-                                    'desc': 'Meridional unit vector along ECEF-z',
-                                    'label': 'Meridional unit vector along ECEF-z',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Meridional unit vector along ECEF-z',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
-
-    return
-
-
-def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.,
-                               method='auto'):
-    """Add unit vectors expressing the ion drift coordinate system
-    organized by the geomagnetic field. Unit vectors are expressed
-    in S/C coordinates.
-    
-    Interally, routine calls add_mag_drift_unit_vectors_ecef. 
-    See function for input parameter description.
-    Requires the orientation of the S/C basis vectors in ECEF using naming,
-    'sc_xhat_x' where *hat (*=x,y,z) is the S/C basis vector and _* (*=x,y,z)
-    is the ECEF direction. 
-    
-    Parameters
-    ----------
-    inst : pysat.Instrument object
-        Instrument object to be modified
-    max_steps : int
-        Maximum number of steps taken for field line integration
-    step_size : float
-        Maximum step size (km) allowed for field line tracer
-    method : see add_mag_drift_unit_vectors_ecef
+    pos : array-like
+        X, Y, and Z ECEF locations to start from
+    field_line : array-like (:,3)
+        X, Y, and Z ECEF locations of field line trace, produced by the
+        field_line_trace method.
+    sign : int
+        if 1, move along positive unit vector. Negwtive direction for -1.
+    time : datetime or float
+        Date to perform tracing on (year + day/365 + hours/24. + etc.)
+        Accounts for leap year if datetime provided.
+    direction : string ('meridional', 'zonal', or 'aligned')
+        Which unit vector direction to move slong when trying to intersect
+        with supplied field line trace. See step_along_mag_unit_vector method
+        for more.
+    unit_steps : int
+        Number of substeps to take along direction, passed to step_along_mag_unit_vector
+        method.
     
     Returns
     -------
-    None
-        Modifies instrument object in place. Adds 'unit_zon_*' where * = x,y,z
-        'unit_fa_*' and 'unit_mer_*' for zonal, field aligned, and meridional
-        directions. Note that vector components are expressed in the S/C basis.
-        
-    """
-
-    # vectors are returned in geo/ecef coordinate system
-    add_mag_drift_unit_vectors_ecef(inst, max_steps=max_steps, step_size=step_size,
-                                    method=method)
-    # convert them to S/C using transformation supplied by OA
-    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = project_ecef_vector_onto_basis(inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
-                                                                                                inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
-                                                                                                inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
-                                                                                                inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = project_ecef_vector_onto_basis(inst['unit_fa_ecef_x'], inst['unit_fa_ecef_y'], inst['unit_fa_ecef_z'],
-                                                                                                inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
-                                                                                                inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
-                                                                                                inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = project_ecef_vector_onto_basis(inst['unit_mer_ecef_x'], inst['unit_mer_ecef_y'], inst['unit_mer_ecef_z'],
-                                                                                                inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
-                                                                                                inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
-                                                                                                inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-
-    inst.meta['unit_zon_x'] = { 'long_name':'Zonal direction along IVM-x',
-                                'desc': 'Unit vector for the zonal geomagnetic direction.',
-                                'label': 'Zonal Unit Vector: IVM-X component',
-                                'axis': 'Zonal Unit Vector: IVM-X component',
-                                'notes': ('Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1., 
-                               'value_max':1}
-    inst.meta['unit_zon_y'] = {'long_name':'Zonal direction along IVM-y',
-                                'desc': 'Unit vector for the zonal geomagnetic direction.',
-                                'label': 'Zonal Unit Vector: IVM-Y component',
-                                'axis': 'Zonal Unit Vector: IVM-Y component',
-                                'notes': ('Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1., 
-                               'value_max':1}
-    inst.meta['unit_zon_z'] = {'long_name':'Zonal direction along IVM-z',
-                                'desc': 'Unit vector for the zonal geomagnetic direction.',
-                                'label': 'Zonal Unit Vector: IVM-Z component',
-                                'axis': 'Zonal Unit Vector: IVM-Z component',
-                                'notes': ('Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1., 
-                               'value_max':1}
-
-    inst.meta['unit_fa_x'] = {'long_name':'Field-aligned direction along IVM-x',
-                                'desc': 'Unit vector for the geomagnetic field line direction.',
-                                'label': 'Field Aligned Unit Vector: IVM-X component',
-                                'axis': 'Field Aligned Unit Vector: IVM-X component',
-                                'notes': ('Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1., 
-                               'value_max':1}
-    inst.meta['unit_fa_y'] = {'long_name':'Field-aligned direction along IVM-y',
-                                'desc': 'Unit vector for the geomagnetic field line direction.',
-                                'label': 'Field Aligned Unit Vector: IVM-Y component',
-                                'axis': 'Field Aligned Unit Vector: IVM-Y component',
-                                'notes': ('Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1., 
-                               'value_max':1}
-    inst.meta['unit_fa_z'] = {'long_name':'Field-aligned direction along IVM-z',
-                                'desc': 'Unit vector for the geomagnetic field line direction.',
-                                'label': 'Field Aligned Unit Vector: IVM-Z component',
-                                'axis': 'Field Aligned Unit Vector: IVM-Z component',
-                                'notes': ('Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1., 
-                               'value_max':1}
-
-    inst.meta['unit_mer_x'] = {'long_name':'Meridional direction along IVM-x',
-                                'desc': 'Unit vector for the geomagnetic meridional direction.',
-                                'label': 'Meridional Unit Vector: IVM-X component',
-                                'axis': 'Meridional Unit Vector: IVM-X component',
-                                'notes': ('Positive is aligned with vertical at '
-                                          'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
-                                          'and in the plane of the meridian.'
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1., 
-                               'value_max':1}
-    inst.meta['unit_mer_y'] = {'long_name':'Meridional direction along IVM-y',
-                                'desc': 'Unit vector for the geomagnetic meridional direction.',
-                                'label': 'Meridional Unit Vector: IVM-Y component',
-                                'axis': 'Meridional Unit Vector: IVM-Y component',
-                                'notes': ('Positive is aligned with vertical at '
-                                          'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
-                                          'and in the plane of the meridian.'
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1., 
-                               'value_max':1}
-    inst.meta['unit_mer_z'] = {'long_name':'Meridional direction along IVM-z',
-                                'desc': 'Unit vector for the geomagnetic meridional direction.',
-                                'label': 'Meridional Unit Vector: IVM-Z component',
-                                'axis': 'Meridional Unit Vector: IVM-Z component',
-                                'notes': ('Positive is aligned with vertical at '
-                                          'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
-                                          'and in the plane of the meridian.'
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1., 
-                               'value_max':1}
-
-    return
-
-
-def add_mag_drifts(inst):
-    """Adds ion drifts in magnetic coordinates using ion drifts in S/C coordinates
-    along with pre-calculated unit vectors for magnetic coordinates.
-    
-    Note
-    ----
-        Requires ion drifts under labels 'iv_*' where * = (x,y,z) along with
-        unit vectors labels 'unit_zonal_*', 'unit_fa_*', and 'unit_mer_*',
-        where the unit vectors are expressed in S/C coordinates. These
-        vectors are calculated by add_mag_drift_unit_vectors.
-    
-    Parameters
-    ----------
-    inst : pysat.Instrument
-        Instrument object will be modified to include new ion drift magnitudes
-        
-    Returns
-    -------
-    None
-        Instrument object modified in place
-    
-    """
-    
-    inst['iv_zon'] = {'data':inst['unit_zon_x'] * inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
-                      'units':'m/s',
-                      'long_name':'Zonal ion velocity',
-                      'notes':('Ion velocity relative to co-rotation along zonal '
-                               'direction, normal to meridional plane. Positive east. '
-                               'Velocity obtained using ion velocities relative '
-                               'to co-rotation in the instrument frame along '
-                               'with the corresponding unit vectors expressed in '
-                               'the instrument frame. '),
-                      'label': 'Zonal Ion Velocity',
-                      'axis': 'Zonal Ion Velocity',
-                      'desc': 'Zonal ion velocity',
-                      'scale': 'Linear',
-                      'value_min':-500., 
-                      'value_max':500.}
-                      
-    inst['iv_fa'] = {'data':inst['unit_fa_x'] * inst['iv_x'] + inst['unit_fa_y'] * inst['iv_y'] + inst['unit_fa_z'] * inst['iv_z'],
-                      'units':'m/s',
-                      'long_name':'Field-Aligned ion velocity',
-                      'notes':('Ion velocity relative to co-rotation along magnetic field line. Positive along the field. ',
-                               'Velocity obtained using ion velocities relative '
-                               'to co-rotation in the instrument frame along '
-                               'with the corresponding unit vectors expressed in '
-                               'the instrument frame. '),
-                      'label':'Field-Aligned Ion Velocity',
-                      'axis':'Field-Aligned Ion Velocity',
-                      'desc':'Field-Aligned Ion Velocity',
-                      'scale':'Linear',
-                      'value_min':-500., 
-                      'value_max':500.}
-
-    inst['iv_mer'] = {'data':inst['unit_mer_x'] * inst['iv_x'] + inst['unit_mer_y']*inst['iv_y'] + inst['unit_mer_z']*inst['iv_z'],
-                      'units':'m/s',
-                      'long_name':'Meridional ion velocity',
-                      'notes':('Velocity along meridional direction, perpendicular '
-                               'to field and within meridional plane. Positive is up at magnetic equator. ',
-                               'Velocity obtained using ion velocities relative '
-                               'to co-rotation in the instrument frame along '
-                               'with the corresponding unit vectors expressed in '
-                               'the instrument frame. '),
-                      'label':'Meridional Ion Velocity',
-                      'axis':'Meridional Ion Velocity',
-                      'desc':'Meridional Ion Velocity',
-                      'scale':'Linear',
-                      'value_min':-500., 
-                      'value_max':500.}
-    
-    return
-
-
-def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_scalar',
-                                              equ_zonal_scalar='equ_zon_drifts_scalar',
-                                              north_mer_scalar='north_footpoint_mer_drifts_scalar',
-                                              north_zon_scalar='north_footpoint_zon_drifts_scalar',
-                                              south_mer_scalar='south_footpoint_mer_drifts_scalar',
-                                              south_zon_scalar='south_footpoint_zon_drifts_scalar',
-                                              mer_drift='iv_mer',
-                                              zon_drift='iv_zon'):
-    """Translates geomagnetic ion velocities to those at footpoints and magnetic equator.
-    Note
-    ----
-        Presumes scalar values for mapping ion velocities are already in the inst, labeled
-        by north_footpoint_zon_drifts_scalar, north_footpoint_mer_drifts_scalar,
-        equ_mer_drifts_scalar, equ_zon_drifts_scalar.
-    
-        Also presumes that ion motions in the geomagnetic system are present and labeled
-        as 'iv_mer' and 'iv_zon' for meridional and zonal ion motions.
-        
-        This naming scheme is used by the other pysat oriented routines
-        in this package.
-    
-    Parameters
-    ----------
-    inst : pysat.Instrument
-    equ_mer_scalar : string
-        Label used to identify equatorial scalar for meridional ion drift
-    equ_zon_scalar : string
-        Label used to identify equatorial scalar for zonal ion drift
-    north_mer_scalar : string
-        Label used to identify northern footpoint scalar for meridional ion drift
-    north_zon_scalar : string
-        Label used to identify northern footpoint scalar for zonal ion drift
-    south_mer_scalar : string
-        Label used to identify northern footpoint scalar for meridional ion drift
-    south_zon_scalar : string
-        Label used to identify southern footpoint scalar for zonal ion drift
-    mer_drift : string
-        Label used to identify meridional ion drifts within inst
-    zon_drift : string
-        Label used to identify zonal ion drifts within inst
-        
-    Returns
-    -------
-    None
-        Modifies pysat.Instrument object in place. Drifts mapped to the magnetic equator
-        are labeled 'equ_mer_drift' and 'equ_zon_drift'. Mappings to the northern
-        and southern footpoints are labeled 'south_footpoint_mer_drift' and
-        'south_footpoint_zon_drift'. Similarly for the northern hemisphere.
-    """
-
-    inst['equ_mer_drift'] = {'data' : inst[equ_mer_scalar]*inst[mer_drift],
-                            'units':'m/s',
-                            'long_name':'Equatorial meridional ion velocity',
-                            'notes':('Velocity along meridional direction, perpendicular '
-                                    'to field and within meridional plane, scaled to '
-                                    'magnetic equator. Positive is up at magnetic equator. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the magnetic equator. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Equatorial Meridional Ion Velocity',
-                            'axis':'Equatorial Meridional Ion Velocity',
-                            'desc':'Equatorial Meridional Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500., 
-                            'value_max':500.}
-
-    inst['equ_zon_drift'] = {'data' : inst[equ_zonal_scalar]*inst[zon_drift],
-                            'units':'m/s',
-                            'long_name':'Equatorial zonal ion velocity',
-                            'notes':('Velocity along zonal direction, perpendicular '
-                                    'to field and the meridional plane, scaled to '
-                                    'magnetic equator. Positive is generally eastward. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the magnetic equator. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Equatorial Zonal Ion Velocity',
-                            'axis':'Equatorial Zonal Ion Velocity',
-                            'desc':'Equatorial Zonal Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500., 
-                            'value_max':500.}
-
-    inst['south_footpoint_mer_drift'] = {'data' : inst[south_mer_scalar]*inst[mer_drift],
-                            'units':'m/s',
-                            'long_name':'Southern meridional ion velocity',
-                            'notes':('Velocity along meridional direction, perpendicular '
-                                    'to field and within meridional plane, scaled to '
-                                    'southern footpoint. Positive is up at magnetic equator. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the magnetic footpoint. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Southern Meridional Ion Velocity',
-                            'axis':'Southern Meridional Ion Velocity',
-                            'desc':'Southern Meridional Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500., 
-                            'value_max':500.}
-
-    inst['south_footpoint_zon_drift'] = {'data':inst[south_zon_scalar]*inst[zon_drift],
-                            'units':'m/s',
-                            'long_name':'Southern zonal ion velocity',
-                            'notes':('Velocity along zonal direction, perpendicular '
-                                    'to field and the meridional plane, scaled to '
-                                    'southern footpoint. Positive is generally eastward. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the southern footpoint. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Southern Zonal Ion Velocity',
-                            'axis':'Southern Zonal Ion Velocity',
-                            'desc':'Southern Zonal Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500., 
-                            'value_max':500.}
-
-    inst['north_footpoint_mer_drift'] = {'data':inst[north_mer_scalar]*inst[mer_drift],
-                            'units':'m/s',
-                            'long_name':'Northern meridional ion velocity',
-                            'notes':('Velocity along meridional direction, perpendicular '
-                                    'to field and within meridional plane, scaled to '
-                                    'northern footpoint. Positive is up at magnetic equator. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the magnetic footpoint. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Northern Meridional Ion Velocity',
-                            'axis':'Northern Meridional Ion Velocity',
-                            'desc':'Northern Meridional Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500., 
-                            'value_max':500.}
-
-    inst['north_footpoint_zon_drift'] = {'data':inst[north_zon_scalar]*inst[zon_drift],
-                            'units':'m/s',
-                            'long_name':'Northern zonal ion velocity',
-                            'notes':('Velocity along zonal direction, perpendicular '
-                                    'to field and the meridional plane, scaled to '
-                                    'northern footpoint. Positive is generally eastward. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the northern footpoint. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Northern Zonal Ion Velocity',
-                            'axis':'Northern Zonal Ion Velocity',
-                            'desc':'Northern Zonal Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500., 
-                            'value_max':500.}
-
-
-def intersection_field_line_and_unit_vector_projection(pos, ux, uy, uz, field_line, sign):
-    
-    # steps = np.arange(len(field_line[0,:]))
-    # interpx = interp1d(field_line[0,:], steps)
-    # interpy = interp1d(field_line[1,:], steps)
-    # interpz = interp1d(field_line[2,:], steps)
-    
+    (float, array, float)
+        Total distance taken along vector direction; the position after taking the step [x, y, z] in ECEF;
+        distance of closest approach from input pos towards the input field line trace.
+         
+    """ 
+                                                         
     # simple things first
     # take distance for all points from test
     # then keep search down, moving along projection line
 
+    # work on a copy, probably not needed
     field_copy = field_line.copy()
+    # set a high last minimum distance to ensure first loop does better than this
     last_min_dist = 2500000.
+    # scalar is the distance along unit vector line that we are taking
     scalar = 0.
+    # repeat boolean
     repeat=True
+    # first run boolean
     first=True
-    factor = 4
-    while repeat: 
-        pos_step = pos + scalar * ux + scalar * uy + scalar * uz
+    # factor is a divisor applied to the remaining distance between point and field line
+    # I slowly take steps towards the field line and I don't want to overshoot
+    # each time my minimum distance increases, I step back, increase factor, reducing
+    # my next step size, then I try again
+    factor = 1
+    while repeat:
+        # take a total step along magnetic unit vector
+        pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
+                                              num_steps=unit_steps, step_size=scalar/unit_steps) 
         # find closest point along + field line trace
         diff = field_copy - pos_step
         diff_mag = np.sqrt((diff ** 2).sum(axis=1))
         min_idx = np.argmin(diff_mag)
         if first:
-        # make a high resolution field trace?
-            field_copy = field_copy[min_idx-100:min_idx+100, :]
+            # first time in while loop, create some information
+            # make a high resolution field line trace around closest distance
+            init = field_copy[min_idx,:]
+            high_res_trace = field_line_trace(init, time, 1., 0.,
+                                                    step_size=0.01, max_steps=2000,
+                                                    recurse=False)
+            high_res_trace2 = field_line_trace(init, time, -1., 0.,
+                                                    step_size=0.01, max_steps=2000,
+                                                    recurse=False)
+            # combine together for a complete trace
+            field_copy = np.vstack((high_res_trace[::-1], high_res_trace2))
+            # difference with position
             diff = field_copy - pos_step
             diff_mag = np.sqrt((diff ** 2).sum(axis=1))
+            # find closest once
             min_idx = np.argmin(diff_mag)
             first = False
-        # calculate distance of that point from S/C location
-        min_dist = (field_copy[min_idx, :] - pos) ** 2
+        # pull out distance of closest point 
         min_dist = diff_mag[min_idx]
+        # check how the solution is doing
+        # if well, add more distance to the total step and recheck if we get closer
+        # if worse, step back and try a smaller step
         if min_dist > last_min_dist:
-            if factor > 16:
+            # last step we took made the solution worse
+            if factor > 4:
+                # we've tried enough, stop looping
                 repeat = False
+                # undo increment to last total distance
+                scalar = scalar - sign*last_min_dist/(2*factor)
+                # calculate latest position
+                pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
+                                        num_steps=unit_steps, step_size=scalar/unit_steps) 
             else:
+                # undo increment to last total distance
+                scalar = scalar - sign*last_min_dist/(2*factor)
+                # increase the divisor used to reduce the distance actually stepped per increment
                 factor = factor + 1.
+                # try a new increment to total distance
+                scalar = scalar + sign*last_min_dist/(2*factor)
         else:
             # increment scalar, but only by a fraction
-            # don't want to overshoot
-            scalar = scalar + sign*min_dist/factor
-            # print ('scalar ', scalar, min_dist, last_min_dist, pos_step, field_copy[min_idx, :], min_idx)
+            scalar = scalar + sign*min_dist/(2*factor)
+            # we have a new standard to judge against, set it
             last_min_dist = min_dist.copy()
-            # field_copy = field_copy[min_idx-1000:min_idx+1000, :]
-    # return magnitude of step
-    return scalar/sign, pos_step
 
-def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, max_steps=None):
+    # return magnitude of step
+    return scalar/sign, pos_step, min_dist
+
+
+def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., step_size=25., scalar=1):
+    """
+    Move along 'lines' formed by following the magnetic unit vector directions.
+
+    Moving along the field is effectively the same as a field line trace though
+    extended movement along a field should use the specific field_line_trace method.
+        
+    
+    Parameters
+    ----------
+    x : ECEF-x (km)
+        Location to step from in ECEF (km). Scalar input.
+    y : ECEF-y (km)
+        Location to step from in ECEF (km). Scalar input.
+    z : ECEF-z (km)
+        Location to step from in ECEF (km). Scalar input.
+    date : list-like of datetimes
+        Date and time for magnetic field
+    direction : string
+        String identifier for which unit vector directino to move along.
+        Supported inputs, 'meridional', 'zonal', 'aligned'
+    num_steps : int
+        Number of steps to take along unit vector direction
+    step_size = float
+        Distance taken for each step (km)
+    scalar : int
+        Scalar modifier for step size distance. Input a -1 to move along negative
+        unit vector direction.
+        
+    Returns
+    -------
+    np.array
+        [x, y, z] of ECEF location after taking num_steps along direction, each step_size long.
+    
+    """
+    
+    
+    # set parameters for the field line tracing routines
+    field_step_size = 10.
+    field_max_steps = 1000
+    field_steps = np.arange(field_max_steps)
+    
+    for i in np.arange(num_steps):
+        # x, y, z in ECEF
+        # convert to geodetic
+        lat, lon, alt = ecef_to_geodetic(x, y, z)
+        # get unit vector directions
+        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef([lat], [lon], [alt], [date],
+                                                        steps=field_steps, max_steps=field_max_steps, 
+                                                        step_size=field_step_size, 
+                                                        ref_height=0.)
+        # pull out the direction we need
+        if direction == 'meridional':
+            ux, uy, uz = mx, my, mz
+        elif direction == 'zonal':
+            ux, uy, uz = zvx, zvy, zvz
+        elif direction == 'aligned':
+            ux, uy, uz = bx, by, bz
+            
+        # take steps along direction
+        x = x + step_size*ux[0]*scalar
+        y = y + step_size*uy[0]*scalar
+        z = z + step_size*uz[0]*scalar
+            
+    return np.array([x, y, z])
+
+
+def apex_location_info(glats, glons, alts, dates):
+    """Determine the apex location for the field line passing through input point.
+    
+    Employs a two stage method. A broad step (10 km) field line trace spanning Northern/Southern
+    footpoints is used to find the location with the largest geodetic (WGS84) height.
+    A higher resolution trace (.1 km) is then used to get a better fix on this location.
+    Greatest geodetic height is once again selected.
+    
+    Parameters
+    ----------
+    glats : list-like of floats (degrees)
+        Geodetic (WGS84) latitude
+    glons : list-like of floats (degrees)
+        Geodetic (WGS84) longitude 
+    alts : list-like of floats (km)
+        Geodetic (WGS84) altitude, height above surface
+    dates : list-like of datetimes
+        Date and time for determination of scalars
+
+    Returns
+    -------
+    (float, float, float, float, float, float)
+        ECEF X, ECEF Y, ECEF Z, Geodetic Latitude (degrees), Geodetic Longitude (degrees), 
+        Geodetic Altitude (km)
+        
+    """
+
+    # use input location and convert to ECEF
+    ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+
+    step_size = 10.
+    max_steps = 10000
+    steps = np.arange(max_steps)
+
+    # prepare output
+    out_x = []
+    out_y = []
+    out_z = []
+
+    for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs, 
+                                                             glats, glons, alts, 
+                                                             dates):
+        # to get the apex location we need to do a field line trace
+        # then find the highest point
+        # trace north, then south, and combine
+        trace_south = field_line_trace(np.array([ecef_x, ecef_y, ecef_z]), date, -1., 0., steps=steps,
+                                                step_size=step_size, max_steps=max_steps)
+        trace_north = field_line_trace(np.array([ecef_x, ecef_y, ecef_z]), date, 1., 0., steps=steps,
+                                                step_size=step_size, max_steps=max_steps)
+        trace = np.vstack((trace_north[::-1], trace_south))
+        # convert all locations to geodetic coordinates
+        tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])        
+        # determine location that is highest with respect to the geodetic Earth
+        max_idx = np.argmax(talt)
+
+        # repeat using a high resolution trace
+        trace_south = field_line_trace(np.array([trace[max_idx,0], trace[max_idx,1], trace[max_idx,2]]), date, -1., 0., 
+                                                steps=np.arange(100),
+                                                step_size=step_size/100., max_steps=100, recurse=False)
+        trace_north = field_line_trace(np.array([trace[max_idx,0], trace[max_idx,1], trace[max_idx,2]]), date, 1., 0., 
+                                                steps=np.arange(100),
+                                                step_size=step_size/100., max_steps=100, recurse=False)
+        trace = np.vstack((trace_north[::-1], trace_south))
+        # convert all locations to geodetic coordinates
+        tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
+        # determine location that is highest with respect to the geodetic Earth
+        max_idx = np.argmax(talt)
+        # collect outputs
+        out_x.append(trace[max_idx,0])
+        out_y.append(trace[max_idx,1])
+        out_z.append(trace[max_idx,2])
+        
+    out_x = np.array(out_x)
+    out_y = np.array(out_y)
+    out_z = np.array(out_z)
+    glat, glon, alt = ecef_to_geodetic(out_x, out_y, out_z)
+    
+    return out_x, out_y, out_z, glat, glon, alt
+
+
+def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, max_steps=None,
+                                   e_field_scaling_only=False):
     """
     Calculates scalars for translating ion motions at position
     glat, glon, and alt, for date, to the footpoints of the field line
@@ -1301,6 +845,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         Geodetic (WGS84) altitude, height above surface
     dates : list-like of datetimes
         Date and time for determination of scalars
+    e_field_scaling_only : boolean (False)
+        If True, method only calculates the electric field scalar, ignoring 
+        changes in magnitude of B. Note ion velocity related to E/B.
         
     Returns
     -------
@@ -1315,9 +862,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
     import pandas
 
     if step_size is None:
-        step_size = .1
+        step_size = 10.
     if max_steps is None:
-        max_steps = 100000
+        max_steps = 1000
     steps = np.arange(max_steps)
 
     ivm = pysat.Instrument('pysat', 'testing')
@@ -1336,194 +883,200 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
     for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs, 
                                                              glats, glons, alts, 
                                                              dates):
+        # going to try and form close loops via field line integration
+        # start at location of interest, map down to northern and southern footpoints
+        # then take symmetric steps along meridional and zonal directions and trace back
+        # from location of interest, step along field line directions until we intersect 
+        # or hit the distance of closest approach to the return field line
+        # with the known distances of footpoint steps, and the closet approach distance
+        # we can determine the scalar mapping of one location to another
+        
         ivm.date = date
         ivm.yr, ivm.doy = pysat.utils.getyrdoy(date)
         double_date = float(ivm.yr) + float(ivm.doy) / 366.
+
+        print (glat, glon, alt)
+        # get location of apex for s/c field line
+        apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info([glat], [glon], [alt], [date])
 
         # trace to northern footpoint
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
         trace_north = field_line_trace(sc_root, double_date, 1., 120., steps=steps,
                                        step_size=step_size, max_steps=max_steps)
-        # print ('bloop ', trace_north[-1, :])
         # southern tracing
         trace_south = field_line_trace(sc_root, double_date, -1., 120., steps=steps,
                                        step_size=step_size, max_steps=max_steps)
-        # print ('bleep ', trace_south[-1, :])
-        
         # footpoint location
         north_ftpnt = trace_north[-1, :]
+        nft_glat, nft_glon, nft_alt = ecef_to_geodetic(*north_ftpnt)
         south_ftpnt = trace_south[-1, :]
-        # convert to geodetic coordinates
-        north_ftpnt = ecef_to_geodetic(*north_ftpnt)
-        south_ftpnt = ecef_to_geodetic(*south_ftpnt)
+        sft_glat, sft_glon, sft_alt = ecef_to_geodetic(*north_ftpnt)
 
-        # add magnetic unit vectors
-        frame_input = {}
-        frame_input['latitude'] = [north_ftpnt[0], south_ftpnt[0], glat]
-        frame_input['longitude'] = [north_ftpnt[1], south_ftpnt[1], glon]
-        frame_input['altitude'] = [north_ftpnt[2], south_ftpnt[2], alt]
-        input_frame = pandas.DataFrame.from_records(frame_input)
-        ivm.data = input_frame
-        ivm.data.index = [date]*len(ivm.data.index)
-        # use all of this info to get the unit vectors at this location
-        add_mag_drift_unit_vectors_ecef(ivm, ref_height=0., steps=steps, max_steps=max_steps, step_size=step_size)
-
-        # trace_north back in ECEF
-        north_ftpnt = geodetic_to_ecef(*north_ftpnt)
-        south_ftpnt = geodetic_to_ecef(*south_ftpnt)
-
-        # take half step along + meridional direction
-        unit_x = np.array([1, 0, 0])
-        unit_y = np.array([0, 1, 0])
-        unit_z = np.array([0, 0, 1])
-        # take step
-        north_plus_mer = north_ftpnt + 25. * unit_x * ivm[0, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[0, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[0, 'unit_mer_ecef_z']
+        # determine scalar for zonal ion drifts (meridional electric fields)
+        # take step from northern footpoint along + meridional direction
+        north_plus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], 
+                                                    date, direction='meridional')
         # trace this back to southern footpoint
         trace_south_plus_mer = field_line_trace(north_plus_mer, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
-
         # take half step from northern along - meridional direction
-        # take step
-        north_minus_mer = north_ftpnt - 25. * unit_x * ivm[0, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[0, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[0, 'unit_mer_ecef_z']
+        north_minus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, 
+                                                     direction='meridional', scalar=-1)
         # trace this back to southern footpoint
         trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
-       
         # need to determine where the intersection of field line coming back from north footpoint + mer is
-        # in relation to the meridional direction from the s/c location.
-        # s/c loc, dir_x, dir_y, dir_z and intersection with field line trace
-        # create a function that interpolates along field line and gets field line location with minimum distance
-        # to meridional line from s/c  
-        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
-                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
-                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
-                                                                                    trace_south_plus_mer,
-                                                                                    1)
-        
-        # take half step from S/C along - meridional direction (may not reach field line trace)
-        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
-                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
-                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
+        # in relation to the meridional direction from the s/c location. 
+        pos_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
+                                                                                  trace_south_plus_mer,
+                                                                                  1, date, direction='meridional')        
+        # take half step from S/C along - meridional direction 
+        minus_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                     trace_south_minus_mer,
-                                                                                    -1)
-        print (pos_mer_step_size, minus_mer_step_size)
-        # scalar for the northern footpoint
+                                                                                    -1, date, direction='meridional')
+        # scalar for the northern footpoint electrif field based on distances
         full_mer_sc_step = pos_mer_step_size + minus_mer_step_size
-        north_ftpnt_zon_drifts_scalar.append((full_mer_sc_step) / 50.)
+        if e_field_scaling_only:
+            north_ftpnt_zon_drifts_scalar.append(full_mer_sc_step/50.)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_nft = igrf.igrf12syn(0, double_date, 1, nft_alt, np.deg2rad(90.-nft_glat), np.deg2rad(nft_glon))
+            north_ftpnt_zon_drifts_scalar.append(full_mer_sc_step*b_sc/(50.*b_nft))
+            
 
-        # calculate scalar for the equator
-        # get furthest point for both pos and minus traces, get distance
-        max_plus_idx = np.argmax(np.sqrt((trace_south_plus_mer ** 2).sum(axis=1)))
-        max_minus_idx = np.argmax(np.sqrt((trace_south_minus_mer ** 2).sum(axis=1)))
-        step_zon_apex = np.sqrt(
-            ((trace_south_plus_mer[max_plus_idx, :] - trace_south_minus_mer[max_minus_idx, :]) ** 2).sum())
-        eq_zon_drifts_scalar.append(full_mer_sc_step / step_zon_apex)
+        # calculate zonal scalar to map ion drifts to the equator        
+        # take step from s/c along + meridional direction
+        # then get the apex location
+        plus_mer = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='meridional')
+        plus_mer_lat, plus_mer_lon, plus_mer_alt = ecef_to_geodetic(plus_mer[0], plus_mer[1], plus_mer[2])
+        plus_apex_x, plus_apex_y, plus_apex_z, plus_apex_lat, plus_apex_lon, plus_apex_alt = \
+                    apex_location_info([plus_mer_lat], [plus_mer_lon], [plus_mer_alt], [date])
+        # take half step from s/c along - meridional direction
+        # then get the apex location
+        minus_mer = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='meridional', scalar=-1)
+        minus_mer_lat, minus_mer_lon, minus_mer_alt = ecef_to_geodetic(minus_mer[0], minus_mer[1], minus_mer[2])
+        minus_apex_x, minus_apex_y, minus_apex_z, minus_apex_lat, minus_apex_lon, minus_apex_alt = \
+                    apex_location_info([minus_mer_lat], [minus_mer_lon], [minus_mer_alt], [date])
+        # take difference in apex locations
+        step_zon_apex = np.sqrt( (plus_apex_x-minus_apex_x)**2 + (plus_apex_y-minus_apex_y)**2 + (plus_apex_z-minus_apex_z)**2) 
+        # compare difference in step sizes vs apex locations to get electric field scalar to the equator
+        if e_field_scaling_only:
+            eq_zon_drifts_scalar.append(50./step_zon_apex)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_eq = igrf.igrf12syn(0, double_date, 1, apex_alt, np.deg2rad(90.-apex_lat), np.deg2rad(apex_lon))
+            eq_zon_drifts_scalar.append(50.*b_sc/(step_zon_apex*b_eq))
+       
 
-        # Now it is time to do the same calculation for the southern footpoint
-        # scalar
-        # take step
-        south_plus_mer = south_ftpnt + 25. * unit_x * ivm[1, 'unit_mer_ecef_x'] + 25. * unit_y * ivm[1, 'unit_mer_ecef_y'] + 25. * unit_z * ivm[1, 'unit_mer_ecef_z']
+        # Now it is time to do the same calculation for the southern footpoint scalar
+        south_plus_mer = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], 
+                                                    date, direction='meridional')
         # trace this back to northern footpoint
         trace_north_plus_mer = field_line_trace(south_plus_mer, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
-
         # take half step from southern along - meridional direction
-        # take step
-        south_minus_mer = south_ftpnt - 25. * unit_x * ivm[1, 'unit_mer_ecef_x'] - 25. * unit_y * ivm[1, 'unit_mer_ecef_y'] - 25. * unit_z * ivm[1, 'unit_mer_ecef_z']
+        south_minus_mer = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], 
+                                                     date, direction='meridional', scalar=-1)
         # trace this back to northern footpoint
         trace_north_minus_mer = field_line_trace(south_minus_mer, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
-
-        pos_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
-                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
-                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
+        pos_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_north_plus_mer,
-                                                                                    1)
-
-        minus_mer_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_mer_ecef_x'], 
-                                                                                    unit_y*ivm[2, 'unit_mer_ecef_y'], 
-                                                                                    unit_z*ivm[2, 'unit_mer_ecef_z'], 
+                                                                                    1, date, direction='meridional')
+        minus_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_north_minus_mer,
-                                                                                    -1)
-
+                                                                                    -1, date, direction='meridional')
         # scalar for the southern footpoint
-        south_ftpnt_zon_drifts_scalar.append((pos_mer_step_size + minus_mer_step_size) / 50.)
+        if e_field_scaling_only:
+            south_ftpnt_zon_drifts_scalar.append((pos_mer_step_size + minus_mer_step_size)/ 50.)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_sft = igrf.igrf12syn(0, double_date, 1, sft_alt, np.deg2rad(90.-sft_glat), np.deg2rad(sft_glon))
+            south_ftpnt_zon_drifts_scalar.append((pos_mer_step_size + minus_mer_step_size)*b_sc/(50.*b_sft))
 
         #############
         # Time for scaling in the meridional drifts, the zonal electric field
         #############
 
         # take half step along + zonal direction
-        north_plus_zon = north_ftpnt + 25. * unit_x * ivm[0, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[0, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[0, 'unit_zon_ecef_z']
+        north_plus_zon = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='zonal')
         # trace this back to southern footpoint
         trace_south_plus_zon = field_line_trace(north_plus_zon, double_date, -1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
-
         # take half step from northern along - zonal direction
-        # take step
-        north_minus_zon = north_ftpnt - 25. * unit_x * ivm[0, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[0, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[0, 'unit_zon_ecef_z']
+        north_minus_zon = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, direction='zonal', scalar=-1)
         # trace this back to southern footpoint
         trace_south_minus_zon = field_line_trace(north_minus_zon, double_date, -1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
-
-        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
-                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
-                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
+        # get intersections
+        pos_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                     trace_south_plus_zon,
-                                                                                    1)
-
-        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
-                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
-                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
+                                                                                    1, date, direction='zonal')
+        minus_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_south_minus_zon,
-                                                                                    -1)
-
+                                                                                    -1, date, direction='zonal')
         # scalar for the northern footpoint
         full_zonal_sc_step = pos_zon_step_size + minus_zon_step_size
-        north_ftpnt_mer_drifts_scalar.append((full_zonal_sc_step) / 50.)
+        if e_field_scaling_only:
+            north_ftpnt_mer_drifts_scalar.append((full_zonal_sc_step) / 50.)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_nft = igrf.igrf12syn(0, double_date, 1, nft_alt, np.deg2rad(90.-nft_glat), np.deg2rad(nft_glon))
+            north_ftpnt_mer_drifts_scalar.append(full_zonal_sc_step*b_sc/(50.*b_nft))
+            
 
-        # calculate scalar for the equator
-        # get furthest point for both pos and minus traces, get distance
-        max_plus_idx = np.argmax(np.sqrt((trace_south_plus_zon ** 2).sum(axis=1)))
-        max_minus_idx = np.argmax(np.sqrt((trace_south_minus_zon ** 2).sum(axis=1)))
-        step_zon_apex = np.sqrt(
-            ((trace_south_plus_zon[max_plus_idx, :] - trace_south_minus_zon[max_minus_idx, :]) ** 2).sum())
-        eq_mer_drifts_scalar.append(full_zonal_sc_step / step_zon_apex)
+        # calculate meridional scalar to map ion drifts to the equator        
+        # take step from s/c along + zonal direction
+        # then get the apex location
+        plus_zon = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='zonal')
+        plus_zon_lat, plus_zon_lon, plus_zon_alt = ecef_to_geodetic(plus_zon[0], plus_zon[1], plus_zon[2])
+        plus_apex_x, plus_apex_y, plus_apex_z, plus_apex_lat, plus_apex_lon, plus_apex_alt = apex_location_info([plus_zon_lat], [plus_zon_lon], [plus_zon_alt], [date])
+        # take half step from s/c along - zonal direction
+        # then get the apex location
+        minus_zon = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date, direction='zonal', scalar=-1)
+        minus_zon_lat, minus_zon_lon, minus_zon_alt = ecef_to_geodetic(minus_zon[0], minus_zon[1], minus_zon[2])
+        minus_apex_x, minus_apex_y, minus_apex_z, minus_apex_lat, minus_apex_lon, minus_apex_alt = apex_location_info([minus_zon_lat], [minus_zon_lon], [minus_zon_alt], [date])
+        # compare difference in step sizes vs apex locations to get electric field scalar to the equator
+        step_zon_apex = np.sqrt( (plus_apex_x-minus_apex_x)**2 + (plus_apex_y-minus_apex_y)**2 + (plus_apex_z-minus_apex_z)**2) 
+
+        if e_field_scaling_only:
+            eq_mer_drifts_scalar.append(50./step_zon_apex)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_eq = igrf.igrf12syn(0, double_date, 1, apex_alt, np.deg2rad(90.-apex_lat), np.deg2rad(apex_lon))
+            eq_mer_drifts_scalar.append(50.*b_sc/(step_zon_apex*b_eq))
 
         # Now it is time to do the same calculation for the southern footpoint
-        # scalar
-        # take step
-        south_plus_zon = south_ftpnt + 25. * unit_x * ivm[1, 'unit_zon_ecef_x'] + 25. * unit_y * ivm[1, 'unit_zon_ecef_y'] + 25. * unit_z * ivm[1, 'unit_zon_ecef_z']
+        south_plus_zon = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='zonal')
         # trace this back to northern footpoint
         trace_north_plus_zon = field_line_trace(south_plus_zon, double_date, 1., 0., steps=steps,
                                                 step_size=step_size, max_steps=max_steps)
-
         # take half step from southern along - zonal direction
-        # take step
-        south_minus_zon = south_ftpnt - 25. * unit_x * ivm[1, 'unit_zon_ecef_x'] - 25. * unit_y * ivm[1, 'unit_zon_ecef_y'] - 25. * unit_z * ivm[1, 'unit_zon_ecef_z']
+        south_minus_zon = step_along_mag_unit_vector(south_ftpnt[0], south_ftpnt[1], south_ftpnt[2], date, direction='zonal', scalar=-1)
         # trace this back to northern footpoint
         trace_north_minus_zon = field_line_trace(south_minus_zon, double_date, 1., 0., steps=steps,
                                                  step_size=step_size, max_steps=max_steps)
-
         # take half step from S/C along + zonal direction
-        pos_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
-                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
-                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
+        pos_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,  
                                                                                     trace_north_plus_zon,
-                                                                                    1)
-
+                                                                                    1, date, direction='zonal')
         # take half step from S/C along - zonal direction
-        minus_zon_step_size, _ = intersection_field_line_and_unit_vector_projection(sc_root, unit_x*ivm[2, 'unit_zon_ecef_x'], 
-                                                                                    unit_y*ivm[2, 'unit_zon_ecef_y'], 
-                                                                                    unit_z*ivm[2, 'unit_zon_ecef_z'], 
+        minus_zon_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root, 
                                                                                     trace_north_minus_zon,
-                                                                                    -1)
-
+                                                                                    -1, date, direction='zonal')
         # scalar for the southern footpoint
-        south_ftpnt_mer_drifts_scalar.append((pos_zon_step_size + minus_zon_step_size) / 50.)
-
-
-        # print north_ftpnt_zon_drifts_scalar, south_ftpnt_zon_drifts_scalar, north_ftpnt_mer_drifts_scalar, south_ftpnt_mer_drifts_scalar, eq_zon_drifts_scalar, eq_mer_drifts_scalar
+        if e_field_scaling_only:
+            south_ftpnt_mer_drifts_scalar.append((pos_zon_step_size + minus_zon_step_size) / 50.)
+        else:
+            # for drift also need to include the magnetic field, drift = E/B
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
+            tbn, tbe, tbd, b_sft = igrf.igrf12syn(0, double_date, 1, sft_alt, np.deg2rad(90.-sft_glat), np.deg2rad(sft_glon))
+            south_ftpnt_mer_drifts_scalar.append((pos_zon_step_size + minus_zon_step_size)*b_sc/(50.*b_sft))
 
     out = {}
     out['north_zonal_drifts_scalar'] = north_ftpnt_zon_drifts_scalar
@@ -1536,18 +1089,3 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
     return out
 
 
-
-# def igrf_ecef_to_magnetic_field_points(position):
-#     radial_distance, colatitude, longitude = igrf.ecef_to_long_colat_r(position)
-#     return radial_distance, colatitude, longitude
-# 
-# 
-# def igrf_ecef_to_geodetic(position):
-#     latitude, lon, alt = igrf.ecef_to_geodetic(position)
-#     return latitude, lon, alt
-# 
-# 
-# def igrf_end_to_ECEF(be,bn,bd,colat,elong):
-#     bx,by,bz = igrf.dne_vector_to_ecef(be,bn,bd,colat,elong)
-#     return bx,by,bz
-# 

@@ -64,6 +64,55 @@ omni_list = [[550. , 20.00   , 0.00 , 29.77,  359.31,  -9.04 ,   3.09],
    [550.  ,20.00  ,352.50  ,30.17  ,351.27 , -9.90 , 356.93]]
 omni = pds.DataFrame(omni_list, columns=['p_alt', 'p_lat', 'p_long', 'n_lat', 'n_long', 's_lat', 's_long'])
 
+def gen_data_fixed_alt(alt):
+    import itertools
+    import os
+    # generate test data set
+    on_travis = os.environ.get('ONTRAVIS') == 'True'
+    if on_travis:
+        long_dim = np.arange(0., 361., 80.)
+        lat_dim = np.arange(-50., 51., 25.)
+    else:
+        long_dim = np.arange(0., 361., 40.)
+        lat_dim = np.arange(-50., 51., 12.5)
+    long_dim = np.arange(0., 361., 30.)
+    lat_dim = np.arange(-90., 91., 15.)
+    idx, = np.where(lat_dim == 90.)
+    lat_dim[idx] = 89.999
+    idx, = np.where(lat_dim == -90.)
+    lat_dim[idx] = -89.999
+    alt_dim = alt
+    locs = np.array(list(itertools.product(long_dim, lat_dim)))
+    # pull out lats and longs
+    lats = locs[:,1]
+    longs = locs[:,0]
+    alts = longs*0 + alt_dim
+    return lats, longs, alts 
+
+def gen_trace_data_fixed_alt(alt):
+    import itertools
+    import os
+    # generate test data set
+    on_travis = os.environ.get('ONTRAVIS') == 'True'
+    if on_travis:
+        long_dim = np.arange(0., 361., 80.)
+        lat_dim = np.arange(-50., 51., 25.)
+    else:
+        long_dim = np.arange(0., 361., 40.)
+        lat_dim = np.arange(-50., 51., 12.5)
+
+    idx, = np.where(lat_dim == 90.)
+    lat_dim[idx] = 89.999
+    idx, = np.where(lat_dim == -90.)
+    lat_dim[idx] = -89.999
+    alt_dim = alt
+    locs = np.array(list(itertools.product(long_dim, lat_dim)))
+    # pull out lats and longs
+    lats = locs[:,1]
+    longs = locs[:,0]
+    alts = longs*0 + alt_dim
+    return lats, longs, alts 
+
 
 class TestCore():
 
@@ -86,6 +135,7 @@ class TestCore():
         trace_s = []
         date = datetime.datetime(2000, 1, 1)
         for x,y,z in zip(ecf_x,ecf_y,ecf_z):
+            # trace north and south, take last points
             trace_n.append(pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
             trace_s.append(pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=0.5, max_steps=1.E6)[-1,:])
         trace_n = pds.DataFrame(trace_n, columns = ['x', 'y', 'z'])
@@ -135,18 +185,18 @@ class TestCore():
         
                 
     def test_geodetic_to_ecef_to_geodetic(self):
-            
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)
         lat, elong, alt = pymv.ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
         
         idx, = np.where(elong < 0)
         elong[idx] += 360.
 
-        d_lat = lat - omni['p_lat']
-        d_long = elong - omni['p_long']
-        d_alt = alt - omni['p_alt']
+        d_lat = lat - lats
+        d_long = elong - longs
+        d_alt = alt - alts
         
         assert np.all(np.abs(d_lat) < 1.E-5)
         assert np.all(np.abs(d_long) < 1.E-5)
@@ -154,11 +204,11 @@ class TestCore():
 
     def test_geodetic_to_ecef_to_geodetic_via_different_methods(self):
             
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)
         methods = ['closed', 'iterative']
-        flags = []
         for method in methods:
             lat, elong, alt = pymv.ecef_to_geodetic(ecf_x, ecf_y, ecf_z,
                                                   method=method)
@@ -166,189 +216,270 @@ class TestCore():
             idx, = np.where(elong < 0)
             elong[idx] += 360.
     
-            d_lat = lat - omni['p_lat']
-            d_long = elong - omni['p_long']
-            d_alt = alt - omni['p_alt']
+            d_lat = lat - lats
+            d_long = elong - longs
+            d_alt = alt - alts
             
-            flag1 = np.all(np.abs(d_lat) < 1.E-5)
-            flag2 = np.all(np.abs(d_long) < 1.E-5)
-            flag3 = np.all(np.abs(d_alt) < 1.E-5)
-            flags.extend([flag1, flag2, flag3])
-            
-        assert np.all(flags)
+            assert np.all(np.abs(d_lat) < 1.E-5)
+            assert np.all(np.abs(d_long) < 1.E-5)
+            assert np.all(np.abs(d_alt) < 1.E-5)            
 
 
     def test_geodetic_to_ecef_to_geocentric_to_ecef_to_geodetic(self):
-            
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)            
         geo_lat, geo_long, geo_alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
 
-        ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
+        ecfs_x,ecfs_y,ecfs_z = pymv.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
 
-        lat, elong, alt = pymv.ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
+        lat, elong, alt = pymv.ecef_to_geodetic(ecfs_x, ecfs_y, ecfs_z)
         
         idx, = np.where(elong < 0)
         elong[idx] += 360.
 
-        d_lat = lat - omni['p_lat']
-        d_long = elong - omni['p_long']
-        d_alt = alt - omni['p_alt']
+        d_lat = lat - lats
+        d_long = elong - longs
+        d_alt = alt - alts
         
-        flag1 = np.all(np.abs(d_lat) < 1.E-5)
-        flag2 = np.all(np.abs(d_long) < 1.E-5)
-        flag3 = np.all(np.abs(d_alt) < 1.E-5)
-        assert flag1 & flag2 & flag3
+        assert np.all(np.abs(d_lat) < 1.E-5)
+        assert np.all(np.abs(d_long) < 1.E-5)
+        assert np.all(np.abs(d_alt) < 1.E-5)
+        assert np.all(np.abs(ecf_x-ecfs_x) < 1.E-5)
+        assert np.all(np.abs(ecf_y-ecfs_y) < 1.E-5)
+        assert np.all(np.abs(ecf_z-ecfs_z) < 1.E-5)
 
 
     def test_geocentric_to_ecef_to_geocentric(self):
             
-        ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(lats, 
+                                                  longs,
+                                                  alts)
         lat, elong, alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
 
         idx, = np.where(elong < 0)
         elong[idx] += 360.
         
-        d_lat = lat - omni['p_lat']
-        d_long = elong - omni['p_long']
-        d_alt = alt - omni['p_alt']
+        d_lat = lat - lats
+        d_long = elong - longs
+        d_alt = alt - alts
         
-        flag1 = np.all(np.abs(d_lat) < 1.E-5)
-        flag2 = np.all(np.abs(d_long) < 1.E-5)
-        flag3 = np.all(np.abs(d_alt) < 1.E-5)
-        assert flag1 & flag2 & flag3
+        assert np.all(np.abs(d_lat) < 1.E-5)
+        assert np.all(np.abs(d_long) < 1.E-5)
+        assert np.all(np.abs(d_alt) < 1.E-5)
+
 
 
     def test_tracing_accuracy(self):
-        x,y,z = pymv.geocentric_to_ecef(np.array([20.]), np.array([0.]), np.array([550.]))
-        
+#         x,y,z = pymv.geocentric_to_ecef(np.array([20.]), np.array([0.]), np.array([550.]))
+#         
+#         steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
+#         max_steps_goal = steps_goal*0+1E7
+# 
+#         out = []
+#         date = datetime.datetime(2000, 1, 1)
+#         for steps, max_steps in zip(steps_goal, max_steps_goal):
+#             trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
+#                                                step_size=steps, 
+#                                                max_steps=max_steps)  
+# 
+#             pt = trace_n[-1,:]
+#             out.append(pt)
+# 
+#         final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+#         x = np.log10(np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1]))
+#         y = np.log10(np.abs(final_pt.ix[:, 'y'].values[1:] - final_pt.ix[:,'y'].values[:-1]))
+#         z = np.log10(np.abs(final_pt.ix[:, 'z'].values[1:] - final_pt.ix[:,'z'].values[:-1]))
+#         
+#         try:
+#             plt.figure()
+#             plt.plot(np.log10(steps_goal[1:]), x)
+#             plt.plot(np.log10(steps_goal[1:]), y)
+#             plt.plot(np.log10(steps_goal[1:]), z)
+#             plt.xlabel('Log Step Size (km)')
+#             plt.ylabel('Log Change in Foot Point Position (km)')
+#             plt.savefig('Footpoint_position_vs_step_size.png' )
+#         except:
+#             pass
+
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
+        # step size to be tried
         steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
+        # max number of steps (fixed)
         max_steps_goal = steps_goal*0+1E7
 
-        out = []
         date = datetime.datetime(2000, 1, 1)
-        for steps, max_steps in zip(steps_goal, max_steps_goal):
-            #print ' '
-            #print steps, max_steps
-            trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
-                                               step_size=steps, 
-                                               max_steps=max_steps)  
+        dx = []
+        dy = []
+        dz = []
+        for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+            out = []
+            for steps, max_steps in zip(steps_goal, max_steps_goal):
+                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+                                                step_size=steps, 
+                                                max_steps=max_steps) 
+                pt = trace_n[-1,:]
+                out.append(pt)
 
-            #print trace_n
-            pt = trace_n[-1,:]
-            out.append(pt)
-            # print ('yo yo ', pt)
-            #out.append(pymv.ecef_to_geocentric(pt[0], pt[1], pt[2]))
-
-        final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-        x = np.log10(np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1]))
-        y = np.log10(np.abs(final_pt.ix[:, 'y'].values[1:] - final_pt.ix[:,'y'].values[:-1]))
-        z = np.log10(np.abs(final_pt.ix[:, 'z'].values[1:] - final_pt.ix[:,'z'].values[:-1]))
+            final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+            dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+        dx = pds.DataFrame(dx)
+        dy = pds.DataFrame(dy)
+        dz = pds.DataFrame(dz)
         
         try:
             plt.figure()
-            plt.plot(np.log10(steps_goal[1:]), x)
-            plt.plot(np.log10(steps_goal[1:]), y)
-            plt.plot(np.log10(steps_goal[1:]), z)
+            plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
+                         yerr=dx.std(axis=0), label='x')
+            plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
+                        yerr=dy.std(axis=0), label='y')
+            plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
+                        yerr=dz.std(axis=0), label='z')
             plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Log Change in Foot Point Position (km)')
+            plt.ylabel('Change in Foot Point Position (km)')
+            plt.title("Change in Final ECEF Position")
+            plt.legend()
+            plt.tight_layout()
             plt.savefig('Footpoint_position_vs_step_size.png' )
         except:
-            pass
+            pass            
                            
     def test_tracing_accuracy_w_recursion(self):
-        x,y,z = pymv.geocentric_to_ecef(np.array([50.]), np.array([0.]), np.array([550.]))
+
         
-        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5., 5., 5.]) #, .005, .003, .001])
-        max_steps_goal = np.array([1000000., 100000., 10000., 3000., 1000., 300., 100., 30., 10., 3.])
+#         x,y,z = pymv.geocentric_to_ecef(np.array([50.]), np.array([0.]), np.array([550.]))
+#         
+#         steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5., 5., 5.]) #, .005, .003, .001])
+#         max_steps_goal = np.array([1000000., 100000., 10000., 3000., 1000., 300., 100., 30., 10., 3.])
+# 
+#         out = []
+#         date = datetime.datetime(2000, 1, 1)
+#         for steps, max_steps in zip(steps_goal, max_steps_goal):
+#             trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
+#                                                step_size=steps, 
+#                                                max_steps=max_steps) 
+#             pt = trace_n[-1,:]
+#             out.append(pt)
+# 
+#         final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+#         x = np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1])
+#         y = np.abs(final_pt.ix[:, 'y'].values[1:] - final_pt.ix[:,'y'].values[:-1])
+#         z = np.abs(final_pt.ix[:, 'z'].values[1:] - final_pt.ix[:,'z'].values[:-1])
+#         
+#         try:
+#             plt.figure()
+#             plt.plot(np.log10(max_steps_goal[1:]), x)
+#             plt.plot(np.log10(max_steps_goal[1:]), y)
+#             plt.plot(np.log10(max_steps_goal[1:]), z)
+#             plt.xlabel('Log Number of Steps per Run')
+#             plt.ylabel('Log Change in Foot Point Position (km)')
+#             plt.savefig('Footpoint_position_vs_max_steps__recursion.png' )
+#         except:
+#             pass
 
-        out = []
+
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
+        # step size to be tried
+        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5.])
+        # max number of steps (fixed)
+        max_steps_goal = np.array([100000., 30000., 10000., 3000., 1000., 300., 100., 30.])
+
         date = datetime.datetime(2000, 1, 1)
-        for steps, max_steps in zip(steps_goal, max_steps_goal):
-            #print ' '
-            #print steps, max_steps
-            trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
-                                               step_size=steps, 
-                                               max_steps=max_steps) 
-            #print trace_n
-            pt = trace_n[-1,:]
-            out.append(pt)
-            print(pymv.ecef_to_geocentric(*pt), pt )
+        dx = []
+        dy = []
+        dz = []
+        for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+            out = []
+            for steps, max_steps in zip(steps_goal, max_steps_goal):
+                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+                                                step_size=steps, 
+                                                max_steps=max_steps) 
+                pt = trace_n[-1,:]
+                out.append(pt)
 
-        final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-        x = np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1])
-        y = np.abs(final_pt.ix[:, 'y'].values[1:] - final_pt.ix[:,'y'].values[:-1])
-        z = np.abs(final_pt.ix[:, 'z'].values[1:] - final_pt.ix[:,'z'].values[:-1])
+            final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+            dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+        dx = pds.DataFrame(dx)
+        dy = pds.DataFrame(dy)
+        dz = pds.DataFrame(dz)
         
         try:
             plt.figure()
-            plt.plot(np.log10(max_steps_goal[1:]), x)
-            plt.plot(np.log10(max_steps_goal[1:]), y)
-            plt.plot(np.log10(max_steps_goal[1:]), z)
+            plt.errorbar(np.log10(max_steps_goal[1:]), dx.mean(axis=0), 
+                         yerr=dx.std(axis=0), label='x')
+            plt.errorbar(np.log10(max_steps_goal[1:]), dy.mean(axis=0), 
+                        yerr=dy.std(axis=0), label='y')
+            plt.errorbar(np.log10(max_steps_goal[1:]), dz.mean(axis=0), 
+                        yerr=dz.std(axis=0), label='z')
             plt.xlabel('Log Number of Steps per Run')
+            plt.ylabel('Change in Foot Point Position (km)')
+            plt.title("Change in Final ECEF Position, Recursive Calls")
+            plt.legend()
+            plt.tight_layout()
             plt.ylabel('Log Change in Foot Point Position (km)')
-            plt.savefig('Footpoint_position_vs_max_steps_vs_recursion.png' )
+            plt.savefig('Footpoint_position_vs_max_steps__recursion.png' )
         except:
-            pass
+            pass            
 
     def test_tracing_accuracy_w_recursion_step_size(self):
-        x,y,z = pymv.geocentric_to_ecef(np.array([50.]), np.array([0.]), np.array([550.]))
-        
-        steps_goal = np.array([.01, .05, .1, .5, 1., 5., 10., 50., 100., 500.]) #, .005, .003, .001])
-        max_steps_goal = np.array([1000000., 1000000., 1000000., 1000000., 1000000., 1000000., 1000000., 1000000., 1000000., 1000000.])
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
+        # step size to be tried
+        steps_goal = np.array([.01, .05, .1, .5, 1., 5., 10., 50., 100., 500.]) 
+        # max number of steps (fixed)
+        max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
 
-        out = []
         date = datetime.datetime(2000, 1, 1)
-        for steps, max_steps in zip(steps_goal, max_steps_goal):
-            #print ' '
-            #print steps, max_steps
-            trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
-                                               step_size=steps, 
-                                               max_steps=max_steps) 
-            #print trace_n
-            pt = trace_n[-1,:]
-            out.append(pt)
-            print(pymv.ecef_to_geocentric(*pt) )
+        dx = []
+        dy = []
+        dz = []
+        for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+            out = []
+            for steps, max_steps in zip(steps_goal, max_steps_goal):
+                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+                                                step_size=steps, 
+                                                max_steps=max_steps) 
+                pt = trace_n[-1,:]
+                out.append(pt)
 
-        final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-        x = np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1])
-        y = np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1])
-        z = np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1])
+            final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+            dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+        dx = pds.DataFrame(dx)
+        dy = pds.DataFrame(dy)
+        dz = pds.DataFrame(dz)
         
         try:
             plt.figure()
-            plt.plot(np.log10(steps_goal[1:]), x)
-            plt.plot(np.log10(steps_goal[1:]), y)
-            plt.plot(np.log10(steps_goal[1:]), z)
-            plt.xlabel('Log Step Size')
-            plt.ylabel('Log Change in Foot Point Position (km)')
-            plt.savefig('Footpoint_position_vs_step_size_vs_recursion.png' )
+            plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
+                         yerr=dx.std(axis=0), label='x')
+            plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
+                        yerr=dy.std(axis=0), label='y')
+            plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
+                        yerr=dz.std(axis=0), label='z')
+            plt.xlabel('Log Step Size (km)')
+            plt.ylabel('Change in Foot Point Position (km)')
+            plt.title("Change in Final ECEF Position, Recursive Calls")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('Footpoint_position_vs_step_size__recursion.png' )
         except:
-            pass
-
-
-#     def test_unit_vector_accuracy(self):
-#         import matplotlib.pyplot as plt
-#         from mpl_toolkits.mplot3d import Axes3D
-#         import os
-#         on_travis = os.environ.get('ONTRAVIS') == 'True'
-#         
-#         # convert OMNI position to ECEF
-#         p_long = np.arange(0.,360.,12.)
-#         p_alt = 0*p_long + 550.        
-#         p_lat = [ 5., 10., 15., 20., 25., 30.]
-#         
-#         #ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
-#         for i,step in enumerate(step_sizes):
-# 
-#             #
-#             calculate_mag_drift_unit_vectors_ecef(p_lat, p_long, p_alt, times, step_size=step)
-#             date = datetime.datetime(2000,1,1)
-#             ecef_x,ecef_y,ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
-            
+            pass            
                                                                   
                                                                                                                                                                                                       
     def test_unit_vector_plots(self):
@@ -377,7 +508,6 @@ class TestCore():
             ecef_x,ecef_y,ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
             
             for j,(x,y,z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
-                print (p_lat, j)
                 # perform field line traces
                 trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., step_size=.5, max_steps=1.E6)
                 trace_s = pymv.field_line_trace(np.array([x,y,z]), date, -1., 0., step_size=.5, max_steps=1.E6)
@@ -416,7 +546,7 @@ class TestCore():
                 self.inst.data.index = pysat.utils.season_date_range(pysat.datetime(2000,1,1),
                                                                     pysat.datetime(2000,1,1)+pds.DateOffset(seconds=len(self.inst.data)-1),
                                                                     freq='S')
-                pymv.add_mag_drift_unit_vectors(self.inst)
+                pymv.satellite.add_mag_drift_unit_vectors(self.inst)
                 
                 #if i % 2 == 0:
                 length = 500
@@ -526,10 +656,230 @@ class TestCore():
 #         
 #         n_z_diff = north_zonal[:,:,1:] - north_zonal[:,:,:-1]
 #         n_z_diff.mean(axis=0).mean(axis=0) 
-#                                 
-    def test_geomag_drift_scalars_plots(self):
+#                                   
+    def test_apex_plots(self):
         import matplotlib.pyplot as plt
         # from mpl_toolkits.mplot3d import Axes3D
+        import os
+        on_travis = os.environ.get('ONTRAVIS') == 'True'
+        
+        if not on_travis:
+            delta = 2.5/10.
+            p_longs = np.arange(0.,360.,12./10.)
+        else:
+            # reduced resolution
+            delta = 25.
+            p_longs = np.arange(0.,360.,120.)
+            
+        p_lats = np.arange(-25., 25.+delta, delta)
+        p_alt = 120.
+        
+        apex_lat = np.zeros((len(p_lats), len(p_longs)+1))
+        apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
+        apex_alt = np.zeros((len(p_lats), len(p_longs)+1))
+        date = datetime.datetime(2000,1,1)
+        for i,p_lat in enumerate(p_lats):
+            print (i, p_lat)
+            for j, p_long in enumerate(p_longs):
+                x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat], [p_long], [p_alt], [date])
+                apex_lat[i,j] = olat
+                apex_lon[i,j] = olon
+                apex_alt[i,j] = oalt
+        # account for periodicity
+        apex_lat[:,-1] = apex_lat[:,0]
+        apex_lon[:,-1] = apex_lon[:,0]
+        apex_alt[:,-1] = apex_alt[:,0]
+
+        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
+        ytickvals = ['-25', '-12.5', '0', '12.5', '25']
+        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        
+        try:
+            fig = plt.figure()
+            plt.imshow(apex_lat, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ytickvals)
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Apex Latitude (Degrees) at 120 km')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('apex_lat.png') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(apex_lon, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ytickvals)
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Apex Longitude (Degrees) at 120 km')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('apex_lon.png') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(apex_alt), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ytickvals)
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Apex Altitude (km) at 120 km')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('apex_alt.png') 
+            plt.close()
+        except:
+            pass
+      
+    def test_unit_vector_component_plots(self):
+        import matplotlib.pyplot as plt
+        # from mpl_toolkits.mplot3d import Axes3D
+        import os
+        on_travis = os.environ.get('ONTRAVIS') == 'True'
+        
+        if not on_travis:
+            delta = 2.5/10.
+            p_longs = np.arange(0.,360.,12./10.)
+        else:
+            # reduced resolution
+            delta = 25.
+            p_longs = np.arange(0.,360.,120.)
+            
+        p_lats = np.arange(-50., 50.+delta, delta)
+        p_alt = 550.
+        
+        zvx = np.zeros((len(p_lats), len(p_longs)+1))
+        zvy = zvx.copy(); zvz = zvx.copy()
+        mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
+        bx = zvx.copy(); by = zvx.copy(); bz = zvx.copy()
+        date = datetime.datetime(2000,1,1)
+        for i,p_lat in enumerate(p_lats):
+            print (i, p_lat)
+            for j, p_long in enumerate(p_longs):
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat], [p_long], [p_alt], [date],
+                                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                                        ref_height=120.)
+                zvx[i,j], zvy[i,j], zvz[i,j] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, p_lat, p_long)
+                bx[i,j], by[i,j], bz[i,j] = pymv.ecef_to_enu_vector(tbx, tby, tbz, p_lat, p_long)
+                mx[i,j], my[i,j], mz[i,j] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, p_lat, p_long)
+     
+        # account for periodicity
+        zvx[:,-1] = zvx[:,0]
+        zvy[:,-1] = zvy[:,0]
+        zvz[:,-1] = zvz[:,0]
+        bx[:,-1] = bx[:,0]
+        by[:,-1] = by[:,0]
+        bz[:,-1] = bz[:,0]
+        mx[:,-1] = mx[:,0]
+        my[:,-1] = my[:,0]
+        mz[:,-1] = mz[:,0]
+        
+        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
+        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        
+        try:
+            fig = plt.figure()
+            plt.imshow(zvx, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Zonal Unit Vector - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('zonal_east.png') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(zvy, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Zonal Unit Vector - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('zonal_north.png') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(zvz, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Zonal Unit Vector - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('zonal_up.png') 
+            plt.close()
+    
+            fig = plt.figure()
+            plt.imshow(bx, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Field Aligned Unit Vector - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('fa_east.png') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(by, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Field Aligned Unit Vector - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('fa_north.png') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(bz, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Field Aligned Unit Vector - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('fa_up.png') 
+            plt.close()
+    
+            fig = plt.figure()
+            plt.imshow(mx, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Meridional Unit Vector - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('mer_east.png') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(my, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Meridional Unit Vector - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('mer_north.png') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(mz, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Meridional Unit Vector - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('mer_up.png') 
+            plt.close()
+        except:
+            pass
+    
+    def test_geomag_efield_scalars_plots(self):
+        import matplotlib.pyplot as plt
         import os
         on_travis = os.environ.get('ONTRAVIS') == 'True'
         
@@ -545,22 +895,131 @@ class TestCore():
         p_lats = np.arange(-50., 50.+delta, delta)
         p_alt = 550.
         
-        north_zonal = np.zeros((len(p_lats), len(p_longs)))
+        north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
         north_mer = north_zonal.copy()
         south_zonal = north_zonal.copy()
         south_mer = north_zonal.copy()
         eq_zonal = north_zonal.copy()
         eq_mer = north_zonal.copy()
-        
-        if not on_travis:
-            fig = plt.figure()
-            ax = fig.add_subplot(111)
-        
+                
         date = datetime.datetime(2000,1,1)
         for i,p_lat in enumerate(p_lats):
             for j, p_long in enumerate(p_longs):
-                # print (i,j, date) 
-                # print (p_lat, p_long, p_alt)
+                scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date], e_field_scaling_only=True)
+                north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
+                north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
+                south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
+                south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
+                eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
+                eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
+        # account for periodicity
+        north_zonal[:,-1] = north_zonal[:,0]
+        north_mer[:,-1] = north_mer[:,0]
+        south_zonal[:,-1] = south_zonal[:,0]
+        south_mer[:,-1] = south_mer[:,0]
+        eq_zonal[:,-1] = eq_zonal[:,0]
+        eq_mer[:,-1] = eq_mer[:,0]
+        
+        xtickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
+        ytickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        
+        try:
+            fig = plt.figure()
+            plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
+            plt.colorbar()
+            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Meridional Electric Field Mapping to Magnetic Equator')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('eq_mer_field.png') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(eq_mer, origin='lower')#, vmin=0, vmax=1.)
+            plt.colorbar()
+            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Zonal Electric Field Mapping to Magnetic Equator')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('eq_zon_field.png') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(north_zonal, origin='lower')#, vmin=0, vmax=2)
+            plt.colorbar()
+            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Meridional Electric Field Mapping to Northern Footpoint')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('north_mer_field.png') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(north_mer, origin='lower')#, vmin=0, vmax=2)
+            plt.colorbar()
+            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Zonal Electric Field Mapping to Northern Footpoint')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('north_zon_field.png') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(south_zonal, origin='lower')#, vmin=0, vmax=2)
+            plt.colorbar()
+            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Meridional Electric Field Mapping to Southern Footpoint')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('south_mer_field.png') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(south_mer, origin='lower')#, vmin=0, vmax=2)
+            plt.colorbar()
+            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Zonal Electric Field Mapping to Southern Footpoint')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('south_zon_field.png') 
+            plt.close()
+        except:
+            pass
+                
+    def test_geomag_ion_drift_scalars_plots(self):
+        import matplotlib.pyplot as plt
+        # from mpl_toolkits.mplot3d import Axes3D
+        import os
+        on_travis = os.environ.get('ONTRAVIS') == 'True'
+        
+        
+        if not on_travis:
+            delta = 2.5
+            p_longs = np.arange(0.,360.,12.)
+        else:
+            # reduced resolution
+            delta = 25.
+            p_longs = np.arange(0.,360.,120.)
+            
+        p_lats = np.arange(-25., 25.+delta, delta)
+        p_alt = 550.
+        
+        north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
+        north_mer = north_zonal.copy()
+        south_zonal = north_zonal.copy()
+        south_mer = north_zonal.copy()
+        eq_zonal = north_zonal.copy()
+        eq_mer = north_zonal.copy()
+                
+        date = datetime.datetime(2000,1,1)
+        for i,p_lat in enumerate(p_lats):
+            for j, p_long in enumerate(p_longs):
                 scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date])
                 north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
                 north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
@@ -568,58 +1027,87 @@ class TestCore():
                 south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
                 eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
                 eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
-
-        if not on_travis:
+        # account for periodicity
+        north_zonal[:,-1] = north_zonal[:,0]
+        north_mer[:,-1] = north_mer[:,0]
+        south_zonal[:,-1] = south_zonal[:,0]
+        south_mer[:,-1] = south_mer[:,0]
+        eq_zonal[:,-1] = eq_zonal[:,0]
+        eq_mer[:,-1] = eq_mer[:,0]
+        
+        xtickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
+        xtickvals = ['-25', '-12.5', '0', '12.5', '25']
+        ytickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        
+        try:
             fig = plt.figure()
-            # ax = fig.add_subplot(111)
             plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
-            plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
-            plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
-            plt.savefig('eq_zonal_test.png') 
+            plt.yticks(xtickarr, xtickvals)
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Zonal Ion Drift Mapping to Magnetic Equator')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('eq_zonal_drift.png') 
             plt.close()
               
             fig = plt.figure()
             plt.imshow(eq_mer, origin='lower')#, vmin=0, vmax=1.)
             plt.colorbar()
-            plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
-            plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
-            plt.savefig('eq_mer_test.png') 
+            plt.yticks(xtickarr, xtickvals)
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Meridional Ion Drift Mapping to Magnetic Equator')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('eq_mer_drift.png') 
             plt.close()
 
             fig = plt.figure()
             plt.imshow(north_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
-            plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
-            plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
-            plt.savefig('north_zonal_test.png') 
+            plt.yticks(xtickarr, xtickvals)
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Zonal Ion Drift Mapping to Northern Footpoint')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('north_zonal_drift.png') 
             plt.close()
 
             fig = plt.figure()
             plt.imshow(north_mer, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
-            plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
-            plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
-            plt.savefig('north_mer_test.png') 
+            plt.yticks(xtickarr, xtickvals)
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Meridional Ion Drift Mapping to Northern Footpoint')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('north_mer_drift.png') 
             plt.close()
-
 
             fig = plt.figure()
             plt.imshow(south_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
-            plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
-            plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
-            plt.savefig('south_zonal_test.png') 
+            plt.yticks(xtickarr, xtickvals)
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Zonal Ion Drift Mapping to Southern Footpoint')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('south_zonal_drift.png') 
             plt.close()
 
             fig = plt.figure()
             plt.imshow(south_mer, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
-            plt.yticks([0, 9, 19, 29, 39], ['50', '25', '0', '-25', '-50'])
-            plt.xticks([0, 6, 12, 18, 24, 30], ['0', '72', '144', '216', '288', '360'])       
-            plt.savefig('south_mer_test.png') 
+            plt.yticks(xtickarr, xtickvals)
+            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Meridional Ion Drift Mapping to Southern Footpoint')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('south_mer_drift.png') 
             plt.close()
-                
+        except:
+            pass
+        
     def test_basic_ecef_to_enu_rotations(self):
         # test basic transformations first
         # vector pointing along ecef y at 0, 0 is east
@@ -747,8 +1235,8 @@ class TestCore():
         vx = 0.9
         vy = 0.1
         vz = np.sqrt(1. - vx**2+vy**2)
-
-        for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        for lat, lon, alt in zip(lats, longs, alts):
             vxx, vyy, vzz = pymv.ecef_to_enu_vector(vx, vy, vz, lat, lon)
             vxx, vyy, vzz = pymv.enu_to_ecef_vector(vxx, vyy, vzz, lat, lon)
             asseq(vx, vxx, 9)
@@ -760,8 +1248,8 @@ class TestCore():
         vx = 0.9
         vy = 0.1
         vz = np.sqrt(1. - vx**2+vy**2)
-
-        for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        for lat, lon, alt in zip(lats, longs, alts):
             vxx, vyy, vzz = pymv.enu_to_ecef_vector(vx, vy, vz, lat, lon)
             vxx, vyy, vzz = pymv.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
             asseq(vx, vxx, 9)
@@ -774,8 +1262,8 @@ class TestCore():
         vy = 0.1
         vz = np.sqrt(1. - vx**2+vy**2)
         vz = -vz
-
-        for lat, lon, alt in zip(omni['p_lat'], omni['p_long'], omni['p_alt']):
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        for lat, lon, alt in zip(lats, longs, alts):
             #print(vx, vy, vz, lat, lon)
             #pdb.set_trace()
             # input here is co-latitude, not latitude
@@ -797,12 +1285,12 @@ class TestCore():
 
 
     def test_igrf_ecef_to_geodetic_back_to_ecef(self):
-        
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
         for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x,ecf_y,
-                           ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
+                           ecf_z, lats, longs, alts):
             pos = np.array([ecef_x, ecef_y, ecef_z])
             lat, elong, alt = igrf.ecef_to_geodetic(pos)
             lat = np.rad2deg(lat)
@@ -823,12 +1311,12 @@ class TestCore():
             
         
     def test_igrf_ecef_to_geographic_with_colatitude(self):
-        
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(omni['p_lat'], 
-                                                  omni['p_long'],
-                                                  omni['p_alt'])
+        lats, longs, alts = gen_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
         for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x,ecf_y,
-                           ecf_z, omni['p_lat'], omni['p_long'], omni['p_alt']):
+                           ecf_z, lats, longs, alts):
             pos = np.array([ecef_x, ecef_y, ecef_z])
             
             colat, lon, r = igrf.ecef_to_colat_long_r(pos)
