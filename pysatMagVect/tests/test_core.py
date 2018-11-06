@@ -87,8 +87,8 @@ def gen_data_fixed_alt(alt):
         long_dim = np.arange(0., 361., 60.)
         lat_dim = np.arange(-90., 91., 30.)
     else:
-        long_dim = np.arange(0., 361., 30.)
-        lat_dim = np.arange(-90., 91., 15.)
+        long_dim = np.arange(0., 361., 20.)
+        lat_dim = np.arange(-90., 91., 5.)
     idx, = np.where(lat_dim == 90.)
     lat_dim[idx] = 89.999
     idx, = np.where(lat_dim == -90.)
@@ -112,8 +112,8 @@ def gen_trace_data_fixed_alt(alt):
         long_dim = np.arange(0., 361., 80.)
         lat_dim = np.arange(-50., 51., 25.)
     else:
-        long_dim = np.arange(0., 361., 40.)
-        lat_dim = np.arange(-50., 51., 12.5)
+        long_dim = np.arange(0., 361., 20.)
+        lat_dim = np.arange(-50., 51., 5.)
 
     alt_dim = alt
     locs = np.array(list(itertools.product(long_dim, lat_dim)))
@@ -140,8 +140,8 @@ def gen_plot_grid_fixed_alt(alt):
         long_dim = np.arange(0., 360., 120.)
         lat_dim = np.arange(-50., 51., 25.)
     else:
-        long_dim = np.arange(0., 360., 12.)
-        lat_dim = np.arange(-50., 51., 2.5)
+        long_dim = np.arange(0., 360., 1.2/2.)
+        lat_dim = np.arange(-50., 50.1, 0.25/2.)
 
     alt_dim = np.array([alt])
     return lat_dim, long_dim, alt_dim 
@@ -207,7 +207,7 @@ class TestCore():
             plt.ylabel('Geographic Latitude')
             plt.legend(loc=0)
             plt.xlim((0,360.))
-            plt.savefig('magnetic_footpoint_comparison.png')
+            plt.savefig('magnetic_footpoint_comparison.pdf')
         except:
             pass
         
@@ -332,9 +332,9 @@ class TestCore():
                 for steps, max_steps in zip(steps_goal, max_steps_goal):
                     # iterate through target cyclicly and run commands
                     dview.targets = targets.next()
-                    pending.append(dview.apply(pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+                    pending.append(dview.apply_async(pymv.field_line_trace, np.array([x,y,z]), date, 1., 0., 
                                                     step_size=steps, 
-                                                    max_steps=max_steps))) 
+                                                    max_steps=max_steps)) 
             for x, y, z in zip(ecf_x, ecf_y, ecf_z):
                 out = []
                 for steps, max_steps in zip(steps_goal, max_steps_goal):
@@ -380,7 +380,7 @@ class TestCore():
             plt.title("Change in Final ECEF Position")
             plt.legend()
             plt.tight_layout()
-            plt.savefig('Footpoint_position_vs_step_size.png' )
+            plt.savefig('Footpoint_position_vs_step_size.pdf' )
         except:
             pass            
                            
@@ -391,9 +391,9 @@ class TestCore():
                                                   longs,
                                                   alts)        
         # step size to be tried
-        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5.])
+        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5.])
         # max number of steps (fixed)
-        max_steps_goal = np.array([100000., 30000., 10000., 3000., 1000., 300., 100., 30.])
+        max_steps_goal = np.array([100000., 30000., 10000., 3000., 1000., 300., 100.])
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
@@ -430,7 +430,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.ylabel('Log Change in Foot Point Position (km)')
-            plt.savefig('Footpoint_position_vs_max_steps__recursion.png' )
+            plt.savefig('Footpoint_position_vs_max_steps__recursion.pdf' )
         except:
             pass            
 
@@ -440,9 +440,9 @@ class TestCore():
                                                   longs,
                                                   alts)        
         # step size to be tried
-        steps_goal = np.array([.01, .05, .1, .5, 1., 5., 10., 50., 100., 500.]) 
+        steps_goal = np.array([.05, .1, .5, 1., 5., 10., 50., 100., 500.]) 
         # max number of steps (fixed)
-        max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
+        max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
@@ -478,7 +478,7 @@ class TestCore():
             plt.title("Change in Final ECEF Position, Recursive Calls")
             plt.legend()
             plt.tight_layout()
-            plt.savefig('Footpoint_position_vs_step_size__recursion.png' )
+            plt.savefig('Footpoint_position_vs_step_size__recursion.pdf' )
         except:
             pass            
                                                                   
@@ -605,7 +605,7 @@ class TestCore():
 
                 
             if not on_travis:
-                plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.png')))
+                plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.pdf')))
         ## plot Earth
         #u = np.linspace(0, 2 * np.pi, 100)
         #v = np.linspace(60.*np.pi/180., 120.*np.pi/180., 100)
@@ -613,7 +613,7 @@ class TestCore():
         #yy = 6371. * np.outer(np.sin(u), np.sin(v))
         #zz = 6371. * np.outer(np.ones(np.size(u)), np.cos(v))
         #ax.plot_surface(xx, yy, zz, rstride=4, cstride=4, color='darkgray')
-        #plt.savefig('magnetic_unit_vectors_w_globe.png')
+        #plt.savefig('magnetic_unit_vectors_w_globe.pdf')
         #print truthiness
         assert np.all(truthiness)
 
@@ -679,7 +679,7 @@ class TestCore():
                 for j, p_long in enumerate(p_longs):
                     # iterate through target cyclicly and run commands
                     dview.targets = targets.next()
-                    pending.append(dview.apply(pymv.apex_location_info([p_lat], [p_long], p_alt, [date]))) 
+                    pending.append(dview.apply_async(pymv.apex_location_info, [p_lat], [p_long], p_alt, [date])) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j, p_long in enumerate(p_longs):
@@ -716,7 +716,7 @@ class TestCore():
             plt.title('Apex Latitude (Degrees) at 120 km')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_lat.png') 
+            plt.savefig('apex_lat.pdf') 
             plt.close()
               
             fig = plt.figure()
@@ -727,7 +727,7 @@ class TestCore():
             plt.title('Apex Longitude (Degrees) at 120 km')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_lon.png') 
+            plt.savefig('apex_lon.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -738,7 +738,7 @@ class TestCore():
             plt.title('Log Apex Altitude (km) at 120 km')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_alt.png') 
+            plt.savefig('apex_alt.pdf') 
             plt.close()
         except:
             pass
@@ -787,7 +787,7 @@ class TestCore():
             plt.title('Zonal Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_east.png') 
+            plt.savefig('zonal_east.pdf') 
             plt.close()
               
             fig = plt.figure()
@@ -798,7 +798,7 @@ class TestCore():
             plt.title('Zonal Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_north.png') 
+            plt.savefig('zonal_north.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -809,7 +809,7 @@ class TestCore():
             plt.title('Zonal Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_up.png') 
+            plt.savefig('zonal_up.pdf') 
             plt.close()
     
             fig = plt.figure()
@@ -820,7 +820,7 @@ class TestCore():
             plt.title('Field Aligned Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_east.png') 
+            plt.savefig('fa_east.pdf') 
             plt.close()
               
             fig = plt.figure()
@@ -831,7 +831,7 @@ class TestCore():
             plt.title('Field Aligned Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_north.png') 
+            plt.savefig('fa_north.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -842,7 +842,7 @@ class TestCore():
             plt.title('Field Aligned Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_up.png') 
+            plt.savefig('fa_up.pdf') 
             plt.close()
     
             fig = plt.figure()
@@ -853,7 +853,7 @@ class TestCore():
             plt.title('Meridional Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_east.png') 
+            plt.savefig('mer_east.pdf') 
             plt.close()
               
             fig = plt.figure()
@@ -864,7 +864,7 @@ class TestCore():
             plt.title('Meridional Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_north.png') 
+            plt.savefig('mer_north.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -875,7 +875,7 @@ class TestCore():
             plt.title('Meridional Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_up.png') 
+            plt.savefig('mer_up.pdf') 
             plt.close()
         except:
             pass
@@ -902,7 +902,7 @@ class TestCore():
                 for j, p_long in enumerate(p_longs):
                     # iterate through target cyclicly and run commands
                     dview.targets = targets.next()
-                    pending.append(dview.apply(pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], p_alt, [date], e_field_scaling_only=True))) 
+                    pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,[p_lat], [p_long], p_alt, [date], e_field_scaling_only=True)) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j, p_long in enumerate(p_longs):
@@ -944,7 +944,7 @@ class TestCore():
             plt.title('Meridional Electric Field Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_mer_field.png') 
+            plt.savefig('eq_mer_field.pdf') 
             plt.close()
               
             fig = plt.figure()
@@ -955,7 +955,7 @@ class TestCore():
             plt.title('Zonal Electric Field Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_zon_field.png') 
+            plt.savefig('eq_zon_field.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -966,7 +966,7 @@ class TestCore():
             plt.title('Meridional Electric Field Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_mer_field.png') 
+            plt.savefig('north_mer_field.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -977,7 +977,7 @@ class TestCore():
             plt.title('Zonal Electric Field Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_zon_field.png') 
+            plt.savefig('north_zon_field.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -988,7 +988,7 @@ class TestCore():
             plt.title('Meridional Electric Field Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_mer_field.png') 
+            plt.savefig('south_mer_field.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -999,7 +999,7 @@ class TestCore():
             plt.title('Zonal Electric Field Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_zon_field.png') 
+            plt.savefig('south_zon_field.pdf') 
             plt.close()
         except:
             pass
@@ -1027,7 +1027,8 @@ class TestCore():
                 for j, p_long in enumerate(p_longs):
                     # iterate through target cyclicly and run commands
                     dview.targets = targets.next()
-                    pending.append(dview.apply(pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], p_alt, [date]))) 
+                    print ('Targeting ', dview.targets, i, j)
+                    pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts, [p_lat], [p_long], p_alt, [date])) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j, p_long in enumerate(p_longs):
@@ -1063,25 +1064,25 @@ class TestCore():
         
         try:
             fig = plt.figure()
-            plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
+            plt.imshow(np.log10(eq_zonal), origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks(xtickarr, xtickvals)
             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Zonal Ion Drift Mapping to Magnetic Equator')
+            plt.title('Log Zonal Ion Drift Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_zonal_drift.png') 
+            plt.savefig('eq_zonal_drift.pdf') 
             plt.close()
               
             fig = plt.figure()
-            plt.imshow(eq_mer, origin='lower')#, vmin=0, vmax=1.)
+            plt.imshow(np.log10(eq_mer), origin='lower')#, vmin=0, vmax=1.)
             plt.colorbar()
             plt.yticks(xtickarr, xtickvals)
             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Meridional Ion Drift Mapping to Magnetic Equator')
+            plt.title('Log Meridional Ion Drift Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_mer_drift.png') 
+            plt.savefig('eq_mer_drift.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -1092,7 +1093,7 @@ class TestCore():
             plt.title('Zonal Ion Drift Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_zonal_drift.png') 
+            plt.savefig('north_zonal_drift.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -1103,7 +1104,7 @@ class TestCore():
             plt.title('Meridional Ion Drift Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_mer_drift.png') 
+            plt.savefig('north_mer_drift.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -1114,7 +1115,7 @@ class TestCore():
             plt.title('Zonal Ion Drift Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_zonal_drift.png') 
+            plt.savefig('south_zonal_drift.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -1125,7 +1126,7 @@ class TestCore():
             plt.title('Meridional Ion Drift Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_mer_drift.png') 
+            plt.savefig('south_mer_drift.pdf') 
             plt.close()
         except:
             pass
