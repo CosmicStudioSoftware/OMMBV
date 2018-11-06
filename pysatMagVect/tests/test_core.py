@@ -13,6 +13,18 @@ from pysatMagVect import igrf
 
 import pysat
 
+# multiprocessing boolean flag
+multiproc = False
+if multiproc:
+    # get remote instances
+    import ipyparallel
+    dc = ipyparallel.Client()
+    dview = dc[:]
+else:
+    # nothing to set
+    dc = None
+    dview = None
+    
 # results from omniweb calculator
 omni_list = [[550. , 20.00   , 0.00 , 29.77,  359.31,  -9.04 ,   3.09],
     [550. , 20.00   , 7.50 , 29.50  ,  7.19 , -8.06 ,   9.54],
@@ -65,18 +77,18 @@ omni_list = [[550. , 20.00   , 0.00 , 29.77,  359.31,  -9.04 ,   3.09],
 omni = pds.DataFrame(omni_list, columns=['p_alt', 'p_lat', 'p_long', 'n_lat', 'n_long', 's_lat', 's_long'])
 
 def gen_data_fixed_alt(alt):
+    """Generate data between -90 and 90 degrees latitude, almost."""
     import itertools
     import os
     # generate test data set
     on_travis = os.environ.get('ONTRAVIS') == 'True'
     if on_travis:
-        long_dim = np.arange(0., 361., 80.)
-        lat_dim = np.arange(-50., 51., 25.)
+        # reduced resolution on the test server
+        long_dim = np.arange(0., 361., 60.)
+        lat_dim = np.arange(-90., 91., 30.)
     else:
-        long_dim = np.arange(0., 361., 40.)
-        lat_dim = np.arange(-50., 51., 12.5)
-    long_dim = np.arange(0., 361., 30.)
-    lat_dim = np.arange(-90., 91., 15.)
+        long_dim = np.arange(0., 361., 30.)
+        lat_dim = np.arange(-90., 91., 15.)
     idx, = np.where(lat_dim == 90.)
     lat_dim[idx] = 89.999
     idx, = np.where(lat_dim == -90.)
@@ -90,21 +102,19 @@ def gen_data_fixed_alt(alt):
     return lats, longs, alts 
 
 def gen_trace_data_fixed_alt(alt):
+    """Generate data between -50 and 50 degrees latitude."""
     import itertools
     import os
     # generate test data set
     on_travis = os.environ.get('ONTRAVIS') == 'True'
     if on_travis:
+        # reduced resolution on the test server
         long_dim = np.arange(0., 361., 80.)
         lat_dim = np.arange(-50., 51., 25.)
     else:
         long_dim = np.arange(0., 361., 40.)
         lat_dim = np.arange(-50., 51., 12.5)
 
-    idx, = np.where(lat_dim == 90.)
-    lat_dim[idx] = 89.999
-    idx, = np.where(lat_dim == -90.)
-    lat_dim[idx] = -89.999
     alt_dim = alt
     locs = np.array(list(itertools.product(long_dim, lat_dim)))
     # pull out lats and longs
@@ -112,6 +122,29 @@ def gen_trace_data_fixed_alt(alt):
     longs = locs[:,0]
     alts = longs*0 + alt_dim
     return lats, longs, alts 
+
+def gen_plot_grid_fixed_alt(alt):
+    """Generate dimensional data between -50 and 50 degrees latitude.
+    
+    Note
+    ----
+    Output is different than routines above.
+    
+    """
+    import itertools
+    import os
+    # generate test data set
+    on_travis = os.environ.get('ONTRAVIS') == 'True'
+    if on_travis:
+        # reduced resolution on the test server
+        long_dim = np.arange(0., 360., 120.)
+        lat_dim = np.arange(-50., 51., 25.)
+    else:
+        long_dim = np.arange(0., 360., 12.)
+        lat_dim = np.arange(-50., 51., 2.5)
+
+    alt_dim = np.array([alt])
+    return lat_dim, long_dim, alt_dim 
 
 
 class TestCore():
@@ -121,6 +154,8 @@ class TestCore():
         self.inst = pysat.Instrument('pysat', 'testing')
         self.inst.yr = 2010.
         self.inst.doy = 1.
+        self.dview = dview
+        self.dc = dc
 
         return
         
@@ -273,36 +308,6 @@ class TestCore():
 
 
     def test_tracing_accuracy(self):
-#         x,y,z = pymv.geocentric_to_ecef(np.array([20.]), np.array([0.]), np.array([550.]))
-#         
-#         steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
-#         max_steps_goal = steps_goal*0+1E7
-# 
-#         out = []
-#         date = datetime.datetime(2000, 1, 1)
-#         for steps, max_steps in zip(steps_goal, max_steps_goal):
-#             trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
-#                                                step_size=steps, 
-#                                                max_steps=max_steps)  
-# 
-#             pt = trace_n[-1,:]
-#             out.append(pt)
-# 
-#         final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-#         x = np.log10(np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1]))
-#         y = np.log10(np.abs(final_pt.ix[:, 'y'].values[1:] - final_pt.ix[:,'y'].values[:-1]))
-#         z = np.log10(np.abs(final_pt.ix[:, 'z'].values[1:] - final_pt.ix[:,'z'].values[:-1]))
-#         
-#         try:
-#             plt.figure()
-#             plt.plot(np.log10(steps_goal[1:]), x)
-#             plt.plot(np.log10(steps_goal[1:]), y)
-#             plt.plot(np.log10(steps_goal[1:]), z)
-#             plt.xlabel('Log Step Size (km)')
-#             plt.ylabel('Log Change in Foot Point Position (km)')
-#             plt.savefig('Footpoint_position_vs_step_size.png' )
-#         except:
-#             pass
 
         lats, longs, alts = gen_trace_data_fixed_alt(550.)        
         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
@@ -317,19 +322,47 @@ class TestCore():
         dx = []
         dy = []
         dz = []
-        for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-            out = []
-            for steps, max_steps in zip(steps_goal, max_steps_goal):
-                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
-                                                step_size=steps, 
-                                                max_steps=max_steps) 
-                pt = trace_n[-1,:]
-                out.append(pt)
-
-            final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-            dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+        
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+                for steps, max_steps in zip(steps_goal, max_steps_goal):
+                    # iterate through target cyclicly and run commands
+                    dview.targets = targets.next()
+                    pending.append(dview.apply(pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+                                                    step_size=steps, 
+                                                    max_steps=max_steps))) 
+            for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+                out = []
+                for steps, max_steps in zip(steps_goal, max_steps_goal):
+                    # collect output 
+                    trace_n = pending.pop(0).get()
+                    pt = trace_n[-1,:]
+                    out.append(pt)
+    
+                final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+                dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+        else:
+            for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+                out = []
+                for steps, max_steps in zip(steps_goal, max_steps_goal):
+                    trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+                                                    step_size=steps, 
+                                                    max_steps=max_steps) 
+                    pt = trace_n[-1,:]
+                    out.append(pt)
+    
+                final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+                dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+            
+            
         dx = pds.DataFrame(dx)
         dy = pds.DataFrame(dy)
         dz = pds.DataFrame(dz)
@@ -352,38 +385,6 @@ class TestCore():
             pass            
                            
     def test_tracing_accuracy_w_recursion(self):
-
-        
-#         x,y,z = pymv.geocentric_to_ecef(np.array([50.]), np.array([0.]), np.array([550.]))
-#         
-#         steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5., 5., 5.]) #, .005, .003, .001])
-#         max_steps_goal = np.array([1000000., 100000., 10000., 3000., 1000., 300., 100., 30., 10., 3.])
-# 
-#         out = []
-#         date = datetime.datetime(2000, 1, 1)
-#         for steps, max_steps in zip(steps_goal, max_steps_goal):
-#             trace_n = pymv.field_line_trace(np.array([x[0],y[0],z[0]]), date, 1., 0., 
-#                                                step_size=steps, 
-#                                                max_steps=max_steps) 
-#             pt = trace_n[-1,:]
-#             out.append(pt)
-# 
-#         final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-#         x = np.abs(final_pt.ix[:, 'x'].values[1:] - final_pt.ix[:,'x'].values[:-1])
-#         y = np.abs(final_pt.ix[:, 'y'].values[1:] - final_pt.ix[:,'y'].values[:-1])
-#         z = np.abs(final_pt.ix[:, 'z'].values[1:] - final_pt.ix[:,'z'].values[:-1])
-#         
-#         try:
-#             plt.figure()
-#             plt.plot(np.log10(max_steps_goal[1:]), x)
-#             plt.plot(np.log10(max_steps_goal[1:]), y)
-#             plt.plot(np.log10(max_steps_goal[1:]), z)
-#             plt.xlabel('Log Number of Steps per Run')
-#             plt.ylabel('Log Change in Foot Point Position (km)')
-#             plt.savefig('Footpoint_position_vs_max_steps__recursion.png' )
-#         except:
-#             pass
-
 
         lats, longs, alts = gen_trace_data_fixed_alt(550.)        
         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
@@ -659,32 +660,44 @@ class TestCore():
 #                                   
     def test_apex_plots(self):
         import matplotlib.pyplot as plt
-        # from mpl_toolkits.mplot3d import Axes3D
         import os
-        on_travis = os.environ.get('ONTRAVIS') == 'True'
-        
-        if not on_travis:
-            delta = 2.5/10.
-            p_longs = np.arange(0.,360.,12./10.)
-        else:
-            # reduced resolution
-            delta = 25.
-            p_longs = np.arange(0.,360.,120.)
-            
-        p_lats = np.arange(-25., 25.+delta, delta)
-        p_alt = 120.
-        
+        # on_travis = os.environ.get('ONTRAVIS') == 'True'
+                
+        p_lats, p_longs, p_alt = gen_plot_grid_fixed_alt(120.)        
         apex_lat = np.zeros((len(p_lats), len(p_longs)+1))
         apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
         apex_alt = np.zeros((len(p_lats), len(p_longs)+1))
         date = datetime.datetime(2000,1,1)
-        for i,p_lat in enumerate(p_lats):
-            print (i, p_lat)
-            for j, p_long in enumerate(p_longs):
-                x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat], [p_long], [p_alt], [date])
-                apex_lat[i,j] = olat
-                apex_lon[i,j] = olon
-                apex_alt[i,j] = oalt
+
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                for j, p_long in enumerate(p_longs):
+                    # iterate through target cyclicly and run commands
+                    dview.targets = targets.next()
+                    pending.append(dview.apply(pymv.apex_location_info([p_lat], [p_long], [p_alt], [date]))) 
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                for j, p_long in enumerate(p_longs):
+                    # collect output 
+                    x, y, z, olat, olon, oalt = pending.pop(0).get()
+                    apex_lat[i,j] = olat
+                    apex_lon[i,j] = olon
+                    apex_alt[i,j] = oalt
+
+        else:
+            # single processor case
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                for j, p_long in enumerate(p_longs):
+                    x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat], [p_long], [p_alt], [date])
+                    apex_lat[i,j] = olat
+                    apex_lon[i,j] = olon
+                    apex_alt[i,j] = oalt
         # account for periodicity
         apex_lat[:,-1] = apex_lat[:,0]
         apex_lon[:,-1] = apex_lon[:,0]
@@ -734,19 +747,8 @@ class TestCore():
         import matplotlib.pyplot as plt
         # from mpl_toolkits.mplot3d import Axes3D
         import os
-        on_travis = os.environ.get('ONTRAVIS') == 'True'
-        
-        if not on_travis:
-            delta = 2.5/10.
-            p_longs = np.arange(0.,360.,12./10.)
-        else:
-            # reduced resolution
-            delta = 25.
-            p_longs = np.arange(0.,360.,120.)
-            
-        p_lats = np.arange(-50., 50.+delta, delta)
-        p_alt = 550.
-        
+
+        p_lats, p_longs, p_alt = gen_plot_grid_fixed_alt(550.)          
         zvx = np.zeros((len(p_lats), len(p_longs)+1))
         zvy = zvx.copy(); zvz = zvx.copy()
         mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
@@ -881,20 +883,8 @@ class TestCore():
     def test_geomag_efield_scalars_plots(self):
         import matplotlib.pyplot as plt
         import os
-        on_travis = os.environ.get('ONTRAVIS') == 'True'
         
-        
-        if not on_travis:
-            delta = 2.5
-            p_longs = np.arange(0.,360.,12.)
-        else:
-            # reduced resolution
-            delta = 25.
-            p_longs = np.arange(0.,360.,120.)
-            
-        p_lats = np.arange(-50., 50.+delta, delta)
-        p_alt = 550.
-        
+        p_lats, p_longs, p_alt = gen_plot_grid_fixed_alt(550.)  
         north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
         north_mer = north_zonal.copy()
         south_zonal = north_zonal.copy()
@@ -903,15 +893,37 @@ class TestCore():
         eq_mer = north_zonal.copy()
                 
         date = datetime.datetime(2000,1,1)
-        for i,p_lat in enumerate(p_lats):
-            for j, p_long in enumerate(p_longs):
-                scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date], e_field_scaling_only=True)
-                north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
-                north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
-                south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
-                south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
-                eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
-                eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                for j, p_long in enumerate(p_longs):
+                    # iterate through target cyclicly and run commands
+                    dview.targets = targets.next()
+                    pending.append(dview.apply(pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date], e_field_scaling_only=True))) 
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                for j, p_long in enumerate(p_longs):
+                    # collect output 
+                    scalars = pending.pop(0).get()
+                    north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
+                    north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
+                    south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
+                    south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
+                    eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
+                    eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
+        else:
+            for i,p_lat in enumerate(p_lats):
+                for j, p_long in enumerate(p_longs):
+                    scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date], e_field_scaling_only=True)
+                    north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
+                    north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
+                    south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
+                    south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
+                    eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
+                    eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
         # account for periodicity
         north_zonal[:,-1] = north_zonal[:,0]
         north_mer[:,-1] = north_mer[:,0]
@@ -996,20 +1008,8 @@ class TestCore():
         import matplotlib.pyplot as plt
         # from mpl_toolkits.mplot3d import Axes3D
         import os
-        on_travis = os.environ.get('ONTRAVIS') == 'True'
-        
-        
-        if not on_travis:
-            delta = 2.5
-            p_longs = np.arange(0.,360.,12.)
-        else:
-            # reduced resolution
-            delta = 25.
-            p_longs = np.arange(0.,360.,120.)
-            
-        p_lats = np.arange(-25., 25.+delta, delta)
-        p_alt = 550.
-        
+
+        p_lats, p_longs, p_alt = gen_plot_grid_fixed_alt(550.)          
         north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
         north_mer = north_zonal.copy()
         south_zonal = north_zonal.copy()
@@ -1018,15 +1018,37 @@ class TestCore():
         eq_mer = north_zonal.copy()
                 
         date = datetime.datetime(2000,1,1)
-        for i,p_lat in enumerate(p_lats):
-            for j, p_long in enumerate(p_longs):
-                scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date])
-                north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
-                north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
-                south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
-                south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
-                eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
-                eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                for j, p_long in enumerate(p_longs):
+                    # iterate through target cyclicly and run commands
+                    dview.targets = targets.next()
+                    pending.append(dview.apply(pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date]))) 
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                for j, p_long in enumerate(p_longs):
+                    # collect output 
+                    scalars = pending.pop(0).get()
+                    north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
+                    north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
+                    south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
+                    south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
+                    eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
+                    eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
+        else:
+            for i,p_lat in enumerate(p_lats):
+                for j, p_long in enumerate(p_longs):
+                    scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date])
+                    north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
+                    north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
+                    south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
+                    south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
+                    eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
+                    eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
         # account for periodicity
         north_zonal[:,-1] = north_zonal[:,0]
         north_mer[:,-1] = north_mer[:,0]
