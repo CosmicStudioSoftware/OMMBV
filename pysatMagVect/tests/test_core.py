@@ -679,7 +679,7 @@ class TestCore():
                 for j, p_long in enumerate(p_longs):
                     # iterate through target cyclicly and run commands
                     dview.targets = targets.next()
-                    pending.append(dview.apply(pymv.apex_location_info([p_lat], [p_long], [p_alt], [date]))) 
+                    pending.append(dview.apply(pymv.apex_location_info([p_lat], [p_long], p_alt, [date]))) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j, p_long in enumerate(p_longs):
@@ -694,7 +694,7 @@ class TestCore():
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
                 for j, p_long in enumerate(p_longs):
-                    x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat], [p_long], [p_alt], [date])
+                    x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat], [p_long], p_alt, [date])
                     apex_lat[i,j] = olat
                     apex_lon[i,j] = olon
                     apex_alt[i,j] = oalt
@@ -757,7 +757,7 @@ class TestCore():
         for i,p_lat in enumerate(p_lats):
             print (i, p_lat)
             for j, p_long in enumerate(p_longs):
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat], [p_long], [p_alt], [date],
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat], [p_long], p_alt, [date],
                                                                                         steps=None, max_steps=10000, step_size=10.,
                                                                                         ref_height=120.)
                 zvx[i,j], zvy[i,j], zvz[i,j] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, p_lat, p_long)
@@ -902,7 +902,7 @@ class TestCore():
                 for j, p_long in enumerate(p_longs):
                     # iterate through target cyclicly and run commands
                     dview.targets = targets.next()
-                    pending.append(dview.apply(pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date], e_field_scaling_only=True))) 
+                    pending.append(dview.apply(pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], p_alt, [date], e_field_scaling_only=True))) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j, p_long in enumerate(p_longs):
@@ -917,7 +917,7 @@ class TestCore():
         else:
             for i,p_lat in enumerate(p_lats):
                 for j, p_long in enumerate(p_longs):
-                    scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date], e_field_scaling_only=True)
+                    scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], p_alt, [date], e_field_scaling_only=True)
                     north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
                     north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
                     south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
@@ -1027,7 +1027,7 @@ class TestCore():
                 for j, p_long in enumerate(p_longs):
                     # iterate through target cyclicly and run commands
                     dview.targets = targets.next()
-                    pending.append(dview.apply(pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date]))) 
+                    pending.append(dview.apply(pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], p_alt, [date]))) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j, p_long in enumerate(p_longs):
@@ -1042,7 +1042,7 @@ class TestCore():
         else:
             for i,p_lat in enumerate(p_lats):
                 for j, p_long in enumerate(p_longs):
-                    scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date])
+                    scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], p_alt, [date])
                     north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
                     north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
                     south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
