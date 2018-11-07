@@ -1419,7 +1419,7 @@ class TestCore():
         import os
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
-        
+        ecef_xs, ecef_ys, ecef_zs = pymv.geodetic_to_ecef(p_lats, p_longs, p_alts)
         # create memory for method
         # locations from method output, in ECEF
         # want positions with one setting on method under test, then another      
@@ -1444,12 +1444,11 @@ class TestCore():
                     print (i, p_lat)
                     dview.targets = targets.next()
                     # inputs are ECEF locations
-                    pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, p_lat, p_long, 
-                                                                            p_alts[0], date, 
+                    in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
+                    pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date, 
                                                                             direction=direction,
                                                                             num_steps=1))
-                    pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, p_lat, p_long, 
-                                                                            p_alts[0], date, 
+                    pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date, 
                                                                             direction=direction,
                                                                             num_steps=10))
             for i,p_lat in enumerate(p_lats):
@@ -1480,10 +1479,11 @@ class TestCore():
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
                 for j,p_long in enumerate(p_longs):
-                    x[i,j], y[i,j], z[i,j] = pymv.step_along_mag_unit_vector(p_lat, p_long, p_alts[0], date, 
+                    in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
+                    x[i,j], y[i,j], z[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
                                                                              direction=direction, num_steps=1)
                     # second run
-                    x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(p_lat, p_long, p_alts[0], date, 
+                    x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
                                                                  direction=direction, num_steps=10)
             for i,p_lat in enumerate(p_lats):
                 dview.targets = targets.next()
