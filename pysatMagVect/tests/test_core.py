@@ -1441,7 +1441,7 @@ class TestCore():
         plt.savefig('zonal_diff_v_longitude_height.pdf' )
 
     
-    def step_along_mag_unit_vector_sensitivity_plots(self, direction):
+    def step_along_mag_unit_vector_sensitivity_plots(self, direction=None):
         import matplotlib.pyplot as plt
         # from mpl_toolkits.mplot3d import Axes3D
         import os
@@ -1483,7 +1483,7 @@ class TestCore():
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date, 
                                                                             direction=direction,
                                                                             num_steps=10))
-            for i,p_lat in enumerate(p_lats):
+            # for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j,p_long in enumerate(p_longs):
                     # collect output from first run
@@ -1518,7 +1518,6 @@ class TestCore():
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
                                                                  direction=direction, num_steps=10)
             for i,p_lat in enumerate(p_lats):
-                dview.targets = targets.next()
                 x[i,:-1], y[i,:-1], z[i,:-1], _, _, _ = pymv.apex_location_info(x[i,:-1], y[i,:-1], 
                                                                                 z[i,:-1], dates)
                 x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, _ = pymv.apex_location_info(x[i,:-1], y[i,:-1], 
@@ -1589,9 +1588,9 @@ class TestCore():
             pass
     
     def test_step_sensitivity(self):
-        f = functools.partial(self.step_along_mag_unit_vector_sensitivity_plots, 'zonal')
+        f = functools.partial(self.step_along_mag_unit_vector_sensitivity_plots, direction='zonal')
         yield (f, )
-        f = functools.partial(self.step_along_mag_unit_vector_sensitivity_plots, 'meridional')
+        f = functools.partial(self.step_along_mag_unit_vector_sensitivity_plots, direction='meridional')
         yield (f, )
                                     
     def test_geomag_efield_scalars_plots(self):
