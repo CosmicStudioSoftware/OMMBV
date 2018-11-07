@@ -934,7 +934,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         minus_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                     trace_south_minus_mer,
                                                                                     -1, date, direction='meridional')
-        # scalar for the northern footpoint electrif field based on distances
+        # scalar for the northern footpoint electric field based on distances
         full_mer_sc_step = pos_mer_step_size + minus_mer_step_size
         if e_field_scaling_only:
             north_ftpnt_zon_drifts_scalar.append(full_mer_sc_step/50.)
