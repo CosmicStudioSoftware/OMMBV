@@ -676,28 +676,27 @@ class TestCore():
             pending = []
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                for j, p_long in enumerate(p_longs):
-                    # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
-                    pending.append(dview.apply_async(pymv.apex_location_info, [p_lat], [p_long], p_alt, [date])) 
+                # iterate through target cyclicly and run commands
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs, 
+                                                                            [p_alt]*len(p_longs), [date]*len(p_longs))) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
-                for j, p_long in enumerate(p_longs):
-                    # collect output 
-                    x, y, z, olat, olon, oalt = pending.pop(0).get()
-                    apex_lat[i,j] = olat
-                    apex_lon[i,j] = olon
-                    apex_alt[i,j] = oalt
+                # collect output 
+                x, y, z, olat, olon, oalt = pending.pop(0).get()
+                apex_lat[i,:-1] = olat
+                apex_lon[i,:-1] = olon
+                apex_alt[i,:-1] = oalt
 
         else:
             # single processor case
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                for j, p_long in enumerate(p_longs):
-                    x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat], [p_long], p_alt, [date])
-                    apex_lat[i,j] = olat
-                    apex_lon[i,j] = olon
-                    apex_alt[i,j] = oalt
+                x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat]*len(p_longs), p_longs, 
+                                                                        [p_alt]*len(p_longs), [date]*len(p_longs))
+                apex_lat[i,:-1] = olat
+                apex_lon[i,:-1] = olon
+                apex_alt[i,:-1] = oalt
         # account for periodicity
         apex_lat[:,-1] = apex_lat[:,0]
         apex_lon[:,-1] = apex_lon[:,0]
@@ -754,15 +753,36 @@ class TestCore():
         mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
         bx = zvx.copy(); by = zvx.copy(); bz = zvx.copy()
         date = datetime.datetime(2000,1,1)
-        for i,p_lat in enumerate(p_lats):
-            print (i, p_lat)
-            for j, p_long in enumerate(p_longs):
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat], [p_long], p_alt, [date],
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                # iterate through target cyclicly and run commands
+                print (i, p_lat)
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                                                                        [p_alt]*len(p_longs), [date]*len(p_longs), 
+                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                        ref_height=120.))
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                    # collect output 
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
+                zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+        else:
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs, 
+                                                                                        [p_alt]*len(p_longs), [date]*len(p_longs),
                                                                                         steps=None, max_steps=10000, step_size=10.,
                                                                                         ref_height=120.)
-                zvx[i,j], zvy[i,j], zvz[i,j] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, p_lat, p_long)
-                bx[i,j], by[i,j], bz[i,j] = pymv.ecef_to_enu_vector(tbx, tby, tbz, p_lat, p_long)
-                mx[i,j], my[i,j], mz[i,j] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, p_lat, p_long)
+                zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
      
         # account for periodicity
         zvx[:,-1] = zvx[:,0]
@@ -899,21 +919,22 @@ class TestCore():
             targets = itertools.cycle(dc.ids)
             pending = []
             for i,p_lat in enumerate(p_lats):
-                for j, p_long in enumerate(p_longs):
-                    # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
-                    pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,[p_lat], [p_long], p_alt, [date], e_field_scaling_only=True)) 
+                # iterate through target cyclicly and run commands
+                print (i, p_lat)
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,[p_lat]*len(p_longs), p_longs, 
+                                                                        [p_alt]*len(p_longs), [date]*len(p_longs), 
+                                                                        e_field_scaling_only=True)) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
-                for j, p_long in enumerate(p_longs):
                     # collect output 
-                    scalars = pending.pop(0).get()
-                    north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
-                    north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
-                    south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
-                    south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
-                    eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
-                    eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
+                scalars = pending.pop(0).get()
+                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
+                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
+                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
+                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
+                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
+                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
         else:
             for i,p_lat in enumerate(p_lats):
                 for j, p_long in enumerate(p_longs):
@@ -1024,22 +1045,21 @@ class TestCore():
             targets = itertools.cycle(dc.ids)
             pending = []
             for i,p_lat in enumerate(p_lats):
-                for j, p_long in enumerate(p_longs):
-                    # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
-                    print ('Targeting ', dview.targets, i, j)
-                    pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts, [p_lat], [p_long], p_alt, [date])) 
+                # iterate through target cyclicly and run commands
+                dview.targets = targets.next()
+                print ('Targeting ', dview.targets, i, p_lat)
+                pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts, [p_lat]*len(p_longs), p_longs, 
+                                                                        [p_alt]*len(p_longs), [date]*len(p_longs))) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
-                for j, p_long in enumerate(p_longs):
-                    # collect output 
-                    scalars = pending.pop(0).get()
-                    north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
-                    north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
-                    south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
-                    south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
-                    eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
-                    eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
+                # collect output 
+                scalars = pending.pop(0).get()
+                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
+                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
+                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
+                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
+                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
+                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
         else:
             for i,p_lat in enumerate(p_lats):
                 for j, p_long in enumerate(p_longs):
