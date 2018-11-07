@@ -665,7 +665,11 @@ class TestCore():
         import os
         # on_travis = os.environ.get('ONTRAVIS') == 'True'
                 
-        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(120.)        
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(120.) 
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)       
         apex_lat = np.zeros((len(p_lats), len(p_longs)+1))
         apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
         apex_alt = np.zeros((len(p_lats), len(p_longs)+1))
@@ -750,6 +754,10 @@ class TestCore():
         import os
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)          
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)       
         zvx = np.zeros((len(p_lats), len(p_longs)+1))
         zvy = zvx.copy(); zvz = zvx.copy()
         mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
@@ -908,6 +916,11 @@ class TestCore():
         import os
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)       
+
         # zonal vector components        
         # +1 on length of longitude array supports repeating first element
         # shows nice periodicity on the plots
@@ -1163,6 +1176,11 @@ class TestCore():
         import os
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)       
+
         # zonal vector components        
         # +1 on length of longitude array supports repeating first element
         # shows nice periodicity on the plots
@@ -1419,7 +1437,11 @@ class TestCore():
         import os
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
-        ecef_xs, ecef_ys, ecef_zs = pymv.geodetic_to_ecef(p_lats, p_longs, p_alts)
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)       
+
         # create memory for method
         # locations from method output, in ECEF
         # want positions with one setting on method under test, then another      
@@ -1563,6 +1585,11 @@ class TestCore():
         import os
         
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)       
+
         north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
         north_mer = north_zonal.copy()
         south_zonal = north_zonal.copy()
@@ -1689,6 +1716,11 @@ class TestCore():
         import os
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)          
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)       
+
         north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
         north_mer = north_zonal.copy()
         south_zonal = north_zonal.copy()
