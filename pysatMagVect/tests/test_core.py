@@ -663,7 +663,7 @@ class TestCore():
         import os
         # on_travis = os.environ.get('ONTRAVIS') == 'True'
                 
-        p_lats, p_longs, p_alt = gen_plot_grid_fixed_alt(120.)        
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(120.)        
         apex_lat = np.zeros((len(p_lats), len(p_longs)+1))
         apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
         apex_alt = np.zeros((len(p_lats), len(p_longs)+1))
@@ -679,7 +679,7 @@ class TestCore():
                 # iterate through target cyclicly and run commands
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs, 
-                                                                            [p_alt]*len(p_longs), [date]*len(p_longs))) 
+                                                                            p_alts, [date]*len(p_longs))) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 # collect output 
@@ -693,7 +693,7 @@ class TestCore():
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
                 x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat]*len(p_longs), p_longs, 
-                                                                        [p_alt]*len(p_longs), [date]*len(p_longs))
+                                                                        p_alts, [date]*len(p_longs))
                 apex_lat[i,:-1] = olat
                 apex_lon[i,:-1] = olon
                 apex_alt[i,:-1] = oalt
@@ -747,7 +747,7 @@ class TestCore():
         # from mpl_toolkits.mplot3d import Axes3D
         import os
 
-        p_lats, p_longs, p_alt = gen_plot_grid_fixed_alt(550.)          
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)          
         zvx = np.zeros((len(p_lats), len(p_longs)+1))
         zvy = zvx.copy(); zvz = zvx.copy()
         mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
@@ -763,7 +763,7 @@ class TestCore():
                 print (i, p_lat)
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
-                                                                        [p_alt]*len(p_longs), [date]*len(p_longs), 
+                                                                        p_alts, [date]*len(p_longs), 
                                                                         steps=None, max_steps=10000, step_size=10.,
                                                                         ref_height=120.))
             for i,p_lat in enumerate(p_lats):
@@ -777,7 +777,7 @@ class TestCore():
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs, 
-                                                                                        [p_alt]*len(p_longs), [date]*len(p_longs),
+                                                                                        p_alts, [date]*len(p_longs),
                                                                                         steps=None, max_steps=10000, step_size=10.,
                                                                                         ref_height=120.)
                 zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
@@ -899,12 +899,225 @@ class TestCore():
             plt.close()
         except:
             pass
+
+    def test_unit_vector_component_sensitivity_plots(self):
+        import matplotlib.pyplot as plt
+        # from mpl_toolkits.mplot3d import Axes3D
+        import os
+
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
+        # zonal vector components        
+        # +1 on length of longitude array supports repeating first element
+        # shows nice periodicity on the plots
+        zvx = np.zeros((len(p_lats), len(p_longs)+1))
+        zvy = zvx.copy(); zvz = zvx.copy()
+        #  meridional vecrtor components
+        mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
+        # field aligned, along B
+        bx = zvx.copy(); by = zvx.copy(); bz = zvx.copy()
+        date = datetime.datetime(2000,1,1)
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                # iterate through target cyclicly and run commands
+                print (i, p_lat)
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs), 
+                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                        ref_height=120.))
+                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs), 
+                                                                        steps=None, max_steps=1000, step_size=100.,
+                                                                        ref_height=120.))
+
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                # collect output from first run
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
+                zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                # collect output from second run
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
+                _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                zvx[i,:-1] = zvx[i,:-1] - _a
+                zvy[i,:-1] = zvy[i,:-1] - _b
+                zvz[i,:-1] = zvz[i,:-1] - _c
+                # field aligned vector
+                _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                bx[i,:-1] = bx[i,:-1] - _a
+                by[i,:-1] = by[i,:-1] - _b
+                bz[i,:-1] = bz[i,:-1] - _c
+                # meridional vector                
+                _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                mx[i,:-1] = mx[i,:-1] - _a
+                my[i,:-1] = my[i,:-1] - _b
+                mz[i,:-1] = mz[i,:-1] - _c
+
+        else:
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs, 
+                                                                                        p_alts, [date]*len(p_longs),
+                                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                                        ref_height=120.)
+                zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+
+                # second run
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs, 
+                                                                                        p_alts, [date]*len(p_longs),
+                                                                                        steps=None, max_steps=1000, step_size=100.,
+                                                                                        ref_height=120.)
+                _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                zvx[i,:-1] = zvx[i,:-1] - _a
+                zvy[i,:-1] = zvy[i,:-1] - _b
+                zvz[i,:-1] = zvz[i,:-1] - _c
+
+                _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                bx[i,:-1] = bx[i,:-1] - _a
+                by[i,:-1] = by[i,:-1] - _b
+                bz[i,:-1] = bz[i,:-1] - _c
+                
+                _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                mx[i,:-1] = mx[i,:-1] - _a
+                my[i,:-1] = my[i,:-1] - _b
+                mz[i,:-1] = mz[i,:-1] - _c
+     
+               
+        # account for periodicity
+        zvx[:,-1] = zvx[:,0]
+        zvy[:,-1] = zvy[:,0]
+        zvz[:,-1] = zvz[:,0]
+        bx[:,-1] = bx[:,0]
+        by[:,-1] = by[:,0]
+        bz[:,-1] = bz[:,0]
+        mx[:,-1] = mx[:,0]
+        my[:,-1] = my[:,0]
+        mz[:,-1] = mz[:,0]
+        
+        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
+        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        
+        try:
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(zvx)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Zonal Unit Vector Difference - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('zonal_east_diff.pdf') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(zvy)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Zonal Unit Vector Difference - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('zonal_north_diff.pdf') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(zvz)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Zonal Unit Vector Difference - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('zonal_up_diff.pdf') 
+            plt.close()
     
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(bx)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Field Aligned Unit Vector Difference - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('fa_east_diff.pdf') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(by)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Field Aligned Unit Vector Difference - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('fa_north_diff.pdf') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(bz)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Field Aligned Unit Vector Difference - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('fa_up_diff.pdf') 
+            plt.close()
+    
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(mx)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Meridional Unit Vector Difference - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('mer_east_diff.pdf') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(my)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Meridional Unit Vector Difference - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('mer_north_diff.pdf') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(mz)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Meridional Unit Vector Difference - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('mer_up_diff.pdf') 
+            plt.close()
+        except:
+            pass
+    
+            
     def test_geomag_efield_scalars_plots(self):
         import matplotlib.pyplot as plt
         import os
         
-        p_lats, p_longs, p_alt = gen_plot_grid_fixed_alt(550.)  
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
         north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
         north_mer = north_zonal.copy()
         south_zonal = north_zonal.copy()
@@ -923,7 +1136,7 @@ class TestCore():
                 print (i, p_lat)
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,[p_lat]*len(p_longs), p_longs, 
-                                                                        [p_alt]*len(p_longs), [date]*len(p_longs), 
+                                                                        p_alts, [date]*len(p_longs), 
                                                                         e_field_scaling_only=True)) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
@@ -937,14 +1150,14 @@ class TestCore():
                 eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
         else:
             for i,p_lat in enumerate(p_lats):
-                for j, p_long in enumerate(p_longs):
-                    scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], p_alt, [date], e_field_scaling_only=True)
-                    north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
-                    north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
-                    south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
-                    south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
-                    eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
-                    eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
+                scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs, 
+                                                               p_alts, [date]*len(p_longs), e_field_scaling_only=True)
+                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
+                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
+                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
+                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
+                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
+                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
         # account for periodicity
         north_zonal[:,-1] = north_zonal[:,0]
         north_mer[:,-1] = north_mer[:,0]
@@ -1030,7 +1243,7 @@ class TestCore():
         # from mpl_toolkits.mplot3d import Axes3D
         import os
 
-        p_lats, p_longs, p_alt = gen_plot_grid_fixed_alt(550.)          
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)          
         north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
         north_mer = north_zonal.copy()
         south_zonal = north_zonal.copy()
@@ -1049,7 +1262,7 @@ class TestCore():
                 dview.targets = targets.next()
                 print ('Targeting ', dview.targets, i, p_lat)
                 pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts, [p_lat]*len(p_longs), p_longs, 
-                                                                        [p_alt]*len(p_longs), [date]*len(p_longs))) 
+                                                                        p_alts, [date]*len(p_longs))) 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 # collect output 
@@ -1062,14 +1275,14 @@ class TestCore():
                 eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
         else:
             for i,p_lat in enumerate(p_lats):
-                for j, p_long in enumerate(p_longs):
-                    scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], p_alt, [date])
-                    north_zonal[i,j] = scalars['north_zonal_drifts_scalar'][0]
-                    north_mer[i,j] = scalars['north_mer_drifts_scalar'][0]
-                    south_zonal[i,j] = scalars['south_zonal_drifts_scalar'][0]
-                    south_mer[i,j] = scalars['south_mer_drifts_scalar'][0]
-                    eq_zonal[i,j] = scalars['equator_zonal_drifts_scalar'][0]
-                    eq_mer[i,j] = scalars['equator_mer_drifts_scalar'][0]
+                scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs))
+                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
+                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
+                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
+                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
+                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
+                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
         # account for periodicity
         north_zonal[:,-1] = north_zonal[:,0]
         north_mer[:,-1] = north_mer[:,0]
