@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import pandas as pds
 import datetime
 
+import functools
+
 import pysatMagVect as pymv
 from pysatMagVect import igrf
 
@@ -762,7 +764,7 @@ class TestCore():
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
                 dview.targets = targets.next()
-                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
                                                                         p_alts, [date]*len(p_longs), 
                                                                         steps=None, max_steps=10000, step_size=10.,
                                                                         ref_height=120.))
@@ -925,11 +927,11 @@ class TestCore():
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
                 dview.targets = targets.next()
-                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
                                                                         p_alts, [date]*len(p_longs), 
                                                                         steps=None, max_steps=10000, step_size=10.,
                                                                         ref_height=120.))
-                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
                                                                         p_alts, [date]*len(p_longs), 
                                                                         steps=None, max_steps=1000, step_size=100.,
                                                                         ref_height=120.))
@@ -1046,12 +1048,12 @@ class TestCore():
             plt.close()
     
             # calculate mean and standard deviation and then plot those
-            plt.errorbar(p_longs, np.mean(np.abs(zvx)), 
-                         yerr=np.std(np.abs(zvx)), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(zvy)), 
-                         yerr=np.std(np.abs(zvy)), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(zvz)), 
-                         yerr=np.std(np.abs(zvz)), label='z')
+            plt.errorbar(p_longs, np.mean(np.abs(zvx), axis=0), 
+                         yerr=np.std(np.abs(zvx), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(zvy), axis=0), 
+                         yerr=np.std(np.abs(zvy), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(zvz), axis=0), 
+                         yerr=np.std(np.abs(zvz), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
@@ -1093,12 +1095,12 @@ class TestCore():
             plt.close()
 
             # calculate mean and standard deviation and then plot those
-            plt.errorbar(p_longs, np.mean(np.abs(bx)), 
-                         yerr=np.std(np.abs(bx)), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(by)), 
-                         yerr=np.std(np.abs(by)), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(bz)), 
-                         yerr=np.std(np.abs(bz)), label='z')
+            plt.errorbar(p_longs, np.mean(np.abs(bx), axis=0), 
+                         yerr=np.std(np.abs(bx), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(by), axis=0), 
+                         yerr=np.std(np.abs(by), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(bz), axis=0), 
+                         yerr=np.std(np.abs(bz), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in Field-Aligned Vector')
             plt.title("Sensitivity of Field-Aligned Unit Vector")
@@ -1140,12 +1142,12 @@ class TestCore():
             plt.close()
 
             # calculate mean and standard deviation and then plot those
-            plt.errorbar(p_longs, np.mean(np.abs(mx)), 
-                         yerr=np.std(np.abs(mx)), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(my)), 
-                         yerr=np.std(np.abs(my)), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(mz)), 
-                         yerr=np.std(np.abs(mz)), label='z')
+            plt.errorbar(p_longs, np.mean(np.abs(mx), axis=0), 
+                         yerr=np.std(np.abs(mx), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(my), axis=0), 
+                         yerr=np.std(np.abs(my), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(mz), axis=0), 
+                         yerr=np.std(np.abs(mz), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
@@ -1180,11 +1182,11 @@ class TestCore():
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
                 dview.targets = targets.next()
-                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
                                                                         p_alts, [date]*len(p_longs), 
                                                                         steps=None, max_steps=10000, step_size=10.,
                                                                         ref_height=240.))
-                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
                                                                         p_alts, [date]*len(p_longs), 
                                                                         steps=None, max_steps=10000, step_size=10.,
                                                                         ref_height=0.))
@@ -1301,12 +1303,12 @@ class TestCore():
             plt.close()
     
             # calculate mean and standard deviation and then plot those
-            plt.errorbar(p_longs, np.mean(np.abs(zvx)), 
-                         yerr=np.std(np.abs(zvx)), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(zvy)), 
-                         yerr=np.std(np.abs(zvy)), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(zvz)), 
-                         yerr=np.std(np.abs(zvz)), label='z')
+            plt.errorbar(p_longs, np.mean(np.abs(zvx), axis=0), 
+                         yerr=np.std(np.abs(zvx), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(zvy), axis=0), 
+                         yerr=np.std(np.abs(zvy), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(zvz), axis=0), 
+                         yerr=np.std(np.abs(zvz), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
@@ -1348,12 +1350,12 @@ class TestCore():
             plt.close()
 
             # calculate mean and standard deviation and then plot those
-            plt.errorbar(p_longs, np.mean(np.abs(bx)), 
-                         yerr=np.std(np.abs(bx)), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(by)), 
-                         yerr=np.std(np.abs(by)), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(bz)), 
-                         yerr=np.std(np.abs(bz)), label='z')
+            plt.errorbar(p_longs, np.mean(np.abs(bx), axis=0), 
+                         yerr=np.std(np.abs(bx), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(by), axis=0), 
+                         yerr=np.std(np.abs(by), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(bz), axis=0), 
+                         yerr=np.std(np.abs(bz), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in Field-Aligned Vector')
             plt.title("Sensitivity of Field-Aligned Unit Vector")
@@ -1395,12 +1397,12 @@ class TestCore():
             plt.close()
 
             # calculate mean and standard deviation and then plot those
-            plt.errorbar(p_longs, np.mean(np.abs(mx)), 
-                         yerr=np.std(np.abs(mx)), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(my)), 
-                         yerr=np.std(np.abs(my)), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(mz)), 
-                         yerr=np.std(np.abs(mz)), label='z')
+            plt.errorbar(p_longs, np.mean(np.abs(mx), axis=0), 
+                         yerr=np.std(np.abs(mx), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(my), axis=0), 
+                         yerr=np.std(np.abs(my), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(mz), axis=0), 
+                         yerr=np.std(np.abs(mz), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
@@ -1410,7 +1412,152 @@ class TestCore():
         except:
             pass
 
-                        
+    
+    def step_along_mag_unit_vector_sensitivity_plots(self, direction=None):
+        import matplotlib.pyplot as plt
+        # from mpl_toolkits.mplot3d import Axes3D
+        import os
+
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
+        
+        # create memory for method
+        # locations from method output, in ECEF
+        # want positions with one setting on method under test, then another      
+        # +1 on length of longitude array supports repeating first element
+        # shows nice periodicity on the plots
+        x = np.zeros((len(p_lats), len(p_longs)+1))
+        y = x.copy(); z = x.copy()
+        # second set of outputs
+        x2 = np.zeros((len(p_lats), len(p_longs)+1))
+        y2 = x2.copy(); z2 = x2.copy()
+
+        date = datetime.datetime(2000,1,1)
+        dates = [date]*len(p_lats)
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                for j,p_long in enumerate(p_longs):
+                    # iterate through target cyclicly and run commands
+                    print (i, p_lat)
+                    dview.targets = targets.next()
+                    # inputs are ECEF locations
+                    pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, p_lat, p_long, 
+                                                                            p_alts[0], date, 
+                                                                            direction=direction,
+                                                                            num_steps=1))
+                    pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, p_lat, p_long, 
+                                                                            p_alts[0], date, 
+                                                                            direction=direction,
+                                                                            num_steps=10))
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                for j,p_long in enumerate(p_longs):
+                    # collect output from first run
+                    x[i,j], y[i,j], z[i,j] = pending.pop(0).get()          
+                    # collect output from second run                    
+                    x2[i,j], y2[i,j], z2[i,j] = pending.pop(0).get()
+            # trace each location to its apex
+            # this provides an increase in the spatial difference that results
+            # from innacurate movement between field lines from step_along_mag_unit_vector                    
+            for i,p_lat in enumerate(p_lats):
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.apex_location_info, x[i,:-1], y[i,:-1], 
+                                                                          z[i,:-1], dates))
+                pending.append(dview.apply_async(pymv.apex_location_info, x2[i,:-1], y2[i,:-1], 
+                                                                          z2[i,:-1], dates))
+            for i,p_lat in enumerate(p_lats):
+                x[i,:-1], y[i,:-1], z[i,:-1], _, _, _ = pending.pop(0).get() 
+                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, _ = pending.pop(0).get() 
+            # take difference in locations
+            x = x - x2
+            y = y - y2
+            z = z - z2                    
+
+        else:
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                for j,p_long in enumerate(p_longs):
+                    x[i,j], y[i,j], z[i,j] = pymv.step_along_mag_unit_vector(p_lat, p_long, p_alts[0], date, 
+                                                                             direction=direction, num_steps=1)
+                    # second run
+                    x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(p_lat, p_long, p_alts[0], date, 
+                                                                 direction=direction, num_steps=10)
+            for i,p_lat in enumerate(p_lats):
+                dview.targets = targets.next()
+                x[i,:-1], y[i,:-1], z[i,:-1], _, _, _ = pymv.apex_location_info(x[i,:-1], y[i,:-1], 
+                                                                                z[i,:-1], dates)
+                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, _ = pymv.apex_location_info(x[i,:-1], y[i,:-1], 
+                                                                                z[i,:-1], dates)
+            # take difference in locations
+            x = x - x2
+            y = y - y2
+            z = z - z2                    
+               
+        # account for periodicity
+        x[:,-1] = x[:,0]
+        y[:,-1] = y[:,0]
+        z[:,-1] = z[:,0]
+        # plot tick locations and labels        
+        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
+        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        
+        try:
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(x)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Difference in Apex Position (X - km) After Stepping')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_step_diff_apex_height_x.pdf') 
+            plt.close()
+            plt.figure()
+                          
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(y)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Difference in Apex Position (Y - km) After Stepping')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_step_diff_apex_height_y.pdf') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(z)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Difference in Apex Position (Z - km) After Stepping')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_step_diff_apex_height_z.pdf') 
+            plt.close()
+    
+            # calculate mean and standard deviation and then plot those
+            plt.errorbar(p_longs, np.mean(np.abs(x, axis=0)), 
+                         yerr=np.std(np.abs(x), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(y, axis=0)), 
+                         yerr=np.std(np.abs(y), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(z, axis=0)), 
+                         yerr=np.std(np.abs(z), axis=0), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in ECEF (km)')
+            plt.title('Mean Difference in Apex Position')
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(direction+'_step_diff_v_longitude.pdf' )
+
+        except:
+            pass
+    test_step_along_mag_unit_vector_sensitivity_plots_zonal = functools.partial(step_along_mag_unit_vector_sensitivity_plots, direction='zonal')
+    test_step_along_mag_unit_vector_sensitivity_plots_meridional = functools.partial(step_along_mag_unit_vector_sensitivity_plots, direction='meridional')
+                                    
     def test_geomag_efield_scalars_plots(self):
         import matplotlib.pyplot as plt
         import os
