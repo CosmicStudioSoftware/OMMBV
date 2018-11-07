@@ -142,8 +142,8 @@ def gen_plot_grid_fixed_alt(alt):
         long_dim = np.arange(0., 360., 120.)
         lat_dim = np.arange(-50., 51., 25.)
     else:
-        long_dim = np.arange(0., 360., 1.2/2.)
-        lat_dim = np.arange(-50., 50.1, 0.25/2.)
+        long_dim = np.arange(0., 360., 1.2*8)
+        lat_dim = np.arange(-50., 50.1, 0.25*8)
 
     alt_dim = np.array([alt])
     return lat_dim, long_dim, alt_dim 
@@ -337,7 +337,7 @@ class TestCore():
                     pending.append(dview.apply_async(pymv.field_line_trace, np.array([x,y,z]), date, 1., 0., 
                                                     step_size=steps, 
                                                     max_steps=max_steps)) 
-            for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+            # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
                 out = []
                 for steps, max_steps in zip(steps_goal, max_steps_goal):
                     # collect output 
