@@ -900,7 +900,7 @@ class TestCore():
         except:
             pass
 
-    def test_unit_vector_component_sensitivity_plots(self):
+    def test_unit_vector_component_stepsize_sensitivity_plots(self):
         import matplotlib.pyplot as plt
         # from mpl_toolkits.mplot3d import Axes3D
         import os
@@ -945,21 +945,21 @@ class TestCore():
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
                 _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                zvx[i,:-1] = zvx[i,:-1] - _a
-                zvy[i,:-1] = zvy[i,:-1] - _b
-                zvz[i,:-1] = zvz[i,:-1] - _c
-                # field aligned vector
+                zvx[i,:-1] = (zvx[i,:-1] - _a)/zvx[i,:-1]
+                zvy[i,:-1] = (zvy[i,:-1] - _b)/zvy[i,:-1]
+                zvz[i,:-1] = (zvz[i,:-1] - _c)/zvz[i,:-1]
+
                 _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                bx[i,:-1] = bx[i,:-1] - _a
-                by[i,:-1] = by[i,:-1] - _b
-                bz[i,:-1] = bz[i,:-1] - _c
-                # meridional vector                
+                bx[i,:-1] = (bx[i,:-1] - _a)/bx[i,:-1]
+                by[i,:-1] = (by[i,:-1] - _b)/by[i,:-1]
+                bz[i,:-1] = (bz[i,:-1] - _c)/bz[i,:-1]
+                
                 _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                mx[i,:-1] = mx[i,:-1] - _a
-                my[i,:-1] = my[i,:-1] - _b
-                mz[i,:-1] = mz[i,:-1] - _c
+                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
 
         else:
             for i,p_lat in enumerate(p_lats):
@@ -979,21 +979,21 @@ class TestCore():
                                                                                         ref_height=120.)
                 _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                zvx[i,:-1] = zvx[i,:-1] - _a
-                zvy[i,:-1] = zvy[i,:-1] - _b
-                zvz[i,:-1] = zvz[i,:-1] - _c
+                zvx[i,:-1] = (zvx[i,:-1] - _a)/zvx[i,:-1]
+                zvy[i,:-1] = (zvy[i,:-1] - _b)/zvy[i,:-1]
+                zvz[i,:-1] = (zvz[i,:-1] - _c)/zvz[i,:-1]
 
                 _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                bx[i,:-1] = bx[i,:-1] - _a
-                by[i,:-1] = by[i,:-1] - _b
-                bz[i,:-1] = bz[i,:-1] - _c
+                bx[i,:-1] = (bx[i,:-1] - _a)/bx[i,:-1]
+                by[i,:-1] = (by[i,:-1] - _b)/by[i,:-1]
+                bz[i,:-1] = (bz[i,:-1] - _c)/bz[i,:-1]
                 
                 _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                mx[i,:-1] = mx[i,:-1] - _a
-                my[i,:-1] = my[i,:-1] - _b
-                mz[i,:-1] = mz[i,:-1] - _c
+                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
      
                
         # account for periodicity
@@ -1021,7 +1021,8 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('zonal_east_diff.pdf') 
             plt.close()
-              
+            plt.figure()
+                          
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(zvy)), origin='lower')
             plt.colorbar()
@@ -1044,6 +1045,20 @@ class TestCore():
             plt.savefig('zonal_up_diff.pdf') 
             plt.close()
     
+            # calculate mean and standard deviation and then plot those
+            plt.errorbar(p_longs, np.mean(np.abs(zvx)), 
+                         yerr=np.std(np.abs(zvx)), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(zvy)), 
+                         yerr=np.std(np.abs(zvy)), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(zvz)), 
+                         yerr=np.std(np.abs(zvz)), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Zonal Vector')
+            plt.title("Sensitivity of Zonal Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('zonal_diff_v_longitude.pdf' )
+
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(bx)), origin='lower')
             plt.colorbar()
@@ -1076,6 +1091,20 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('fa_up_diff.pdf') 
             plt.close()
+
+            # calculate mean and standard deviation and then plot those
+            plt.errorbar(p_longs, np.mean(np.abs(bx)), 
+                         yerr=np.std(np.abs(bx)), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(by)), 
+                         yerr=np.std(np.abs(by)), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(bz)), 
+                         yerr=np.std(np.abs(bz)), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Field-Aligned Vector')
+            plt.title("Sensitivity of Field-Aligned Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('fa_diff_v_longitude.pdf' )
     
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(mx)), origin='lower')
@@ -1109,10 +1138,279 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('mer_up_diff.pdf') 
             plt.close()
+
+            # calculate mean and standard deviation and then plot those
+            plt.errorbar(p_longs, np.mean(np.abs(mx)), 
+                         yerr=np.std(np.abs(mx)), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(my)), 
+                         yerr=np.std(np.abs(my)), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(mz)), 
+                         yerr=np.std(np.abs(mz)), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Meridional Vector')
+            plt.title("Sensitivity of Meridional Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('zonal_diff_v_longitude.pdf' )
         except:
             pass
     
-            
+    def test_unit_vector_component_refheight_sensitivity_plots(self):
+        import matplotlib.pyplot as plt
+        # from mpl_toolkits.mplot3d import Axes3D
+        import os
+
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
+        # zonal vector components        
+        # +1 on length of longitude array supports repeating first element
+        # shows nice periodicity on the plots
+        zvx = np.zeros((len(p_lats), len(p_longs)+1))
+        zvy = zvx.copy(); zvz = zvx.copy()
+        #  meridional vecrtor components
+        mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
+        # field aligned, along B
+        bx = zvx.copy(); by = zvx.copy(); bz = zvx.copy()
+        date = datetime.datetime(2000,1,1)
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                # iterate through target cyclicly and run commands
+                print (i, p_lat)
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs), 
+                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                        ref_height=240.))
+                pending.append(dview.apply_async(pymv.pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs), 
+                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                        ref_height=0.))
+
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                # collect output from first run
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
+                zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                # collect output from second run
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
+                _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                zvx[i,:-1] = (zvx[i,:-1] - _a)/zvx[i,:-1]
+                zvy[i,:-1] = (zvy[i,:-1] - _b)/zvy[i,:-1]
+                zvz[i,:-1] = (zvz[i,:-1] - _c)/zvz[i,:-1]
+
+                _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                bx[i,:-1] = (bx[i,:-1] - _a)/bx[i,:-1]
+                by[i,:-1] = (by[i,:-1] - _b)/by[i,:-1]
+                bz[i,:-1] = (bz[i,:-1] - _c)/bz[i,:-1]
+                
+                _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
+
+        else:
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs, 
+                                                                                        p_alts, [date]*len(p_longs),
+                                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                                        ref_height=240.)
+                zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+
+                # second run
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs, 
+                                                                                        p_alts, [date]*len(p_longs),
+                                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                                        ref_height=0.)
+                _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                zvx[i,:-1] = (zvx[i,:-1] - _a)/zvx[i,:-1]
+                zvy[i,:-1] = (zvy[i,:-1] - _b)/zvy[i,:-1]
+                zvz[i,:-1] = (zvz[i,:-1] - _c)/zvz[i,:-1]
+
+                _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                bx[i,:-1] = (bx[i,:-1] - _a)/bx[i,:-1]
+                by[i,:-1] = (by[i,:-1] - _b)/by[i,:-1]
+                bz[i,:-1] = (bz[i,:-1] - _c)/bz[i,:-1]
+                
+                _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                # take difference with first run
+                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
+     
+               
+        # account for periodicity
+        zvx[:,-1] = zvx[:,0]
+        zvy[:,-1] = zvy[:,0]
+        zvz[:,-1] = zvz[:,0]
+        bx[:,-1] = bx[:,0]
+        by[:,-1] = by[:,0]
+        bz[:,-1] = bz[:,0]
+        mx[:,-1] = mx[:,0]
+        my[:,-1] = my[:,0]
+        mz[:,-1] = mz[:,0]
+        
+        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
+        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        
+        try:
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(zvx)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Zonal Unit Vector Difference - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('zonal_east_diff_height.pdf') 
+            plt.close()
+            plt.figure()
+                          
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(zvy)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Zonal Unit Vector Difference - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('zonal_north_diff_height.pdf') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(zvz)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Zonal Unit Vector Difference - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('zonal_up_diff_height.pdf') 
+            plt.close()
+    
+            # calculate mean and standard deviation and then plot those
+            plt.errorbar(p_longs, np.mean(np.abs(zvx)), 
+                         yerr=np.std(np.abs(zvx)), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(zvy)), 
+                         yerr=np.std(np.abs(zvy)), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(zvz)), 
+                         yerr=np.std(np.abs(zvz)), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Zonal Vector')
+            plt.title("Sensitivity of Zonal Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('zonal_diff_v_longitude_height.pdf' )
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(bx)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Field Aligned Unit Vector Difference - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('fa_east_diff_height.pdf') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(by)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Field Aligned Unit Vector Difference - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('fa_north_diff_height.pdf') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(bz)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Field Aligned Unit Vector Difference - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('fa_up_diff_height.pdf') 
+            plt.close()
+
+            # calculate mean and standard deviation and then plot those
+            plt.errorbar(p_longs, np.mean(np.abs(bx)), 
+                         yerr=np.std(np.abs(bx)), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(by)), 
+                         yerr=np.std(np.abs(by)), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(bz)), 
+                         yerr=np.std(np.abs(bz)), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Field-Aligned Vector')
+            plt.title("Sensitivity of Field-Aligned Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('fa_diff_v_longitude_height.pdf' )
+    
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(mx)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Meridional Unit Vector Difference - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('mer_east_diff_height.pdf') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(my)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Meridional Unit Vector Difference - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('mer_north_diff_height.pdf') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(mz)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Meridional Unit Vector Difference - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('mer_up_diff_height.pdf') 
+            plt.close()
+
+            # calculate mean and standard deviation and then plot those
+            plt.errorbar(p_longs, np.mean(np.abs(mx)), 
+                         yerr=np.std(np.abs(mx)), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(my)), 
+                         yerr=np.std(np.abs(my)), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(mz)), 
+                         yerr=np.std(np.abs(mz)), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Meridional Vector')
+            plt.title("Sensitivity of Meridional Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('zonal_diff_v_longitude_height.pdf' )
+        except:
+            pass
+
+                        
     def test_geomag_efield_scalars_plots(self):
         import matplotlib.pyplot as plt
         import os
