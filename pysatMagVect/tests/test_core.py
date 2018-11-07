@@ -669,11 +669,14 @@ class TestCore():
         # data returned are the locations along each direction
         # the full range of points obtained by iterating over all
         # recasting alts into a more convenient form for later calculation
-        p_alts = [p_alts[0]]*len(p_longs)       
+        p_alts = [p_alts[0]]*len(p_longs)
+        # set the date
+        date = datetime.datetime(2000,1,1)
+        # memory for results       
         apex_lat = np.zeros((len(p_lats), len(p_longs)+1))
         apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
         apex_alt = np.zeros((len(p_lats), len(p_longs)+1))
-        date = datetime.datetime(2000,1,1)
+        
 
         # set up multi
         if self.dc is not None:
@@ -703,14 +706,24 @@ class TestCore():
                 apex_lat[i,:-1] = olat
                 apex_lon[i,:-1] = olon
                 apex_alt[i,:-1] = oalt
+            
+        # calculate difference between apex longitude and original longitude
+        # values for apex long are -180 to 180, shift to 0 to 360
+        # process degrees a bit to make the degree difference the most meaningful (close to 0)
+        idx, idy, = np.where(apex_lon < 0.)
+        apex_lon[idx, idy] += 360.
+        apex_lon[:, :-1] -= p_longs
+        idx, idy, = np.where(apex_lon > 180.)
+        apex_lon[idx, idy] -= 360.
+            
         # account for periodicity
         apex_lat[:,-1] = apex_lat[:,0]
         apex_lon[:,-1] = apex_lon[:,0]
         apex_alt[:,-1] = apex_alt[:,0]
 
-        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         ytickvals = ['-25', '-12.5', '0', '12.5', '25']
-        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
         
         try:
             fig = plt.figure()
@@ -729,7 +742,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Apex Longitude (Degrees) at 120 km')
+            plt.title('Apex Longitude Difference (Degrees) at 120 km')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_lon.pdf') 
@@ -805,8 +818,8 @@ class TestCore():
         my[:,-1] = my[:,0]
         mz[:,-1] = mz[:,0]
         
-        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
-        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
             fig = plt.figure()
@@ -1022,8 +1035,8 @@ class TestCore():
         my[:,-1] = my[:,0]
         mz[:,-1] = mz[:,0]
         
-        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
-        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
             fig = plt.figure()
@@ -1282,8 +1295,8 @@ class TestCore():
         my[:,-1] = my[:,0]
         mz[:,-1] = mz[:,0]
         
-        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
-        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
             fig = plt.figure()
@@ -1523,8 +1536,8 @@ class TestCore():
         y[:,-1] = y[:,0]
         z[:,-1] = z[:,0]
         # plot tick locations and labels        
-        ytickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
-        xtickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
             fig = plt.figure()
@@ -1638,8 +1651,8 @@ class TestCore():
         eq_zonal[:,-1] = eq_zonal[:,0]
         eq_mer[:,-1] = eq_mer[:,0]
         
-        xtickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
-        ytickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
             fig = plt.figure()
@@ -1768,9 +1781,9 @@ class TestCore():
         eq_zonal[:,-1] = eq_zonal[:,0]
         eq_mer[:,-1] = eq_mer[:,0]
         
-        xtickarr = np.array([0, 10, 20, 30, 40])*len(p_lats)/41.
         xtickvals = ['-25', '-12.5', '0', '12.5', '25']
-        ytickarr = np.array([0, 6, 12, 18, 24, 30])*len(p_longs)/30.
+        xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
             fig = plt.figure()
