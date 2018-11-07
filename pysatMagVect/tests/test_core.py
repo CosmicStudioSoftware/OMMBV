@@ -1444,7 +1444,7 @@ class TestCore():
             pass
 
     
-    def step_along_mag_unit_vector_sensitivity_plots(self, direction=None):
+    def step_along_mag_unit_vector_sensitivity_plots(self, direction):
         import matplotlib.pyplot as plt
         # from mpl_toolkits.mplot3d import Axes3D
         import os
@@ -1590,8 +1590,12 @@ class TestCore():
 
         except:
             pass
-    test_step_along_mag_unit_vector_sensitivity_plots_zonal = functools.partial(step_along_mag_unit_vector_sensitivity_plots, direction='zonal')
-    test_step_along_mag_unit_vector_sensitivity_plots_meridional = functools.partial(step_along_mag_unit_vector_sensitivity_plots, direction='meridional')
+    
+    def test_step_sensitivity(self):
+        f = functools.partial(self.step_along_mag_unit_vector_sensitivity_plots, 'zonal')
+        yield (f, )
+        f = functools.partial(self.step_along_mag_unit_vector_sensitivity_plots, 'meridional')
+        yield (f, )
                                     
     def test_geomag_efield_scalars_plots(self):
         import matplotlib.pyplot as plt
