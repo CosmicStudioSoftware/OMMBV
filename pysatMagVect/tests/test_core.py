@@ -309,184 +309,184 @@ class TestCore():
 
 
 
-    def test_tracing_accuracy(self):
-
-        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
-                                                  longs,
-                                                  alts)        
-        # step size to be tried
-        steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
-        # max number of steps (fixed)
-        max_steps_goal = steps_goal*0+1E7
-
-        date = datetime.datetime(2000, 1, 1)
-        dx = []
-        dy = []
-        dz = []
-        
-        # set up multi
-        # if self.dc is not None:
-        if False:
-            import itertools
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-                for steps, max_steps in zip(steps_goal, max_steps_goal):
-                    # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
-                    pending.append(dview.apply_async(pymv.field_line_trace, np.array([x,y,z]), date, 1., 0., 
-                                                    step_size=steps, 
-                                                    max_steps=max_steps)) 
-            # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-                out = []
-                for steps, max_steps in zip(steps_goal, max_steps_goal):
-                    # collect output 
-                    trace_n = pending.pop(0).get()
-                    pt = trace_n[-1,:]
-                    out.append(pt)
-    
-                final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-                dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
-        else:
-            for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-                out = []
-                for steps, max_steps in zip(steps_goal, max_steps_goal):
-                    trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
-                                                    step_size=steps, 
-                                                    max_steps=max_steps) 
-                    pt = trace_n[-1,:]
-                    out.append(pt)
-    
-                final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-                dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
-            
-            
-        dx = pds.DataFrame(dx)
-        dy = pds.DataFrame(dy)
-        dz = pds.DataFrame(dz)
-        
-        try:
-            plt.figure()
-            plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
-                         yerr=dx.std(axis=0), label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
-                        yerr=dy.std(axis=0), label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
-                        yerr=dz.std(axis=0), label='z')
-            plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in Foot Point Position (km)')
-            plt.title("Change in Final ECEF Position")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('Footpoint_position_vs_step_size.pdf' )
-            plt.close()
-        except:
-            pass            
-                           
-    def test_tracing_accuracy_w_recursion(self):
-
-        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
-                                                  longs,
-                                                  alts)        
-        # step size to be tried
-        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5.])
-        # max number of steps (fixed)
-        max_steps_goal = np.array([100000., 30000., 10000., 3000., 1000., 300., 100.])
-
-        date = datetime.datetime(2000, 1, 1)
-        dx = []
-        dy = []
-        dz = []
-        for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-            out = []
-            for steps, max_steps in zip(steps_goal, max_steps_goal):
-                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
-                                                step_size=steps, 
-                                                max_steps=max_steps) 
-                pt = trace_n[-1,:]
-                out.append(pt)
-
-            final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-            dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
-        dx = pds.DataFrame(dx)
-        dy = pds.DataFrame(dy)
-        dz = pds.DataFrame(dz)
-        
-        try:
-            plt.figure()
-            plt.errorbar(np.log10(max_steps_goal[1:]), dx.mean(axis=0), 
-                         yerr=dx.std(axis=0), label='x')
-            plt.errorbar(np.log10(max_steps_goal[1:]), dy.mean(axis=0), 
-                        yerr=dy.std(axis=0), label='y')
-            plt.errorbar(np.log10(max_steps_goal[1:]), dz.mean(axis=0), 
-                        yerr=dz.std(axis=0), label='z')
-            plt.xlabel('Log Number of Steps per Run')
-            plt.ylabel('Change in Foot Point Position (km)')
-            plt.title("Change in Final ECEF Position, Recursive Calls")
-            plt.legend()
-            plt.tight_layout()
-            plt.ylabel('Log Change in Foot Point Position (km)')
-            plt.savefig('Footpoint_position_vs_max_steps__recursion.pdf' )
-            plt.close()
-        except:
-            pass            
-
-    def test_tracing_accuracy_w_recursion_step_size(self):
-        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
-        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
-                                                  longs,
-                                                  alts)        
-        # step size to be tried
-        steps_goal = np.array([.05, .1, .5, 1., 5., 10., 50., 100., 500.]) 
-        # max number of steps (fixed)
-        max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
-
-        date = datetime.datetime(2000, 1, 1)
-        dx = []
-        dy = []
-        dz = []
-        for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-            out = []
-            for steps, max_steps in zip(steps_goal, max_steps_goal):
-                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
-                                                step_size=steps, 
-                                                max_steps=max_steps) 
-                pt = trace_n[-1,:]
-                out.append(pt)
-
-            final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-            dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
-        dx = pds.DataFrame(dx)
-        dy = pds.DataFrame(dy)
-        dz = pds.DataFrame(dz)
-        
-        try:
-            plt.figure()
-            plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
-                         yerr=dx.std(axis=0), label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
-                        yerr=dy.std(axis=0), label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
-                        yerr=dz.std(axis=0), label='z')
-            plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in Foot Point Position (km)')
-            plt.title("Change in Final ECEF Position, Recursive Calls")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('Footpoint_position_vs_step_size__recursion.pdf' )
-            plt.close()
-        except:
-            pass            
+#     def test_tracing_accuracy(self):
+# 
+#         lats, longs, alts = gen_trace_data_fixed_alt(550.)        
+#         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+#                                                   longs,
+#                                                   alts)        
+#         # step size to be tried
+#         steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
+#         # max number of steps (fixed)
+#         max_steps_goal = steps_goal*0+1E7
+# 
+#         date = datetime.datetime(2000, 1, 1)
+#         dx = []
+#         dy = []
+#         dz = []
+#         
+#         # set up multi
+#         # if self.dc is not None:
+#         if False:
+#             import itertools
+#             targets = itertools.cycle(dc.ids)
+#             pending = []
+#             for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+#                 for steps, max_steps in zip(steps_goal, max_steps_goal):
+#                     # iterate through target cyclicly and run commands
+#                     dview.targets = targets.next()
+#                     pending.append(dview.apply_async(pymv.field_line_trace, np.array([x,y,z]), date, 1., 0., 
+#                                                     step_size=steps, 
+#                                                     max_steps=max_steps)) 
+#             # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+#                 out = []
+#                 for steps, max_steps in zip(steps_goal, max_steps_goal):
+#                     # collect output 
+#                     trace_n = pending.pop(0).get()
+#                     pt = trace_n[-1,:]
+#                     out.append(pt)
+#     
+#                 final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+#                 dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+#                 dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+#                 dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+#         else:
+#             for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+#                 out = []
+#                 for steps, max_steps in zip(steps_goal, max_steps_goal):
+#                     trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+#                                                     step_size=steps, 
+#                                                     max_steps=max_steps) 
+#                     pt = trace_n[-1,:]
+#                     out.append(pt)
+#     
+#                 final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+#                 dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+#                 dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+#                 dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+#             
+#             
+#         dx = pds.DataFrame(dx)
+#         dy = pds.DataFrame(dy)
+#         dz = pds.DataFrame(dz)
+#         
+#         try:
+#             plt.figure()
+#             plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
+#                          yerr=dx.std(axis=0), label='x')
+#             plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
+#                         yerr=dy.std(axis=0), label='y')
+#             plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
+#                         yerr=dz.std(axis=0), label='z')
+#             plt.xlabel('Log Step Size (km)')
+#             plt.ylabel('Change in Foot Point Position (km)')
+#             plt.title("Change in Final ECEF Position")
+#             plt.legend()
+#             plt.tight_layout()
+#             plt.savefig('Footpoint_position_vs_step_size.pdf' )
+#             plt.close()
+#         except:
+#             pass            
+#                            
+#     def test_tracing_accuracy_w_recursion(self):
+# 
+#         lats, longs, alts = gen_trace_data_fixed_alt(550.)        
+#         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+#                                                   longs,
+#                                                   alts)        
+#         # step size to be tried
+#         steps_goal = np.array([5., 5., 5., 5., 5., 5., 5.])
+#         # max number of steps (fixed)
+#         max_steps_goal = np.array([100000., 30000., 10000., 3000., 1000., 300., 100.])
+# 
+#         date = datetime.datetime(2000, 1, 1)
+#         dx = []
+#         dy = []
+#         dz = []
+#         for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+#             out = []
+#             for steps, max_steps in zip(steps_goal, max_steps_goal):
+#                 trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+#                                                 step_size=steps, 
+#                                                 max_steps=max_steps) 
+#                 pt = trace_n[-1,:]
+#                 out.append(pt)
+# 
+#             final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+#             dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+#             dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+#             dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+#         dx = pds.DataFrame(dx)
+#         dy = pds.DataFrame(dy)
+#         dz = pds.DataFrame(dz)
+#         
+#         try:
+#             plt.figure()
+#             plt.errorbar(np.log10(max_steps_goal[1:]), dx.mean(axis=0), 
+#                          yerr=dx.std(axis=0), label='x')
+#             plt.errorbar(np.log10(max_steps_goal[1:]), dy.mean(axis=0), 
+#                         yerr=dy.std(axis=0), label='y')
+#             plt.errorbar(np.log10(max_steps_goal[1:]), dz.mean(axis=0), 
+#                         yerr=dz.std(axis=0), label='z')
+#             plt.xlabel('Log Number of Steps per Run')
+#             plt.ylabel('Change in Foot Point Position (km)')
+#             plt.title("Change in Final ECEF Position, Recursive Calls")
+#             plt.legend()
+#             plt.tight_layout()
+#             plt.ylabel('Log Change in Foot Point Position (km)')
+#             plt.savefig('Footpoint_position_vs_max_steps__recursion.pdf' )
+#             plt.close()
+#         except:
+#             pass            
+# 
+#     def test_tracing_accuracy_w_recursion_step_size(self):
+#         lats, longs, alts = gen_trace_data_fixed_alt(550.)        
+#         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+#                                                   longs,
+#                                                   alts)        
+#         # step size to be tried
+#         steps_goal = np.array([.05, .1, .5, 1., 5., 10., 50., 100., 500.]) 
+#         # max number of steps (fixed)
+#         max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
+# 
+#         date = datetime.datetime(2000, 1, 1)
+#         dx = []
+#         dy = []
+#         dz = []
+#         for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+#             out = []
+#             for steps, max_steps in zip(steps_goal, max_steps_goal):
+#                 trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+#                                                 step_size=steps, 
+#                                                 max_steps=max_steps) 
+#                 pt = trace_n[-1,:]
+#                 out.append(pt)
+# 
+#             final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+#             dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+#             dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+#             dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+#         dx = pds.DataFrame(dx)
+#         dy = pds.DataFrame(dy)
+#         dz = pds.DataFrame(dz)
+#         
+#         try:
+#             plt.figure()
+#             plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
+#                          yerr=dx.std(axis=0), label='x')
+#             plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
+#                         yerr=dy.std(axis=0), label='y')
+#             plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
+#                         yerr=dz.std(axis=0), label='z')
+#             plt.xlabel('Log Step Size (km)')
+#             plt.ylabel('Change in Foot Point Position (km)')
+#             plt.title("Change in Final ECEF Position, Recursive Calls")
+#             plt.legend()
+#             plt.tight_layout()
+#             plt.savefig('Footpoint_position_vs_step_size__recursion.pdf' )
+#             plt.close()
+#         except:
+#             pass            
                                                                   
                                                                                                                                                                                                       
     def test_unit_vector_plots(self):
@@ -1498,10 +1498,10 @@ class TestCore():
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date, 
                                                                             direction=direction,
-                                                                            num_steps=1))
+                                                                            num_steps=10))
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date, 
                                                                             direction=direction,
-                                                                            num_steps=10))
+                                                                            num_steps=20))
             # for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j,p_long in enumerate(p_longs):
@@ -1534,10 +1534,10 @@ class TestCore():
                 for j,p_long in enumerate(p_longs):
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
                     x[i,j], y[i,j], z[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
-                                                                             direction=direction, num_steps=1)
+                                                                             direction=direction, num_steps=10)
                     # second run
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
-                                                                 direction=direction, num_steps=10)
+                                                                 direction=direction, num_steps=20)
             for i,p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])        
