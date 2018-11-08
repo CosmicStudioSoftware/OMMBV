@@ -586,8 +586,7 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
         with supplied field line trace. See step_along_mag_unit_vector method
         for more.
     step_size_goal : float
-        Number of substeps to take along direction, passed to step_along_mag_unit_vector
-        method.
+        step size goal that method will try to match when stepping towards field line. 
     
     Returns
     -------
