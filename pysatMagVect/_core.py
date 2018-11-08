@@ -712,7 +712,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., step
     
     
     # set parameters for the field line tracing routines
-    field_step_size = 10.
+    field_step_size = 100.
     field_max_steps = 1000
     field_steps = np.arange(field_max_steps)
     
