@@ -142,8 +142,8 @@ def gen_plot_grid_fixed_alt(alt):
         long_dim = np.arange(0., 360., 120.)
         lat_dim = np.arange(-50., 51., 25.)
     else:
-        long_dim = np.arange(0., 360., 1.2*8)
-        lat_dim = np.arange(-50., 50.1, 0.25*8)
+        long_dim = np.arange(0., 360., 1.2*10)
+        lat_dim = np.arange(-50., 50.1, 0.25*10)
 
     alt_dim = np.array([alt])
     return lat_dim, long_dim, alt_dim 
