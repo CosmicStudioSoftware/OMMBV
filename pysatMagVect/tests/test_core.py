@@ -384,6 +384,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.savefig('Footpoint_position_vs_step_size.pdf' )
+            plt.close()
         except:
             pass            
                            
@@ -434,6 +435,7 @@ class TestCore():
             plt.tight_layout()
             plt.ylabel('Log Change in Foot Point Position (km)')
             plt.savefig('Footpoint_position_vs_max_steps__recursion.pdf' )
+            plt.close()
         except:
             pass            
 
@@ -482,6 +484,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.savefig('Footpoint_position_vs_step_size__recursion.pdf' )
+            plt.close()
         except:
             pass            
                                                                   
@@ -609,6 +612,7 @@ class TestCore():
                 
             if not on_travis:
                 plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.pdf')))
+                plt.close()
         ## plot Earth
         #u = np.linspace(0, 2 * np.pi, 100)
         #v = np.linspace(60.*np.pi/180., 120.*np.pi/180., 100)
@@ -1050,7 +1054,6 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('zonal_east_diff.pdf') 
             plt.close()
-            plt.figure()
                           
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(zvy)), origin='lower')
@@ -1087,6 +1090,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.savefig('zonal_diff_v_longitude.pdf' )
+            plt.close()
 
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(bx)), origin='lower')
@@ -1134,6 +1138,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.savefig('fa_diff_v_longitude.pdf' )
+            plt.close()
     
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(mx)), origin='lower')
@@ -1181,6 +1186,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.savefig('zonal_diff_v_longitude.pdf' )
+            plt.close()
         except:
             pass
     
@@ -1310,7 +1316,6 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('zonal_east_diff_height.pdf') 
             plt.close()
-            plt.figure()
                             
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(zvy)), origin='lower')
@@ -1347,6 +1352,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.savefig('zonal_diff_v_longitude_height.pdf' )
+            plt.close()
     
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(bx)), origin='lower')
@@ -1394,6 +1400,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.savefig('fa_diff_v_longitude_height.pdf' )
+            plt.close()
     
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(mx)), origin='lower')
@@ -1550,7 +1557,7 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig(direction+'_step_diff_apex_height_x.pdf') 
             plt.close()
-            plt.figure()
+            
                           
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(y)), origin='lower')
