@@ -114,8 +114,8 @@ def gen_trace_data_fixed_alt(alt):
         long_dim = np.arange(0., 361., 80.)
         lat_dim = np.arange(-50., 51., 25.)
     else:
-        long_dim = np.arange(0., 361., 20.)
-        lat_dim = np.arange(-50., 51., 5.)
+        long_dim = np.arange(0., 361., 60.)
+        lat_dim = np.arange(-50., 51., 10.)
 
     alt_dim = alt
     locs = np.array(list(itertools.product(long_dim, lat_dim)))
@@ -1482,9 +1482,10 @@ class TestCore():
             targets = itertools.cycle(dc.ids)
             pending = []
             for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
                 for j,p_long in enumerate(p_longs):
                     # iterate through target cyclicly and run commands
-                    print (i, p_lat)
+
                     dview.targets = targets.next()
                     # inputs are ECEF locations
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
