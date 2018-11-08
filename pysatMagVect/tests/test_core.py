@@ -726,7 +726,7 @@ class TestCore():
         apex_lon[:,-1] = apex_lon[:,0]
         apex_alt[:,-1] = apex_alt[:,0]
 
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         ytickvals = ['-25', '-12.5', '0', '12.5', '25']
         
@@ -823,7 +823,7 @@ class TestCore():
         my[:,-1] = my[:,0]
         mz[:,-1] = mz[:,0]
         
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
@@ -1040,7 +1040,7 @@ class TestCore():
         my[:,-1] = my[:,0]
         mz[:,-1] = mz[:,0]
         
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
@@ -1302,7 +1302,7 @@ class TestCore():
         my[:,-1] = my[:,0]
         mz[:,-1] = mz[:,0]
         
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
@@ -1506,10 +1506,12 @@ class TestCore():
             # from innacurate movement between field lines from step_along_mag_unit_vector                    
             for i,p_lat in enumerate(p_lats):
                 dview.targets = targets.next()
-                pending.append(dview.apply_async(pymv.apex_location_info, x[i,:-1], y[i,:-1], 
-                                                                          z[i,:-1], dates))
-                pending.append(dview.apply_async(pymv.apex_location_info, x2[i,:-1], y2[i,:-1], 
-                                                                          z2[i,:-1], dates))
+                # convert all locations to geodetic coordinates
+                tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])        
+                pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates))
+                # convert all locations to geodetic coordinates
+                tlat, tlon, talt = pymv.ecef_to_geodetic(x2[i,:-1], y2[i,:-1], z2[i,:-1])        
+                pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates))
             for i,p_lat in enumerate(p_lats):
                 x[i,:-1], y[i,:-1], z[i,:-1], _, _, _ = pending.pop(0).get() 
                 x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, _ = pending.pop(0).get() 
@@ -1529,10 +1531,12 @@ class TestCore():
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
                                                                  direction=direction, num_steps=10)
             for i,p_lat in enumerate(p_lats):
-                x[i,:-1], y[i,:-1], z[i,:-1], _, _, _ = pymv.apex_location_info(x[i,:-1], y[i,:-1], 
-                                                                                z[i,:-1], dates)
-                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, _ = pymv.apex_location_info(x[i,:-1], y[i,:-1], 
-                                                                                z[i,:-1], dates)
+                # convert all locations to geodetic coordinates
+                tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])        
+                x[i,:-1], y[i,:-1], z[i,:-1], _, _, _ = pymv.apex_location_info(tlat, tlon, talt, dates)
+                # convert all locations to geodetic coordinates
+                tlat, tlon, talt = pymv.ecef_to_geodetic(x2[i,:-1], y2[i,:-1], z2[i,:-1])        
+                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, _ = pymv.apex_location_info(tlat, tlon, talt, dates)
             # take difference in locations
             x = x - x2
             y = y - y2
@@ -1543,7 +1547,7 @@ class TestCore():
         y[:,-1] = y[:,0]
         z[:,-1] = z[:,0]
         # plot tick locations and labels        
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
@@ -1662,7 +1666,7 @@ class TestCore():
         eq_zonal[:,-1] = eq_zonal[:,0]
         eq_mer[:,-1] = eq_mer[:,0]
         
-        xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
@@ -1793,7 +1797,7 @@ class TestCore():
         eq_mer[:,-1] = eq_mer[:,0]
         
         xtickvals = ['-25', '-12.5', '0', '12.5', '25']
-        xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*len(p_lats)
+        xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         
         try:
