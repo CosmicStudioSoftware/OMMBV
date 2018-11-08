@@ -114,8 +114,8 @@ def gen_trace_data_fixed_alt(alt):
         long_dim = np.arange(0., 361., 80.)
         lat_dim = np.arange(-50., 51., 25.)
     else:
-        long_dim = np.arange(0., 361., 60.)
-        lat_dim = np.arange(-50., 51., 10.)
+        long_dim = np.arange(0., 361., 80.)
+        lat_dim = np.arange(-50., 51., 25.)
 
     alt_dim = alt
     locs = np.array(list(itertools.product(long_dim, lat_dim)))
@@ -1078,6 +1078,7 @@ class TestCore():
             plt.close()
     
             # calculate mean and standard deviation and then plot those
+            plt.figure()
             plt.errorbar(p_longs, np.mean(np.abs(zvx), axis=0), 
                          yerr=np.std(np.abs(zvx), axis=0), label='x')
             plt.errorbar(p_longs, np.mean(np.abs(zvy), axis=0), 
@@ -1126,6 +1127,7 @@ class TestCore():
             plt.close()
 
             # calculate mean and standard deviation and then plot those
+            plt.figure()
             plt.errorbar(p_longs, np.mean(np.abs(bx), axis=0), 
                          yerr=np.std(np.abs(bx), axis=0), label='x')
             plt.errorbar(p_longs, np.mean(np.abs(by), axis=0), 
@@ -1174,6 +1176,7 @@ class TestCore():
             plt.close()
 
             # calculate mean and standard deviation and then plot those
+            plt.figure()
             plt.errorbar(p_longs, np.mean(np.abs(mx), axis=0), 
                          yerr=np.std(np.abs(mx), axis=0), label='x')
             plt.errorbar(p_longs, np.mean(np.abs(my), axis=0), 
@@ -1340,6 +1343,7 @@ class TestCore():
             plt.close()
     
             # calculate mean and standard deviation and then plot those
+            fig = plt.figure()
             plt.errorbar(p_longs, np.mean(np.abs(zvx), axis=0), 
                             yerr=np.std(np.abs(zvx), axis=0), label='x')
             plt.errorbar(p_longs, np.mean(np.abs(zvy), axis=0), 
@@ -1388,6 +1392,7 @@ class TestCore():
             plt.close()
     
             # calculate mean and standard deviation and then plot those
+            fig = plt.figure()
             plt.errorbar(p_longs, np.mean(np.abs(bx), axis=0), 
                             yerr=np.std(np.abs(bx), axis=0), label='x')
             plt.errorbar(p_longs, np.mean(np.abs(by), axis=0), 
@@ -1436,6 +1441,7 @@ class TestCore():
             plt.close()
     
             # calculate mean and standard deviation and then plot those
+            fig = plt.figure()
             plt.errorbar(p_longs, np.mean(np.abs(mx), axis=0), 
                             yerr=np.std(np.abs(mx), axis=0), label='x')
             plt.errorbar(p_longs, np.mean(np.abs(my), axis=0), 
@@ -1448,6 +1454,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.savefig('zonal_diff_v_longitude_height.pdf' )
+            plt.close()
         except:
             pass
 
@@ -1587,11 +1594,12 @@ class TestCore():
             plt.close()
     
             # calculate mean and standard deviation and then plot those
-            plt.errorbar(p_longs, np.mean(np.abs(x, axis=0)), 
+            fig = plt.figure()
+            plt.errorbar(p_longs, np.mean(np.abs(x), axis=0), 
                          yerr=np.std(np.abs(x), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(y, axis=0)), 
+            plt.errorbar(p_longs, np.mean(np.abs(y), axis=0), 
                          yerr=np.std(np.abs(y), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(z, axis=0)), 
+            plt.errorbar(p_longs, np.mean(np.abs(z), axis=0), 
                          yerr=np.std(np.abs(z), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in ECEF (km)')
@@ -1599,6 +1607,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.savefig(direction+'_step_diff_v_longitude.pdf' )
+            plt.close()
 
         except:
             pass
