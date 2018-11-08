@@ -417,7 +417,52 @@ def field_line_trace(init, date, direction, height, steps=None,
         # x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2]) 
         # idx = np.argmin(np.abs(check_height - z)) 
         return trace_north #[:idx+1,:]
+
+
+def full_field_line(init, date, height, step_size=100., max_steps=100, 
+                    steps=None, **kwargs):
+    """Perform field line tracing using IGRF and scipy.integrate.odeint.
     
+    Parameters
+    ----------
+    init : array-like of floats
+        Position to begin field line tracing from in ECEF (x,y,z) km
+    date : datetime or float
+        Date to perform tracing on (year + day/365 + hours/24. + etc.)
+        Accounts for leap year if datetime provided.
+    height : float
+        Altitude to terminate trace, geodetic WGS84 (km)
+    max_steps : float
+        Maximum number of steps along field line that should be taken
+    step_size : float
+        Distance in km for each large integration step. Multiple substeps
+        are taken as determined by scipy.integrate.odeint
+    steps : array-like of ints or floats
+        Number of steps along field line when field line trace positions should 
+        be reported. By default, each step is reported; steps=np.arange(max_steps).
+        
+    Returns
+    -------
+    numpy array
+        2D array. [0,:] has the x,y,z location for initial point
+        [:,0] is the x positions over the integration.
+        Positions are reported in ECEF (km).
+        
+    
+    """
+    
+    if steps is None:
+        steps = np.arange(max_steps)
+    # trace north, then south, and combine
+    trace_south = field_line_trace(init, date, -1., 0., steps=steps,
+                                    step_size=step_size, max_steps=max_steps, **kwargs)
+    trace_north = field_line_trace(init, date, 1., 0., steps=steps,
+                                    step_size=step_size, max_steps=max_steps, **kwargs)
+    # order of field points is along the field line, south to north
+    trace = np.vstack((trace_south[::-1][:-1,:], trace_north))
+    return trace
+ 
+     
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           steps=None, max_steps=10000, step_size=10.,
                                           ref_height=120.):
@@ -742,8 +787,8 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., step
         z = z + step_size*uz[0]*scalar
             
     return np.array([x, y, z])
-
-
+   
+    
 def apex_location_info(glats, glons, alts, dates):
     """Determine the apex location for the field line passing through input point.
     
@@ -774,8 +819,8 @@ def apex_location_info(glats, glons, alts, dates):
     # use input location and convert to ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
-    step_size = 10.
-    max_steps = 10000
+    step_size = 100.
+    max_steps = 100
     steps = np.arange(max_steps)
 
     # prepare output
@@ -788,25 +833,17 @@ def apex_location_info(glats, glons, alts, dates):
                                                              dates):
         # to get the apex location we need to do a field line trace
         # then find the highest point
-        # trace north, then south, and combine
-        trace_south = field_line_trace(np.array([ecef_x, ecef_y, ecef_z]), date, -1., 0., steps=steps,
-                                                step_size=step_size, max_steps=max_steps)
-        trace_north = field_line_trace(np.array([ecef_x, ecef_y, ecef_z]), date, 1., 0., steps=steps,
-                                                step_size=step_size, max_steps=max_steps)
-        trace = np.vstack((trace_north[::-1], trace_south))
+        trace = full_field_line(np.array([ecef_x, ecef_y, ecef_z]), date, 0., steps=steps,
+                                step_size=step_size, max_steps=max_steps)
         # convert all locations to geodetic coordinates
         tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])        
         # determine location that is highest with respect to the geodetic Earth
         max_idx = np.argmax(talt)
 
-        # repeat using a high resolution trace
-        trace_south = field_line_trace(np.array([trace[max_idx,0], trace[max_idx,1], trace[max_idx,2]]), date, -1., 0., 
-                                                steps=np.arange(100),
-                                                step_size=step_size/100., max_steps=100, recurse=False)
-        trace_north = field_line_trace(np.array([trace[max_idx,0], trace[max_idx,1], trace[max_idx,2]]), date, 1., 0., 
-                                                steps=np.arange(100),
-                                                step_size=step_size/100., max_steps=100, recurse=False)
-        trace = np.vstack((trace_north[::-1], trace_south))
+        # repeat using a high resolution trace one big step size each direction around identified max
+        # recurse False ensures only max_steps are taken
+        trace = full_field_line(np.array([trace[max_idx,0], trace[max_idx,1], trace[max_idx,2]]), date, 0., steps=steps,
+                                step_size=step_size/1000., max_steps=1000, recurse=False)
         # convert all locations to geodetic coordinates
         tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
         # determine location that is highest with respect to the geodetic Earth
