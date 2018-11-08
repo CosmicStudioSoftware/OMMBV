@@ -557,7 +557,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 
 def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, direction=None,
-                                                       unit_steps=1.):   
+                                                       step_size_goal=1.):   
     """Starting at pos, method steps along magnetic unit vector direction towards the supplied 
     field line trace. Determines the distance of closest approach to field line.
     
@@ -585,7 +585,7 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
         Which unit vector direction to move slong when trying to intersect
         with supplied field line trace. See step_along_mag_unit_vector method
         for more.
-    unit_steps : int
+    step_size_goal : float
         Number of substeps to take along direction, passed to step_along_mag_unit_vector
         method.
     
@@ -618,6 +618,10 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
     factor = 1
     while repeat:
         # take a total step along magnetic unit vector
+        # try to take steps near user provided step_size_goal
+        unit_steps = scalar//step_size_goal
+        if unit_steps == 0:
+            unit_steps = 1
         pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
                                               num_steps=unit_steps, step_size=scalar/unit_steps) 
         # find closest point along + field line trace
