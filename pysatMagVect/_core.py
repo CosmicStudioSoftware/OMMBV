@@ -604,7 +604,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 
 def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, direction=None,
-                                                       step_size_goal=1., field_step_size=None):   
+                                                       step_size_goal=25., field_step_size=None):   
     """Starting at pos, method steps along magnetic unit vector direction towards the supplied 
     field line trace. Determines the distance of closest approach to field line.
     
