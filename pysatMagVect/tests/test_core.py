@@ -86,7 +86,7 @@ def gen_data_fixed_alt(alt):
     on_travis = os.environ.get('ONTRAVIS') == 'True'
     if on_travis:
         # reduced resolution on the test server
-        long_dim = np.arange(0., 361., 60.)
+        long_dim = np.arange(0., 361., 180.)
         lat_dim = np.arange(-90., 91., 30.)
     else:
         long_dim = np.arange(0., 361., 20.)
@@ -111,7 +111,7 @@ def gen_trace_data_fixed_alt(alt):
     on_travis = os.environ.get('ONTRAVIS') == 'True'
     if on_travis:
         # reduced resolution on the test server
-        long_dim = np.arange(0., 361., 80.)
+        long_dim = np.arange(0., 361., 180.)
         lat_dim = np.arange(-50., 51., 25.)
     else:
         long_dim = np.arange(0., 361., 80.)
