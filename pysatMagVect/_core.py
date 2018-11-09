@@ -519,13 +519,14 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                           np.deg2rad(geo_long), datetimes):
         init = np.array([x, y, z])
         # date = inst.yr + inst.doy / 366.
-        trace_north = field_line_trace(init, time, 1., ref_height, steps=steps,
-                                       step_size=step_size, max_steps=max_steps)
-        trace_south = field_line_trace(init, time, -1., ref_height, steps=steps,
-                                       step_size=step_size, max_steps=max_steps)
-        # store final location
-        trace_north = trace_north[-1, :]
-        trace_south = trace_south[-1, :]
+        trace = full_field_line(init, time, ref_height, step_size=step_size, max_steps=max_steps)
+        # trace_north = field_line_trace(init, time, 1., ref_height, steps=steps,
+        #                                step_size=step_size, max_steps=max_steps)
+        # trace_south = field_line_trace(init, time, -1., ref_height, steps=steps,
+        #                                step_size=step_size, max_steps=max_steps)
+        # store final location, full trace goes south to north
+        trace_north = trace[-1, :]
+        trace_south = trace[0, :]
         # magnetic field at spacecraft location, using geocentric inputs
         # to get magnetic field in geocentric output
         # recast from datetime to float, as required by IGRF12 code
@@ -683,7 +684,7 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
             # difference with position
             diff = field_copy - pos_step
             diff_mag = np.sqrt((diff ** 2).sum(axis=1))
-            # find closest once
+            # find closest one
             min_idx = np.argmin(diff_mag)
             first = False
             
@@ -899,9 +900,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
     import pandas
 
     if step_size is None:
-        step_size = 10.
+        step_size = 100.
     if max_steps is None:
-        max_steps = 1000
+        max_steps = 100
     steps = np.arange(max_steps)
 
     ivm = pysat.Instrument('pysat', 'testing')
