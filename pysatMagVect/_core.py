@@ -977,8 +977,6 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
     elif direction == 'north':
         direct = 1
 
-    ivm = pysat.Instrument('pysat', 'testing')
-
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
@@ -1061,9 +1059,9 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
 
 
 def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
-                                           vector_direction,
-                                           edge_length=25., 
-                                           edge_steps=5):
+                                         vector_direction,
+                                         edge_length=25., 
+                                         edge_steps=5):
     """
     Forms closed loop integration along mag field, satrting at input
     points and goes through footpoint. At footpoint, steps along vector direction
@@ -1259,8 +1257,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
         max_steps = 100
     steps = np.arange(max_steps)
 
-    ivm = pysat.Instrument('pysat', 'testing')
-
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
@@ -1283,11 +1279,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
         # with the known distances of footpoint steps, and the closet approach distance
         # we can determine the scalar mapping of one location to another
         
-        ivm.date = date
-        ivm.yr, ivm.doy = pysat.utils.getyrdoy(date)
-        double_date = float(ivm.yr) + float(ivm.doy) / 366.
+        yr, doy = pysat.utils.getyrdoy(date)
+        double_date = float(yr) + float(doy) / 366.
 
-        print (glat, glon, alt)
         # get location of apex for s/c field line
         apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info(
                                                                     [glat], [glon], 
