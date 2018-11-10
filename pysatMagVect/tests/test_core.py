@@ -1076,22 +1076,6 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('zonal_up_diff.pdf') 
             plt.close()
-    
-            # calculate mean and standard deviation and then plot those
-            plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(zvx), axis=0), 
-                         yerr=np.std(np.abs(zvx), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(zvy), axis=0), 
-                         yerr=np.std(np.abs(zvy), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(zvz), axis=0), 
-                         yerr=np.std(np.abs(zvz), axis=0), label='z')
-            plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Zonal Vector')
-            plt.title("Sensitivity of Zonal Unit Vector")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('zonal_diff_v_longitude.pdf' )
-            plt.close()
 
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(bx)), origin='lower')
@@ -1124,22 +1108,6 @@ class TestCore():
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('fa_up_diff.pdf') 
-            plt.close()
-
-            # calculate mean and standard deviation and then plot those
-            plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(bx), axis=0), 
-                         yerr=np.std(np.abs(bx), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(by), axis=0), 
-                         yerr=np.std(np.abs(by), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(bz), axis=0), 
-                         yerr=np.std(np.abs(bz), axis=0), label='z')
-            plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Field-Aligned Vector')
-            plt.title("Sensitivity of Field-Aligned Unit Vector")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('fa_diff_v_longitude.pdf' )
             plt.close()
     
             fig = plt.figure()
@@ -1176,6 +1144,41 @@ class TestCore():
             plt.close()
 
             # calculate mean and standard deviation and then plot those
+            print (p_longs)
+            print (np.mean(np.abs(zvx), axis=0))
+            print (np.std(np.abs(zvx), axis=0))
+            plt.figure()
+            plt.errorbar(p_longs, np.mean(np.abs(zvx), axis=0), 
+                         yerr=np.std(np.abs(zvx), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(zvy), axis=0), 
+                         yerr=np.std(np.abs(zvy), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(zvz), axis=0), 
+                         yerr=np.std(np.abs(zvz), axis=0), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Zonal Vector')
+            plt.title("Sensitivity of Zonal Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('zonal_diff_v_longitude.pdf' )
+            plt.close()
+            
+            # calculate mean and standard deviation and then plot those
+            plt.figure()
+            plt.errorbar(p_longs, np.mean(np.abs(bx), axis=0), 
+                         yerr=np.std(np.abs(bx), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(by), axis=0), 
+                         yerr=np.std(np.abs(by), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(bz), axis=0), 
+                         yerr=np.std(np.abs(bz), axis=0), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Field-Aligned Vector')
+            plt.title("Sensitivity of Field-Aligned Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('fa_diff_v_longitude.pdf' )
+            plt.close()
+
+            # calculate mean and standard deviation and then plot those
             plt.figure()
             plt.errorbar(p_longs, np.mean(np.abs(mx), axis=0), 
                          yerr=np.std(np.abs(mx), axis=0), label='x')
@@ -1190,6 +1193,7 @@ class TestCore():
             plt.tight_layout()
             plt.savefig('zonal_diff_v_longitude.pdf' )
             plt.close()
+            
         except:
             pass
     
@@ -1342,21 +1346,6 @@ class TestCore():
             plt.savefig('zonal_up_diff_height.pdf') 
             plt.close()
     
-            # calculate mean and standard deviation and then plot those
-            fig = plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(zvx), axis=0), 
-                            yerr=np.std(np.abs(zvx), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(zvy), axis=0), 
-                            yerr=np.std(np.abs(zvy), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(zvz), axis=0), 
-                            yerr=np.std(np.abs(zvz), axis=0), label='z')
-            plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Zonal Vector')
-            plt.title("Sensitivity of Zonal Unit Vector")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('zonal_diff_v_longitude_height.pdf' )
-            plt.close()
     
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(bx)), origin='lower')
@@ -1390,23 +1379,7 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('fa_up_diff_height.pdf') 
             plt.close()
-    
-            # calculate mean and standard deviation and then plot those
-            fig = plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(bx), axis=0), 
-                            yerr=np.std(np.abs(bx), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(by), axis=0), 
-                            yerr=np.std(np.abs(by), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(bz), axis=0), 
-                            yerr=np.std(np.abs(bz), axis=0), label='z')
-            plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Field-Aligned Vector')
-            plt.title("Sensitivity of Field-Aligned Unit Vector")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('fa_diff_v_longitude_height.pdf' )
-            plt.close()
-    
+        
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(mx)), origin='lower')
             plt.colorbar()
@@ -1439,15 +1412,31 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('mer_up_diff_height.pdf') 
             plt.close()
+
+            # calculate mean and standard deviation and then plot those
+            fig = plt.figure()
+            plt.errorbar(p_longs, np.mean(np.abs(zvx[:,:-1]), axis=0), 
+                            yerr=np.std(np.abs(zvx[:,:-1]), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(zvy[:,:-1]), axis=0), 
+                            yerr=np.std(np.abs(zvy[:,:-1]), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(zvz[:,:-1]), axis=0), 
+                            yerr=np.std(np.abs(zvz[:,:-1]), axis=0), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Zonal Vector')
+            plt.title("Sensitivity of Zonal Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('zonal_diff_v_longitude_height.pdf' )
+            plt.close()
     
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(mx), axis=0), 
-                            yerr=np.std(np.abs(mx), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(my), axis=0), 
-                            yerr=np.std(np.abs(my), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(mz), axis=0), 
-                            yerr=np.std(np.abs(mz), axis=0), label='z')
+            plt.errorbar(p_longs, np.mean(np.abs(mx[:,:-1]), axis=0), 
+                            yerr=np.std(np.abs(mx[:,:-1]), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(my[:,:-1]), axis=0), 
+                            yerr=np.std(np.abs(my[:,:-1]), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(mz[:,:-1]), axis=0), 
+                            yerr=np.std(np.abs(mz[:,:-1]), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
@@ -1455,6 +1444,23 @@ class TestCore():
             plt.tight_layout()
             plt.savefig('zonal_diff_v_longitude_height.pdf' )
             plt.close()
+
+            # calculate mean and standard deviation and then plot those
+            fig = plt.figure()
+            plt.errorbar(p_longs, np.mean(np.abs(bx[:,:-1]), axis=0), 
+                            yerr=np.std(np.abs(bx[:,:-1]), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(by[:,:-1]), axis=0), 
+                            yerr=np.std(np.abs(by[:,:-1]), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(bz[:,:-1]), axis=0), 
+                            yerr=np.std(np.abs(bz[:,:-1]), axis=0), label='z')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Change in Field-Aligned Vector')
+            plt.title("Sensitivity of Field-Aligned Unit Vector")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('fa_diff_v_longitude_height.pdf' )
+            plt.close()
+        
         except:
             pass
 
@@ -1498,10 +1504,10 @@ class TestCore():
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date, 
                                                                             direction=direction,
-                                                                            num_steps=10))
+                                                                            num_steps=6, step_size=25./6.))
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date, 
                                                                             direction=direction,
-                                                                            num_steps=20))
+                                                                            num_steps=3, step_size=25./3.))
             # for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j,p_long in enumerate(p_longs):
@@ -1534,10 +1540,12 @@ class TestCore():
                 for j,p_long in enumerate(p_longs):
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
                     x[i,j], y[i,j], z[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
-                                                                             direction=direction, num_steps=10)
+                                                                             direction=direction, 
+                                                                             num_steps=6, step_size=25./6.)
                     # second run
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
-                                                                 direction=direction, num_steps=20)
+                                                                            direction=direction, 
+                                                                            num_steps=3, step_size=25./3.)
             for i,p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])        
@@ -1595,11 +1603,11 @@ class TestCore():
     
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(x), axis=0), 
-                         yerr=np.std(np.abs(x), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(y), axis=0), 
-                         yerr=np.std(np.abs(y), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(z), axis=0), 
+            plt.errorbar(p_longs, np.mean(np.abs(x[:,:-1]), axis=0), 
+                         yerr=np.std(np.abs(x[:,:-1]), axis=0), label='x')
+            plt.errorbar(p_longs, np.mean(np.abs(y[:,:-1]), axis=0), 
+                         yerr=np.std(np.abs(y[:,:-1]), axis=0), label='y')
+            plt.errorbar(p_longs, np.mean(np.abs(z[:,:-1]), axis=0), 
                          yerr=np.std(np.abs(z), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in ECEF (km)')

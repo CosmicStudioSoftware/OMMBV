@@ -337,7 +337,8 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 
 def field_line_trace(init, date, direction, height, steps=None,
-                     max_steps=1E5, step_size=10., recursive_loop_count=None, recurse=True):
+                     max_steps=1E4, step_size=10., recursive_loop_count=None, 
+                     recurse=True):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
     
     Parameters
@@ -405,9 +406,10 @@ def field_line_trace(init, date, direction, height, steps=None,
             # again by taking check value as init - recursive call
             recursive_loop_count = recursive_loop_count + 1
             trace_north1 = field_line_trace(check, date, direction, height,
-                                                step_size=step_size, max_steps=max_steps,
-                                                recursive_loop_count=recursive_loop_count,
-                                                steps=steps)
+                                            step_size=step_size, 
+                                            max_steps=max_steps,
+                                            recursive_loop_count=recursive_loop_count,
+                                            steps=steps)
         else:
             raise RuntimeError("After 100 iterations couldn't reach target altitude")
         return np.vstack((trace_north, trace_north1))
@@ -446,7 +448,7 @@ def full_field_line(init, date, height, step_size=100., max_steps=100,
     Returns
     -------
     numpy array
-        2D array. [0,:] has the x,y,z location for initial point
+        2D array. [0,:] has the x,y,z location for southern footpoint
         [:,0] is the x positions over the integration.
         Positions are reported in ECEF (km).
         
@@ -456,17 +458,24 @@ def full_field_line(init, date, height, step_size=100., max_steps=100,
     if steps is None:
         steps = np.arange(max_steps)
     # trace north, then south, and combine
-    trace_south = field_line_trace(init, date, -1., 0., steps=steps,
-                                    step_size=step_size, max_steps=max_steps, **kwargs)
-    trace_north = field_line_trace(init, date, 1., 0., steps=steps,
-                                    step_size=step_size, max_steps=max_steps, **kwargs)
-    # order of field points is along the field line, south to north
+    trace_south = field_line_trace(init, date, -1., height, 
+                                   steps=steps,
+                                   step_size=step_size, 
+                                   max_steps=max_steps, 
+                                   **kwargs)
+    trace_north = field_line_trace(init, date, 1., height, 
+                                   steps=steps,
+                                   step_size=step_size, 
+                                   max_steps=max_steps, 
+                                   **kwargs)
+    # order of field points is generally along the field line, south to north
+    # don't want to include the initial point twice
     trace = np.vstack((trace_south[::-1][:-1,:], trace_north))
     return trace
  
      
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          steps=None, max_steps=10000, step_size=10.,
+                                          steps=None, max_steps=10, step_size=100.,
                                           ref_height=120.):
     """Calculates unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
@@ -514,19 +523,21 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     be = [];
     bd = []
 
-    out = []
-    for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z, geo_alt, np.deg2rad(90. - geo_lat),
-                                          np.deg2rad(geo_long), datetimes):
+    for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z, 
+                                                geo_alt, np.deg2rad(90. - geo_lat),
+                                                np.deg2rad(geo_long), datetimes):
         init = np.array([x, y, z])
         # date = inst.yr + inst.doy / 366.
-        trace = full_field_line(init, time, ref_height, step_size=step_size, max_steps=max_steps)
-        # trace_north = field_line_trace(init, time, 1., ref_height, steps=steps,
-        #                                step_size=step_size, max_steps=max_steps)
-        # trace_south = field_line_trace(init, time, -1., ref_height, steps=steps,
-        #                                step_size=step_size, max_steps=max_steps)
+        # trace = full_field_line(init, time, ref_height, step_size=step_size, 
+        #                                                 max_steps=max_steps,
+        #                                                 steps=steps)
+        trace_north = field_line_trace(init, time, 1., ref_height, steps=steps,
+                                        step_size=step_size, max_steps=max_steps)
+        trace_south = field_line_trace(init, time, -1., ref_height, steps=steps,
+                                        step_size=step_size, max_steps=max_steps)
         # store final location, full trace goes south to north
-        trace_north = trace[-1, :]
-        trace_south = trace[0, :]
+        trace_north = trace_north[-1, :]
+        trace_south = trace_south[-1, :]
         # magnetic field at spacecraft location, using geocentric inputs
         # to get magnetic field in geocentric output
         # recast from datetime to float, as required by IGRF12 code
@@ -604,18 +615,23 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     return zvx, zvy, zvz, bx, by, bz, mx, my, mz
 
 
-def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, direction=None,
-                                                       step_size_goal=25., field_step_size=None):   
-    """Starting at pos, method steps along magnetic unit vector direction towards the supplied 
-    field line trace. Determines the distance of closest approach to field line.
+def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, 
+                                                       direction=None,
+                                                       step_size_goal=25., 
+                                                       field_step_size=None):   
+    """Starting at pos, method steps along magnetic unit vector direction 
+    towards the supplied field line trace. Determines the distance of 
+    closest approach to field line.
     
-    Routine is used when calculting the mapping of electric fields along magnetic field 
-    lines. Voltage remains constant along the field but the distance between field lines does not.
-    This routine may be used to form the last leg when trying to trace out a closed field line loop.
+    Routine is used when calculting the mapping of electric fields along 
+    magnetic field lines. Voltage remains constant along the field but the 
+    distance between field lines does not.This routine may be used to form the 
+    last leg when trying to trace out a closed field line loop.
     
-    Routine will create a high resolution field line trace (.01 km step size) near the location
-    of closest approach to better determine where the intersection occurs. This centered segment is 
-    40 km long, thus the input field_line trace should have a maximum step size of 20 km.
+    Routine will create a high resolution field line trace (.01 km step size) 
+    near the location of closest approach to better determine where the 
+    intersection occurs. This centered segment is 40 km long, thus the input 
+    field_line trace should have a maximum step size of 20 km.
     
     Parameters
     ----------
@@ -639,8 +655,9 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
     Returns
     -------
     (float, array, float)
-        Total distance taken along vector direction; the position after taking the step [x, y, z] in ECEF;
-        distance of closest approach from input pos towards the input field line trace.
+        Total distance taken along vector direction; the position after taking 
+        the step [x, y, z] in ECEF; distance of closest approach from input pos 
+        towards the input field line trace.
          
     """ 
                                                          
@@ -662,11 +679,15 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
     while repeat:
         # take a total step along magnetic unit vector
         # try to take steps near user provided step_size_goal
-        unit_steps = scalar//step_size_goal
+        unit_steps = np.abs(scalar//step_size_goal)
         if unit_steps == 0:
             unit_steps = 1
-        pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
-                                              num_steps=unit_steps, step_size=scalar/unit_steps) 
+        # print (unit_steps, scalar/unit_steps)
+        pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, 
+                                              direction=direction,
+                                              num_steps=unit_steps, 
+                                              step_size=np.abs(scalar)/unit_steps,
+                                              scalar=sign) 
         # find closest point along field line trace
         diff = field_copy - pos_step
         diff_mag = np.sqrt((diff ** 2).sum(axis=1))
@@ -686,13 +707,20 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
             diff_mag = np.sqrt((diff ** 2).sum(axis=1))
             # find closest one
             min_idx = np.argmin(diff_mag)
+            # # reduce number of elements we really need to check
+            field_copy = field_copy[min_idx-100:min_idx:100]
+            # difference with position
+            diff = field_copy - pos_step
+            diff_mag = np.sqrt((diff ** 2).sum(axis=1))
+            # find closest one
+            min_idx = np.argmin(diff_mag)
             first = False
             
         # pull out distance of closest point 
         min_dist = diff_mag[min_idx]
         
         # check how the solution is doing
-        # if well, add more distance to the total step and recheck if we get closer
+        # if well, add more distance to the total step and recheck if closer
         # if worse, step back and try a smaller step
         if min_dist > last_min_dist:
             # last step we took made the solution worse
@@ -700,34 +728,41 @@ def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, ti
                 # we've tried enough, stop looping
                 repeat = False
                 # undo increment to last total distance
-                scalar = scalar - sign*last_min_dist/(2*factor)
+                scalar = scalar - last_min_dist/(2*factor)
                 # calculate latest position
-                pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, direction=direction,
-                                        num_steps=unit_steps, step_size=scalar/unit_steps) 
+                pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], 
+                                        time, 
+                                        direction=direction,
+                                        num_steps=unit_steps, 
+                                        step_size=np.abs(scalar)/unit_steps,
+                                        scalar=sign) 
             else:
                 # undo increment to last total distance
-                scalar = scalar - sign*last_min_dist/(2*factor)
-                # increase the divisor used to reduce the distance actually stepped per increment
+                scalar = scalar - last_min_dist/(2*factor)
+                # increase the divisor used to reduce the distance 
+                # actually stepped per increment
                 factor = factor + 1.
                 # try a new increment to total distance
-                scalar = scalar + sign*last_min_dist/(2*factor)
+                scalar = scalar + last_min_dist/(2*factor)
         else:
             # we did better, move even closer, a fraction of remaining distance
             # increment scalar, but only by a fraction
-            scalar = scalar + sign*min_dist/(2*factor)
+            scalar = scalar + min_dist/(2*factor)
             # we have a new standard to judge against, set it
             last_min_dist = min_dist.copy()
 
     # return magnitude of step
-    return scalar/sign, pos_step, min_dist
+    return scalar, pos_step, min_dist
 
 
-def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., step_size=25., scalar=1):
+def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., 
+                               step_size=25., scalar=1):
     """
     Move along 'lines' formed by following the magnetic unit vector directions.
 
     Moving along the field is effectively the same as a field line trace though
-    extended movement along a field should use the specific field_line_trace method.
+    extended movement along a field should use the specific field_line_trace 
+    method.
         
     
     Parameters
@@ -748,13 +783,14 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., step
     step_size = float
         Distance taken for each step (km)
     scalar : int
-        Scalar modifier for step size distance. Input a -1 to move along negative
-        unit vector direction.
+        Scalar modifier for step size distance. Input a -1 to move along 
+        negative unit vector direction.
         
     Returns
     -------
     np.array
-        [x, y, z] of ECEF location after taking num_steps along direction, each step_size long.
+        [x, y, z] of ECEF location after taking num_steps along direction, 
+        each step_size long.
     
     """
     
@@ -769,8 +805,10 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., step
         # convert to geodetic
         lat, lon, alt = ecef_to_geodetic(x, y, z)
         # get unit vector directions
-        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef([lat], [lon], [alt], [date],
-                                                        steps=field_steps, max_steps=field_max_steps, 
+        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(
+                                                        [lat], [lon], [alt], [date],
+                                                        steps=field_steps, 
+                                                        max_steps=field_max_steps, 
                                                         step_size=field_step_size, 
                                                         ref_height=0.)
         # pull out the direction we need
@@ -790,12 +828,13 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1., step
    
     
 def apex_location_info(glats, glons, alts, dates):
-    """Determine the apex location for the field line passing through input point.
+    """Determine apex location for the field line passing through input point.
     
-    Employs a two stage method. A broad step (100 km) field line trace spanning Northern/Southern
-    footpoints is used to find the location with the largest geodetic (WGS84) height.
-    A higher resolution trace (.1 km) is then used to get a better fix on this location.
-    Greatest geodetic height is once again selected.
+    Employs a two stage method. A broad step (100 km) field line trace spanning 
+    Northern/Southern footpoints is used to find the location with the largest 
+    geodetic (WGS84) height. A higher resolution trace (.1 km) is then used to 
+    get a better fix on this location. Greatest geodetic height is once again 
+    selected.
     
     Parameters
     ----------
@@ -811,7 +850,9 @@ def apex_location_info(glats, glons, alts, dates):
     Returns
     -------
     (float, float, float, float, float, float)
-        ECEF X, ECEF Y, ECEF Z, Geodetic Latitude (degrees), Geodetic Longitude (degrees), 
+        ECEF X (km), ECEF Y (km), ECEF Z (km), 
+        Geodetic Latitude (degrees), 
+        Geodetic Longitude (degrees), 
         Geodetic Altitude (km)
         
     """
@@ -822,6 +863,10 @@ def apex_location_info(glats, glons, alts, dates):
     step_size = 100.
     max_steps = 100
     steps = np.arange(max_steps)
+    # high resolution trace parameters
+    fine_step_size = .1
+    fine_max_steps = int(step_size/fine_step_size)
+    fine_steps = np.arange(fine_max_steps)
     # prepare output
     out_x = []
     out_y = []
@@ -832,16 +877,22 @@ def apex_location_info(glats, glons, alts, dates):
                                                              dates):
         # to get the apex location we need to do a field line trace
         # then find the highest point
-        trace = full_field_line(np.array([ecef_x, ecef_y, ecef_z]), date, 0., steps=steps,
-                                step_size=step_size, max_steps=max_steps)
+        trace = full_field_line(np.array([ecef_x, ecef_y, ecef_z]), date, 0., 
+                                steps=steps,
+                                step_size=step_size, 
+                                max_steps=max_steps)
         # convert all locations to geodetic coordinates
         tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])        
         # determine location that is highest with respect to the geodetic Earth
         max_idx = np.argmax(talt)
-        # repeat using a high resolution trace one big step size each direction around identified max
+        # repeat using a high resolution trace one big step size each 
+        # direction around identified max
         # recurse False ensures only max_steps are taken
-        trace = full_field_line(trace[max_idx,:], date, 0., steps=steps,
-                                step_size=step_size/1000., max_steps=1000, recurse=False)
+        trace = full_field_line(trace[max_idx,:], date, 0., 
+                                steps=fine_steps,
+                                step_size=fine_step_size, 
+                                max_steps=fine_max_steps, 
+                                recurse=False)
         # convert all locations to geodetic coordinates
         tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
         # determine location that is highest with respect to the geodetic Earth
@@ -859,8 +910,8 @@ def apex_location_info(glats, glons, alts, dates):
     return out_x, out_y, out_z, glat, glon, alt
 
 
-def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, max_steps=None,
-                                   e_field_scaling_only=False):
+def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, 
+                                   max_steps=None, e_field_scaling_only=False):
     """
     Calculates scalars for translating ion motions at position
     glat, glon, and alt, for date, to the footpoints of the field line
@@ -897,8 +948,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
     
     """
     
-    import pandas
-
     if step_size is None:
         step_size = 100.
     if max_steps is None:
@@ -935,15 +984,21 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
 
         print (glat, glon, alt)
         # get location of apex for s/c field line
-        apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info([glat], [glon], [alt], [date])
+        apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info(
+                                                                    [glat], [glon], 
+                                                                    [alt], [date])
 
         # trace to northern footpoint
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
-        trace_north = field_line_trace(sc_root, double_date, 1., 120., steps=steps,
-                                       step_size=step_size, max_steps=max_steps)
+        trace_north = field_line_trace(sc_root, double_date, 1., 120., 
+                                       steps=steps,
+                                       step_size=step_size, 
+                                       max_steps=max_steps)
         # southern tracing
-        trace_south = field_line_trace(sc_root, double_date, -1., 120., steps=steps,
-                                       step_size=step_size, max_steps=max_steps)
+        trace_south = field_line_trace(sc_root, double_date, -1., 120., 
+                                       steps=steps,
+                                       step_size=step_size, 
+                                       max_steps=max_steps)
         # footpoint location
         north_ftpnt = trace_north[-1, :]
         nft_glat, nft_glon, nft_alt = ecef_to_geodetic(*north_ftpnt)
@@ -955,24 +1010,33 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
         north_plus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], 
                                                     date, direction='meridional')
         # trace this back to southern footpoint
-        trace_south_plus_mer = field_line_trace(north_plus_mer, double_date, -1., 0., steps=steps,
-                                                step_size=step_size, max_steps=max_steps)
+        trace_south_plus_mer = field_line_trace(north_plus_mer, double_date, -1., 0., 
+                                                steps=steps,
+                                                step_size=step_size, 
+                                                max_steps=max_steps)
         # take half step from northern along - meridional direction
-        north_minus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], north_ftpnt[2], date, 
-                                                     direction='meridional', scalar=-1)
+        north_minus_mer = step_along_mag_unit_vector(north_ftpnt[0], north_ftpnt[1], 
+                                                     north_ftpnt[2], 
+                                                     date, 
+                                                     direction='meridional', 
+                                                     scalar=-1)
         # trace this back to southern footpoint
-        trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 0., steps=steps,
-                                                 step_size=step_size, max_steps=max_steps)
+        trace_south_minus_mer = field_line_trace(north_minus_mer, double_date, -1., 0., 
+                                                 steps=steps,
+                                                 step_size=step_size, 
+                                                 max_steps=max_steps)
         # need to determine where the intersection of field line coming back from north footpoint + mer is
         # in relation to the meridional direction from the s/c location. 
         pos_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                   trace_south_plus_mer,
-                                                                                  1, date, direction='meridional',
+                                                                                  1, date, 
+                                                                                  direction='meridional',
                                                                                   field_step_size=step_size)        
         # take half step from S/C along - meridional direction 
         minus_mer_step_size, _, _ = intersection_field_line_and_unit_vector_projection(sc_root,
                                                                                     trace_south_minus_mer,
-                                                                                    -1, date, direction='meridional',
+                                                                                    -1, date, 
+                                                                                    direction='meridional',
                                                                                     field_step_size=step_size)
         # scalar for the northern footpoint electric field based on distances
         full_mer_sc_step = pos_mer_step_size + minus_mer_step_size
@@ -980,8 +1044,12 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None, ma
             north_ftpnt_zon_drifts_scalar.append(full_mer_sc_step/50.)
         else:
             # for drift also need to include the magnetic field, drift = E/B
-            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, np.deg2rad(90.-glat), np.deg2rad(glon))
-            tbn, tbe, tbd, b_nft = igrf.igrf12syn(0, double_date, 1, nft_alt, np.deg2rad(90.-nft_glat), np.deg2rad(nft_glon))
+            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt, 
+                                                 np.deg2rad(90.-glat), 
+                                                 np.deg2rad(glon))
+            tbn, tbe, tbd, b_nft = igrf.igrf12syn(0, double_date, 1, nft_alt, 
+                                                  np.deg2rad(90.-nft_glat), 
+                                                  np.deg2rad(nft_glon))
             north_ftpnt_zon_drifts_scalar.append(full_mer_sc_step*b_sc/(50.*b_nft))
             
 
