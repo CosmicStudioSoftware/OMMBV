@@ -411,7 +411,7 @@ def field_line_trace(init, date, direction, height, steps=None,
                                             recursive_loop_count=recursive_loop_count,
                                             steps=steps)
         else:
-            raise RuntimeError("After 100 iterations couldn't reach target altitude")
+            raise RuntimeError("After 1000 iterations couldn't reach target altitude")
         return np.vstack((trace_north, trace_north1))
     else:
         # return results if we make it to the target altitude
@@ -421,7 +421,7 @@ def field_line_trace(init, date, direction, height, steps=None,
         return trace_north #[:idx+1,:]
 
 
-def full_field_line(init, date, height, step_size=100., max_steps=100, 
+def full_field_line(init, date, height, step_size=100., max_steps=1000, 
                     steps=None, **kwargs):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
     
@@ -475,7 +475,7 @@ def full_field_line(init, date, height, step_size=100., max_steps=100,
  
      
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          steps=None, max_steps=10, step_size=100.,
+                                          steps=None, max_steps=1000, step_size=100.,
                                           ref_height=120.):
     """Calculates unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
@@ -617,7 +617,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 def intersection_field_line_and_unit_vector_projection(pos, field_line, sign, time, 
                                                        direction=None,
-                                                       step_size_goal=25., 
+                                                       step_size_goal=5., 
                                                        field_step_size=None):   
     """Starting at pos, method steps along magnetic unit vector direction 
     towards the supplied field line trace. Determines the distance of 
@@ -797,7 +797,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
     
     # set parameters for the field line tracing routines
     field_step_size = 100.
-    field_max_steps = 100
+    field_max_steps = 1000
     field_steps = np.arange(field_max_steps)
     
     for i in np.arange(num_steps):
@@ -861,7 +861,7 @@ def apex_location_info(glats, glons, alts, dates):
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
     # prepare parameters for field line trace
     step_size = 100.
-    max_steps = 100
+    max_steps = 1000
     steps = np.arange(max_steps)
     # high resolution trace parameters
     fine_step_size = .01
@@ -969,7 +969,7 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
     if step_size is None:
         step_size = 100.
     if max_steps is None:
-        max_steps = 100
+        max_steps = 1000
     steps = np.arange(max_steps)
 
     if direction == 'south':
@@ -979,7 +979,6 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
 
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
-
 
     # prepare output
     full_local_step = []
@@ -1138,6 +1137,7 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
         apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info(
                                                                     [glat], [glon], 
                                                                     [alt], [date])
+        # apex in ecef (maps to input location)
         apex_root = np.array([apex_x[0], apex_y[0], apex_z[0]])      
         # take step from s/c along + vector direction
         # then get the apex location
@@ -1148,6 +1148,8 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
         plus_lat, plus_lon, plus_alt = ecef_to_geodetic(*plus)
         plus_apex_x, plus_apex_y, plus_apex_z, plus_apex_lat, plus_apex_lon, plus_apex_alt = \
                     apex_location_info([plus_lat], [plus_lon], [plus_alt], [date])
+        # plus apex location in ECEF
+        plus_apex_root = np.array([plus_apex_x[0], plus_apex_y[0], plus_apex_z[0]])   
 
         # take half step from s/c along - vector direction
         # then get the apex location
@@ -1159,47 +1161,48 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
         minus_lat, minus_lon, minus_alt = ecef_to_geodetic(*minus)
         minus_apex_x, minus_apex_y, minus_apex_z, minus_apex_lat, minus_apex_lon, minus_apex_alt = \
                     apex_location_info([minus_lat], [minus_lon], [minus_alt], [date])
+        minus_apex_root = np.array([minus_apex_x[0], minus_apex_y[0], minus_apex_z[0]])   
 
         # take difference in apex locations
-        apex_edge_length.append(np.sqrt((plus_apex_x-minus_apex_x)**2 + 
-                                        (plus_apex_y-minus_apex_y)**2 + 
-                                        (plus_apex_z-minus_apex_z)**2))
+        apex_edge_length.append(np.sqrt((plus_apex_x[0]-minus_apex_x[0])**2 + 
+                                        (plus_apex_y[0]-minus_apex_y[0])**2 + 
+                                        (plus_apex_z[0]-minus_apex_z[0])**2))
 
-        # take an alternative path to calculation
-        # do field line trace around pos and neg apexes
-        # then do intersection with field line projection thing        
-
-        # do a short centered field line trace around 'plus'
-        other_trace = full_field_line(plus, double_date, 0., 
-                                      step_size=1., 
-                                      max_steps=10,
-                                      recurse=False)
-        # need to determine where the intersection of apex field line 
-        # in relation to the vector direction from the s/c field apex location. 
-        pos_edge_length, _, mind_pos = intersection_field_line_and_unit_vector_projection(apex_root,
-                                                                                  other_trace,
-                                                                                  1, date, 
-                                                                                  direction=vector_direction,
-                                                                                  field_step_size=1.,
-                                                                                  step_size_goal=edge_length/edge_steps)                                                                                               
-        # do a short centered field line trace around 'minus'
-        other_trace = full_field_line(minus, double_date, 0., 
-                                      step_size=1., 
-                                      max_steps=10,
-                                      recurse=False)
-        # need to determine where the intersection of apex field line 
-        # in relation to the vector direction from the s/c field apex location. 
-        minus_edge_length, _, mind_minus = intersection_field_line_and_unit_vector_projection(apex_root,
-                                                                                  other_trace,
-                                                                                  -1, date, 
-                                                                                  direction=vector_direction,
-                                                                                  field_step_size=1.,
-                                                                                  step_size_goal=edge_length/edge_steps)        
-        full_local_step.append(pos_edge_length + minus_edge_length)
-        min_distance_plus.append(mind_pos)
-        min_distance_minus.append(mind_minus)
+#         # take an alternative path to calculation
+#         # do field line trace around pos and neg apexes
+#         # then do intersection with field line projection thing        
+# 
+#         # do a short centered field line trace around plus apex location
+#         other_trace = full_field_line(plus_apex_root, double_date, 0., 
+#                                       step_size=1., 
+#                                       max_steps=10,
+#                                       recurse=False)
+#         # need to determine where the intersection of apex field line 
+#         # in relation to the vector direction from the s/c field apex location.
+#         pos_edge_length, _, mind_pos = intersection_field_line_and_unit_vector_projection(apex_root,
+#                                                                                   other_trace,
+#                                                                                   1, date, 
+#                                                                                   direction=vector_direction,
+#                                                                                   field_step_size=1.,
+#                                                                                   step_size_goal=edge_length/edge_steps)                                                                                               
+#         # do a short centered field line trace around 'minus' apex location
+#         other_trace = full_field_line(minus_apex_root, double_date, 0., 
+#                                       step_size=1., 
+#                                       max_steps=10,
+#                                       recurse=False)
+#         # need to determine where the intersection of apex field line 
+#         # in relation to the vector direction from the s/c field apex location. 
+#         minus_edge_length, _, mind_minus = intersection_field_line_and_unit_vector_projection(apex_root,
+#                                                                                   other_trace,
+#                                                                                   -1, date, 
+#                                                                                   direction=vector_direction,
+#                                                                                   field_step_size=1.,
+#                                                                                   step_size_goal=edge_length/edge_steps)        
+        # full_local_step.append(pos_edge_length + minus_edge_length)
+        # min_distance_plus.append(mind_pos)
+        # min_distance_minus.append(mind_minus)
         
-    return np.array(apex_edge_length), np.array(full_local_step), np.array(min_distance_plus), np.array(min_distance_minus)
+    return np.array(apex_edge_length)#, np.array(full_local_step), np.array(min_distance_plus), np.array(min_distance_minus)
                                                                                                                                                                                                                                                                         
         # # take step from one apex towards the other
         # apex_path = step_along_mag_unit_vector(minus_apex_x, minus_apex_y, minus_apex_z, date, 
@@ -1254,30 +1257,27 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     if step_size is None:
         step_size = 100.
     if max_steps is None:
-        max_steps = 100
+        max_steps = 1000
     steps = np.arange(max_steps)
 
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
     # prepare output
-    north_ftpnt_zon_drifts_scalar = []
-    south_ftpnt_zon_drifts_scalar = []
-    north_ftpnt_mer_drifts_scalar = []
-    south_ftpnt_mer_drifts_scalar = []
     eq_zon_drifts_scalar = []
     eq_mer_drifts_scalar = []
-    #
+    # magnetic field info
     north_mag_scalar = []
     south_mag_scalar = []
     eq_mag_scalar = []
-
+    out = {}
     # meridional e-field scalar map, can also be
     # zonal ion drift scalar map
+    # print ('Starting Northern')
     north_zon_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
                                                         glons, alts, dates, 'north',
                                                         'meridional',
-                                                        setp_size=step_size,
+                                                        step_size=step_size,
                                                         max_steps=max_steps, 
                                                         edge_length=25.,
                                                         edge_steps=5)
@@ -1285,15 +1285,16 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     north_mer_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
                                                         glons, alts, dates, 'north',
                                                         'zonal',
-                                                        setp_size=step_size,
+                                                        step_size=step_size,
                                                         max_steps=max_steps, 
                                                         edge_length=25.,
                                                         edge_steps=5)
 
+    # print ('Starting Southern')
     south_zon_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
                                                         glons, alts, dates, 'south',
                                                         'meridional',
-                                                        setp_size=step_size,
+                                                        step_size=step_size,
                                                         max_steps=max_steps, 
                                                         edge_length=25.,
                                                         edge_steps=5)
@@ -1301,28 +1302,38 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     south_mer_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
                                                         glons, alts, dates, 'south',
                                                         'zonal',
-                                                        setp_size=step_size,
+                                                        step_size=step_size,
                                                         max_steps=max_steps, 
                                                         edge_length=25.,
                                                         edge_steps=5)
-                                                        
-    step_zon_apex = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
+    # print ('Starting Equatorial')                
+    # , step_zon_apex2, mind_plus, mind_minus                                 
+    eq_zon_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                                         'meridional',
                                                         edge_length=25., 
                                                         edge_steps=5)
-                                                        
-    step_mer_apex = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
+    # , step_mer_apex2, mind_plus, mind_minus                                                      
+    eq_mer_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                                         'zonal',
                                                         edge_length=25., 
                                                         edge_steps=5)
+    # print ('Done with core')
     if e_field_scaling_only:
         north_zon_drifts_scalar = north_zon_drifts_scalar/50. 
         south_zon_drifts_scalar = south_zon_drifts_scalar/50. 
         north_mer_drifts_scalar = north_mer_drifts_scalar/50. 
         south_mer_drifts_scalar = south_mer_drifts_scalar/50. 
         # equatorial 
-        step_zon_apex = 50./step_zon_apex
-        step_mer_apex = 50./step_mer_apex
+        eq_zon_drifts_scalar = 50./eq_zon_drifts_scalar
+        eq_mer_drifts_scalar = 50./eq_mer_drifts_scalar
+
+        out['north_mer_fields_scalar'] = north_zon_drifts_scalar
+        out['south_mer_fields_scalar'] = south_zon_drifts_scalar
+        out['north_zon_fields_scalar'] = north_mer_drifts_scalar
+        out['south_zon_fields_scalar'] = south_mer_drifts_scalar
+        out['equator_mer_fields_scalar'] = eq_zon_drifts_scalar
+        out['equator_zon_fields_scalar'] = eq_mer_drifts_scalar
+    
     else:
         # figure out scaling for drifts based upon change in magnetic field
         # strength
@@ -1375,22 +1386,24 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
             south_mag_scalar.append(b_sc/b_sft)
         
         # make E-Field scalars to drifts
+        north_mag_scalar = np.array(north_mag_scalar)
+        south_mag_scalar = np.array(south_mag_scalar)
+        eq_mag_scalar = np.array(eq_mag_scalar)
         north_zon_drifts_scalar = north_zon_drifts_scalar*north_mag_scalar
         south_zon_drifts_scalar = south_zon_drifts_scalar*south_mag_scalar 
         north_mer_drifts_scalar = north_mer_drifts_scalar*north_mag_scalar
         south_mer_drifts_scalar = south_mer_drifts_scalar*south_mag_scalar
         # equatorial 
-        step_zon_apex = 50./step_zon_apex*eq_mag_scalar
-        step_mer_apex = 50./step_mer_apex*eq_mag_scalar
+        eq_zon_drifts_scalar = eq_zon_drifts_scalar*eq_mag_scalar
+        eq_mer_drifts_scalar = eq_mer_drifts_scalar*eq_mag_scalar
 
 
-    out = {}
-    out['north_zonal_drifts_scalar'] = north_ftpnt_zon_drifts_scalar
-    out['south_zonal_drifts_scalar'] = south_ftpnt_zon_drifts_scalar
-    out['north_mer_drifts_scalar'] = north_ftpnt_mer_drifts_scalar
-    out['south_mer_drifts_scalar'] = south_ftpnt_mer_drifts_scalar
-    out['equator_zonal_drifts_scalar'] = eq_zon_drifts_scalar
-    out['equator_mer_drifts_scalar'] = eq_mer_drifts_scalar
+        out['north_zonal_drifts_scalar'] = north_zon_drifts_scalar
+        out['south_zonal_drifts_scalar'] = south_zon_drifts_scalar
+        out['north_mer_drifts_scalar'] = north_mer_drifts_scalar
+        out['south_mer_drifts_scalar'] = south_mer_drifts_scalar
+        out['equator_zonal_drifts_scalar'] = eq_zon_drifts_scalar
+        out['equator_mer_drifts_scalar'] = eq_mer_drifts_scalar
 
     return out
 
@@ -1436,7 +1449,7 @@ def scalars_for_mapping_ion_drifts_orig(glats, glons, alts, dates, step_size=Non
     if step_size is None:
         step_size = 100.
     if max_steps is None:
-        max_steps = 100
+        max_steps = 1000
     steps = np.arange(max_steps)
 
     # use spacecraft location to get ECEF
@@ -1674,12 +1687,21 @@ def scalars_for_mapping_ion_drifts_orig(glats, glons, alts, dates, step_size=Non
             south_ftpnt_mer_drifts_scalar.append((pos_zon_step_size + minus_zon_step_size)*b_sc/(50.*b_sft))
 
     out = {}
-    out['north_zonal_drifts_scalar'] = north_ftpnt_zon_drifts_scalar
-    out['south_zonal_drifts_scalar'] = south_ftpnt_zon_drifts_scalar
-    out['north_mer_drifts_scalar'] = north_ftpnt_mer_drifts_scalar
-    out['south_mer_drifts_scalar'] = south_ftpnt_mer_drifts_scalar
-    out['equator_zonal_drifts_scalar'] = eq_zon_drifts_scalar
-    out['equator_mer_drifts_scalar'] = eq_mer_drifts_scalar
+    if e_field_scaling_only:
+        out['north_mer_fields_scalar'] = north_ftpnt_zon_drifts_scalar
+        out['south_mer_fields_scalar'] = south_ftpnt_zon_drifts_scalar
+        out['north_zon_fields_scalar'] = north_ftpnt_mer_drifts_scalar
+        out['south_zon_fields_scalar'] = south_ftpnt_mer_drifts_scalar
+        out['equator_mer_fields_scalar'] = eq_zon_drifts_scalar
+        out['equator_zon_fields_scalar'] = eq_mer_drifts_scalar
+    else:
+        out['north_zonal_drifts_scalar'] = north_ftpnt_zon_drifts_scalar
+        out['south_zonal_drifts_scalar'] = south_ftpnt_zon_drifts_scalar
+        out['north_mer_drifts_scalar'] = north_ftpnt_mer_drifts_scalar
+        out['south_mer_drifts_scalar'] = south_ftpnt_mer_drifts_scalar
+        out['equator_zonal_drifts_scalar'] = eq_zon_drifts_scalar
+        out['equator_mer_drifts_scalar'] = eq_mer_drifts_scalar
+       
 
     return out
 

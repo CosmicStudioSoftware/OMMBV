@@ -142,8 +142,8 @@ def gen_plot_grid_fixed_alt(alt):
         long_dim = np.arange(0., 360., 180.)
         lat_dim = np.arange(-50., 51., 50.)
     else:
-        long_dim = np.arange(0., 360., 1.2*10)
-        lat_dim = np.arange(-50., 50.1, 0.25*10)
+        long_dim = np.arange(0., 360., 1.2*30)
+        lat_dim = np.arange(-50., 50.1, 0.25*30)
 
     alt_dim = np.array([alt])
     return lat_dim, long_dim, alt_dim 
@@ -318,7 +318,7 @@ class TestCore():
         # step size to be tried
         steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
         # max number of steps (fixed)
-        max_steps_goal = steps_goal*0+1E7
+        max_steps_goal = steps_goal*0+1E6
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
@@ -395,9 +395,9 @@ class TestCore():
                                                   longs,
                                                   alts)        
         # step size to be tried
-        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5.])
+        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5., 5., 5.])
         # max number of steps (fixed)
-        max_steps_goal = np.array([100000., 30000., 10000., 3000., 1000., 300., 100., 50])
+        max_steps_goal = np.array([100000, 30000, 10000, 3000, 1000, 500, 300, 100, 50, 30])
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
@@ -422,12 +422,12 @@ class TestCore():
         
         try:
             plt.figure()
-            plt.errorbar(np.log10(max_steps_goal[1:]), dx.mean(axis=0), 
-                          yerr=dx.std(axis=0), label='x')
-            plt.errorbar(np.log10(max_steps_goal[1:]), dy.mean(axis=0), 
-                        yerr=dy.std(axis=0), label='y')
-            plt.errorbar(np.log10(max_steps_goal[1:]), dz.mean(axis=0), 
-                        yerr=dz.std(axis=0), label='z')
+            plt.errorbar(np.log10(max_steps_goal[1:]), np.log10(dx.mean(axis=0)), 
+                          yerr=np.log10(dx).std(axis=0), label='x')
+            plt.errorbar(np.log10(max_steps_goal[1:]), np.log10(dy.mean(axis=0)), 
+                        yerr=np.log10(dy).std(axis=0), label='y')
+            plt.errorbar(np.log10(max_steps_goal[1:]), np.log10(dz.mean(axis=0)), 
+                        yerr=np.log10(dz).std(axis=0), label='z')
             plt.xlabel('Log Number of Steps per Run')
             plt.ylabel('Change in Foot Point Position (km)')
             plt.title("Change in Final ECEF Position, Recursive Calls")
@@ -472,14 +472,20 @@ class TestCore():
         
         try:
             plt.figure()
-            plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
-                          yerr=dx.std(axis=0), label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
-                        yerr=dy.std(axis=0), label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
-                        yerr=dz.std(axis=0), label='z')
+            # plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
+            #               yerr=dx.std(axis=0), label='x')
+            # plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
+            #             yerr=dy.std(axis=0), label='y')
+            # plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
+            #             yerr=dz.std(axis=0), label='z')
+            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dx.mean(axis=0)), 
+                          yerr=np.log10(dx).std(axis=0), label='x')
+            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dy.mean(axis=0)), 
+                        yerr=np.log10(dy).std(axis=0), label='y')
+            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dz.mean(axis=0)), 
+                        yerr=np.log10(dz).std(axis=0), label='z')
             plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in Foot Point Position (km)')
+            plt.ylabel('Log Change in Foot Point Position (km)')
             plt.title("Change in Final ECEF Position, Recursive Calls")
             plt.legend()
             plt.tight_layout()
@@ -927,6 +933,275 @@ class TestCore():
             plt.close()
         except:
             pass
+
+
+    def closed_loop_footpoint_sensitivity_plots(self, direction, vector_direction):
+        import matplotlib.pyplot as plt
+        # from mpl_toolkits.mplot3d import Axes3D
+        import os
+
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)       
+
+        # zonal vector components        
+        # +1 on length of longitude array supports repeating first element
+        # shows nice periodicity on the plots
+        zvx = np.zeros((len(p_lats), len(p_longs)+1))
+        #  meridional vecrtor components
+        mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
+        date = datetime.datetime(2000,1,1)
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                # iterate through target cyclicly and run commands
+                print (i, p_lat)
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.closed_loop_edge_lengths_via_footpoint,[p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs), 
+                                                                        direction,
+                                                                        vector_direction, 
+                                                                        edge_length=25., 
+                                                                        edge_steps=5))
+                pending.append(dview.apply_async(pymv.closed_loop_edge_lengths_via_footpoint,[p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs), 
+                                                                        direction,
+                                                                        vector_direction, 
+                                                                        edge_length=25., 
+                                                                        edge_steps=10))
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                # collect output from first run
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pending.pop(0).get()
+                # collect output from second run 
+                _a, _b, _c = pending.pop(0).get()
+                # take difference with first run
+                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
+
+        else:
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.closed_loop_edge_lengths_via_footpoint([p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs),
+                                                                        direction,
+                                                                        vector_direction, 
+                                                                        edge_length=25., 
+                                                                        edge_steps=5)
+
+                # second run
+                _a, _b, _c = pymv.closed_loop_edge_lengths_via_footpoint([p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs), 
+                                                                        direction,
+                                                                        vector_direction, 
+                                                                        edge_length=25., 
+                                                                        edge_steps=10)
+                # take difference with first run
+                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
+     
+               
+        # account for periodicity
+        mx[:,-1] = mx[:,0]
+        my[:,-1] = my[:,0]
+        mz[:,-1] = mz[:,0]
+        
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
+        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
+        
+        try:
+    
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(mx)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Closed Loop Edge Length Normalized Difference, Footpoint Path')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_'+vector_direction+'_closed_loop_footpoint_edge_diff.pdf') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(my)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Closed Loop Closest Approach Normalized Difference, Pos Footpoint Path')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_'+vector_direction+'_closed_loop_footpoint_pos_diff.pdf') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(mz)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Closed Loop Closest Approach Normalized Difference, Minus Footpoint Path')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_'+vector_direction+'_closed_loop_footpoint_min_diff.pdf') 
+            plt.close()
+
+            # calculate mean and standard deviation and then plot those
+            plt.figure()
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='Edge')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='Positive')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Minus')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Log Normalized Closed Loop Difference')
+            plt.title("Sensitivity of Closed Loop Values")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(direction+'_'+vector_direction+'_length_diff_v_longitude.pdf' )
+            plt.close()
+                        
+        except:
+            pass
+
+    def test_closed_loop_footpoint_sensitivity_plots(self):
+        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'meridional')
+        yield(f,)
+        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'meridional')
+        yield(f,)
+        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'zonal')
+        yield(f,)
+        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'zonal')
+        yield(f,)
+
+
+    def closed_loop_footpoint_value_plots(self, direction, vector_direction):
+        import matplotlib.pyplot as plt
+        # from mpl_toolkits.mplot3d import Axes3D
+        import os
+
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)  
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)       
+
+        # zonal vector components        
+        # +1 on length of longitude array supports repeating first element
+        # shows nice periodicity on the plots
+        zvx = np.zeros((len(p_lats), len(p_longs)+1))
+        #  meridional vecrtor components
+        mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
+        date = datetime.datetime(2000,1,1)
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                # iterate through target cyclicly and run commands
+                print (i, p_lat)
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.closed_loop_edge_lengths_via_footpoint,[p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs), 
+                                                                        direction,
+                                                                        vector_direction, 
+                                                                        edge_length=25., 
+                                                                        edge_steps=5))
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                # collect output from first run
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pending.pop(0).get()
+
+        else:
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.closed_loop_edge_lengths_via_footpoint([p_lat]*len(p_longs), p_longs, 
+                                                                        p_alts, [date]*len(p_longs), 
+                                                                        direction,
+                                                                        vector_direction, 
+                                                                        edge_length=25., 
+                                                                        edge_steps=5)     
+               
+        # account for periodicity
+        mx[:,-1] = mx[:,0]
+        my[:,-1] = my[:,0]
+        mz[:,-1] = mz[:,0]
+        
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
+        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
+        
+        try:
+    
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(mx)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Closed Loop Edge Length, Footpoint Path')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_'+vector_direction+'_closed_loop_footpoint_edge.pdf') 
+            plt.close()
+              
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(my)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Closed Loop Closest Approach, Pos Footpoint Path')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_'+vector_direction+'_closed_loop_footpoint_pos.pdf') 
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(mz)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
+            plt.title('Log Closed Loop Closest Approach, Minus Footpoint Path')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_'+vector_direction+'_closed_loop_footpoint_min.pdf') 
+            plt.close()
+
+            # calculate mean and standard deviation and then plot those
+            plt.figure()
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='Edge')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='Positive')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Minus')
+            plt.xlabel('Longitude (Degrees)')
+            plt.ylabel('Log Closed Loop Values')
+            plt.title("Closed Loop Values")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig(direction+'_'+vector_direction+'_length_v_longitude.pdf' )
+            plt.close()
+                        
+        except:
+            pass
+
+
+    def test_closed_loop_footpoint_value_plots(self):
+        f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'meridional')
+        yield(f,)
+        f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'meridional')
+        yield(f,)
+        f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'zonal')
+        yield(f,)
+        f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'zonal')
+        yield(f,)
+
 
     def test_unit_vector_component_stepsize_sensitivity_plots(self):
         import matplotlib.pyplot as plt
@@ -1541,7 +1816,7 @@ class TestCore():
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
                     x[i,j], y[i,j], z[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
                                                                              direction=direction, 
-                                                                             num_steps=10, step_size=25./5.)
+                                                                             num_steps=10, step_size=25./10.)
                     # second run
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
                                                                             direction=direction, 
@@ -1660,22 +1935,23 @@ class TestCore():
                 print ('collecting ', i, p_lat)
                     # collect output 
                 scalars = pending.pop(0).get()
-                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
-                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
-                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
-                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
-                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
-                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
+                north_zonal[i,:-1] = scalars['north_mer_fields_scalar']
+                north_mer[i,:-1] = scalars['north_zon_fields_scalar']
+                south_zonal[i,:-1] = scalars['south_mer_fields_scalar']
+                south_mer[i,:-1] = scalars['south_zon_fields_scalar']
+                eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
+                eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
         else:
             for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
                 scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs, 
                                                                p_alts, [date]*len(p_longs), e_field_scaling_only=True)
-                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
-                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
-                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
-                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
-                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
-                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
+                north_zonal[i,:-1] = scalars['north_mer_fields_scalar']
+                north_mer[i,:-1] = scalars['north_zon_fields_scalar']
+                south_zonal[i,:-1] = scalars['south_mer_fields_scalar']
+                south_mer[i,:-1] = scalars['south_zon_fields_scalar']
+                eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
+                eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
         # account for periodicity
         north_zonal[:,-1] = north_zonal[:,0]
         north_mer[:,-1] = north_mer[:,0]
@@ -1798,6 +2074,7 @@ class TestCore():
                 eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
         else:
             for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
                 scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs, 
                                                                         p_alts, [date]*len(p_longs))
                 north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
