@@ -309,184 +309,184 @@ class TestCore():
 
 
 
-#     def test_tracing_accuracy(self):
-# 
-#         lats, longs, alts = gen_trace_data_fixed_alt(550.)        
-#         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
-#                                                   longs,
-#                                                   alts)        
-#         # step size to be tried
-#         steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
-#         # max number of steps (fixed)
-#         max_steps_goal = steps_goal*0+1E7
-# 
-#         date = datetime.datetime(2000, 1, 1)
-#         dx = []
-#         dy = []
-#         dz = []
-#         
-#         # set up multi
-#         # if self.dc is not None:
-#         if False:
-#             import itertools
-#             targets = itertools.cycle(dc.ids)
-#             pending = []
-#             for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-#                 for steps, max_steps in zip(steps_goal, max_steps_goal):
-#                     # iterate through target cyclicly and run commands
-#                     dview.targets = targets.next()
-#                     pending.append(dview.apply_async(pymv.field_line_trace, np.array([x,y,z]), date, 1., 0., 
-#                                                     step_size=steps, 
-#                                                     max_steps=max_steps)) 
-#             # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-#                 out = []
-#                 for steps, max_steps in zip(steps_goal, max_steps_goal):
-#                     # collect output 
-#                     trace_n = pending.pop(0).get()
-#                     pt = trace_n[-1,:]
-#                     out.append(pt)
-#     
-#                 final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-#                 dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-#                 dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-#                 dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
-#         else:
-#             for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-#                 out = []
-#                 for steps, max_steps in zip(steps_goal, max_steps_goal):
-#                     trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
-#                                                     step_size=steps, 
-#                                                     max_steps=max_steps) 
-#                     pt = trace_n[-1,:]
-#                     out.append(pt)
-#     
-#                 final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-#                 dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-#                 dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-#                 dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
-#             
-#             
-#         dx = pds.DataFrame(dx)
-#         dy = pds.DataFrame(dy)
-#         dz = pds.DataFrame(dz)
-#         
-#         try:
-#             plt.figure()
-#             plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
-#                          yerr=dx.std(axis=0), label='x')
-#             plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
-#                         yerr=dy.std(axis=0), label='y')
-#             plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
-#                         yerr=dz.std(axis=0), label='z')
-#             plt.xlabel('Log Step Size (km)')
-#             plt.ylabel('Change in Foot Point Position (km)')
-#             plt.title("Change in Final ECEF Position")
-#             plt.legend()
-#             plt.tight_layout()
-#             plt.savefig('Footpoint_position_vs_step_size.pdf' )
-#             plt.close()
-#         except:
-#             pass            
-#                            
-#     def test_tracing_accuracy_w_recursion(self):
-# 
-#         lats, longs, alts = gen_trace_data_fixed_alt(550.)        
-#         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
-#                                                   longs,
-#                                                   alts)        
-#         # step size to be tried
-#         steps_goal = np.array([5., 5., 5., 5., 5., 5., 5.])
-#         # max number of steps (fixed)
-#         max_steps_goal = np.array([100000., 30000., 10000., 3000., 1000., 300., 100.])
-# 
-#         date = datetime.datetime(2000, 1, 1)
-#         dx = []
-#         dy = []
-#         dz = []
-#         for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-#             out = []
-#             for steps, max_steps in zip(steps_goal, max_steps_goal):
-#                 trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
-#                                                 step_size=steps, 
-#                                                 max_steps=max_steps) 
-#                 pt = trace_n[-1,:]
-#                 out.append(pt)
-# 
-#             final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-#             dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-#             dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-#             dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
-#         dx = pds.DataFrame(dx)
-#         dy = pds.DataFrame(dy)
-#         dz = pds.DataFrame(dz)
-#         
-#         try:
-#             plt.figure()
-#             plt.errorbar(np.log10(max_steps_goal[1:]), dx.mean(axis=0), 
-#                          yerr=dx.std(axis=0), label='x')
-#             plt.errorbar(np.log10(max_steps_goal[1:]), dy.mean(axis=0), 
-#                         yerr=dy.std(axis=0), label='y')
-#             plt.errorbar(np.log10(max_steps_goal[1:]), dz.mean(axis=0), 
-#                         yerr=dz.std(axis=0), label='z')
-#             plt.xlabel('Log Number of Steps per Run')
-#             plt.ylabel('Change in Foot Point Position (km)')
-#             plt.title("Change in Final ECEF Position, Recursive Calls")
-#             plt.legend()
-#             plt.tight_layout()
-#             plt.ylabel('Log Change in Foot Point Position (km)')
-#             plt.savefig('Footpoint_position_vs_max_steps__recursion.pdf' )
-#             plt.close()
-#         except:
-#             pass            
-# 
-#     def test_tracing_accuracy_w_recursion_step_size(self):
-#         lats, longs, alts = gen_trace_data_fixed_alt(550.)        
-#         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
-#                                                   longs,
-#                                                   alts)        
-#         # step size to be tried
-#         steps_goal = np.array([.05, .1, .5, 1., 5., 10., 50., 100., 500.]) 
-#         # max number of steps (fixed)
-#         max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
-# 
-#         date = datetime.datetime(2000, 1, 1)
-#         dx = []
-#         dy = []
-#         dz = []
-#         for x, y, z in zip(ecf_x, ecf_y, ecf_z):
-#             out = []
-#             for steps, max_steps in zip(steps_goal, max_steps_goal):
-#                 trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
-#                                                 step_size=steps, 
-#                                                 max_steps=max_steps) 
-#                 pt = trace_n[-1,:]
-#                 out.append(pt)
-# 
-#             final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
-#             dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
-#             dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-#             dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
-#         dx = pds.DataFrame(dx)
-#         dy = pds.DataFrame(dy)
-#         dz = pds.DataFrame(dz)
-#         
-#         try:
-#             plt.figure()
-#             plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
-#                          yerr=dx.std(axis=0), label='x')
-#             plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
-#                         yerr=dy.std(axis=0), label='y')
-#             plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
-#                         yerr=dz.std(axis=0), label='z')
-#             plt.xlabel('Log Step Size (km)')
-#             plt.ylabel('Change in Foot Point Position (km)')
-#             plt.title("Change in Final ECEF Position, Recursive Calls")
-#             plt.legend()
-#             plt.tight_layout()
-#             plt.savefig('Footpoint_position_vs_step_size__recursion.pdf' )
-#             plt.close()
-#         except:
-#             pass            
+    def test_tracing_accuracy(self):
+
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
+        # step size to be tried
+        steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
+        # max number of steps (fixed)
+        max_steps_goal = steps_goal*0+1E7
+
+        date = datetime.datetime(2000, 1, 1)
+        dx = []
+        dy = []
+        dz = []
+        
+        # set up multi
+        # if self.dc is not None:
+        if False:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+                for steps, max_steps in zip(steps_goal, max_steps_goal):
+                    # iterate through target cyclicly and run commands
+                    dview.targets = targets.next()
+                    pending.append(dview.apply_async(pymv.field_line_trace, np.array([x,y,z]), date, 1., 0., 
+                                                    step_size=steps, 
+                                                    max_steps=max_steps)) 
+            # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+                out = []
+                for steps, max_steps in zip(steps_goal, max_steps_goal):
+                    # collect output 
+                    trace_n = pending.pop(0).get()
+                    pt = trace_n[-1,:]
+                    out.append(pt)
+    
+                final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+                dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+        else:
+            for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+                out = []
+                for steps, max_steps in zip(steps_goal, max_steps_goal):
+                    trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+                                                    step_size=steps, 
+                                                    max_steps=max_steps) 
+                    pt = trace_n[-1,:]
+                    out.append(pt)
+    
+                final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+                dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+            
+            
+        dx = pds.DataFrame(dx)
+        dy = pds.DataFrame(dy)
+        dz = pds.DataFrame(dz)
+        
+        try:
+            plt.figure()
+            plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
+                          yerr=dx.std(axis=0), label='x')
+            plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
+                        yerr=dy.std(axis=0), label='y')
+            plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
+                        yerr=dz.std(axis=0), label='z')
+            plt.xlabel('Log Step Size (km)')
+            plt.ylabel('Change in Foot Point Position (km)')
+            plt.title("Change in Final ECEF Position")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('Footpoint_position_vs_step_size.pdf' )
+            plt.close()
+        except:
+            pass            
+                            
+    def test_tracing_accuracy_w_recursion(self):
+
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
+        # step size to be tried
+        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5.])
+        # max number of steps (fixed)
+        max_steps_goal = np.array([100000., 30000., 10000., 3000., 1000., 300., 100., 50])
+
+        date = datetime.datetime(2000, 1, 1)
+        dx = []
+        dy = []
+        dz = []
+        for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+            out = []
+            for steps, max_steps in zip(steps_goal, max_steps_goal):
+                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+                                                step_size=steps, 
+                                                max_steps=max_steps) 
+                pt = trace_n[-1,:]
+                out.append(pt)
+
+            final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+            dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+        dx = pds.DataFrame(dx)
+        dy = pds.DataFrame(dy)
+        dz = pds.DataFrame(dz)
+        
+        try:
+            plt.figure()
+            plt.errorbar(np.log10(max_steps_goal[1:]), dx.mean(axis=0), 
+                          yerr=dx.std(axis=0), label='x')
+            plt.errorbar(np.log10(max_steps_goal[1:]), dy.mean(axis=0), 
+                        yerr=dy.std(axis=0), label='y')
+            plt.errorbar(np.log10(max_steps_goal[1:]), dz.mean(axis=0), 
+                        yerr=dz.std(axis=0), label='z')
+            plt.xlabel('Log Number of Steps per Run')
+            plt.ylabel('Change in Foot Point Position (km)')
+            plt.title("Change in Final ECEF Position, Recursive Calls")
+            plt.legend()
+            plt.tight_layout()
+            plt.ylabel('Log Change in Foot Point Position (km)')
+            plt.savefig('Footpoint_position_vs_max_steps__recursion.pdf' )
+            plt.close()
+        except:
+            pass            
+
+    def test_tracing_accuracy_w_recursion_step_size(self):
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)        
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats, 
+                                                  longs,
+                                                  alts)        
+        # step size to be tried
+        steps_goal = np.array([.05, .1, .5, 1., 5., 10., 50., 100., 500.]) 
+        # max number of steps (fixed)
+        max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
+
+        date = datetime.datetime(2000, 1, 1)
+        dx = []
+        dy = []
+        dz = []
+        for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+            out = []
+            for steps, max_steps in zip(steps_goal, max_steps_goal):
+                trace_n = pymv.field_line_trace(np.array([x,y,z]), date, 1., 0., 
+                                                step_size=steps, 
+                                                max_steps=max_steps) 
+                pt = trace_n[-1,:]
+                out.append(pt)
+
+            final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
+            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+            dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+        dx = pds.DataFrame(dx)
+        dy = pds.DataFrame(dy)
+        dz = pds.DataFrame(dz)
+        
+        try:
+            plt.figure()
+            plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0), 
+                          yerr=dx.std(axis=0), label='x')
+            plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0), 
+                        yerr=dy.std(axis=0), label='y')
+            plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0), 
+                        yerr=dz.std(axis=0), label='z')
+            plt.xlabel('Log Step Size (km)')
+            plt.ylabel('Change in Foot Point Position (km)')
+            plt.title("Change in Final ECEF Position, Recursive Calls")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('Footpoint_position_vs_step_size__recursion.pdf' )
+            plt.close()
+        except:
+            pass            
                                                                   
                                                                                                                                                                                                       
     def test_unit_vector_plots(self):
@@ -1049,10 +1049,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Zonal Unit Vector Difference - Eastward')
+            plt.title('Log Zonal Unit Vector Nornalized Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_east_diff.pdf') 
+            plt.savefig('zonal_east_norm_diff.pdf') 
             plt.close()
                           
             fig = plt.figure()
@@ -1060,10 +1060,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Zonal Unit Vector Difference - Northward')
+            plt.title('Log Zonal Unit Vector Nornalized Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_north_diff.pdf') 
+            plt.savefig('zonal_north_norm_diff.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -1071,10 +1071,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Zonal Unit Vector Difference - Upward')
+            plt.title('Log Zonal Unit Vector Nornalized Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_up_diff.pdf') 
+            plt.savefig('zonal_up_norm_diff.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -1082,10 +1082,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Field Aligned Unit Vector Difference - Eastward')
+            plt.title('Log Field Aligned Unit Vector Nornalized Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_east_diff.pdf') 
+            plt.savefig('fa_east_norm_diff.pdf') 
             plt.close()
               
             fig = plt.figure()
@@ -1093,10 +1093,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Field Aligned Unit Vector Difference - Northward')
+            plt.title('Log Field Aligned Unit Vector Nornalized Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_north_diff.pdf') 
+            plt.savefig('fa_north_norm_diff.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -1104,10 +1104,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Field Aligned Unit Vector Difference - Upward')
+            plt.title('Log Field Aligned Unit Vector Nornalized Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_up_diff.pdf') 
+            plt.savefig('fa_up_norm_diff.pdf') 
             plt.close()
     
             fig = plt.figure()
@@ -1115,10 +1115,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Meridional Unit Vector Difference - Eastward')
+            plt.title('Log Meridional Unit Vector Nornalized Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_east_diff.pdf') 
+            plt.savefig('mer_east_norm_diff.pdf') 
             plt.close()
               
             fig = plt.figure()
@@ -1126,10 +1126,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Meridional Unit Vector Difference - Northward')
+            plt.title('Log Meridional Unit Vector Nornalized Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_north_diff.pdf') 
+            plt.savefig('mer_north_norm_diff.pdf') 
             plt.close()
 
             fig = plt.figure()
@@ -1137,25 +1137,25 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Meridional Unit Vector Difference - Upward')
+            plt.title('Log Meridional Unit Vector Nornalized Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_up_diff.pdf') 
+            plt.savefig('mer_up_norm_diff.pdf') 
             plt.close()
 
             # calculate mean and standard deviation and then plot those
-            print (p_longs)
-            print (np.mean(np.abs(zvx), axis=0))
-            print (np.std(np.abs(zvx), axis=0))
+            # print (p_longs)
+            # print (np.mean(np.abs(zvx), axis=0))
+            # print (np.std(np.abs(zvx), axis=0))
             plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(zvx), axis=0), 
-                         yerr=np.std(np.abs(zvx), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(zvy), axis=0), 
-                         yerr=np.std(np.abs(zvy), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(zvz), axis=0), 
-                         yerr=np.std(np.abs(zvz), axis=0), label='z')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(zvx[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(zvx[:,:-1])), axis=0), label='East')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(zvy[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(zvy[:,:-1])), axis=0), label='North')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(zvz[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(zvz[:,:-1])), axis=0), label='Up')
             plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Zonal Vector')
+            plt.ylabel('Log Normalized Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
             plt.legend()
             plt.tight_layout()
@@ -1164,14 +1164,14 @@ class TestCore():
             
             # calculate mean and standard deviation and then plot those
             plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(bx), axis=0), 
-                         yerr=np.std(np.abs(bx), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(by), axis=0), 
-                         yerr=np.std(np.abs(by), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(bz), axis=0), 
-                         yerr=np.std(np.abs(bz), axis=0), label='z')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(bx[:,:-1])), axis=0), label='East')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(by[:,:-1])), axis=0), label='North')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
             plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Field-Aligned Vector')
+            plt.ylabel('Log Normalized Change in Field-Aligned Vector')
             plt.title("Sensitivity of Field-Aligned Unit Vector")
             plt.legend()
             plt.tight_layout()
@@ -1180,18 +1180,18 @@ class TestCore():
 
             # calculate mean and standard deviation and then plot those
             plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(mx), axis=0), 
-                         yerr=np.std(np.abs(mx), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(my), axis=0), 
-                         yerr=np.std(np.abs(my), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(mz), axis=0), 
-                         yerr=np.std(np.abs(mz), axis=0), label='z')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='East')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='North')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Up')
             plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Meridional Vector')
+            plt.ylabel('Log Normalized Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
             plt.legend()
             plt.tight_layout()
-            plt.savefig('zonal_diff_v_longitude.pdf' )
+            plt.savefig('mer_diff_v_longitude.pdf' )
             plt.close()
             
         except:
@@ -1229,11 +1229,11 @@ class TestCore():
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
                                                                         p_alts, [date]*len(p_longs), 
-                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                        steps=None, max_steps=1000, step_size=10.,
                                                                         ref_height=240.))
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs, 
                                                                         p_alts, [date]*len(p_longs), 
-                                                                        steps=None, max_steps=10000, step_size=10.,
+                                                                        steps=None, max_steps=1000, step_size=10.,
                                                                         ref_height=0.))
 
             for i,p_lat in enumerate(p_lats):
@@ -1247,21 +1247,21 @@ class TestCore():
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
                 _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                zvx[i,:-1] = (zvx[i,:-1] - _a)#/zvx[i,:-1]
-                zvy[i,:-1] = (zvy[i,:-1] - _b)#/zvy[i,:-1]
-                zvz[i,:-1] = (zvz[i,:-1] - _c)#/zvz[i,:-1]
+                zvx[i,:-1] = (zvx[i,:-1] - _a)/zvx[i,:-1]
+                zvy[i,:-1] = (zvy[i,:-1] - _b)/zvy[i,:-1]
+                zvz[i,:-1] = (zvz[i,:-1] - _c)/zvz[i,:-1]
 
                 _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                bx[i,:-1] = (bx[i,:-1] - _a)#/bx[i,:-1]
-                by[i,:-1] = (by[i,:-1] - _b)#/by[i,:-1]
-                bz[i,:-1] = (bz[i,:-1] - _c)#/bz[i,:-1]
+                bx[i,:-1] = (bx[i,:-1] - _a)/bx[i,:-1]
+                by[i,:-1] = (by[i,:-1] - _b)/by[i,:-1]
+                bz[i,:-1] = (bz[i,:-1] - _c)/bz[i,:-1]
                 
                 _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                mx[i,:-1] = (mx[i,:-1] - _a)#/mx[i,:-1]
-                my[i,:-1] = (my[i,:-1] - _b)#/my[i,:-1]
-                mz[i,:-1] = (mz[i,:-1] - _c)#/mz[i,:-1]
+                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
 
         else:
             for i,p_lat in enumerate(p_lats):
@@ -1281,21 +1281,21 @@ class TestCore():
                                                                                         ref_height=0.)
                 _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                zvx[i,:-1] = (zvx[i,:-1] - _a)#/zvx[i,:-1]
-                zvy[i,:-1] = (zvy[i,:-1] - _b)#/zvy[i,:-1]
-                zvz[i,:-1] = (zvz[i,:-1] - _c)#/zvz[i,:-1]
+                zvx[i,:-1] = (zvx[i,:-1] - _a)/zvx[i,:-1]
+                zvy[i,:-1] = (zvy[i,:-1] - _b)/zvy[i,:-1]
+                zvz[i,:-1] = (zvz[i,:-1] - _c)/zvz[i,:-1]
 
                 _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                bx[i,:-1] = (bx[i,:-1] - _a)#/bx[i,:-1]
-                by[i,:-1] = (by[i,:-1] - _b)#/by[i,:-1]
-                bz[i,:-1] = (bz[i,:-1] - _c)#/bz[i,:-1]
+                bx[i,:-1] = (bx[i,:-1] - _a)/bx[i,:-1]
+                by[i,:-1] = (by[i,:-1] - _b)/by[i,:-1]
+                bz[i,:-1] = (bz[i,:-1] - _c)/bz[i,:-1]
                 
                 _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                mx[i,:-1] = (mx[i,:-1] - _a)#/mx[i,:-1]
-                my[i,:-1] = (my[i,:-1] - _b)#/my[i,:-1]
-                mz[i,:-1] = (mz[i,:-1] - _c)#/mz[i,:-1]
+                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
      
                
         # account for periodicity
@@ -1318,7 +1318,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Zonal Unit Vector Difference - Eastward')
+            plt.title('Log Zonal Unit Vector Nornalized Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('zonal_east_diff_height.pdf') 
@@ -1329,7 +1329,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Zonal Unit Vector Difference - Northward')
+            plt.title('Log Zonal Unit Vector Nornalized Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('zonal_north_diff_height.pdf') 
@@ -1340,7 +1340,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Zonal Unit Vector Difference - Upward')
+            plt.title('Log Zonal Unit Vector Nornalized Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('zonal_up_diff_height.pdf') 
@@ -1352,7 +1352,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Field Aligned Unit Vector Difference - Eastward')
+            plt.title('Log Field Aligned Unit Vector Nornalized Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('fa_east_diff_height.pdf') 
@@ -1363,7 +1363,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Field Aligned Unit Vector Difference - Northward')
+            plt.title('Log Field Aligned Unit Vector Nornalized Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('fa_north_diff_height.pdf') 
@@ -1374,7 +1374,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Field Aligned Unit Vector Difference - Upward')
+            plt.title('Log Field Aligned Unit Vector Nornalized Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('fa_up_diff_height.pdf') 
@@ -1385,7 +1385,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Meridional Unit Vector Difference - Eastward')
+            plt.title('Log Meridional Unit Vector Nornalized Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('mer_east_diff_height.pdf') 
@@ -1396,7 +1396,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Meridional Unit Vector Difference - Northward')
+            plt.title('Log Meridional Unit Vector Nornalized Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('mer_north_diff_height.pdf') 
@@ -1407,7 +1407,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])       
-            plt.title('Log Meridional Unit Vector Difference - Upward')
+            plt.title('Log Meridional Unit Vector Nornalized Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('mer_up_diff_height.pdf') 
@@ -1415,14 +1415,14 @@ class TestCore():
 
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(zvx[:,:-1]), axis=0), 
-                            yerr=np.std(np.abs(zvx[:,:-1]), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(zvy[:,:-1]), axis=0), 
-                            yerr=np.std(np.abs(zvy[:,:-1]), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(zvz[:,:-1]), axis=0), 
-                            yerr=np.std(np.abs(zvz[:,:-1]), axis=0), label='z')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(zvx[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(zvx[:,:-1])), axis=0), label='East')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(zvy[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(zvy[:,:-1])), axis=0), label='North')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(zvz[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(zvz[:,:-1])), axis=0), label='Up')
             plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Zonal Vector')
+            plt.ylabel('Log Normalized Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
             plt.legend()
             plt.tight_layout()
@@ -1431,30 +1431,30 @@ class TestCore():
     
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(mx[:,:-1]), axis=0), 
-                            yerr=np.std(np.abs(mx[:,:-1]), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(my[:,:-1]), axis=0), 
-                            yerr=np.std(np.abs(my[:,:-1]), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(mz[:,:-1]), axis=0), 
-                            yerr=np.std(np.abs(mz[:,:-1]), axis=0), label='z')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='East')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='North')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Up')
             plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Meridional Vector')
+            plt.ylabel('Log Normalized Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
             plt.legend()
             plt.tight_layout()
-            plt.savefig('zonal_diff_v_longitude_height.pdf' )
+            plt.savefig('mer_diff_v_longitude_height.pdf' )
             plt.close()
 
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(bx[:,:-1]), axis=0), 
-                            yerr=np.std(np.abs(bx[:,:-1]), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(by[:,:-1]), axis=0), 
-                            yerr=np.std(np.abs(by[:,:-1]), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(bz[:,:-1]), axis=0), 
-                            yerr=np.std(np.abs(bz[:,:-1]), axis=0), label='z')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(bx[:,:-1])), axis=0), label='East')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(by[:,:-1])), axis=0), label='North')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)), 
+                            yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
             plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in Field-Aligned Vector')
+            plt.ylabel('Log Normalized Change in Field-Aligned Vector')
             plt.title("Sensitivity of Field-Aligned Unit Vector")
             plt.legend()
             plt.tight_layout()
@@ -1504,10 +1504,10 @@ class TestCore():
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date, 
                                                                             direction=direction,
-                                                                            num_steps=6, step_size=25./6.))
+                                                                            num_steps=10, step_size=25./10.))
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date, 
                                                                             direction=direction,
-                                                                            num_steps=3, step_size=25./3.))
+                                                                            num_steps=5, step_size=25./5.))
             # for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j,p_long in enumerate(p_longs):
@@ -1541,11 +1541,11 @@ class TestCore():
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
                     x[i,j], y[i,j], z[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
                                                                              direction=direction, 
-                                                                             num_steps=6, step_size=25./6.)
+                                                                             num_steps=10, step_size=25./5.)
                     # second run
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date, 
                                                                             direction=direction, 
-                                                                            num_steps=3, step_size=25./3.)
+                                                                            num_steps=5, step_size=25./5.)
             for i,p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])        
@@ -1603,15 +1603,15 @@ class TestCore():
     
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
-            plt.errorbar(p_longs, np.mean(np.abs(x[:,:-1]), axis=0), 
+            plt.errorbar(p_longs, np.median(np.abs(x[:,:-1]), axis=0), 
                          yerr=np.std(np.abs(x[:,:-1]), axis=0), label='x')
-            plt.errorbar(p_longs, np.mean(np.abs(y[:,:-1]), axis=0), 
+            plt.errorbar(p_longs, np.median(np.abs(y[:,:-1]), axis=0), 
                          yerr=np.std(np.abs(y[:,:-1]), axis=0), label='y')
-            plt.errorbar(p_longs, np.mean(np.abs(z[:,:-1]), axis=0), 
-                         yerr=np.std(np.abs(z), axis=0), label='z')
+            plt.errorbar(p_longs, np.median(np.abs(z[:,:-1]), axis=0), 
+                         yerr=np.std(np.abs(z[:,:-1]), axis=0), label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in ECEF (km)')
-            plt.title('Mean Difference in Apex Position')
+            plt.title('Median Difference in Apex Position')
             plt.legend()
             plt.tight_layout()
             plt.savefig(direction+'_step_diff_v_longitude.pdf' )
