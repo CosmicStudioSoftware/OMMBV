@@ -14,5 +14,6 @@ else:
     
 from . import _core
 from ._core import *
+from . import satellite
 
 __all__ = []
