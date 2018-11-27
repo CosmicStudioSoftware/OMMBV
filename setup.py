@@ -44,7 +44,9 @@ numpy.distutils.core.setup(
     include_package_data=True,
 
     ext_modules = config.todict()['ext_modules'],
-
-    install_requires = ['numpy', 'scipy',],
+    # required modules
+    install_requires = ['numpy', 'scipy', 'pysat'],
+    # requirements for testing
+    extras_require={'testing':['nose']}
 
 )  
