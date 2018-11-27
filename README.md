@@ -4,7 +4,15 @@
 [![Documentation Status](https://readthedocs.org/projects/pysatmagvect/badge/?version=latest)](https://pysatmagvect.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/138220240.svg)](https://zenodo.org/badge/latestdoi/138220240)
 
-Calculates geomagnetic unit vectors (field aligned, zonal, and meridional) and includes supporting routines for characterizing the motion of ionospheric plasma
+The motion of plasma in the ionosphere is the result of forcing from netural winds, electric fields, neutral collisions, as well as the orientation of the background magnetic field. Plasma moves easily along the magnetic field line and less so across it. PysatMagVect calculates directions (unit vectors) based upon the geomagnetic field that are most relevant for understanding the movement of plasma. In addition, pysatMagVect includes methods for scaling ion drifts at one location to either the magnetic footpoint or to the magnetic equator. Scaling to the footpoint is critical for understanding how neutral atmosphere winds at low altitudes (footpoint heights) will be expressed either at the satellite location or at the magnetic equator. Scaling to the magnetic equator can be particularly effective when creating a common basis for integrating measurements from multiple platforms.
+
+PysatMagVect is used by the upcoming NASA Ionospheric Connections (ICON) Explorer Mission to understand how remote measurements of neutral motions at 120 km impacts the motion of plasma measured in situ (at the satellite location). This package is also being used by the upcoming NOAA/NSPO COSMIC-2 constellation to express plasma measurements made at the satellite locations in a more geophysically useful basis. PysatMagVect is currently being incorporated into analysis routines suitable for integrating physics-based models (TIEGCM) and measurements from the Communications/Navigation Outage Forecasting System (C/NOFS) satellite.
+
+The development of this software has been supported, in part, by NASA, NOAA, and NSF.
+
+# Field-Line Tracing
+The International Geomagnetic Reference Field (IGRF) is coupled into SciPy's odeint to produce an accurate field
+line tracing algorithm that terminates at a supplied reference height, or after a fixed number of steps. The SciPy integrator is an adaptive method that internally determines an appropriate step size thus the performance of the technique is both robust and accurate. The sensitivity of the field line tracing and other quantities in this package have been established via direct comparison (when possible) as well as sensitvity and consistency tests.
 
 # Geomagnetic Unit Vectors
 Plasma in the ionosphere is constrained by the geomagnetic field. Motion along magnetic field lines is easy while motion across field lines is comparatively hard. To understand the motion of ions it is generally best to do so along these directions.
@@ -15,5 +23,11 @@ Plasma in the ionosphere is constrained by the geomagnetic field. Motion along m
 
  - Meridional: Perpendicular to the zonal and field aligned directions. This vector is positive upward and is vertical at the geomagnetic equator. To remain perpendicular to the field, the meridional vector has a poleward component when away from the magnetic equator. Note that meridional may sometimes be used in other contexts to be north/south. Here, the vector is generally up/down.
  
+ # Ion Drift Mapping
+ Calculates scalars for mapping ion motions expressed in geomagnetic unit vectors to either the magnetic footpoint or to the magnetic equator. These scalars are determined assuming that magnetic field lines are equipotential, thus the electric field associated with ion motion will vary as the distance between two geomagnetic field lines changes. The ExB/B^2 motion accounted for here also varies with magnetic field strength. Either the mappings for just the electric field, or the ion drift, are available. Scaling from the equator or footpoint to a different location is achieved by taking the inverse of the supplied parameters.
+
  # Coordinate Transformations
  Supports the conversion of geographic and geodetic (WGS84) into eachother and into Earth Centered Earth Fixed (ECEF). ECEF coordinates are fixed with respect to the Earth, x points from the center towards 0 degrees longitude at the geographic equator, y similarly points to 90 degrees east, while z points along the Earth's rotation axis.
+ 
+ # Vector Transformations
+ Supports expressing a vector known in one basis into the same vector expressed in another basis. This supports translating measurements made in a spacecraft frame into frames more relevant for scientific analysis.
