@@ -8,7 +8,7 @@ The motion of plasma in the ionosphere is the result of forcing from netural win
 
 PysatMagVect is used by the upcoming NASA Ionospheric Connections (ICON) Explorer Mission to understand how remote measurements of neutral motions at 120 km impacts the motion of plasma measured in situ (at the satellite location). This package is also being used by the upcoming NOAA/NSPO COSMIC-2 constellation to express plasma measurements made at the satellite locations in a more geophysically useful basis. PysatMagVect is currently being incorporated into analysis routines suitable for integrating physics-based models (TIEGCM) and measurements from the Communications/Navigation Outage Forecasting System (C/NOFS) satellite.
 
-The development of this software has been supported, in part, by multiple agencies under the following grants: National Aeronautics and Space Agency (NASA NNG12FA45C), National Oceanic and Atmospheric Administration, and the National Science Foundation (NSF 1651393).
+The development of this software has been supported, in part, by multiple agencies under the following grants: National Aeronautics and Space Agency (NASA NNG12FA45C), National Oceanic and Atmospheric Administration(NOAA NSF AGS-1033112), and the National Science Foundation (NSF 1651393).
 
 # Field-Line Tracing
 The International Geomagnetic Reference Field (IGRF) is coupled into SciPy's odeint to produce an accurate field
