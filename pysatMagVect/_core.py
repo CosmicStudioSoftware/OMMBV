@@ -2,9 +2,6 @@
 """
 Supporting routines for coordinate conversions as well as vector operations and
 transformations used in Space Science.
-Note these routines are not formatted by direct use by pysat.Instrument custom
-function features. Given the transformations will generally be part of a larger 
-calculation, the functions are formatted more traditionally.
 """
 
 import scipy
@@ -415,7 +412,12 @@ def field_line_trace(init, date, direction, height, steps=None,
         return np.vstack((trace_north, trace_north1))
     else:
         # return results if we make it to the target altitude
+        
         # filter points to terminate at point closest to target height
+        # code below not correct, we want the first poiint that goes below target
+        # height
+        # code also introduces a variable length return, though I suppose
+        # that already exists with the recursive functionality
         # x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2]) 
         # idx = np.argmin(np.abs(check_height - z)) 
         return trace_north #[:idx+1,:]
@@ -476,10 +478,21 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
      
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           steps=None, max_steps=1000, step_size=100.,
-                                          ref_height=120.):
+                                          ref_height=120., filter_zonal=True):
     """Calculates unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
+    
+    Note
+    ----
+        The zonal vector is calculated by field-line tracing from
+        the input locations toward the footpoint locations at ref_height.
+        The cross product of these two vectors is taken to define the plane of
+        the magnetic field. This vector is not always orthogonal
+        with the local field-aligned vector (IGRF), thus any component of the 
+        zonal vector with the field-aligned direction is removed (optional). 
+        The meridional unit vector is defined via the cross product of the 
+        zonal and field-aligned directions.
     
     Parameters
     ----------
@@ -497,6 +510,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Maximum step size (km) allowed when field line tracing
     ref_height : float
         Altitude used as cutoff for labeling a field line location a footpoint
+    filter_zonal : bool
+        If True, removes any field aligned component from the calculated
+        zonal unit vector. Resulting coordinate system is not-orthogonal.
         
     Returns
     -------
@@ -509,10 +525,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # calculate satellite position in ECEF coordinates
     ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
     # also get position in geocentric coordinates
-    geo_lat, geo_long, geo_alt = ecef_to_geocentric(ecef_x, ecef_y, ecef_z, ref_height=0.)
+    geo_lat, geo_long, geo_alt = ecef_to_geocentric(ecef_x, ecef_y, ecef_z, 
+                                                    ref_height=0.)
+    # filter longitudes (could use pysat's function here)
     idx, = np.where(geo_long < 0)
     geo_long[idx] = geo_long[idx] + 360.
-    
+    # prepare output lists
     north_x = [];
     north_y = [];
     north_z = []
@@ -548,7 +566,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         # get IGRF field components
         # tbn, tbe, tbd, tbmag are in nT
         tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 1, alt, colat, elong)
-
+        # collect outputs
         south_x.append(trace_south[0])
         south_y.append(trace_south[1])
         south_z.append(trace_south[2])
@@ -594,9 +612,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                     bx, by, bz)
     # normalize the vectors
     norm_foot = np.sqrt(zvx_foot ** 2 + zvy_foot ** 2 + zvz_foot ** 2)
-    # norm_north = np.sqrt(zvx_north ** 2 + zvy_north ** 2 + zvz_north ** 2)
-    # norm_south = np.sqrt(zvx_south ** 2 + zvy_south ** 2 + zvz_south ** 2)
-
+    
     # calculate zonal vector
     zvx = zvx_foot / norm_foot
     zvy = zvy_foot / norm_foot
@@ -629,8 +645,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
     
     Routine will create a high resolution field line trace (.01 km step size) 
     near the location of closest approach to better determine where the 
-    intersection occurs. This centered segment is 40 km long, thus the input 
-    field_line trace should have a maximum step size of 20 km.
+    intersection occurs. 
     
     Parameters
     ----------
@@ -707,7 +722,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
             # find closest one
             min_idx = np.argmin(diff_mag)
             # # reduce number of elements we really need to check
-            # field_copy = field_copy[min_idx-100:min_idx:100]
+            # field_copy = field_copy[min_idx-100:min_idx+100]
             # # difference with position
             # diff = field_copy - pos_step
             # diff_mag = np.sqrt((diff ** 2).sum(axis=1))
@@ -1062,13 +1077,21 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                          edge_length=25., 
                                          edge_steps=5):
     """
-    Forms closed loop integration along mag field, satrting at input
-    points and goes through footpoint. At footpoint, steps along vector direction
-    in both positive and negative directions, then traces back to opposite
-    footpoint. Back at input location, steps toward those new field lines 
-    (edge_length) along vector direction until hitting distance of minimum
-    approach. Loops don't always close. Returns total edge distance 
-    that goes through input location, along with the distances of closest approach. 
+    Calculates the distance between apex locations mapping to the input location.
+    
+    Using the input location, the apex location is calculated. Also from the input 
+    location, a step along both the positive and negative
+    vector_directions is taken, and the apex locations for those points are calculated.
+    The difference in position between these apex locations is the total centered
+    distance between magnetic field lines at the magnetic apex when starting
+    locally with a field line half distance of edge_length.
+    
+    An alternative method has been implemented, then commented out.
+    This technique takes multiple steps from the origin apex towards the apex
+    locations identified along vector_direction. In principle this is more accurate
+    but more computationally intensive, similar to the footpoint model.
+    A comparison is planned.
+    
     
     Note
     ----
@@ -1099,13 +1122,13 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
         
     Returns
     -------
-    np.array, np.array, np.array
-        A closed loop field line path through input location and footpoint in 
-        northern/southern hemisphere and back is taken. The return edge length
-        through input location is provided. 
+    np.array, ### np.array, np.array
+        The change in field line apex locations. 
         
-        The distances of closest approach for the positive step along vector
-        direction, and the negative step are returned.
+        ## Pending ## The return edge length through input location is provided. 
+        
+        ## Pending ## The distances of closest approach for the positive step 
+                      along vector direction, and the negative step are returned.
 
     
     """
@@ -1115,6 +1138,7 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
 
     # prepare output
     apex_edge_length = []
+    # outputs for alternative calculation
     full_local_step = []
     min_distance_plus = []
     min_distance_minus = []
@@ -1122,13 +1146,6 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
     for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs, 
                                                              glats, glons, alts, 
                                                              dates):
-        # going to try and form close loops via field line integration
-        # start at location of interest, map down to northern or southern footpoints
-        # then take symmetric steps along meridional and zonal directions and trace back
-        # from location of interest, step along field line directions until we intersect 
-        # or hit the distance of closest approach to the return field line
-        # with the known distances of footpoint steps, and the closet approach distance
-        # we can determine the scalar mapping of one location to another
         
         yr, doy = pysat.utils.getyrdoy(date)
         double_date = float(yr) + float(doy) / 366.
@@ -1202,6 +1219,11 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
         # min_distance_plus.append(mind_pos)
         # min_distance_minus.append(mind_minus)
         
+        # still sorting out alternative option for this calculation
+        # commented code is 'good' as far as the plan goes
+        # takes more time, so I haven't tested one vs the other yet
+        # having two live methods can lead to problems
+        # THIS IS A TODO (sort it out)
     return np.array(apex_edge_length)#, np.array(full_local_step), np.array(min_distance_plus), np.array(min_distance_minus)
                                                                                                                                                                                                                                                                         
         # # take step from one apex towards the other
@@ -1247,7 +1269,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     Returns
     -------
     dict
-        array-like of scalars for translating electric field. Keys are,
+        array-like of scalars for translating ion drifts. Keys are,
         'north_zonal_drifts_scalar', 'north_mer_drifts_scalar', and similarly
         for southern locations. 'equator_mer_drifts_scalar' and 
         'equator_zonal_drifts_scalar' cover the mappings to the equator.
