@@ -632,6 +632,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         zvy -= dot_fa * by
         zvz -= dot_fa * bz
         zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
+
     # compute meridional vector
     # cross product of zonal and magnetic unit vector
     mx, my, mz = cross_product(zvx, zvy, zvz,
