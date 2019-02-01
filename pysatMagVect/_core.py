@@ -572,6 +572,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         # get IGRF field components
         # tbn, tbe, tbd, tbmag are in nT
         tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 1, alt, colat, elong)
+        
         # collect outputs
         south_x.append(trace_south[0])
         south_y.append(trace_south[1])
@@ -610,12 +611,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # take cross product of southward and northward vectors to get the zonal vector
     zvx_foot, zvy_foot, zvz_foot = cross_product(south_x, south_y, south_z,
                                                  north_x, north_y, north_z)  
-    # # getting zonal vector utilizing magnetic field vector instead
-    # zvx_north, zvy_north, zvz_north = cross_product(north_x, north_y, north_z,
-    #                                                 bx, by, bz)
-    # # getting zonal vector utilizing magnetic field vector instead and southern point
-    # zvx_south, zvy_south, zvz_south = cross_product(south_x, south_y, south_z,
-    #                                                 bx, by, bz)
     # normalize the vectors
     norm_foot = np.sqrt(zvx_foot ** 2 + zvy_foot ** 2 + zvz_foot ** 2)
     
