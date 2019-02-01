@@ -522,6 +522,10 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
     if steps is None:
         steps = np.arange(max_steps)
+    latitude = np.array(latitude)
+    longitude = np.array(longitude)
+    altitude = np.array(altitude)
+    
     # calculate satellite position in ECEF coordinates
     ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
     # also get position in geocentric coordinates
@@ -606,12 +610,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # take cross product of southward and northward vectors to get the zonal vector
     zvx_foot, zvy_foot, zvz_foot = cross_product(south_x, south_y, south_z,
                                                  north_x, north_y, north_z)  
-    # getting zonal vector utilizing magnetic field vector instead
-    zvx_north, zvy_north, zvz_north = cross_product(north_x, north_y, north_z,
-                                                    bx, by, bz)
-    # getting zonal vector utilizing magnetic field vector instead and southern point
-    zvx_south, zvy_south, zvz_south = cross_product(south_x, south_y, south_z,
-                                                    bx, by, bz)
+    # # getting zonal vector utilizing magnetic field vector instead
+    # zvx_north, zvy_north, zvz_north = cross_product(north_x, north_y, north_z,
+    #                                                 bx, by, bz)
+    # # getting zonal vector utilizing magnetic field vector instead and southern point
+    # zvx_south, zvy_south, zvz_south = cross_product(south_x, south_y, south_z,
+    #                                                 bx, by, bz)
     # normalize the vectors
     norm_foot = np.sqrt(zvx_foot ** 2 + zvy_foot ** 2 + zvz_foot ** 2)
     
