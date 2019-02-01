@@ -527,6 +527,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # also get position in geocentric coordinates
     geo_lat, geo_long, geo_alt = ecef_to_geocentric(ecef_x, ecef_y, ecef_z, 
                                                     ref_height=0.)
+    # geo_lat, geo_long, geo_alt = ecef_to_geodetic(ecef_x, ecef_y, ecef_z)
+
     # filter longitudes (could use pysat's function here)
     idx, = np.where(geo_long < 0)
     geo_long[idx] = geo_long[idx] + 360.
@@ -542,8 +544,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     bd = []
 
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z, 
-                                                geo_alt, np.deg2rad(90. - geo_lat),
-                                                np.deg2rad(geo_long), datetimes):
+                                                altitude, np.deg2rad(90. - latitude),
+                                                np.deg2rad(longitude), datetimes):
         init = np.array([x, y, z])
         # date = inst.yr + inst.doy / 366.
         # trace = full_field_line(init, time, ref_height, step_size=step_size, 
@@ -617,12 +619,15 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     zvx = zvx_foot / norm_foot
     zvy = zvy_foot / norm_foot
     zvz = zvz_foot / norm_foot
-    # remove any field aligned component to the zonal vector
-    dot_fa = zvx * bx + zvy * by + zvz * bz
-    zvx -= dot_fa * bx
-    zvy -= dot_fa * by
-    zvz -= dot_fa * bz
-    zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
+    
+    if filter_zonal:
+        # print ("Making magnetic vectors orthogonal")
+        # remove any field aligned component to the zonal vector
+        dot_fa = zvx * bx + zvy * by + zvz * bz
+        zvx -= dot_fa * bx
+        zvy -= dot_fa * by
+        zvz -= dot_fa * bz
+        zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
     # compute meridional vector
     # cross product of zonal and magnetic unit vector
     mx, my, mz = cross_product(zvx, zvy, zvz,
