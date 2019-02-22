@@ -379,8 +379,9 @@ def field_line_trace(init, date, direction, height, steps=None,
         doy = (date - datetime.datetime(date.year,1,1)).days
         # number of days in year, works for leap years
         num_doy_year = (datetime.datetime(date.year+1,1,1) - datetime.datetime(date.year,1,1)).days
-        date = float(date.year) + float(doy)/float(num_doy_year) + float(date.hour + date.minute/60. + date.second/3600.)/24.
-          
+        date = float(date.year) + \
+               (float(doy) + float(date.hour + date.minute/60. + date.second/3600.)/24.)/float(num_doy_year+1)
+
     trace_north = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                          steps,
                                          args=(date, step_size, direction, height),
