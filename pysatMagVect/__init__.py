@@ -11,7 +11,7 @@ if not on_rtd:
     from . import igrf
 else:
     igrf = None
-    
+
 from . import _core
 from ._core import *
 from . import satellite
