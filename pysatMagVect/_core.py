@@ -735,7 +735,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
             init = field_copy[min_idx,:]
             field_copy = full_field_line(init, time, 0.,
                                          step_size=tol, 
-                                         max_steps=int(field_step_size/tol),
+                                         max_steps=int(round(field_step_size/tol)),
                                          recurse=False)
             # difference with position
             diff = field_copy - pos_step
