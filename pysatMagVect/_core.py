@@ -10,7 +10,7 @@ import numpy as np
 import datetime
 import pysat
 # import reference IGRF fortran code within the package
-from . import igrf
+from pysatMagVect import igrf as igrf
 
 # parameters used to define Earth ellipsoid
 # WGS84 parameters below
@@ -371,9 +371,10 @@ def field_line_trace(init, date, direction, height, steps=None,
     
     if recursive_loop_count is None:  
         recursive_loop_count = 0
-    #     
+    # number of times integration routine must output step location
     if steps is None:
         steps = np.arange(max_steps)
+    # ensure date is a float for IGRF call
     if not isinstance(date, float):
         # recast from datetime to float, as required by IGRF12 code
         doy = (date - datetime.datetime(date.year,1,1)).days
@@ -382,6 +383,13 @@ def field_line_trace(init, date, direction, height, steps=None,
         date = float(date.year) + \
                (float(doy) + float(date.hour + date.minute/60. + date.second/3600.)/24.)/float(num_doy_year+1)
 
+    # set altitude to terminate trace
+    if height == 0:
+        check_height = 1.
+    else:
+        check_height = height
+
+    # perform trace
     trace_north = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                          steps,
                                          args=(date, step_size, direction, height),
@@ -390,13 +398,10 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          ixpr=False) #,
                                          # mxstep=500)
     
-    # check that we reached final altitude
+    # calculate data to check that we reached final altitude
     check = trace_north[-1, :]
-    x, y, z = ecef_to_geodetic(*check)        
-    if height == 0:
-        check_height = 1.
-    else:
-        check_height = height
+    x, y, z = ecef_to_geodetic(*check)
+
     # fortran integration gets close to target height        
     if recurse & (z > check_height*1.000001):
         if (recursive_loop_count < 1000):
@@ -410,18 +415,22 @@ def field_line_trace(init, date, direction, height, steps=None,
                                             steps=steps)
         else:
             raise RuntimeError("After 1000 iterations couldn't reach target altitude")
+        # append new trace data to existing trace data
+        # this return is taken as part of recursive loop
         return np.vstack((trace_north, trace_north1))
     else:
         # return results if we make it to the target altitude
-        
+
         # filter points to terminate at point closest to target height
-        # code below not correct, we want the first poiint that goes below target
-        # height
         # code also introduces a variable length return, though I suppose
         # that already exists with the recursive functionality
-        # x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2]) 
-        # idx = np.argmin(np.abs(check_height - z)) 
-        return trace_north #[:idx+1,:]
+        # while this check is done innternally within Fortran integrand, if
+        # that steps out early, the output we receive would be problematic.
+        # Steps below provide an extra layer of security that output has some
+        # semblance to expectations
+        x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2]) 
+        idx = np.argmin(np.abs(check_height - z)) 
+        return trace_north[:idx+1,:]
 
 
 def full_field_line(init, date, height, step_size=100., max_steps=1000, 
@@ -702,7 +711,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         unit_steps = np.abs(scalar//step_size_goal)
         if unit_steps == 0:
             unit_steps = 1
-        # print (unit_steps, scalar/unit_steps)
+        print('unit, scalar/unit, and factor and first', unit_steps, scalar/unit_steps, factor, first)
         pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, 
                                               direction=direction,
                                               num_steps=unit_steps, 
@@ -712,6 +721,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         diff = field_copy - pos_step
         diff_mag = np.sqrt((diff ** 2).sum(axis=1))
         min_idx = np.argmin(diff_mag)
+        print('First min dist, idx, last_min', diff_mag[min_idx], min_idx, last_min_dist)
         if first:
             # first time in while loop, create some information
             # make a high resolution field line trace around closest distance
@@ -727,18 +737,12 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
             diff_mag = np.sqrt((diff ** 2).sum(axis=1))
             # find closest one
             min_idx = np.argmin(diff_mag)
-            # # reduce number of elements we really need to check
-            # field_copy = field_copy[min_idx-100:min_idx+100]
-            # # difference with position
-            # diff = field_copy - pos_step
-            # diff_mag = np.sqrt((diff ** 2).sum(axis=1))
-            # # find closest one
-            # min_idx = np.argmin(diff_mag)
+            # no longer first run through
             first = False
             
         # pull out distance of closest point 
         min_dist = diff_mag[min_idx]
-        
+        print('min dist, idx, last_min', min_dist, min_idx, last_min_dist)
         # check how the solution is doing
         # if well, add more distance to the total step and recheck if closer
         # if worse, step back and try a smaller step
@@ -770,7 +774,8 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
             scalar = scalar + min_dist/(2*factor)
             # we have a new standard to judge against, set it
             last_min_dist = min_dist.copy()
-
+        print('Last scalar, factor, last_min', scalar, factor, last_min_dist)
+        print('')
     # return magnitude of step
     return scalar, pos_step, min_dist
 
@@ -996,7 +1001,7 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         direct = -1
     elif direction == 'north':
         direct = 1
-
+    print('Direction ', direction, direct)
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
@@ -1023,22 +1028,29 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         # print (glat, glon, alt)
         # trace to footpoint, starting with input location
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
+        print('starting root ', ecef_to_geodetic(*sc_root))
         trace = field_line_trace(sc_root, double_date, direct, 120., 
                                  steps=steps,
                                  step_size=step_size, 
                                  max_steps=max_steps)
+        print('second root ', ecef_to_geodetic(*sc_root))
         # pull out footpoint location
         ftpnt = trace[-1, :]
         ft_glat, ft_glon, ft_alt = ecef_to_geodetic(*ftpnt)
-        
+        if np.isnan([ft_glat, ft_glon, ft_alt]).any():
+            raise RuntimeError('Unable to find footpoint location, NaN.')
+        print('Footpoint geodetic position ', ft_glat, ft_glon, ft_alt)
+        if ft_alt < 0:
+            raise RuntimeError('Footpoint altitude negative.')
         # take step from footpoint along + vector direction
         plus_step = step_along_mag_unit_vector(ftpnt[0], ftpnt[1], ftpnt[2], 
                                                date, 
                                                direction=vector_direction,
                                                num_steps=edge_steps,
                                                step_size=edge_length/edge_steps)
+        print('plus_step', plus_step, ecef_to_geodetic(*plus_step))
         # trace this back to other footpoint
-        other_plus = field_line_trace(plus_step, double_date, -direct, 0., 
+        other_plus = field_line_trace(plus_step, double_date, -1*direct, 0., 
                                       steps=steps,
                                       step_size=step_size, 
                                       max_steps=max_steps)
@@ -1049,21 +1061,27 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                                scalar=-1,
                                                num_steps=edge_steps,
                                                step_size=edge_length/edge_steps)
+        print('minus_step', minus_step, ecef_to_geodetic(*minus_step))
         # trace this back to other footpoint
-        other_minus = field_line_trace(minus_step, double_date, -direct, 0., 
+        other_minus = field_line_trace(minus_step, double_date, -1*direct, 0., 
                                        steps=steps,
                                        step_size=step_size, 
                                        max_steps=max_steps)
         # need to determine where the intersection of field line coming back from
         # footpoint through postive vector direction step and back
         # in relation to the vector direction from the s/c location. 
+        print('Intersection call 1', ecef_to_geodetic(*sc_root), 
+                                     ecef_to_geodetic(*other_plus[0,:]),
+                                     ecef_to_geodetic(*other_plus[10,:]))
         pos_edge_length, _, mind_pos = step_until_intersect(sc_root,
                                         other_plus,
                                         1, date, 
                                         direction=vector_direction,
                                         field_step_size=step_size,
-                                        step_size_goal=edge_length/edge_steps)        
+                                        step_size_goal=edge_length/edge_steps) 
+        # print('pos_edge_length', pos_edge_length, mind_pos, ecef_to_geodetic(*mind_pos))       
         # take half step from S/C along - vector direction 
+        print('Intersection call 1', ecef_to_geodetic(*sc_root), ecef_to_geodetic(*other_plus[0,:]))
         minus_edge_length, _, mind_minus = step_until_intersect(sc_root,
                                         other_minus,
                                         -1, date, 
