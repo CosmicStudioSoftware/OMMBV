@@ -22,16 +22,16 @@ before_install:
   - pip install numpy
   - cd ..
   - echo 'cloning pysat'
-  - git clone https://github.com/pysat/pysat.git >/dev/null
+  - git clone https://github.com/jklenzing/pysat.git >/dev/null
   - echo 'installing pysat'
   - cd ./pysat
   - git checkout no_sgp4
   # set up data directory
-  - mkdir /home/travis/build/pysat/pysatData
+  - mkdir /home/travis/build/jklenzing/pysatData
   # install pysat
-  - cd /home/travis/build/pysat/pysat
+  - cd /home/travis/build/jklenzing/pysat
   - python setup.py install >/dev/null
-  - cd /home/travis/build/pysat/pysatMagVect
+  - cd /home/travis/build/jklenzing/pysatMagVect
 
 install:
   - python setup.py install
