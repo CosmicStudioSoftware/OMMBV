@@ -45,7 +45,7 @@ before_script:
     fi
 
 script:
-  - pytest -vs --cov=pysatMagVect/
+  - nosetests  -vs --with-coverage --cover-package=pysatMagVect
 
 after_success:
   - coveralls
