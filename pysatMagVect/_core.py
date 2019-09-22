@@ -660,8 +660,8 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
     last leg when trying to trace out a closed field line loop.
     
     Routine will create a high resolution field line trace (.01 km step size) 
-    near the location of closest approach to better determine where the 
-    intersection occurs. 
+    around the location of closest approach (usiing the field line supplied by
+    user) to better determine where the intersection occurs. 
     
     Parameters
     ----------
@@ -691,20 +691,17 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
          
     """ 
                                                          
-    # work on a copy, probably not needed
     field_copy = field_line
     # set a high last minimum distance to ensure first loop does better than this
-    running_min_dist = 2500000.
+    best_min_dist = 2500000.
     # scalar is the distance along unit vector line that we are taking
     scalar = 0.
     # repeat boolean
     repeat = True
     # first run boolean
-    first=True
-    # factor is a divisor applied to the remaining distance between point and field line
-    # I slowly take steps towards the field line and I don't want to overshoot
-    # each time my minimum distance increases, I step back, increase factor, reducing
-    # my next step size, then I try again
+    first = True
+    # factor is a divisor applied to the path length step size used when
+    # looking for location of closest approach
     factor = 0
     # distance for each step
     step = np.NaN
@@ -714,6 +711,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         unit_steps = np.abs(scalar//step_size_goal)
         if unit_steps == 0:
             unit_steps = 1
+        # first time through, step_size is zero
         pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time, 
                                               direction=direction,
                                               num_steps=unit_steps, 
@@ -724,14 +722,15 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         diff_mag = np.sqrt((diff ** 2).sum(axis=1))
         min_idx = np.argmin(diff_mag)
         if first:
-            # first time in while loop, create some information
-            # make a high resolution field line trace around closest distance
-            # want to take a field step size in each direction
+            # first time through, the minimum distance just determined 
+            # uses the coarse field line supplied by the user
+            # Now, make a high resolution field line trace around closest distance
+            # Take a field step size in each direction to ensure minimum is covered
             # maintain accuracy of high res trace below to be .01 km
             init = field_copy[min_idx,:]
             field_copy = full_field_line(init, time, 0.,
                                          step_size=0.01, 
-                                         max_steps=int(2.*field_step_size/.01),
+                                         max_steps=int(1.25*field_step_size/.01),
                                          recurse=False)
             # difference with position
             diff = field_copy - pos_step
@@ -740,7 +739,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
             min_idx = np.argmin(diff_mag)
             # no longer first run through
             first = False
-            # get step size to iterate along when finding minimum distance
+            # get step size for path integration
             step = diff_mag[min_idx]/3.
             step_factor = step/(2.**factor)*(-1)**factor
             
@@ -748,9 +747,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         min_dist = diff_mag[min_idx]
 
         # check how the solution is doing
-        # if well, add more distance to the total step and recheck if closer
-        # if worse, step back and try a smaller step
-        if min_dist > running_min_dist:
+        if min_dist > best_min_dist:
             # last step we took made the solution worse
             if np.abs(step_factor) < 1E-2:
                 # we've tried enough, stop looping
@@ -758,20 +755,24 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
             else:
                 # undo the last step
                 scalar = scalar - step_factor
-                # try a new increment to total distance
-                # moving the other direction
+                # decrease the size of the step
+                # and turn around
                 factor = factor + 1.
                 step_factor = step/(2.**factor)*(-1)**factor
+                # perform step
                 scalar = scalar + step_factor
         else:
-            # we have a new standard to judge against, set it
-            running_min_dist = min_dist
+            # things got better
+            # we have a new standard to judge against
+            # store it
+            best_min_dist = min_dist
             best_scalar = scalar
             best_pos_step = pos_step
-            # Try moving even closer
+            # perform another step
+            # same size, same direction
             scalar = scalar + step_factor
     # return magnitude of step
-    return best_scalar, best_pos_step, running_min_dist
+    return best_scalar, best_pos_step, best_min_dist
 
 
 def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5., 
