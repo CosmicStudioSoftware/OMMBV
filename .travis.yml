@@ -22,7 +22,7 @@ before_install:
   - pip install numpy
   - cd ..
   - echo 'cloning pysat'
-  - git clone https://github.com/jklenzing/pysat.git >/dev/null
+  - git clone https://github.com/pysat/pysat.git >/dev/null
   - echo 'installing pysat'
   - cd ./pysat
   - git checkout no_sgp4
