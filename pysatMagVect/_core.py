@@ -648,27 +648,27 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 
 def step_until_intersect(pos, field_line, sign, time,  direction=None,
-                        step_size_goal=5., 
-                        field_step_size=None):   
+                        step_size_goal=5., field_step_size=None,
+                        tol=1.E-2):   
     """Starting at pos, method steps along magnetic unit vector direction 
     towards the supplied field line trace. Determines the distance of 
     closest approach to field line.
     
     Routine is used when calculting the mapping of electric fields along 
     magnetic field lines. Voltage remains constant along the field but the 
-    distance between field lines does not.This routine may be used to form the 
+    distance between field lines does not. This routine may be used to form the 
     last leg when trying to trace out a closed field line loop.
     
-    Routine will create a high resolution field line trace (.01 km step size) 
-    around the location of closest approach (usiing the field line supplied by
+    Routine will create a high resolution field line trace (tol km step size) 
+    around the location of closest approach (using the field line supplied by
     user) to better determine where the intersection occurs. 
     
     Parameters
     ----------
     pos : array-like
-        X, Y, and Z ECEF locations to start from
+        X, Y, and Z ECEF (km) locations to start from
     field_line : array-like (:,3)
-        X, Y, and Z ECEF locations of field line trace, produced by the
+        X, Y, and Z ECEF (km) locations of field line trace, produced by the
         field_line_trace method.
     sign : int
         if 1, move along positive unit vector. Negwtive direction for -1.
@@ -679,9 +679,14 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         Which unit vector direction to move slong when trying to intersect
         with supplied field line trace. See step_along_mag_unit_vector method
         for more.
-    step_size_goal : float
+    step_size_goal : float (5 km)
         step size goal that method will try to match when stepping towards field line. 
-    
+    field_step_size : float
+        step size used (km) for the field_line supplied
+    tol : float (.01 km)
+        tolerance (uncertainty) allowed (km) for calculating closest 
+        approach distance
+        
     Returns
     -------
     (float, array, float)
@@ -729,8 +734,8 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
             # maintain accuracy of high res trace below to be .01 km
             init = field_copy[min_idx,:]
             field_copy = full_field_line(init, time, 0.,
-                                         step_size=0.01, 
-                                         max_steps=int(1.25*field_step_size/.01),
+                                         step_size=tol, 
+                                         max_steps=int(field_step_size/tol),
                                          recurse=False)
             # difference with position
             diff = field_copy - pos_step
@@ -739,7 +744,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
             min_idx = np.argmin(diff_mag)
             # no longer first run through
             first = False
-            # get step size for path integration
+            # calculate step size for path integration
             step = diff_mag[min_idx]/3.
             step_factor = step/(2.**factor)*(-1)**factor
             
@@ -749,7 +754,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         # check how the solution is doing
         if min_dist > best_min_dist:
             # last step we took made the solution worse
-            if np.abs(step_factor) < 1E-2:
+            if np.abs(step_factor) < tol:
                 # we've tried enough, stop looping
                 repeat = False
             else:
