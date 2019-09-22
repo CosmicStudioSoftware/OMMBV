@@ -1001,7 +1001,6 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         direct = -1
     elif direction == 'north':
         direct = 1
-    # print('Direction ', direction, direct)
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
@@ -1025,21 +1024,17 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         yr, doy = pysat.utils.getyrdoy(date)
         double_date = float(yr) + float(doy) / 366.
 
-        # print (glat, glon, alt)
         # trace to footpoint, starting with input location
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
-        # print('starting root ', ecef_to_geodetic(*sc_root))
         trace = field_line_trace(sc_root, double_date, direct, 120., 
                                  steps=steps,
                                  step_size=step_size, 
                                  max_steps=max_steps)
-        # print('second root ', ecef_to_geodetic(*sc_root))
         # pull out footpoint location
         ftpnt = trace[-1, :]
         ft_glat, ft_glon, ft_alt = ecef_to_geodetic(*ftpnt)
         if np.isnan([ft_glat, ft_glon, ft_alt]).any():
             raise RuntimeError('Unable to find footpoint location, NaN.')
-        # print('Footpoint geodetic position ', ft_glat, ft_glon, ft_alt)
         if ft_alt < 0:
             raise RuntimeError('Footpoint altitude negative.')
         # take step from footpoint along + vector direction
@@ -1048,7 +1043,6 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                                direction=vector_direction,
                                                num_steps=edge_steps,
                                                step_size=edge_length/edge_steps)
-        # print('plus_step', plus_step, ecef_to_geodetic(*plus_step))
         # trace this back to other footpoint
         other_plus = field_line_trace(plus_step, double_date, -1*direct, 0., 
                                       steps=steps,
@@ -1061,7 +1055,6 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                                scalar=-1,
                                                num_steps=edge_steps,
                                                step_size=edge_length/edge_steps)
-        # print('minus_step', minus_step, ecef_to_geodetic(*minus_step))
         # trace this back to other footpoint
         other_minus = field_line_trace(minus_step, double_date, -1*direct, 0., 
                                        steps=steps,
@@ -1070,18 +1063,13 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         # need to determine where the intersection of field line coming back from
         # footpoint through postive vector direction step and back
         # in relation to the vector direction from the s/c location. 
-        # print('Intersection call 1', ecef_to_geodetic(*sc_root), 
-        #                              ecef_to_geodetic(*other_plus[0,:]),
-        #                              ecef_to_geodetic(*other_plus[10,:]))
         pos_edge_length, _, mind_pos = step_until_intersect(sc_root,
                                         other_plus,
                                         1, date, 
                                         direction=vector_direction,
                                         field_step_size=step_size,
                                         step_size_goal=edge_length/edge_steps) 
-        # print('pos_edge_length', pos_edge_length, mind_pos, ecef_to_geodetic(*mind_pos))       
         # take half step from S/C along - vector direction 
-        # print('Intersection call 1', ecef_to_geodetic(*sc_root), ecef_to_geodetic(*other_plus[0,:]))
         minus_edge_length, _, mind_minus = step_until_intersect(sc_root,
                                         other_minus,
                                         -1, date, 
