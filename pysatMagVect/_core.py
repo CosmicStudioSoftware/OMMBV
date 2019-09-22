@@ -1021,7 +1021,7 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         # distances of footpoint steps, and the closet approach distance
         # we can determine the scalar mapping of one location to another
                     
-        yr, doy = pysat.utils.getyrdoy(date)
+        yr, doy = pysat.utils.time.getyrdoy(date)
         double_date = float(yr) + float(doy) / 366.
 
         # trace to footpoint, starting with input location
@@ -1159,7 +1159,7 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                                              glats, glons, alts, 
                                                              dates):
         
-        yr, doy = pysat.utils.getyrdoy(date)
+        yr, doy = pysat.utils.time.getyrdoy(date)
         double_date = float(yr) + float(doy) / 366.
                     
         # get location of apex for s/c field line
@@ -1375,7 +1375,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
         for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs, 
                                                                 glats, glons, alts, 
                                                                 dates):            
-            yr, doy = pysat.utils.getyrdoy(date)
+            yr, doy = pysat.utils.time.getyrdoy(date)
             double_date = float(yr) + float(doy) / 366.
             # get location of apex for s/c field line
             apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info(
