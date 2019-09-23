@@ -4,8 +4,6 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.x.x] - 2019-09-22
 - Added community documents
-- Updated to new travis structure
-- Fixed a bug due to new pysat code organization
 
 ## [0.4.0] - 2018-11-26
 - Testing routines have been expanded significantly.
