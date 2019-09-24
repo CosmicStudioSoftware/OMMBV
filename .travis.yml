@@ -12,6 +12,7 @@ addons:
     packages:
     - gfortran
     - libncurses5-dev
+    - python-numpy
 
 before_install:
   - pip install pytest-cov
