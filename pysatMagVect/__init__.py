@@ -13,7 +13,7 @@ else:
     igrf = None
 
 from pysatMagVect import _core
-from pysatMagVect_core import *
+from pysatMagVect._core import *
 from pysatMagVect import satellite
 
 __all__ = []
