@@ -18,6 +18,7 @@ before_install:
   - pip install coveralls
   - pip install future
   - pip install matplotlib
+  - pip install atlas
   - pip install pysatCDF >/dev/null
   # Prepare modified pysat install
   - pip install numpy
