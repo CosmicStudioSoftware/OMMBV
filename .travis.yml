@@ -1,44 +1,45 @@
 language: python
-python:
-  - "2.7"
-  - "3.6"
-sudo: false
+dist: xenial
+matrix:
+  include:
+    - python: 2.7
+    - python: 3.6
+    - python: 3.7
 
 addons:
   apt:
     packages:
     - gfortran
-    - libncurses5-dev
 
-# Setup anaconda
 before_install:
-  #- apt-get update
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-    fi
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q --yes conda
-  # Useful for debugging any issues with conda
-  - conda info -a
-
-  # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels coverage netCDF4 xarray
-
-# command to install dependencies
-install:
-  - source activate test-environment
+  - pip install pytest-cov
   - pip install coveralls
+  - pip install future
+  - pip install matplotlib
   - pip install pysatCDF >/dev/null
-  - pip install pysat
-  - "python setup.py develop"
+
+  # Prepare modified pysat install
+  - pip install numpy
+  - cd ..
+  - echo 'cloning pysat'
+  - git clone https://github.com/pysat/pysat.git >/dev/null
+  - echo 'installing pysat'
+  - cd ./pysat
+  - git checkout no_sgp4
+  # set up data directory
+  - mkdir /home/travis/build/pysat/pysatData
+  # install pysat
+  - cd /home/travis/build/pysat/pysat
+  - python setup.py install >/dev/null
+
+install:
+  # install pysatMagVect
+  - cd /home/travis/build/pysat/pysatMagVect
+  - python setup.py develop
+
 # command to run tests
-script: 
+script:
   - nosetests  -vs --with-coverage --cover-package=pysatMagVect
-  #coverage run --source=pysat setup.py test
+
 after_success:
-  coveralls
+  - coveralls
