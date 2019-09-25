@@ -11,7 +11,7 @@ if not on_rtd:
     from pysatMagVect import igrf
 else:
     igrf = None
-    
+
 from pysatMagVect import _core
 from pysatMagVect._core import *
 from pysatMagVect import satellite

@@ -8,13 +8,13 @@ contributions.
 Short version
 =============
 
-* Submit bug reports and feature requests at `GitHub <https://github.com/rstoneback/pysatMagVect/issues>`_
+* Submit bug reports and feature requests at `GitHub <https://github.com/pysat/pysatMagVect/issues>`_
 * Make pull requests to the ``develop`` branch
 
 Bug reports
 ===========
 
-When `reporting a bug <https://github.com/rstoneback/pysatMagVect/issues>`_ please
+When `reporting a bug <https://github.com/pysat/pysatMagVect/issues>`_ please
 include:
 
 * Your operating system name and version
@@ -25,7 +25,7 @@ Feature requests and feedback
 =============================
 
 The best way to send feedback is to file an issue at
-`GitHub <https://github.com/rstoneback/pysatMagVect/issues>`_.
+`GitHub <https://github.com/pysat/pysatMagVect/issues>`_.
 
 If you are proposing a feature:
 
@@ -39,7 +39,7 @@ Development
 
 To set up `pysat` for local development:
 
-1. `Fork pysat on GitHub <https://github.com/rstoneback/pysatMagVect/fork>`_.
+1. `Fork pysat on GitHub <https://github.com/pysat/pysatMagVect/fork>`_.
 2. Clone your fork locally::
 
     git clone git@github.com:your_name_here/pysatMagVect.git
