@@ -739,7 +739,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         doy = (time - datetime.datetime(time.year,1,1)).days
         # number of days in year, works for leap years
         num_doy_year = (datetime.datetime(time.year+1,1,1) - datetime.datetime(time.year,1,1)).days
-        date = time.year + float(doy)/float(num_doy_year) + (time.hour + time.minute/60. + time.second/3600.)/24.
+        date = time.year + float(doy)/float(num_doy_year+1) 
+        date += (time.hour + time.minute/60. + time.second/3600.)/24./float(num_doy_year+1) 
         # get IGRF field components
         # tbn, tbe, tbd, tbmag are in nT
         tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 2, alt, colat, elong)
