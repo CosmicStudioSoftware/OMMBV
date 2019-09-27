@@ -562,26 +562,21 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
                                                 altitude, np.deg2rad(90. - latitude),
                                                 np.deg2rad(longitude), datetimes):
         init = np.array([x, y, z])
-        # date = inst.yr + inst.doy / 366.
-        # trace = full_field_line(init, time, ref_height, step_size=step_size, 
-        #                                                 max_steps=max_steps,
-        #                                                 steps=steps)
-        trace_north = field_line_trace(init, time, 1., ref_height, steps=steps,
-                                        step_size=step_size, max_steps=max_steps)
-        trace_south = field_line_trace(init, time, -1., ref_height, steps=steps,
-                                        step_size=step_size, max_steps=max_steps)
+        trace = full_field_line(init, time, ref_height, step_size=step_size, 
+                                                        max_steps=max_steps,
+                                                        steps=steps)
         # store final location, full trace goes south to north
-        trace_north = trace_north[-1, :]
-        trace_south = trace_south[-1, :]
-        # magnetic field at spacecraft location, using geocentric inputs
-        # to get magnetic field in geocentric output
+        trace_north = trace[-1, :]
+        trace_south = trace[0, :]
         # recast from datetime to float, as required by IGRF12 code
         doy = (time - datetime.datetime(time.year,1,1)).days
         # number of days in year, works for leap years
         num_doy_year = (datetime.datetime(time.year+1,1,1) - datetime.datetime(time.year,1,1)).days
-        date = time.year + float(doy)/float(num_doy_year) + (time.hour + time.minute/60. + time.second/3600.)/24.
+        date = time.year + float(doy)/float(num_doy_year+1) 
+        date += (time.hour + time.minute/60. + time.second/3600.)/24./float(num_doy_year+1) 
         # get IGRF field components
         # tbn, tbe, tbd, tbmag are in nT
+        # geodetic input
         tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 1, alt, colat, elong)
         
         # collect outputs
@@ -723,16 +718,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                 np.deg2rad(longitude), datetimes):
         init = np.array([x, y, z])
         # date = inst.yr + inst.doy / 366.
-        # trace = full_field_line(init, time, ref_height, step_size=step_size, 
-        #                                                 max_steps=max_steps,
-        #                                                 steps=steps)
-        trace_north = field_line_trace(init, time, 1., ref_height, steps=steps,
-                                        step_size=step_size, max_steps=max_steps)
-        trace_south = field_line_trace(init, time, -1., ref_height, steps=steps,
-                                        step_size=step_size, max_steps=max_steps)
+        trace = full_field_line(init, time, ref_height, step_size=step_size, 
+                                                        max_steps=max_steps,
+                                                        steps=steps)
         # store final location, full trace goes south to north
-        trace_north = trace_north[-1, :]
-        trace_south = trace_south[-1, :]
+        trace_north = trace[-1, :]
+        trace_south = trace[0, :]
         # magnetic field at spacecraft location, using geocentric inputs
         # to get magnetic field in geocentric output
         # recast from datetime to float, as required by IGRF12 code
@@ -743,7 +734,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         date += (time.hour + time.minute/60. + time.second/3600.)/24./float(num_doy_year+1) 
         # get IGRF field components
         # tbn, tbe, tbd, tbmag are in nT
-        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 2, alt, colat, elong)
+        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 1, alt, colat, elong)
         
         # collect outputs
         south_x.append(trace_south[0])
