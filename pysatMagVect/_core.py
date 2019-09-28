@@ -685,9 +685,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Tolerance goal for the magnitude of the change in unit vectors per loop
     max_loops : int
         Maximum number of iterations
-    angle_tol : float
-        Tolerance goal for the rotation angle difference between aligning
-        unit vectors along zero and maximum gradients.
     max_steps : int
         Deprecated
     ref_height : float
