@@ -1,11 +1,10 @@
-from . import *
+import pysatMagVect as pymv
 
-def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size=10.,
-                                    ref_height=120.):
+def add_mag_drift_unit_vectors_ecef(inst, step_size=.01):
     """Adds unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
-    
+
     Parameters
     ----------
     inst : pysat.Instrument
@@ -14,25 +13,23 @@ def add_mag_drift_unit_vectors_ecef(inst, steps=None, max_steps=40000, step_size
         Maximum number of steps allowed for field line tracing
     step_size : float
         Maximum step size (km) allowed when field line tracing
-    ref_height : float
-        Altitude used as cutoff for labeling a field line location a footpoint
-        
+
     Returns
     -------
     None
-        unit vectors are added to the passed Instrument object with a naming 
+        unit vectors are added to the passed Instrument object with a naming
         scheme:
             'unit_zon_ecef_*' : unit zonal vector, component along ECEF-(X,Y,or Z)
             'unit_fa_ecef_*' : unit field-aligned vector, component along ECEF-(X,Y,or Z)
             'unit_mer_ecef_*' : unit meridional vector, component along ECEF-(X,Y,or Z)
-            
+
     """
 
     # add unit vectors for magnetic drifts in ecef coordinates
-    zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(inst['latitude'], 
+    zvx, zvy, zvz, bx, by, bz, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef(inst['latitude'],
                                                             inst['longitude'], inst['altitude'], inst.data.index,
-                                                            steps=steps, max_steps=max_steps, step_size=step_size, ref_height=ref_height)
-    
+                                                            step_size=step_size)
+
     inst['unit_zon_ecef_x'] = zvx
     inst['unit_zon_ecef_y'] = zvy
     inst['unit_zon_ecef_z'] = zvz
@@ -172,13 +169,13 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
     """Add unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in S/C coordinates.
-    
-    Interally, routine calls add_mag_drift_unit_vectors_ecef. 
+
+    Interally, routine calls add_mag_drift_unit_vectors_ecef.
     See function for input parameter description.
     Requires the orientation of the S/C basis vectors in ECEF using naming,
     'sc_xhat_x' where *hat (*=x,y,z) is the S/C basis vector and _* (*=x,y,z)
-    is the ECEF direction. 
-    
+    is the ECEF direction.
+
     Parameters
     ----------
     inst : pysat.Instrument object
@@ -187,28 +184,28 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
         Maximum number of steps taken for field line integration
     step_size : float
         Maximum step size (km) allowed for field line tracer
-    
+
     Returns
     -------
     None
         Modifies instrument object in place. Adds 'unit_zon_*' where * = x,y,z
         'unit_fa_*' and 'unit_mer_*' for zonal, field aligned, and meridional
         directions. Note that vector components are expressed in the S/C basis.
-        
+
     """
 
     # vectors are returned in geo/ecef coordinate system
     add_mag_drift_unit_vectors_ecef(inst, max_steps=max_steps, step_size=step_size)
     # convert them to S/C using transformation supplied by OA
-    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = project_ecef_vector_onto_basis(inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
+    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = pymv.project_ecef_vector_onto_basis(inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
                                                                                                 inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
                                                                                                 inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
                                                                                                 inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = project_ecef_vector_onto_basis(inst['unit_fa_ecef_x'], inst['unit_fa_ecef_y'], inst['unit_fa_ecef_z'],
+    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = pymv.project_ecef_vector_onto_basis(inst['unit_fa_ecef_x'], inst['unit_fa_ecef_y'], inst['unit_fa_ecef_z'],
                                                                                                 inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
                                                                                                 inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
                                                                                                 inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = project_ecef_vector_onto_basis(inst['unit_mer_ecef_x'], inst['unit_mer_ecef_y'], inst['unit_mer_ecef_z'],
+    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = pymv.project_ecef_vector_onto_basis(inst['unit_mer_ecef_x'], inst['unit_mer_ecef_y'], inst['unit_mer_ecef_z'],
                                                                                                 inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
                                                                                                 inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
                                                                                                 inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
@@ -224,7 +221,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
                                           'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                 'scale': 'linear',
                                 'units': '',
-                               'value_min':-1., 
+                               'value_min':-1.,
                                'value_max':1}
     inst.meta['unit_zon_y'] = {'long_name':'Zonal direction along IVM-y',
                                 'desc': 'Unit vector for the zonal geomagnetic direction.',
@@ -237,7 +234,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
                                           'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                 'scale': 'linear',
                                 'units': '',
-                               'value_min':-1., 
+                               'value_min':-1.,
                                'value_max':1}
     inst.meta['unit_zon_z'] = {'long_name':'Zonal direction along IVM-z',
                                 'desc': 'Unit vector for the zonal geomagnetic direction.',
@@ -250,7 +247,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
                                           'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                 'scale': 'linear',
                                 'units': '',
-                               'value_min':-1., 
+                               'value_min':-1.,
                                'value_max':1}
 
     inst.meta['unit_fa_x'] = {'long_name':'Field-aligned direction along IVM-x',
@@ -264,7 +261,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
                                           'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                 'scale': 'linear',
                                 'units': '',
-                               'value_min':-1., 
+                               'value_min':-1.,
                                'value_max':1}
     inst.meta['unit_fa_y'] = {'long_name':'Field-aligned direction along IVM-y',
                                 'desc': 'Unit vector for the geomagnetic field line direction.',
@@ -277,7 +274,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
                                           'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                 'scale': 'linear',
                                 'units': '',
-                               'value_min':-1., 
+                               'value_min':-1.,
                                'value_max':1}
     inst.meta['unit_fa_z'] = {'long_name':'Field-aligned direction along IVM-z',
                                 'desc': 'Unit vector for the geomagnetic field line direction.',
@@ -290,7 +287,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
                                           'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                 'scale': 'linear',
                                 'units': '',
-                               'value_min':-1., 
+                               'value_min':-1.,
                                'value_max':1}
 
     inst.meta['unit_mer_x'] = {'long_name':'Meridional direction along IVM-x',
@@ -306,7 +303,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
                                           'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                 'scale': 'linear',
                                 'units': '',
-                               'value_min':-1., 
+                               'value_min':-1.,
                                'value_max':1}
     inst.meta['unit_mer_y'] = {'long_name':'Meridional direction along IVM-y',
                                 'desc': 'Unit vector for the geomagnetic meridional direction.',
@@ -321,7 +318,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
                                           'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                 'scale': 'linear',
                                 'units': '',
-                               'value_min':-1., 
+                               'value_min':-1.,
                                'value_max':1}
     inst.meta['unit_mer_z'] = {'long_name':'Meridional direction along IVM-z',
                                 'desc': 'Unit vector for the geomagnetic meridional direction.',
@@ -336,7 +333,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
                                           'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                 'scale': 'linear',
                                 'units': '',
-                               'value_min':-1., 
+                               'value_min':-1.,
                                'value_max':1}
 
     return
@@ -345,26 +342,26 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
 def add_mag_drifts(inst):
     """Adds ion drifts in magnetic coordinates using ion drifts in S/C coordinates
     along with pre-calculated unit vectors for magnetic coordinates.
-    
+
     Note
     ----
         Requires ion drifts under labels 'iv_*' where * = (x,y,z) along with
         unit vectors labels 'unit_zonal_*', 'unit_fa_*', and 'unit_mer_*',
         where the unit vectors are expressed in S/C coordinates. These
         vectors are calculated by add_mag_drift_unit_vectors.
-    
+
     Parameters
     ----------
     inst : pysat.Instrument
         Instrument object will be modified to include new ion drift magnitudes
-        
+
     Returns
     -------
     None
         Instrument object modified in place
-    
+
     """
-    
+
     inst['iv_zon'] = {'data':inst['unit_zon_x'] * inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
                       'units':'m/s',
                       'long_name':'Zonal ion velocity',
@@ -378,9 +375,9 @@ def add_mag_drifts(inst):
                       'axis': 'Zonal Ion Velocity',
                       'desc': 'Zonal ion velocity',
                       'scale': 'Linear',
-                      'value_min':-500., 
+                      'value_min':-500.,
                       'value_max':500.}
-                      
+
     inst['iv_fa'] = {'data':inst['unit_fa_x'] * inst['iv_x'] + inst['unit_fa_y'] * inst['iv_y'] + inst['unit_fa_z'] * inst['iv_z'],
                       'units':'m/s',
                       'long_name':'Field-Aligned ion velocity',
@@ -393,7 +390,7 @@ def add_mag_drifts(inst):
                       'axis':'Field-Aligned Ion Velocity',
                       'desc':'Field-Aligned Ion Velocity',
                       'scale':'Linear',
-                      'value_min':-500., 
+                      'value_min':-500.,
                       'value_max':500.}
 
     inst['iv_mer'] = {'data':inst['unit_mer_x'] * inst['iv_x'] + inst['unit_mer_y']*inst['iv_y'] + inst['unit_mer_z']*inst['iv_z'],
@@ -409,9 +406,9 @@ def add_mag_drifts(inst):
                       'axis':'Meridional Ion Velocity',
                       'desc':'Meridional Ion Velocity',
                       'scale':'Linear',
-                      'value_min':-500., 
+                      'value_min':-500.,
                       'value_max':500.}
-    
+
     return
 
 
@@ -429,13 +426,13 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
         Presumes scalar values for mapping ion velocities are already in the inst, labeled
         by north_footpoint_zon_drifts_scalar, north_footpoint_mer_drifts_scalar,
         equ_mer_drifts_scalar, equ_zon_drifts_scalar.
-    
+
         Also presumes that ion motions in the geomagnetic system are present and labeled
         as 'iv_mer' and 'iv_zon' for meridional and zonal ion motions.
-        
+
         This naming scheme is used by the other pysat oriented routines
         in this package.
-    
+
     Parameters
     ----------
     inst : pysat.Instrument
@@ -455,7 +452,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
         Label used to identify meridional ion drifts within inst
     zon_drift : string
         Label used to identify zonal ion drifts within inst
-        
+
     Returns
     -------
     None
@@ -486,7 +483,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'axis':'Equatorial Meridional Ion Velocity',
                             'desc':'Equatorial Meridional Ion Velocity',
                             'scale':'Linear',
-                            'value_min':-500., 
+                            'value_min':-500.,
                             'value_max':500.}
 
     inst['equ_zon_drift'] = {'data' : inst[equ_zonal_scalar]*inst[zon_drift],
@@ -510,7 +507,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'axis':'Equatorial Zonal Ion Velocity',
                             'desc':'Equatorial Zonal Ion Velocity',
                             'scale':'Linear',
-                            'value_min':-500., 
+                            'value_min':-500.,
                             'value_max':500.}
 
     inst['south_footpoint_mer_drift'] = {'data' : inst[south_mer_scalar]*inst[mer_drift],
@@ -534,7 +531,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'axis':'Southern Meridional Ion Velocity',
                             'desc':'Southern Meridional Ion Velocity',
                             'scale':'Linear',
-                            'value_min':-500., 
+                            'value_min':-500.,
                             'value_max':500.}
 
     inst['south_footpoint_zon_drift'] = {'data':inst[south_zon_scalar]*inst[zon_drift],
@@ -558,7 +555,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'axis':'Southern Zonal Ion Velocity',
                             'desc':'Southern Zonal Ion Velocity',
                             'scale':'Linear',
-                            'value_min':-500., 
+                            'value_min':-500.,
                             'value_max':500.}
 
     inst['north_footpoint_mer_drift'] = {'data':inst[north_mer_scalar]*inst[mer_drift],
@@ -582,7 +579,7 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'axis':'Northern Meridional Ion Velocity',
                             'desc':'Northern Meridional Ion Velocity',
                             'scale':'Linear',
-                            'value_min':-500., 
+                            'value_min':-500.,
                             'value_max':500.}
 
     inst['north_footpoint_zon_drift'] = {'data':inst[north_zon_scalar]*inst[zon_drift],
@@ -606,5 +603,5 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
                             'axis':'Northern Zonal Ion Velocity',
                             'desc':'Northern Zonal Ion Velocity',
                             'scale':'Linear',
-                            'value_min':-500., 
+                            'value_min':-500.,
                             'value_max':500.}
