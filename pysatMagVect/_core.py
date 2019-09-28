@@ -645,7 +645,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=.01, tol=.0001, max_loops=10,
+                                          step_size=.01, tol=.0001, max_loops=30,
                                           max_steps=None, ref_height=None):
     """Calculates local geomagnetic unit vectors expressing the ion drift
     coordinate system organized by the geomagnetic field. Unit vectors are expressed
@@ -1013,7 +1013,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
         lat, lon, alt = ecef_to_geodetic(x, y, z)
         # get unit vector directions
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(
-                                                        [lat], [lon], [alt], [date],
+                                                        lat, lon, alt, [date],
                                                         step_size=step_size)
         # pull out the direction we need
         if direction == 'meridional':
