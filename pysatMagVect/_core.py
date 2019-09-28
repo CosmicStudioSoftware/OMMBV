@@ -700,10 +700,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         raise DeprecationWarning('max_steps is no longer supported.')
     if ref_height is not None:
         raise DeprecationWarning('ref_height is no longer supported.')
-
+    if step_size <= 0:
+        raise ValueError('Step Size must be greater than 0.')
     # loop counter
     loop_num = 0
 
+    # convert inputs to arrays
     latitude = np.array(latitude)
     longitude = np.array(longitude)
     altitude = np.array(altitude)
@@ -822,7 +824,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             repeat_flag = False
         loop_num += 1
         if loop_num > max_loops:
-            raise RuntimeError("Didn't converge after reaching max_loops")
+            raise RuntimeWarning("Didn't converge after reaching max_loops")
+            tzx, tzy, tzz = np.nan*tzx, np.nan*tzy, np.nan*tzz
+            tmx, tmy, tmz = np.nan*tzx, np.nan*tzy, np.nan*tzz
 
     zx, zy, zz = tzx, tzy, tzz
     mx, my, mz = tmx, tmy, tmz
@@ -882,7 +886,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
     # set a high last minimum distance to ensure first loop does better than this
     best_min_dist = 2500000.
     # scalar is the distance along unit vector line that we are taking
-    scalar = 0.
+    scalar = 1.E-3
     # repeat boolean
     repeat = True
     # first run boolean
