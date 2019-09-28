@@ -643,8 +643,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          steps=None, max_steps=1000, step_size=100.,
-                                          ref_height=120., filter_zonal=True):
+                                          step_size=.01, tol=.0001, max_loops=10):
     """Calculates unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -670,15 +669,13 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Altitude of location, height above surface, WGS84
     datetimes : array-like of datetimes
         Time to calculate vectors
-    max_steps : int
-        Maximum number of steps allowed for field line tracing
     step_size : float
-        Maximum step size (km) allowed when field line tracing
-    ref_height : float
-        Altitude used as cutoff for labeling a field line location a footpoint
-    filter_zonal : bool
-        If True, removes any field aligned component from the calculated
-        zonal unit vector. Resulting coordinate system is not-orthogonal.
+        Step size (km) when calculating changes in apex height
+    tol : float
+        Change in rotation angle when determining unit vectors must be less
+        than tol
+    max_loops : int
+        Maximum number of iterations
         
     Returns
     -------
@@ -686,8 +683,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             
     """
 
-    if steps is None:
-        steps = np.arange(max_steps)
+    loop_num = 0
+
     latitude = np.array(latitude)
     longitude = np.array(longitude)
     altitude = np.array(altitude)
@@ -697,33 +694,18 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # also get position in geocentric coordinates
     geo_lat, geo_long, geo_alt = ecef_to_geocentric(ecef_x, ecef_y, ecef_z, 
                                                     ref_height=0.)
-    # geo_lat, geo_long, geo_alt = ecef_to_geodetic(ecef_x, ecef_y, ecef_z)
-
     # filter longitudes (could use pysat's function here)
-    idx, = np.where(geo_long < 0)
-    geo_long[idx] = geo_long[idx] + 360.
+    idx, = np.where(geo_long > 180)
+    geo_long[idx] = geo_long[idx] - 360.
     # prepare output lists
-    north_x = [];
-    north_y = [];
-    north_z = []
-    south_x = [];
-    south_y = [];
-    south_z = []
     bn = [];
     be = [];
     bd = []
 
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z, 
                                                 altitude, np.deg2rad(90. - latitude),
-                                                np.deg2rad(longitude), datetimes):
-        init = np.array([x, y, z])
-        # date = inst.yr + inst.doy / 366.
-        trace = full_field_line(init, time, ref_height, step_size=step_size, 
-                                                        max_steps=max_steps,
-                                                        steps=steps)
-        # store final location, full trace goes south to north
-        trace_north = trace[-1, :]
-        trace_south = trace[0, :]
+                                                np.deg2rad(longitude), datetimes):              
+        # get field aligned vector
         # magnetic field at spacecraft location, using geocentric inputs
         # to get magnetic field in geocentric output
         # recast from datetime to float, as required by IGRF12 code
@@ -737,66 +719,75 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 1, alt, colat, elong)
         
         # collect outputs
-        south_x.append(trace_south[0])
-        south_y.append(trace_south[1])
-        south_z.append(trace_south[2])
-        north_x.append(trace_north[0])
-        north_y.append(trace_north[1])
-        north_z.append(trace_north[2])
-
         bn.append(tbn);
         be.append(tbe);
         bd.append(tbd)
 
-    north_x = np.array(north_x)
-    north_y = np.array(north_y)
-    north_z = np.array(north_z)
-    south_x = np.array(south_x)
-    south_y = np.array(south_y)
-    south_z = np.array(south_z)
     bn = np.array(bn)
     be = np.array(be)
     bd = np.array(bd)
 
-    # calculate vector from satellite to northern/southern footpoints
-    north_x = north_x - ecef_x
-    north_y = north_y - ecef_y
-    north_z = north_z - ecef_z
-    north_x, north_y, north_z = normalize_vector(north_x, north_y, north_z)
-    south_x = south_x - ecef_x
-    south_y = south_y - ecef_y
-    south_z = south_z - ecef_z
-    south_x, south_y, south_z = normalize_vector(south_x, south_y, south_z)
     # calculate magnetic unit vector
     bx, by, bz = enu_to_ecef_vector(be, bn, -bd, geo_lat, geo_long)
     bx, by, bz = normalize_vector(bx, by, bz)
     
-    # take cross product of southward and northward vectors to get the zonal vector
-    zvx_foot, zvy_foot, zvz_foot = cross_product(south_x, south_y, south_z,
-                                                 north_x, north_y, north_z)  
-    # normalize the vectors
-    norm_foot = np.sqrt(zvx_foot ** 2 + zvy_foot ** 2 + zvz_foot ** 2)
+    # get apex location for root point
+    _, _, _, _, _, apex_root = apex_location_info(latitude, longitude, altitude, datetimes)
     
-    # calculate zonal vector
-    zvx = zvx_foot / norm_foot
-    zvy = zvy_foot / norm_foot
-    zvz = zvz_foot / norm_foot
+    repeat_flag = True
+    # need a vector perpendicular to mag field
+    # infinitely many, I'll pick one where z component zero
+    tzx, tzy, tzz = -by, bx, 0.*bx
+    tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
+    # need another perpendicular vector to both
+    tmx, tmy, tmz = cross_product(tzx, tzy, tzz, bx, by, bz)
     
-    if filter_zonal:
-        # print ("Making magnetic vectors orthogonal")
-        # remove any field aligned component to the zonal vector
-        dot_fa = zvx * bx + zvy * by + zvz * bz
-        zvx -= dot_fa * bx
-        zvy -= dot_fa * by
-        zvz -= dot_fa * bz
-        zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
-
-    # compute meridional vector
-    # cross product of zonal and magnetic unit vector
-    mx, my, mz = cross_product(zvx, zvy, zvz,
-                               bx, by, bz)
+    while repeat_flag:
+        
+        # get apex field height location info for both places
+        # after taking step along these directions
+        # zonal-ish direction
+        ecef_xz, ecef_yz, ecef_zz = ecef_x + step_size*tzx, ecef_y + step_size*tzy, ecef_z + step_size*tzz
+        geo_lat_z, geo_long_z, geo_alt_z = ecef_to_geodetic(ecef_xz, ecef_yz, ecef_zz)
+        _, _, _, _, _, apex_z = apex_location_info(geo_lat_z, geo_long_z, geo_alt_z, datetimes)
+        diff_apex_z = apex_z - apex_root
+        # meridional-ish direction
+        ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*tmx, ecef_y + step_size*tmy, ecef_z + step_size*tmz
+        geo_lat_m, geo_long_m, geo_alt_m = ecef_to_geodetic(ecef_xm, ecef_ym, ecef_zm)
+        _, _, _, _, _, apex_m = apex_location_info(geo_lat_m, geo_long_m, geo_alt_m, datetimes)
+        diff_apex_m = apex_m - apex_root
+    
+        # rotation angle
+        theta = np.arctan2(diff_apex_z, diff_apex_m)
+        # precalculate some info
+        ct = np.cos(theta)
+        st = np.sin(theta)
+        # zonal vector
+        tzx2, tzy2, tzz2 = tzx*ct - tmx*st, tzy*ct - tmy*st, tzz*ct - tmz*st        
+        # meridional vector
+        tmx2, tmy2, tmz2 = tmx*ct + tzx*st, tmy*ct + tzy*st, tmz*ct + tzz*st
+        # track difference
+        dx, dy, dz = (tzx2 - tzx)**2, (tzy2 - tzy)**2, (tzz2 - tzz)**2
+        diff = np.sqrt(dx + dy + dz)
+        dx, dy, dz = (tmx2 - tmx)**2, (tmy2 - tmy)**2, (tmz2 - tmz)**2
+        diff2 = np.sqrt(dx + dy + dz)
+        # take biggest difference
+        diff = np.max([diff, diff2])
+        
+        # store info into calculation vectors to refine neext loop
+        tzx, tzy, tzz = tzx2, tzy2, tzz2
+        tmx, tmy, tmz = tmx2, tmy2, tmz2
+        # check if we are done
+        if diff < tol:
+            repeat_flag = False 
+        loop_num += 1
+        if loop_num > max_loops:
+            raise RuntimeError("Didn't converge before reaching max_loops")
+        
+    zx, zy, zz = tzx, tzy, tzz
+    mx, my, mz = tmx, tmy, tmz
     # add unit vectors for magnetic drifts in ecef coordinates
-    return zvx, zvy, zvz, bx, by, bz, mx, my, mz
+    return zx, zy, zz, bx, by, bz, mx, my, mz
 
 def step_until_intersect(pos, field_line, sign, time,  direction=None,
                         step_size_goal=5., field_step_size=None,
@@ -970,23 +961,13 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
     
     """
     
-    
-    # set parameters for the field line tracing routines
-    field_step_size = 100.
-    field_max_steps = 1000
-    field_steps = np.arange(field_max_steps)
-    
     for i in np.arange(num_steps):
         # x, y, z in ECEF
         # convert to geodetic
         lat, lon, alt = ecef_to_geodetic(x, y, z)
         # get unit vector directions
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(
-                                                        [lat], [lon], [alt], [date],
-                                                        steps=field_steps, 
-                                                        max_steps=field_max_steps, 
-                                                        step_size=field_step_size, 
-                                                        ref_height=0.)
+                                                        [lat], [lon], [alt], [date])
         # pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
