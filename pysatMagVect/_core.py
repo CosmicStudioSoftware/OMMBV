@@ -645,7 +645,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=.01, tol=.0001, max_loops=30,
+                                          step_size=.01, tol=.001, max_loops=100,
                                           max_steps=None, ref_height=None):
     """Calculates local geomagnetic unit vectors expressing the ion drift
     coordinate system organized by the geomagnetic field. Unit vectors are expressed
@@ -888,7 +888,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
     # set a high last minimum distance to ensure first loop does better than this
     best_min_dist = 2500000.
     # scalar is the distance along unit vector line that we are taking
-    scalar = 1.E-3
+    scalar = 1.
     # repeat boolean
     repeat = True
     # first run boolean
@@ -904,7 +904,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         unit_steps = np.abs(scalar//step_size_goal)
         if unit_steps == 0:
             unit_steps = 1
-        # first time through, step_size is zero
+        # first time through, step_size is 1
         pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time,
                                               direction=direction,
                                               num_steps=unit_steps,
@@ -1359,7 +1359,7 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                           step_size=edge_length/edge_steps)
         plus_lat, plus_lon, plus_alt = ecef_to_geodetic(*plus)
         plus_apex_x, plus_apex_y, plus_apex_z, plus_apex_lat, plus_apex_lon, plus_apex_alt = \
-                    apex_location_info([plus_lat], [plus_lon], [plus_alt], [date])
+                    apex_location_info(plus_lat, plus_lon, plus_alt, [date])
         # plus apex location in ECEF
         plus_apex_root = np.array([plus_apex_x[0], plus_apex_y[0], plus_apex_z[0]])
 
@@ -1372,7 +1372,7 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                                step_size=edge_length/edge_steps)
         minus_lat, minus_lon, minus_alt = ecef_to_geodetic(*minus)
         minus_apex_x, minus_apex_y, minus_apex_z, minus_apex_lat, minus_apex_lon, minus_apex_alt = \
-                    apex_location_info([minus_lat], [minus_lon], [minus_alt], [date])
+                    apex_location_info(minus_lat, minus_lon, minus_alt, [date])
         minus_apex_root = np.array([minus_apex_x[0], minus_apex_y[0], minus_apex_z[0]])
 
         # take difference in apex locations
