@@ -1031,12 +1031,13 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
     return np.array([x, y, z])
 
 
-def apex_location_info(glats, glons, alts, dates):
+def apex_location_info(glats, glons, alts, dates, step_size=100.,
+                       fine_step_size=.01):
     """Determine apex location for the field line passing through input point.
 
-    Employs a two stage method. A broad step (100 km) field line trace spanning
+    Employs a two stage method. A broad step (step_size) field line trace spanning
     Northern/Southern footpoints is used to find the location with the largest
-    geodetic (WGS84) height. A higher resolution trace (.1 km) is then used to
+    geodetic (WGS84) height. A higher resolution trace (fine_step_size) is then used to
     get a better fix on this location. Greatest geodetic height is once again
     selected.
 
@@ -1050,6 +1051,10 @@ def apex_location_info(glats, glons, alts, dates):
         Geodetic (WGS84) altitude, height above surface
     dates : list-like of datetimes
         Date and time for determination of scalars
+    step_size : float (100. km)
+        Step size (km) used for tracing coarse field line
+    fine_step_size : float (.01 km)
+        Fine step size for refining apex location height
 
     Returns
     -------
@@ -1064,11 +1069,9 @@ def apex_location_info(glats, glons, alts, dates):
     # use input location and convert to ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
     # prepare parameters for field line trace
-    step_size = 100.
     max_steps = 1000
     steps = np.arange(max_steps)
     # high resolution trace parameters
-    fine_step_size = .01
     fine_max_steps = int(step_size/fine_step_size)+10
     fine_steps = np.arange(fine_max_steps)
     # prepare output
@@ -1101,6 +1104,7 @@ def apex_location_info(glats, glons, alts, dates):
         tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
         # determine location that is highest with respect to the geodetic Earth
         max_idx = np.argmax(talt)
+        # print(talt[1]-talt[0])
         # collect outputs
         out_x.append(trace[max_idx,0])
         out_y.append(trace[max_idx,1])
