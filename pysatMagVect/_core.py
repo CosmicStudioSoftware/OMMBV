@@ -109,8 +109,10 @@ def geodetic_to_ecef(latitude, longitude, altitude):
 
     return x, y, z
 
+import pysatMagVect.fortran_coords
+ecef_to_geodetic = pysatMagVect.fortran_coords.ecef_to_geodetic
 
-def ecef_to_geodetic(x, y, z, method=None):
+def python_ecef_to_geodetic(x, y, z, method=None):
     """Convert ECEF into Geodetic WGS84 coordinates
 
     Parameters

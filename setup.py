@@ -11,6 +11,9 @@ from numpy.distutils.core import setup, Extension
 # create extension for calling IGRF
 extensions = [Extension(name='pysatMagVect.igrf',
                         sources = [os.path.join('pysatMagVect', 'igrf12.f')])]
+# create extension for calling IGRF
+extensions = [Extension(name='pysatMagVect.fortran_coords',
+                        sources = [os.path.join('pysatMagVect', '_coords.f')])]
 
 here = os.path.abspath(os.path.dirname(__file__))
 #with open(path.join(here, 'description.txt'), encoding='utf-8') as f:
