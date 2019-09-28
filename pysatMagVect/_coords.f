@@ -6,7 +6,7 @@
       ! h is the geodetic altitude, returned in km
 
       ! pos is (x,y,z) in ECEF coordinates
-      INTEGER num
+      INTEGER num, i
       real*8 posx(num), posy(num), posz(num)
       real*8 a,b,ellip,e2,p,e_prime,theta,r_n
       real*8 lon(num), latitude(num), h(num)
@@ -50,9 +50,9 @@ Cf2py integer intent(hide) num=shape(posx)
          if (posy(i).gt.0) lon(i)=lon(i)+pi/2.D0
          if (posy(i).lt.0) lon(i)=lon(i)-pi/2.D0
       end if
-      a=180.D0/pi
-      latitude(i)=latitude(i)*a
-      lon(i)=lon(i)*a
+      p=180.D0/pi
+      latitude(i)=latitude(i)*p
+      lon(i)=lon(i)*p
       end do
 
       return
