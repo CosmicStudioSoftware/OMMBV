@@ -967,7 +967,8 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
         lat, lon, alt = ecef_to_geodetic(x, y, z)
         # get unit vector directions
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(
-                                                        [lat], [lon], [alt], [date])
+                                                        [lat], [lon], [alt], [date],
+                                                        step_size=step_size)
         # pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
