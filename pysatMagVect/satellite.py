@@ -165,7 +165,7 @@ def add_mag_drift_unit_vectors_ecef(inst, step_size=.01):
     return
 
 
-def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
+def add_mag_drift_unit_vectors(inst, step_size=0.01):
     """Add unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in S/C coordinates.
@@ -195,7 +195,7 @@ def add_mag_drift_unit_vectors(inst, max_steps=40000, step_size=10.):
     """
 
     # vectors are returned in geo/ecef coordinate system
-    add_mag_drift_unit_vectors_ecef(inst, max_steps=max_steps, step_size=step_size)
+    add_mag_drift_unit_vectors_ecef(inst, step_size=step_size)
     # convert them to S/C using transformation supplied by OA
     inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = pymv.project_ecef_vector_onto_basis(inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
                                                                                                 inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
