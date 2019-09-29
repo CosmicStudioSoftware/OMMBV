@@ -645,7 +645,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=.12, tol=.0001, max_loops=50,
+                                          step_size=.12, tol=.0001, max_loops=100,
                                           max_steps=None, ref_height=None):
     """Calculates local geomagnetic unit vectors expressing the ion drift
     coordinate system organized by the geomagnetic field. Unit vectors are expressed
@@ -1032,7 +1032,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
 
 
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
-                       fine_step_size=.1):
+                       fine_step_size=0.2):
     """Determine apex location for the field line passing through input point.
 
     Employs a two stage method. A broad step (step_size) field line trace spanning
