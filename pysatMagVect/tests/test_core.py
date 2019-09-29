@@ -388,6 +388,87 @@ class TestCore():
         except:
             pass
 
+    def test_apex_info_accuracy(self):
+
+        lats, longs, alts = gen_trace_data_fixed_alt(550.)
+        ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats,
+                                                  longs,
+                                                  alts)
+        # step size to be tried
+        fine_steps_goal = np.array([10., 5., 3., 1., .5,  .3, .1, .05, .03, .01, 0.005, 0.003, 0.001])
+
+        date = datetime.datetime(2000, 1, 1)
+        dx = []
+        dy = []
+        dz = []
+        dh = []
+
+        # set up multi
+        # if self.dc is not None:
+        if False:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for lat, lon, alt in zip(lats, longs, alts):
+                for steps in fine_steps_goal:
+                    # iterate through target cyclicly and run commands
+                    dview.targets = targets.next()
+                    pending.append(dview.apply_async(pymv.apex_location_info, [lat],
+                                                     [lon], [alt], [date], fine_step_size=steps))
+            # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+                out = []
+                for steps in fine_steps_goal:
+                    # collect output
+                    x, y, z, _, _, apex_height = pending.pop(0).get()
+                    pt = [x, y, z, apex_height]
+                    out.append(pt)
+
+                final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z', 'h'])
+                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+                dz.append(np.abs(final_pt.ix[1:, 'z'].values - final_pt.ix[:,'z'].values[:-1]))
+                dh.append(np.abs(final_pt.ix[1:, 'h'].values - final_pt.ix[:,'h'].values[:-1]))
+        else:
+            for lat, lon, alt in zip(lats, longs, alts):
+                out = []
+                for steps in fine_steps_goal:
+                    x, y, z, _, _, apex_height = pymv.apex_location_info([lat], [lon], [alt], [date], fine_step_size=steps)
+                    pt = [x, y, z, apex_height]
+                    out.append(pt)
+
+                final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z', 'h'])
+                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
+                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
+                dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+                dh.append(np.abs(final_pt.ix[1:, 'h'].values - final_pt.ix[:,'h'].values[:-1]))
+
+
+        dx = pds.DataFrame(dx)
+        dy = pds.DataFrame(dy)
+        dz = pds.DataFrame(dz)
+        dh = pds.DataFrame(dh)
+
+        try:
+            plt.figure()
+            plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dx.mean(axis=0)),
+                          yerr=np.log10(dx.std(axis=0)), label='x')
+            plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dy.mean(axis=0)),
+                        yerr=np.log10(dy.std(axis=0)), label='y')
+            plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dz.mean(axis=0)),
+                        yerr=np.log10(dz.std(axis=0)), label='z')
+            plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dh.mean(axis=0)),
+                        yerr=np.log10(dh.std(axis=0)), label='h')
+            plt.xlabel('Log Step Size (km)')
+            plt.ylabel('Change in Apex Position (km)')
+            plt.title("Change in Field Apex Position vs Step Size")
+            plt.legend()
+            plt.tight_layout()
+            plt.savefig('apex_location_vs_step_size.pdf' )
+            plt.close()
+        except:
+            pass
+
+
     def test_tracing_accuracy_w_recursion(self):
 
         lats, longs, alts = gen_trace_data_fixed_alt(550.)
@@ -1223,15 +1304,15 @@ class TestCore():
         except:
             pass
 
-    def test_closed_loop_footpoint_sensitivity_plots(self):
-        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'meridional')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'meridional')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'zonal')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'zonal')
-        yield(f,)
+    # def test_closed_loop_footpoint_sensitivity_plots(self):
+    #     f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'meridional')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'meridional')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'zonal')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'zonal')
+    #     yield(f,)
 
 
     def closed_loop_footpoint_value_plots(self, direction, vector_direction):
@@ -1345,15 +1426,15 @@ class TestCore():
             pass
 
 
-    def test_closed_loop_footpoint_value_plots(self):
-        f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'meridional')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'meridional')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'zonal')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'zonal')
-        yield(f,)
+    # def test_closed_loop_footpoint_value_plots(self):
+    #     f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'meridional')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'meridional')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'zonal')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'zonal')
+    #     yield(f,)
 
 
     def test_unit_vector_component_stepsize_sensitivity_plots(self):
@@ -1402,21 +1483,21 @@ class TestCore():
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
                 _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                zvx[i,:-1] = (zvx[i,:-1] - _a)/zvx[i,:-1]
-                zvy[i,:-1] = (zvy[i,:-1] - _b)/zvy[i,:-1]
-                zvz[i,:-1] = (zvz[i,:-1] - _c)/zvz[i,:-1]
+                zvx[i,:-1] = (zvx[i,:-1] - _a)#/zvx[i,:-1]
+                zvy[i,:-1] = (zvy[i,:-1] - _b)#/zvy[i,:-1]
+                zvz[i,:-1] = (zvz[i,:-1] - _c)#/zvz[i,:-1]
 
                 _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                bx[i,:-1] = (bx[i,:-1] - _a)/bx[i,:-1]
-                by[i,:-1] = (by[i,:-1] - _b)/by[i,:-1]
-                bz[i,:-1] = (bz[i,:-1] - _c)/bz[i,:-1]
+                bx[i,:-1] = (bx[i,:-1] - _a)#/bx[i,:-1]
+                by[i,:-1] = (by[i,:-1] - _b)#/by[i,:-1]
+                bz[i,:-1] = (bz[i,:-1] - _c)#/bz[i,:-1]
 
                 _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
-                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
-                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
+                mx[i,:-1] = (mx[i,:-1] - _a)#/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)#/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)#/mz[i,:-1]
 
         else:
             for i,p_lat in enumerate(p_lats):
@@ -1434,21 +1515,21 @@ class TestCore():
                                                                                         step_size=.001)
                 _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                zvx[i,:-1] = (zvx[i,:-1] - _a)/zvx[i,:-1]
-                zvy[i,:-1] = (zvy[i,:-1] - _b)/zvy[i,:-1]
-                zvz[i,:-1] = (zvz[i,:-1] - _c)/zvz[i,:-1]
+                zvx[i,:-1] = (zvx[i,:-1] - _a)#/zvx[i,:-1]
+                zvy[i,:-1] = (zvy[i,:-1] - _b)#/zvy[i,:-1]
+                zvz[i,:-1] = (zvz[i,:-1] - _c)#/zvz[i,:-1]
 
                 _a, _b, _c  = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                bx[i,:-1] = (bx[i,:-1] - _a)/bx[i,:-1]
-                by[i,:-1] = (by[i,:-1] - _b)/by[i,:-1]
-                bz[i,:-1] = (bz[i,:-1] - _c)/bz[i,:-1]
+                bx[i,:-1] = (bx[i,:-1] - _a)#/bx[i,:-1]
+                by[i,:-1] = (by[i,:-1] - _b)#/by[i,:-1]
+                bz[i,:-1] = (bz[i,:-1] - _c)#/bz[i,:-1]
 
                 _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
-                mx[i,:-1] = (mx[i,:-1] - _a)/mx[i,:-1]
-                my[i,:-1] = (my[i,:-1] - _b)/my[i,:-1]
-                mz[i,:-1] = (mz[i,:-1] - _c)/mz[i,:-1]
+                mx[i,:-1] = (mx[i,:-1] - _a)#/mx[i,:-1]
+                my[i,:-1] = (my[i,:-1] - _b)#/my[i,:-1]
+                mz[i,:-1] = (mz[i,:-1] - _c)#/mz[i,:-1]
 
 
         # account for periodicity
@@ -1471,10 +1552,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Zonal Unit Vector Nornalized Difference - Eastward')
+            plt.title('Log Zonal Unit Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_east_norm_diff.pdf')
+            plt.savefig('zonal_east_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1482,10 +1563,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Zonal Unit Vector Nornalized Difference - Northward')
+            plt.title('Log Zonal Unit Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_north_norm_diff.pdf')
+            plt.savefig('zonal_north_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1493,10 +1574,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Zonal Unit Vector Nornalized Difference - Upward')
+            plt.title('Log Zonal Unit Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_up_norm_diff.pdf')
+            plt.savefig('zonal_up_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1504,10 +1585,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Field Aligned Unit Vector Nornalized Difference - Eastward')
+            plt.title('Log Field Aligned Unit Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_east_norm_diff.pdf')
+            plt.savefig('fa_east_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1515,10 +1596,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Field Aligned Unit Vector Nornalized Difference - Northward')
+            plt.title('Log Field Aligned Unit Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_north_norm_diff.pdf')
+            plt.savefig('fa_north_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1526,10 +1607,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Field Aligned Unit Vector Nornalized Difference - Upward')
+            plt.title('Log Field Aligned Unit Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_up_norm_diff.pdf')
+            plt.savefig('fa_up_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1537,10 +1618,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Meridional Unit Vector Nornalized Difference - Eastward')
+            plt.title('Log Meridional Unit Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_east_norm_diff.pdf')
+            plt.savefig('mer_east_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1548,10 +1629,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Meridional Unit Vector Nornalized Difference - Northward')
+            plt.title('Log Meridional Unit Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_north_norm_diff.pdf')
+            plt.savefig('mer_north_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1559,10 +1640,10 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Meridional Unit Vector Nornalized Difference - Upward')
+            plt.title('Log Meridional Unit Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_up_norm_diff.pdf')
+            plt.savefig('mer_up_diff.pdf')
             plt.close()
 
             # calculate mean and standard deviation and then plot those
@@ -1577,7 +1658,7 @@ class TestCore():
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvz[:,:-1]), axis=0)),
                             yerr=np.std(np.log10(np.abs(zvz[:,:-1])), axis=0), label='Up')
             plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Log Normalized Change in Zonal Vector')
+            plt.ylabel('Log Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
             plt.legend()
             plt.tight_layout()
@@ -1593,7 +1674,7 @@ class TestCore():
             plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
                             yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
             plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Log Normalized Change in Field-Aligned Vector')
+            plt.ylabel('Log Change in Field-Aligned Vector')
             plt.title("Sensitivity of Field-Aligned Unit Vector")
             plt.legend()
             plt.tight_layout()
@@ -1609,7 +1690,7 @@ class TestCore():
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)),
                             yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Up')
             plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Log Normalized Change in Meridional Vector')
+            plt.ylabel('Log Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
             plt.legend()
             plt.tight_layout()
@@ -2492,7 +2573,7 @@ class TestCore():
                     # second run
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date,
                                                                             direction=direction,
-                                                                            num_steps=5, step_size=25./5.)
+                                                                            num_steps=1, step_size=25.)
             for i,p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])
@@ -2573,268 +2654,268 @@ class TestCore():
         f = functools.partial(self.step_along_mag_unit_vector_sensitivity_plots, direction='meridional')
         yield (f, )
 
-    def test_geomag_efield_scalars_plots(self):
-        import matplotlib.pyplot as plt
-        import os
-
-        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
-        # data returned are the locations along each direction
-        # the full range of points obtained by iterating over all
-        # recasting alts into a more convenient form for later calculation
-        p_alts = [p_alts[0]]*len(p_longs)
-
-        north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
-        north_mer = north_zonal.copy()
-        south_zonal = north_zonal.copy()
-        south_mer = north_zonal.copy()
-        eq_zonal = north_zonal.copy()
-        eq_mer = north_zonal.copy()
-
-        date = datetime.datetime(2000,1,1)
-        # set up multi
-        if self.dc is not None:
-            import itertools
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            for i,p_lat in enumerate(p_lats):
-                # iterate through target cyclicly and run commands
-                print (i, p_lat)
-                dview.targets = targets.next()
-                pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,[p_lat]*len(p_longs), p_longs,
-                                                                        p_alts, [date]*len(p_longs),
-                                                                        e_field_scaling_only=True))
-            for i,p_lat in enumerate(p_lats):
-                print ('collecting ', i, p_lat)
-                    # collect output
-                scalars = pending.pop(0).get()
-                north_zonal[i,:-1] = scalars['north_mer_fields_scalar']
-                north_mer[i,:-1] = scalars['north_zon_fields_scalar']
-                south_zonal[i,:-1] = scalars['south_mer_fields_scalar']
-                south_mer[i,:-1] = scalars['south_zon_fields_scalar']
-                eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
-                eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
-        else:
-            for i,p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
-                                                               p_alts, [date]*len(p_longs), e_field_scaling_only=True)
-                north_zonal[i,:-1] = scalars['north_mer_fields_scalar']
-                north_mer[i,:-1] = scalars['north_zon_fields_scalar']
-                south_zonal[i,:-1] = scalars['south_mer_fields_scalar']
-                south_mer[i,:-1] = scalars['south_zon_fields_scalar']
-                eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
-                eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
-        # account for periodicity
-        north_zonal[:,-1] = north_zonal[:,0]
-        north_mer[:,-1] = north_mer[:,0]
-        south_zonal[:,-1] = south_zonal[:,0]
-        south_mer[:,-1] = south_mer[:,0]
-        eq_zonal[:,-1] = eq_zonal[:,0]
-        eq_mer[:,-1] = eq_mer[:,0]
-
-        xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
-        ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
-
-        try:
-            fig = plt.figure()
-            plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Meridional Electric Field Mapping to Magnetic Equator')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_mer_field.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(eq_mer, origin='lower')#, vmin=0, vmax=1.)
-            plt.colorbar()
-            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Electric Field Mapping to Magnetic Equator')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_zon_field.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(north_zonal, origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Meridional Electric Field Mapping to Northern Footpoint')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_mer_field.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(north_mer, origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Electric Field Mapping to Northern Footpoint')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_zon_field.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(south_zonal, origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Meridional Electric Field Mapping to Southern Footpoint')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_mer_field.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(south_mer, origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Electric Field Mapping to Southern Footpoint')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_zon_field.pdf')
-            plt.close()
-        except:
-            pass
-
-    def test_geomag_ion_drift_scalars_plots(self):
-        import matplotlib.pyplot as plt
-        # from mpl_toolkits.mplot3d import Axes3D
-        import os
-
-        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
-        # data returned are the locations along each direction
-        # the full range of points obtained by iterating over all
-        # recasting alts into a more convenient form for later calculation
-        p_alts = [p_alts[0]]*len(p_longs)
-
-        north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
-        north_mer = north_zonal.copy()
-        south_zonal = north_zonal.copy()
-        south_mer = north_zonal.copy()
-        eq_zonal = north_zonal.copy()
-        eq_mer = north_zonal.copy()
-
-        date = datetime.datetime(2000,1,1)
-        # set up multi
-        if self.dc is not None:
-            import itertools
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            for i,p_lat in enumerate(p_lats):
-                # iterate through target cyclicly and run commands
-                dview.targets = targets.next()
-                print ('Targeting ', dview.targets, i, p_lat)
-                pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts, [p_lat]*len(p_longs), p_longs,
-                                                                        p_alts, [date]*len(p_longs)))
-            for i,p_lat in enumerate(p_lats):
-                print ('collecting ', i, p_lat)
-                # collect output
-                scalars = pending.pop(0).get()
-                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
-                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
-                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
-                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
-                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
-                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
-        else:
-            for i,p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
-                                                                        p_alts, [date]*len(p_longs))
-                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
-                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
-                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
-                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
-                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
-                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
-        # account for periodicity
-        north_zonal[:,-1] = north_zonal[:,0]
-        north_mer[:,-1] = north_mer[:,0]
-        south_zonal[:,-1] = south_zonal[:,0]
-        south_mer[:,-1] = south_mer[:,0]
-        eq_zonal[:,-1] = eq_zonal[:,0]
-        eq_mer[:,-1] = eq_mer[:,0]
-
-        xtickvals = ['-25', '-12.5', '0', '12.5', '25']
-        xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
-        ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
-
-        try:
-            fig = plt.figure()
-            plt.imshow(np.log10(eq_zonal), origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, xtickvals)
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Zonal Ion Drift Mapping to Magnetic Equator')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_zonal_drift.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(eq_mer), origin='lower')#, vmin=0, vmax=1.)
-            plt.colorbar()
-            plt.yticks(xtickarr, xtickvals)
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Meridional Ion Drift Mapping to Magnetic Equator')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_mer_drift.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(north_zonal, origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, xtickvals)
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Ion Drift Mapping to Northern Footpoint')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_zonal_drift.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(north_mer, origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, xtickvals)
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Meridional Ion Drift Mapping to Northern Footpoint')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_mer_drift.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(south_zonal, origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, xtickvals)
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Ion Drift Mapping to Southern Footpoint')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_zonal_drift.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(south_mer, origin='lower')#, vmin=0, vmax=2)
-            plt.colorbar()
-            plt.yticks(xtickarr, xtickvals)
-            plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Meridional Ion Drift Mapping to Southern Footpoint')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_mer_drift.pdf')
-            plt.close()
-        except:
-            pass
+#     def test_geomag_efield_scalars_plots(self):
+#         import matplotlib.pyplot as plt
+#         import os
+#
+#         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+#         # data returned are the locations along each direction
+#         # the full range of points obtained by iterating over all
+#         # recasting alts into a more convenient form for later calculation
+#         p_alts = [p_alts[0]]*len(p_longs)
+#
+#         north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
+#         north_mer = north_zonal.copy()
+#         south_zonal = north_zonal.copy()
+#         south_mer = north_zonal.copy()
+#         eq_zonal = north_zonal.copy()
+#         eq_mer = north_zonal.copy()
+#
+#         date = datetime.datetime(2000,1,1)
+#         # set up multi
+#         if self.dc is not None:
+#             import itertools
+#             targets = itertools.cycle(dc.ids)
+#             pending = []
+#             for i,p_lat in enumerate(p_lats):
+#                 # iterate through target cyclicly and run commands
+#                 print (i, p_lat)
+#                 dview.targets = targets.next()
+#                 pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,[p_lat]*len(p_longs), p_longs,
+#                                                                         p_alts, [date]*len(p_longs),
+#                                                                         e_field_scaling_only=True))
+#             for i,p_lat in enumerate(p_lats):
+#                 print ('collecting ', i, p_lat)
+#                     # collect output
+#                 scalars = pending.pop(0).get()
+#                 north_zonal[i,:-1] = scalars['north_mer_fields_scalar']
+#                 north_mer[i,:-1] = scalars['north_zon_fields_scalar']
+#                 south_zonal[i,:-1] = scalars['south_mer_fields_scalar']
+#                 south_mer[i,:-1] = scalars['south_zon_fields_scalar']
+#                 eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
+#                 eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
+#         else:
+#             for i,p_lat in enumerate(p_lats):
+#                 print (i, p_lat)
+#                 scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
+#                                                                p_alts, [date]*len(p_longs), e_field_scaling_only=True)
+#                 north_zonal[i,:-1] = scalars['north_mer_fields_scalar']
+#                 north_mer[i,:-1] = scalars['north_zon_fields_scalar']
+#                 south_zonal[i,:-1] = scalars['south_mer_fields_scalar']
+#                 south_mer[i,:-1] = scalars['south_zon_fields_scalar']
+#                 eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
+#                 eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
+#         # account for periodicity
+#         north_zonal[:,-1] = north_zonal[:,0]
+#         north_mer[:,-1] = north_mer[:,0]
+#         south_zonal[:,-1] = south_zonal[:,0]
+#         south_mer[:,-1] = south_mer[:,0]
+#         eq_zonal[:,-1] = eq_zonal[:,0]
+#         eq_mer[:,-1] = eq_mer[:,0]
+#
+#         xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
+#         ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
+#
+#         try:
+#             fig = plt.figure()
+#             plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Meridional Electric Field Mapping to Magnetic Equator')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('eq_mer_field.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(eq_mer, origin='lower')#, vmin=0, vmax=1.)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Zonal Electric Field Mapping to Magnetic Equator')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('eq_zon_field.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(north_zonal, origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Meridional Electric Field Mapping to Northern Footpoint')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('north_mer_field.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(north_mer, origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Zonal Electric Field Mapping to Northern Footpoint')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('north_zon_field.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(south_zonal, origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Meridional Electric Field Mapping to Southern Footpoint')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('south_mer_field.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(south_mer, origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Zonal Electric Field Mapping to Southern Footpoint')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('south_zon_field.pdf')
+#             plt.close()
+#         except:
+#             pass
+#
+#     def test_geomag_ion_drift_scalars_plots(self):
+#         import matplotlib.pyplot as plt
+#         # from mpl_toolkits.mplot3d import Axes3D
+#         import os
+#
+#         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+#         # data returned are the locations along each direction
+#         # the full range of points obtained by iterating over all
+#         # recasting alts into a more convenient form for later calculation
+#         p_alts = [p_alts[0]]*len(p_longs)
+#
+#         north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
+#         north_mer = north_zonal.copy()
+#         south_zonal = north_zonal.copy()
+#         south_mer = north_zonal.copy()
+#         eq_zonal = north_zonal.copy()
+#         eq_mer = north_zonal.copy()
+#
+#         date = datetime.datetime(2000,1,1)
+#         # set up multi
+#         if self.dc is not None:
+#             import itertools
+#             targets = itertools.cycle(dc.ids)
+#             pending = []
+#             for i,p_lat in enumerate(p_lats):
+#                 # iterate through target cyclicly and run commands
+#                 dview.targets = targets.next()
+#                 print ('Targeting ', dview.targets, i, p_lat)
+#                 pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts, [p_lat]*len(p_longs), p_longs,
+#                                                                         p_alts, [date]*len(p_longs)))
+#             for i,p_lat in enumerate(p_lats):
+#                 print ('collecting ', i, p_lat)
+#                 # collect output
+#                 scalars = pending.pop(0).get()
+#                 north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
+#                 north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
+#                 south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
+#                 south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
+#                 eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
+#                 eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
+#         else:
+#             for i,p_lat in enumerate(p_lats):
+#                 print (i, p_lat)
+#                 scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
+#                                                                         p_alts, [date]*len(p_longs))
+#                 north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
+#                 north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
+#                 south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
+#                 south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
+#                 eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
+#                 eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
+#         # account for periodicity
+#         north_zonal[:,-1] = north_zonal[:,0]
+#         north_mer[:,-1] = north_mer[:,0]
+#         south_zonal[:,-1] = south_zonal[:,0]
+#         south_mer[:,-1] = south_mer[:,0]
+#         eq_zonal[:,-1] = eq_zonal[:,0]
+#         eq_mer[:,-1] = eq_mer[:,0]
+#
+#         xtickvals = ['-25', '-12.5', '0', '12.5', '25']
+#         xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
+#         ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
+#
+#         try:
+#             fig = plt.figure()
+#             plt.imshow(np.log10(eq_zonal), origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, xtickvals)
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Log Zonal Ion Drift Mapping to Magnetic Equator')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('eq_zonal_drift.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(np.log10(eq_mer), origin='lower')#, vmin=0, vmax=1.)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, xtickvals)
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Log Meridional Ion Drift Mapping to Magnetic Equator')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('eq_mer_drift.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(north_zonal, origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, xtickvals)
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Zonal Ion Drift Mapping to Northern Footpoint')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('north_zonal_drift.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(north_mer, origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, xtickvals)
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Meridional Ion Drift Mapping to Northern Footpoint')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('north_mer_drift.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(south_zonal, origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, xtickvals)
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Zonal Ion Drift Mapping to Southern Footpoint')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('south_zonal_drift.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(south_mer, origin='lower')#, vmin=0, vmax=2)
+#             plt.colorbar()
+#             plt.yticks(xtickarr, xtickvals)
+#             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Meridional Ion Drift Mapping to Southern Footpoint')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('south_mer_drift.pdf')
+#             plt.close()
+#         except:
+#             pass
 
     def test_basic_ecef_to_enu_rotations(self):
         # test basic transformations first
