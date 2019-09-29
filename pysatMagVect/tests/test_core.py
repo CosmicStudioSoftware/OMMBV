@@ -372,12 +372,15 @@ class TestCore():
 
         try:
             plt.figure()
-            plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0),
-                          yerr=dx.std(axis=0), label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0),
-                        yerr=dy.std(axis=0), label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0),
-                        yerr=dz.std(axis=0), label='z')
+            yerrx = np.abs(np.log10(np.std(dx, axis=0)) - np.log10(np.abs(np.median(dx, axis=0))))
+            yerry = np.abs(np.log10(np.std(dy, axis=0)) - np.log10(np.abs(np.median(dy, axis=0))))
+            yerrz = np.abs(np.log10(np.std(dz, axis=0)) - np.log10(np.abs(np.median(dz, axis=0))))
+            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dx.mean(axis=0)),
+                          yerr=yerrx, label='x')
+            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dy.mean(axis=0)),
+                        yerr=yerry, label='y')
+            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dz.mean(axis=0)),
+                        yerr=yerrz, label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Foot Point Position (km)')
             plt.title("Change in Final ECEF Position")
@@ -450,17 +453,21 @@ class TestCore():
 
         try:
             plt.figure()
+            yerrx = np.abs(np.log10(np.std(dx, axis=0)) - np.log10(np.abs(np.median(dx, axis=0))))
+            yerry = np.abs(np.log10(np.std(dy, axis=0)) - np.log10(np.abs(np.median(dy, axis=0))))
+            yerrz = np.abs(np.log10(np.std(dz, axis=0)) - np.log10(np.abs(np.median(dz, axis=0))))
+            yerrh = np.abs(np.log10(np.std(dh, axis=0)) - np.log10(np.abs(np.median(dh, axis=0))))
             plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dx.mean(axis=0)),
-                          yerr=np.abs(np.log10(dx.std(axis=0)) - np.log10(dx.mean(axis=0))),
+                          yerr=yerrx,
                           label='x')
             plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dy.mean(axis=0)),
-                          yerr=np.abs(np.log10(dy.std(axis=0)) - np.log10(dy.mean(axis=0))),
+                          yerr=yerry,
                           label='y')
             plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dz.mean(axis=0)),
-                          yerr=np.abs(np.log10(dz.std(axis=0)) - np.log10(dz.mean(axis=0))),
+                          yerr=yerrz,
                           label='z')
             plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dh.mean(axis=0)),
-                          yerr=np.abs(np.log10(dh.std(axis=0)) - np.log10(dh.mean(axis=0))),
+                          yerr=yerrh,
                           label='h')
 
             plt.xlabel('Log Step Size (km)')
@@ -543,14 +550,18 @@ class TestCore():
 
         try:
             plt.figure()
+            yerrx = np.abs(np.log10(np.std(dzx, axis=0)) - np.log10(np.abs(np.median(dzx, axis=0))))
+            yerry = np.abs(np.log10(np.std(dzy, axis=0)) - np.log10(np.abs(np.median(dzy, axis=0))))
+            yerrz = np.abs(np.log10(np.std(dzz, axis=0)) - np.log10(np.abs(np.median(dzz, axis=0))))
+
             plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=0)),
-                          yerr=np.abs(np.log10(dzx.std(axis=0)) - np.log10(dzx.mean(axis=0))),
+                          yerr=yerrx,
                           label='x')
             plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=0)),
-                          yerr=np.abs(np.log10(dzy.std(axis=0)) - np.log10(dzy.mean(axis=0))),
+                          yerr=yerry,
                           label='y')
             plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=0)),
-                          yerr=np.abs(np.log10(dzz.std(axis=0)) - np.log10(dzz.mean(axis=0))),
+                          yerr=yerrz,
                           label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Vector Component')
@@ -561,14 +572,17 @@ class TestCore():
             plt.close()
 
             plt.figure()
+            yerrx = np.abs(np.log10(np.std(dmx, axis=0)) - np.log10(np.abs(np.median(dmx, axis=0))))
+            yerry = np.abs(np.log10(np.std(dmy, axis=0)) - np.log10(np.abs(np.median(dmy, axis=0))))
+            yerrz = np.abs(np.log10(np.std(dmz, axis=0)) - np.log10(np.abs(np.median(dmz, axis=0))))
             plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=0)),
-                          yerr=np.abs(np.log10(dmx.std(axis=0)) - np.log10(dmx.mean(axis=0))),
+                          yerr=yerrx,
                           label='x')
             plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=0)),
-                          yerr=np.abs(np.log10(dmy.std(axis=0)) - np.log10(dmy.mean(axis=0))),
+                          yerr=yerry,
                           label='y')
             plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=0)),
-                          yerr=np.abs(np.log10(dmz.std(axis=0)) - np.log10(dmz.mean(axis=0))),
+                          yerr=yerrz,
                           label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Vector Component')
@@ -608,19 +622,25 @@ class TestCore():
             final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z'])
             dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
             dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-            dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+            dz.append(np.abs(final_pt.ix[1:, 'z'].values - final_pt.ix[:,'z'].values[:-1]))
         dx = pds.DataFrame(dx)
         dy = pds.DataFrame(dy)
         dz = pds.DataFrame(dz)
 
         try:
             plt.figure()
+            yerrx = np.abs(np.log10(np.std(dx, axis=0)) - np.log10(np.abs(np.median(dx, axis=0))))
+            yerry = np.abs(np.log10(np.std(dy, axis=0)) - np.log10(np.abs(np.median(dy, axis=0))))
+            yerrz = np.abs(np.log10(np.std(dz, axis=0)) - np.log10(np.abs(np.median(dz, axis=0))))
             plt.errorbar(np.log10(max_steps_goal[1:]), np.log10(dx.mean(axis=0)),
-                          yerr=np.log10(dx).std(axis=0), label='x')
+                          yerr=yerrx,
+                          label='x')
             plt.errorbar(np.log10(max_steps_goal[1:]), np.log10(dy.mean(axis=0)),
-                        yerr=np.log10(dy).std(axis=0), label='y')
+                          yerr=yerry,
+                          label='y')
             plt.errorbar(np.log10(max_steps_goal[1:]), np.log10(dz.mean(axis=0)),
-                        yerr=np.log10(dz).std(axis=0), label='z')
+                          yerr=yerrz,
+                          label='z')
             plt.xlabel('Log Number of Steps per Run')
             plt.ylabel('Change in Foot Point Position (km)')
             plt.title("Change in Final ECEF Position, Recursive Calls")
@@ -665,18 +685,18 @@ class TestCore():
 
         try:
             plt.figure()
-            # plt.errorbar(np.log10(steps_goal[1:]), dx.mean(axis=0),
-            #               yerr=dx.std(axis=0), label='x')
-            # plt.errorbar(np.log10(steps_goal[1:]), dy.mean(axis=0),
-            #             yerr=dy.std(axis=0), label='y')
-            # plt.errorbar(np.log10(steps_goal[1:]), dz.mean(axis=0),
-            #             yerr=dz.std(axis=0), label='z')
+            yerrx = np.abs(np.log10(np.std(dx, axis=0)) - np.log10(np.abs(np.median(dx, axis=0))))
+            yerry = np.abs(np.log10(np.std(dy, axis=0)) - np.log10(np.abs(np.median(dy, axis=0))))
+            yerrz = np.abs(np.log10(np.std(dz, axis=0)) - np.log10(np.abs(np.median(dz, axis=0))))
             plt.errorbar(np.log10(steps_goal[1:]), np.log10(dx.mean(axis=0)),
-                          yerr=np.log10(dx).std(axis=0), label='x')
+                          yerr=yerrx,
+                          label='x')
             plt.errorbar(np.log10(steps_goal[1:]), np.log10(dy.mean(axis=0)),
-                        yerr=np.log10(dy).std(axis=0), label='y')
+                          yerr=yerry,
+                          label='y')
             plt.errorbar(np.log10(steps_goal[1:]), np.log10(dz.mean(axis=0)),
-                        yerr=np.log10(dz).std(axis=0), label='z')
+                          yerr=yerrz,
+                          label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Log Change in Foot Point Position (km)')
             plt.title("Change in Final ECEF Position, Recursive Calls")
@@ -698,8 +718,6 @@ class TestCore():
         p_long = np.arange(0.,360.,12.)
         p_alt = 0*p_long + 550.
         p_lats = [ 5., 10., 15., 20., 25., 30.]
-
-        #ecf_x,ecf_y,ecf_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
 
         truthiness = []
         for i,p_lat in enumerate(p_lats):
@@ -1399,12 +1417,15 @@ class TestCore():
 
             # calculate mean and standard deviation and then plot those
             plt.figure()
+            yerrx = np.abs(np.log10(np.std(mx[:,:-1], axis=0)) - np.log10(np.abs(np.median(mx[:,:-1], axis=0))))
+            yerry = np.abs(np.log10(np.std(my[:,:-1], axis=0)) - np.log10(np.abs(np.median(my[:,:-1], axis=0))))
+            yerrz = np.abs(np.log10(np.std(mz[:,:-1], axis=0)) - np.log10(np.abs(np.median(mz[:,:-1], axis=0))))
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='Edge')
+                            yerr=yerrx, label='Edge')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='Positive')
+                            yerr=yerry, label='Positive')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Minus')
+                            yerr=yerrz, label='Minus')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Normalized Closed Loop Difference')
             plt.title("Sensitivity of Closed Loop Values")
@@ -1521,11 +1542,11 @@ class TestCore():
             # calculate mean and standard deviation and then plot those
             plt.figure()
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='Edge')
+                            yerr=np.abs(np.log10(mx.std(axis=0)) - np.log10(mx.median(axis=0))), label='Edge')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='Positive')
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Minus')
+                            yerr=np.abs(np.log10(my.std(axis=0)) - np.log10(my.median(axis=0))), label='Positive')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)),
+                            yerr=np.abs(np.log10(mz.std(axis=0)) - np.log10(mz.median(axis=0))), label='Minus')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Closed Loop Values')
             plt.title("Closed Loop Values")
@@ -1549,7 +1570,7 @@ class TestCore():
     #     yield(f,)
 
 
-    def test_unit_vector_component_stepsize_sensitivity_plots(self):
+    def test_aaaa_unit_vector_component_stepsize_sensitivity_plots(self):
         import matplotlib.pyplot as plt
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
@@ -1579,10 +1600,10 @@ class TestCore():
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
-                                                                        step_size=.01))
+                                                                        step_size=.1))
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
-                                                                        step_size=.001))
+                                                                        step_size=.2))
 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
@@ -1616,7 +1637,7 @@ class TestCore():
                 print (i, p_lat)
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs,
                                                                                         p_alts, [date]*len(p_longs),
-                                                                                        step_size=.01)
+                                                                                        step_size=.1)
                 zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
@@ -1624,7 +1645,7 @@ class TestCore():
                 # second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs,
                                                                                         p_alts, [date]*len(p_longs),
-                                                                                        step_size=.001)
+                                                                                        step_size=.2)
                 _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i,:-1] = (zvx[i,:-1] - _a)#/zvx[i,:-1]
@@ -1762,13 +1783,14 @@ class TestCore():
             # print (p_longs)
             # print (np.mean(np.abs(zvx), axis=0))
             # print (np.std(np.abs(zvx), axis=0))
+            print('yo')
             plt.figure()
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvx[:,:-1])), axis=0), label='East')
+                            yerr=np.abs(np.log10(np.std(zvx[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvx[:,:-1], axis=0)))), label='East')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvy[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvy[:,:-1])), axis=0), label='North')
+                            yerr=np.abs(np.log10(np.std(zvy[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvy[:,:-1], axis=0)))), label='North')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvz[:,:-1])), axis=0), label='Up')
+                            yerr=np.abs(np.log10(np.std(zvz[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvz[:,:-1], axis=0)))), label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
@@ -1776,31 +1798,32 @@ class TestCore():
             plt.tight_layout()
             plt.savefig('zonal_diff_v_longitude.pdf' )
             plt.close()
+            print('yo yo')
 
-            # calculate mean and standard deviation and then plot those
-            plt.figure()
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(bx[:,:-1])), axis=0), label='East')
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(by[:,:-1])), axis=0), label='North')
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
-            plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Log Change in Field-Aligned Vector')
-            plt.title("Sensitivity of Field-Aligned Unit Vector")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('fa_diff_v_longitude.pdf' )
-            plt.close()
+            # # calculate mean and standard deviation and then plot those
+            # plt.figure()
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)),
+            #                 yerr=np.abs(np.log10(np.median(bx, axis=0)) - np.log10(np.median(bx, axis=0))), label='East')
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)),
+            #                 yerr=np.abs(np.log10(np.median(by, axis=0)) - np.log10(np.median(by, axis=0))), label='North')
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
+            #                 yerr=np.abs(np.log10(np.median(bz, axis=0)) - np.log10(np.median(bz, axis=0))), label='Up')
+            # plt.xlabel('Longitude (Degrees)')
+            # plt.ylabel('Log Change in Field-Aligned Vector')
+            # plt.title("Sensitivity of Field-Aligned Unit Vector")
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('fa_diff_v_longitude.pdf' )
+            # plt.close()
 
             # calculate mean and standard deviation and then plot those
             plt.figure()
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='East')
+                            yerr=np.abs(np.log10(np.std(mx[:,:-1], axis=0)) - np.log10(np.abs(np.median(mx[:,:-1], axis=0)))), label='East')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='North')
+                            yerr=np.abs(np.log10(np.std(my[:,:-1], axis=0)) - np.log10(np.abs(np.median(my[:,:-1], axis=0)))), label='North')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Up')
+                            yerr=np.abs(np.log10(np.std(mz[:,:-1], axis=0)) - np.log10(np.abs(np.median(mz[:,:-1], axis=0)))), label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
@@ -1808,9 +1831,11 @@ class TestCore():
             plt.tight_layout()
             plt.savefig('mer_diff_v_longitude.pdf' )
             plt.close()
+            # print(np.median(mz[:,:-1], axis=0), mz.std(axis=0),
+            #       np.abs(np.log10(mz[:,:-1].std(axis=0)) - np.log10(np.abs(np.median(mz[:,:-1], axis=0)))) )
 
-        except:
-            pass
+        except Exception as e:
+            raise e
 
     def test_integrated_unit_vector_component_stepsize_sensitivity_plots(self):
         import matplotlib.pyplot as plt
@@ -2032,12 +2057,16 @@ class TestCore():
             # print (np.mean(np.abs(zvx), axis=0))
             # print (np.std(np.abs(zvx), axis=0))
             plt.figure()
+            yerrx = np.abs(np.log10(np.std(zvx[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvx[:,:-1], axis=0))))
+            yerry = np.abs(np.log10(np.std(zvy[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvy[:,:-1], axis=0))))
+            yerrz = np.abs(np.log10(np.std(zvz[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvz[:,:-1], axis=0))))
+
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvx[:,:-1])), axis=0), label='East')
+                            yerr=yerrx, label='East')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvy[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvy[:,:-1])), axis=0), label='North')
+                            yerr=yerry, label='North')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvz[:,:-1])), axis=0), label='Up')
+                            yerr=yerrz, label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Normalized Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
@@ -2046,30 +2075,33 @@ class TestCore():
             plt.savefig('int_zonal_diff_v_longitude.pdf' )
             plt.close()
 
-            # calculate mean and standard deviation and then plot those
-            plt.figure()
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(bx[:,:-1])), axis=0), label='East')
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(by[:,:-1])), axis=0), label='North')
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
-            plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Log Normalized Change in Field-Aligned Vector')
-            plt.title("Sensitivity of Field-Aligned Unit Vector")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('int_fa_diff_v_longitude.pdf' )
-            plt.close()
+            # # calculate mean and standard deviation and then plot those
+            # plt.figure()
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)),
+            #                 yerr=np.std(np.log10(np.abs(bx[:,:-1])), axis=0), label='East')
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)),
+            #                 yerr=np.std(np.log10(np.abs(by[:,:-1])), axis=0), label='North')
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
+            #                 yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
+            # plt.xlabel('Longitude (Degrees)')
+            # plt.ylabel('Log Normalized Change in Field-Aligned Vector')
+            # plt.title("Sensitivity of Field-Aligned Unit Vector")
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('int_fa_diff_v_longitude.pdf' )
+            # plt.close()
 
             # calculate mean and standard deviation and then plot those
             plt.figure()
+            yerrx = np.abs(np.log10(np.std(mx[:,:-1], axis=0)) - np.log10(np.abs(np.median(mx[:,:-1], axis=0))))
+            yerry = np.abs(np.log10(np.std(my[:,:-1], axis=0)) - np.log10(np.abs(np.median(my[:,:-1], axis=0))))
+            yerrz = np.abs(np.log10(np.std(mz[:,:-1], axis=0)) - np.log10(np.abs(np.median(mz[:,:-1], axis=0))))
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='East')
+                            yerr=yerrx, label='East')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='North')
+                            yerr=yerry, label='North')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Up')
+                            yerr=yerrz, label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Normalized Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
@@ -2291,12 +2323,15 @@ class TestCore():
             # print (np.mean(np.abs(zvx), axis=0))
             # print (np.std(np.abs(zvx), axis=0))
             plt.figure()
+            yerrx = np.abs(np.log10(np.std(zvx[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvx[:,:-1], axis=0))))
+            yerry = np.abs(np.log10(np.std(zvy[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvy[:,:-1], axis=0))))
+            yerrz = np.abs(np.log10(np.std(zvz[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvz[:,:-1], axis=0))))
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvx[:,:-1])), axis=0), label='East')
+                            yerr=yerrx, label='East')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvy[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvy[:,:-1])), axis=0), label='North')
+                            yerr=yerry, label='North')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvz[:,:-1])), axis=0), label='Up')
+                            yerr=yerrz, label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
@@ -2305,30 +2340,33 @@ class TestCore():
             plt.savefig('method_zonal_diff_v_longitude.pdf' )
             plt.close()
 
-            # calculate mean and standard deviation and then plot those
-            plt.figure()
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(bx[:,:-1])), axis=0), label='East')
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(by[:,:-1])), axis=0), label='North')
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
-            plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Log Change in Field-Aligned Vector')
-            plt.title("Sensitivity of Field-Aligned Unit Vector")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('method_fa_diff_v_longitude.pdf' )
-            plt.close()
+            # # calculate mean and standard deviation and then plot those
+            # plt.figure()
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)),
+            #                 yerr=np.std(np.log10(np.abs(bx[:,:-1])), axis=0), label='East')
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)),
+            #                 yerr=np.std(np.log10(np.abs(by[:,:-1])), axis=0), label='North')
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
+            #                 yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
+            # plt.xlabel('Longitude (Degrees)')
+            # plt.ylabel('Log Change in Field-Aligned Vector')
+            # plt.title("Sensitivity of Field-Aligned Unit Vector")
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('method_fa_diff_v_longitude.pdf' )
+            # plt.close()
 
             # calculate mean and standard deviation and then plot those
             plt.figure()
+            yerrx = np.abs(np.log10(np.std(mx[:,:-1], axis=0)) - np.log10(np.abs(np.median(mx[:,:-1], axis=0))))
+            yerry = np.abs(np.log10(np.std(my[:,:-1], axis=0)) - np.log10(np.abs(np.median(my[:,:-1], axis=0))))
+            yerrz = np.abs(np.log10(np.std(mz[:,:-1], axis=0)) - np.log10(np.abs(np.median(mz[:,:-1], axis=0))))
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='East')
+                            yerr=yerrx, label='East')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='North')
+                            yerr=yerry, label='North')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Up')
+                            yerr=yerrz, label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
@@ -2557,12 +2595,15 @@ class TestCore():
 
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
+            yerrx = np.abs(np.log10(np.std(zvx[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvx[:,:-1], axis=0))))
+            yerry = np.abs(np.log10(np.std(zvy[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvy[:,:-1], axis=0))))
+            yerrz = np.abs(np.log10(np.std(zvz[:,:-1], axis=0)) - np.log10(np.abs(np.median(zvz[:,:-1], axis=0))))
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvx[:,:-1])), axis=0), label='East')
+                            yerr=yerrx, label='East')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvy[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvy[:,:-1])), axis=0), label='North')
+                            yerr=yerry, label='North')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(zvz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(zvz[:,:-1])), axis=0), label='Up')
+                            yerr=yerrz, label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Normalized Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
@@ -2573,12 +2614,15 @@ class TestCore():
 
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
+            yerrx = np.abs(np.log10(np.std(mx[:,:-1], axis=0)) - np.log10(np.abs(np.median(mx[:,:-1], axis=0))))
+            yerry = np.abs(np.log10(np.std(my[:,:-1], axis=0)) - np.log10(np.abs(np.median(my[:,:-1], axis=0))))
+            yerrz = np.abs(np.log10(np.std(mz[:,:-1], axis=0)) - np.log10(np.abs(np.median(mz[:,:-1], axis=0))))
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mx[:,:-1])), axis=0), label='East')
+                            yerr=yerrx, label='East')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(my[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(my[:,:-1])), axis=0), label='North')
+                            yerr=yerry, label='North')
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(mz[:,:-1])), axis=0), label='Up')
+                            yerr=yerrz, label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Normalized Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
@@ -2587,21 +2631,21 @@ class TestCore():
             plt.savefig('int_mer_diff_v_longitude_height.pdf' )
             plt.close()
 
-            # calculate mean and standard deviation and then plot those
-            fig = plt.figure()
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(bx[:,:-1])), axis=0), label='East')
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(by[:,:-1])), axis=0), label='North')
-            plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
-                            yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
-            plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Log Normalized Change in Field-Aligned Vector')
-            plt.title("Sensitivity of Field-Aligned Unit Vector")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('int_fa_diff_v_longitude_height.pdf' )
-            plt.close()
+            # # calculate mean and standard deviation and then plot those
+            # fig = plt.figure()
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)),
+            #                 yerr=np.std(np.log10(np.abs(bx[:,:-1])), axis=0), label='East')
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)),
+            #                 yerr=np.std(np.log10(np.abs(by[:,:-1])), axis=0), label='North')
+            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
+            #                 yerr=np.std(np.log10(np.abs(bz[:,:-1])), axis=0), label='Up')
+            # plt.xlabel('Longitude (Degrees)')
+            # plt.ylabel('Log Normalized Change in Field-Aligned Vector')
+            # plt.title("Sensitivity of Field-Aligned Unit Vector")
+            # plt.legend()
+            # plt.tight_layout()
+            # plt.savefig('int_fa_diff_v_longitude_height.pdf' )
+            # plt.close()
 
         except:
             pass
@@ -2743,15 +2787,18 @@ class TestCore():
 
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
-            plt.errorbar(p_longs, np.median(np.abs(x[:,:-1]), axis=0),
-                         yerr=np.std(np.abs(x[:,:-1]), axis=0), label='x')
-            plt.errorbar(p_longs, np.median(np.abs(y[:,:-1]), axis=0),
-                         yerr=np.std(np.abs(y[:,:-1]), axis=0), label='y')
-            plt.errorbar(p_longs, np.median(np.abs(z[:,:-1]), axis=0),
-                         yerr=np.std(np.abs(z[:,:-1]), axis=0), label='z')
+            yerrx = np.abs(np.log10(np.std(x[:,:-1], axis=0)) - np.log10(np.abs(np.median(x[:,:-1], axis=0))))
+            yerry = np.abs(np.log10(np.std(y[:,:-1], axis=0)) - np.log10(np.abs(np.median(y[:,:-1], axis=0))))
+            yerrz = np.abs(np.log10(np.std(z[:,:-1], axis=0)) - np.log10(np.abs(np.median(z[:,:-1], axis=0))))
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(x[:,:-1])), axis=0),
+                         yerr=yerrx, label='x')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(y[:,:-1])), axis=0),
+                         yerr=yerry, label='y')
+            plt.errorbar(p_longs, np.log10(np.median(np.abs(z[:,:-1])), axis=0),
+                         yerr=yerrz, label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in ECEF (km)')
-            plt.title('Median Difference in Apex Position')
+            plt.title('Log Median Difference in Apex Position')
             plt.legend()
             plt.tight_layout()
             plt.savefig(direction+'_step_diff_v_longitude.pdf' )
