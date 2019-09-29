@@ -645,7 +645,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=.01, tol=.001, max_loops=100,
+                                          step_size=.12, tol=.0001, max_loops=50,
                                           max_steps=None, ref_height=None):
     """Calculates local geomagnetic unit vectors expressing the ion drift
     coordinate system organized by the geomagnetic field. Unit vectors are expressed
@@ -1032,7 +1032,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
 
 
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
-                       fine_step_size=.01):
+                       fine_step_size=.1):
     """Determine apex location for the field line passing through input point.
 
     Employs a two stage method. A broad step (step_size) field line trace spanning
@@ -1069,7 +1069,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     # use input location and convert to ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
     # prepare parameters for field line trace
-    max_steps = 1000
+    max_steps = 100
     steps = np.arange(max_steps)
     # high resolution trace parameters
     fine_max_steps = int(step_size/fine_step_size)+10
@@ -1505,7 +1505,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                         step_size=step_size,
                                                         max_steps=max_steps,
                                                         edge_length=25.,
-                                                        edge_steps=5)
+                                                        edge_steps=1)
 
     # print ('Starting Southern')
     south_zon_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
@@ -1522,7 +1522,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                         step_size=step_size,
                                                         max_steps=max_steps,
                                                         edge_length=25.,
-                                                        edge_steps=5)
+                                                        edge_steps=1)
     # print ('Starting Equatorial')
     # , step_zon_apex2, mind_plus, mind_minus
     eq_zon_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
@@ -1533,7 +1533,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     eq_mer_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                                         'zonal',
                                                         edge_length=25.,
-                                                        edge_steps=5)
+                                                        edge_steps=1)
     # print ('Done with core')
     north_zon_drifts_scalar = north_zon_drifts_scalar/50.
     south_zon_drifts_scalar = south_zon_drifts_scalar/50.
