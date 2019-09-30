@@ -15,7 +15,7 @@
 
 cf2py intent(in) posx, posy, posz
 Cf2py intent(out)  latitude, lon, h
-Cf2py integer intent(hide) num=shape(posx)
+Cf2py integer intent(hide), depend(posx) :: num=shape(posx,0)
 
       pi = 4.D0*DATAN(1.D0)
       ! interpret height as geodetic limit
