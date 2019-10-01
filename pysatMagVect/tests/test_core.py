@@ -142,7 +142,7 @@ def gen_plot_grid_fixed_alt(alt):
         long_dim = np.arange(0., 360., 180.)
         lat_dim = np.arange(-50., 51., 50.)
     else:
-        long_dim = np.arange(0., 360., 1.2*30)
+        long_dim = np.arange(0., 360., 1*30.)
         lat_dim = np.arange(-50., 50.1, 0.25*30)
 
     alt_dim = np.array([alt])
@@ -210,6 +210,7 @@ class TestCore():
             plt.legend(loc=0)
             plt.xlim((0,360.))
             plt.savefig('magnetic_footpoint_comparison.pdf')
+            print('Saving magnetic_footpoint_comparison.pdf')
         except:
             pass
 
@@ -315,8 +316,9 @@ class TestCore():
         ecf_x,ecf_y,ecf_z = pymv.geodetic_to_ecef(lats,
                                                   longs,
                                                   alts)
-        # step size to be tried
-        steps_goal = np.array([1000., 500., 300., 100., 50.,  30., 10., 5., 3., 1., 0.5, 0.3, 0.1])
+        # step size to be tried, move by inverse powers of 2 (half step size)
+        steps_goal = np.arange(13)
+        steps_goal = 1000./2**steps_goal
         # max number of steps (fixed)
         max_steps_goal = steps_goal*0+1E6
 
@@ -398,7 +400,9 @@ class TestCore():
                                                   longs,
                                                   alts)
         # step size to be tried
-        fine_steps_goal = np.array([20., 10., 5., 2.5, 1.25, 0.61, .3, .15, .075, .0375, .01825, .009, 0.005, 0.002, .001, 0.0005, .00025, .000125])
+        fine_steps_goal = np.array([25.6, 12.8, 6.4, 3.2, 1.6, 0.8, 0.4, 0.2,
+                                    0.1, 0.05, .025, .0125, .00625, .003125,
+                                    .0015625, .00078125, .000390625, .0001953125])
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
@@ -423,7 +427,7 @@ class TestCore():
                 for steps in fine_steps_goal:
                     # collect output
                     x, y, z, _, _, apex_height = pending.pop(0).get()
-                    pt = [x, y, z, apex_height]
+                    pt = [x[0], y[0], z[0], apex_height[0]]
                     out.append(pt)
 
                 final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z', 'h'])
@@ -436,13 +440,13 @@ class TestCore():
                 out = []
                 for steps in fine_steps_goal:
                     x, y, z, _, _, apex_height = pymv.apex_location_info([lat], [lon], [alt], [date], fine_step_size=steps)
-                    pt = [x, y, z, apex_height]
+                    pt = [x[0], y[0], z[0], apex_height[0]]
                     out.append(pt)
 
                 final_pt = pds.DataFrame(out, columns = ['x', 'y', 'z', 'h'])
                 dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:,'x'].values[:-1]))
                 dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:,'y'].values[:-1]))
-                dz.append(np.abs(final_pt.ix[1:, 'z'].values- final_pt.ix[:,'z'].values[:-1]))
+                dz.append(np.abs(final_pt.ix[1:, 'z'].values - final_pt.ix[:,'z'].values[:-1]))
                 dh.append(np.abs(final_pt.ix[1:, 'h'].values - final_pt.ix[:,'h'].values[:-1]))
 
 
@@ -458,17 +462,17 @@ class TestCore():
             yerrz = np.abs(np.log10(np.std(dz, axis=0)) - np.log10(np.abs(np.median(dz, axis=0))))
             yerrh = np.abs(np.log10(np.std(dh, axis=0)) - np.log10(np.abs(np.median(dh, axis=0))))
             plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dx.mean(axis=0)),
-                          yerr=yerrx,
-                          label='x')
+                            yerr=yerrx,
+                            label='x')
             plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dy.mean(axis=0)),
-                          yerr=yerry,
-                          label='y')
+                            yerr=yerry,
+                            label='y')
             plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dz.mean(axis=0)),
-                          yerr=yerrz,
-                          label='z')
+                            yerr=yerrz,
+                            label='z')
             plt.errorbar(np.log10(fine_steps_goal[1:]), np.log10(dh.mean(axis=0)),
-                          yerr=yerrh,
-                          label='h')
+                            yerr=yerrh,
+                            label='h')
 
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Apex Position (km)')
@@ -480,11 +484,12 @@ class TestCore():
         except:
             pass
 
-    def test_az_unit_vector_step_size_sensitivity(self):
+    def test_unit_vector_step_size_sensitivity(self):
         import numpy as np
         lats, longs, alts = gen_trace_data_fixed_alt(550.)
         # step size to be tried
-        steps_goal = np.array([20., 10., 6., 3., 2., 1., 0.6, 0.3, 0.2, .16, .13, .12, .1, .06, .03, .02, .01, .006, .003, .002, .001])
+        steps_goal = np.arange(13)
+        steps_goal = 20./2**steps_goal
 
         date = datetime.datetime(2000, 1, 1)
         dzx = []
@@ -511,16 +516,16 @@ class TestCore():
                 for steps in steps_goal:
                     # collect output
                     zx, zy, zz, _, _, _, mx, my, mz = pending.pop(0).get()
-                    pt = [zx, zy, zz, mx, my, mz]
+                    pt = [zx[0], zy[0], zz[0], mx[0], my[0], mz[0]]
                     out.append(pt)
 
                 final_pt = pds.DataFrame(out, columns = ['zx', 'zy', 'zz', 'mx', 'my', 'mz'])
                 dzx.append(np.abs(final_pt.ix[1:, 'zx'].values - final_pt.ix[:,'zx'].values[:-1]))
                 dzy.append(np.abs(final_pt.ix[1:, 'zy'].values - final_pt.ix[:,'zy'].values[:-1]))
-                dzz.append(np.abs(final_pt.ix[1:, 'zz'].values- final_pt.ix[:,'zz'].values[:-1]))
+                dzz.append(np.abs(final_pt.ix[1:, 'zz'].values - final_pt.ix[:,'zz'].values[:-1]))
                 dmx.append(np.abs(final_pt.ix[1:, 'mx'].values - final_pt.ix[:,'mx'].values[:-1]))
                 dmy.append(np.abs(final_pt.ix[1:, 'my'].values - final_pt.ix[:,'my'].values[:-1]))
-                dmz.append(np.abs(final_pt.ix[1:, 'mz'].values- final_pt.ix[:,'mz'].values[:-1]))
+                dmz.append(np.abs(final_pt.ix[1:, 'mz'].values - final_pt.ix[:,'mz'].values[:-1]))
         else:
             for lat, lon, alt in zip(lats, longs, alts):
                 out = []
@@ -528,7 +533,7 @@ class TestCore():
                     zx, zy, zz, _, _, _, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef([lat],
                                                                          [lon], [alt], [date],
                                                                          step_size=steps)
-                    pt = [zx, zy, zz, mx, my, mz]
+                    pt = [zx[0], zy[0], zz[0], mx[0], my[0], mz[0]]
                     out.append(pt)
 
                 final_pt = pds.DataFrame(out, columns = ['zx', 'zy', 'zz', 'mx', 'my', 'mz'])
@@ -539,8 +544,6 @@ class TestCore():
                 dmy.append(np.abs(final_pt.ix[1:, 'my'].values - final_pt.ix[:,'my'].values[:-1]))
                 dmz.append(np.abs(final_pt.ix[1:, 'mz'].values - final_pt.ix[:,'mz'].values[:-1]))
 
-        dzx = np.array(dzx)
-        # dzx = numpy.log10(dzx)
         dzx = pds.DataFrame(dzx)
         dzy = pds.DataFrame(dzy)
         dzz = pds.DataFrame(dzz)
@@ -1071,38 +1074,38 @@ class TestCore():
             plt.savefig('zonal_up.pdf')
             plt.close()
 
-            fig = plt.figure()
-            plt.imshow(bx, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Field Aligned Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(by, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Field Aligned Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(bz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Field Aligned Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_up.pdf')
-            plt.close()
+#             fig = plt.figure()
+#             plt.imshow(bx, origin='lower')
+#             plt.colorbar()
+#             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+#             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Field Aligned Unit Vector - Eastward')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('fa_east.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(by, origin='lower')
+#             plt.colorbar()
+#             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+#             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Field Aligned Unit Vector - Northward')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('fa_north.pdf')
+#             plt.close()
+#
+#             fig = plt.figure()
+#             plt.imshow(bz, origin='lower')
+#             plt.colorbar()
+#             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+#             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+#             plt.title('Field Aligned Unit Vector - Upward')
+#             plt.xlabel('Geodetic Longitude (Degrees)')
+#             plt.ylabel('Geodetic Latitude (Degrees)')
+#             plt.savefig('fa_up.pdf')
+#             plt.close()
 
             fig = plt.figure()
             plt.imshow(mx, origin='lower')
@@ -1570,7 +1573,7 @@ class TestCore():
     #     yield(f,)
 
 
-    def test_aaaa_unit_vector_component_stepsize_sensitivity_plots(self):
+    def test_unit_vector_component_stepsize_sensitivity_plots(self):
         import matplotlib.pyplot as plt
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
@@ -1800,22 +1803,6 @@ class TestCore():
             plt.close()
             print('yo yo')
 
-            # # calculate mean and standard deviation and then plot those
-            # plt.figure()
-            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bx[:,:-1]), axis=0)),
-            #                 yerr=np.abs(np.log10(np.median(bx, axis=0)) - np.log10(np.median(bx, axis=0))), label='East')
-            # plt.errorbar(p_longs, np.log10(np.median(np.abs(by[:,:-1]), axis=0)),
-            #                 yerr=np.abs(np.log10(np.median(by, axis=0)) - np.log10(np.median(by, axis=0))), label='North')
-            # plt.errorbar(p_longs, np.log10(np.median(np.abs(bz[:,:-1]), axis=0)),
-            #                 yerr=np.abs(np.log10(np.median(bz, axis=0)) - np.log10(np.median(bz, axis=0))), label='Up')
-            # plt.xlabel('Longitude (Degrees)')
-            # plt.ylabel('Log Change in Field-Aligned Vector')
-            # plt.title("Sensitivity of Field-Aligned Unit Vector")
-            # plt.legend()
-            # plt.tight_layout()
-            # plt.savefig('fa_diff_v_longitude.pdf' )
-            # plt.close()
-
             # calculate mean and standard deviation and then plot those
             plt.figure()
             plt.errorbar(p_longs, np.log10(np.median(np.abs(mx[:,:-1]), axis=0)),
@@ -1831,8 +1818,6 @@ class TestCore():
             plt.tight_layout()
             plt.savefig('mer_diff_v_longitude.pdf' )
             plt.close()
-            # print(np.median(mz[:,:-1], axis=0), mz.std(axis=0),
-            #       np.abs(np.log10(mz[:,:-1].std(axis=0)) - np.log10(np.abs(np.median(mz[:,:-1], axis=0)))) )
 
         except:
             print('Skipping plots due to error.')
