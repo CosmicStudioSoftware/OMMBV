@@ -727,9 +727,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # also get position in geocentric coordinates
     geo_lat, geo_long, geo_alt = ecef_to_geocentric(ecef_x, ecef_y, ecef_z,
                                                     ref_height=0.)
-    # filter longitudes (could use pysat's function here)
-    idx, = np.where(geo_long > 180)
-    geo_long[idx] = geo_long[idx] - 360.
     # prepare output lists
     bn = [];
     be = [];
@@ -772,6 +769,16 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # infinitely many, I'll pick one where z component zero
     tzx, tzy, tzz = -by, bx, 0.*bx
     tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
+    # make sure this vector is well constrained
+    # avoid locations where bobth bx and by are equal to zero
+    idx, = np.where((np.abs(bx) < tol) & (np.abs(by) < tol))
+    if len(idx) > 0:
+        # equal values for x and y are good, definitely orthogonal to main z component
+        tzx[idx] = 0.707
+        tzy[idx] = 0.707
+        # renormalize these vectors
+        tzx[idx], tzy[idx], tzz[idx] = normalize_vector(tzx[idx], tzy[idx], tzz[idx])
+
     # need another perpendicular vector to both
     tmx, tmy, tmz = cross_product(tzx, tzy, tzz, bx, by, bz)
 
