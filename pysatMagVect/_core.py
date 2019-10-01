@@ -844,7 +844,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 def step_until_intersect(pos, field_line, sign, time,  direction=None,
                         step_size_goal=5., field_step_size=None,
-                        tol=1.E-2):
+                        tol=1.E-2, initial_step_factor=3.):
     """Starting at pos, method steps along magnetic unit vector direction
     towards the supplied field line trace. Determines the distance of
     closest approach to field line.
@@ -940,7 +940,7 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
             # no longer first run through
             first = False
             # calculate step size for path integration
-            step = diff_mag[min_idx]/3.
+            step = diff_mag[min_idx]/initial_step_factor
             step_factor = step/(2.**factor)*(-1)**factor
 
         # pull out distance of closest point
@@ -1020,8 +1020,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
         lat, lon, alt = ecef_to_geodetic(x, y, z)
         # get unit vector directions
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(
-                                                        lat, lon, alt, [date],
-                                                        step_size=step_size)
+                                                        lat, lon, alt, [date])
         # pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
@@ -1128,7 +1127,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                            vector_direction, step_size=None,
                                            max_steps=None, edge_length=25.,
-                                           edge_steps=5):
+                                           edge_steps=5, **kwargs):
     """
     Forms closed loop integration along mag field, satrting at input
     points and goes through footpoint. At footpoint, steps along vector direction
@@ -1167,6 +1166,8 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
     edge_steps : int
         Number of steps taken from footpoint towards new field line
         in a given direction (positive/negative) along unit vector
+    **kwargs : additional keywords
+        Passed along to step_until_intersect
 
     Returns
     -------
@@ -1258,14 +1259,16 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                         1, date,
                                         direction=vector_direction,
                                         field_step_size=step_size,
-                                        step_size_goal=edge_length/edge_steps)
+                                        step_size_goal=edge_length/edge_steps,
+                                        **kwargs)
         # take half step from S/C along - vector direction
         minus_edge_length, _, mind_minus = step_until_intersect(sc_root,
                                         other_minus,
                                         -1, date,
                                         direction=vector_direction,
                                         field_step_size=step_size,
-                                        step_size_goal=edge_length/edge_steps)
+                                        step_size_goal=edge_length/edge_steps,
+                                        **kwargs)
         # collect outputs
         full_local_step.append(pos_edge_length + minus_edge_length)
         min_distance_plus.append(mind_pos)
@@ -1441,7 +1444,8 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
 
 
 def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
-                                   max_steps=None, e_field_scaling_only=False):
+                                   max_steps=None, e_field_scaling_only=False,
+                                   **kwargs):
     """
     Calculates scalars for translating ion motions at position
     glat, glon, and alt, for date, to the footpoints of the field line
@@ -1504,7 +1508,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                         step_size=step_size,
                                                         max_steps=max_steps,
                                                         edge_length=25.,
-                                                        edge_steps=5)
+                                                        edge_steps=5,
+                                                        **kwargs)
 
     north_mer_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
                                                         glons, alts, dates, 'north',
@@ -1512,7 +1517,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                         step_size=step_size,
                                                         max_steps=max_steps,
                                                         edge_length=25.,
-                                                        edge_steps=1)
+                                                        edge_steps=1,
+                                                        **kwargs)
 
     # print ('Starting Southern')
     south_zon_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
@@ -1521,7 +1527,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                         step_size=step_size,
                                                         max_steps=max_steps,
                                                         edge_length=25.,
-                                                        edge_steps=5)
+                                                        edge_steps=5,
+                                                        **kwargs)
 
     south_mer_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
                                                         glons, alts, dates, 'south',
@@ -1529,7 +1536,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                         step_size=step_size,
                                                         max_steps=max_steps,
                                                         edge_length=25.,
-                                                        edge_steps=1)
+                                                        edge_steps=1,
+                                                        **kwargs)
     # print ('Starting Equatorial')
     # , step_zon_apex2, mind_plus, mind_minus
     eq_zon_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
