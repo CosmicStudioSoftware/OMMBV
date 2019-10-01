@@ -2714,7 +2714,7 @@ class TestCore():
                     # second run
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date,
                                                                             direction=direction,
-                                                                            num_steps=1, step_size=25.)
+                                                                            num_steps=5, step_size=25./5.)
             for i,p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])
