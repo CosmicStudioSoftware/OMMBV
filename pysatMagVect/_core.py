@@ -771,7 +771,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
     # make sure this vector is well constrained
     # avoid locations where bobth bx and by are equal to zero
-    idx, = np.where((np.abs(bx) < tol) & (np.abs(by) < tol))
+    idx, = np.where((np.abs(bx) < tol/10.) & (np.abs(by) < tol/10.))
     if len(idx) > 0:
         # equal values for x and y are good, definitely orthogonal to main z component
         tzx[idx] = 0.707
