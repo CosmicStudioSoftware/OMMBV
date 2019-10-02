@@ -1850,6 +1850,12 @@ class TestCore():
         my[:,-1] = my[:,0]
         mz[:,-1] = mz[:,0]
 
+        # feedbback on locations with highest error
+        idx = np.argmax(mz)
+        idx, idy = np.unravel_index(idx, np.shape(mz))
+        print('****** ****** ******')
+        print('maxixum location lat, long', p_lats[idx], p_longs[idy])
+
         ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
 
