@@ -456,6 +456,8 @@ class TestCore():
         dh = pds.DataFrame(dh)
 
         try:
+
+
             plt.figure()
             yerrx = np.abs(np.log10(np.std(dx, axis=0)) - np.log10(np.abs(np.median(dx, axis=0))))
             yerry = np.abs(np.log10(np.std(dy, axis=0)) - np.log10(np.abs(np.median(dy, axis=0))))
@@ -476,13 +478,15 @@ class TestCore():
 
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Apex Position (km)')
-            plt.title("Change in Field Apex Position vs Step Size")
+            plt.title("Change in Field Apex Position vs Fine Step Size")
             plt.legend()
             plt.tight_layout()
             plt.savefig('apex_location_vs_step_size.pdf' )
             plt.close()
         except:
             pass
+
+
 
     def test_unit_vector_step_size_sensitivity(self):
         import numpy as np
@@ -982,6 +986,108 @@ class TestCore():
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_alt.pdf')
+            plt.close()
+        except:
+            pass
+
+    def test_apex_diff_plots(self):
+        import matplotlib.pyplot as plt
+        import os
+        # on_travis = os.environ.get('ONTRAVIS') == 'True'
+
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)
+        # set the date
+        date = datetime.datetime(2000,1,1)
+        # memory for results
+        apex_lat = np.zeros((len(p_lats), len(p_longs)+1))
+        apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
+        apex_alt = np.zeros((len(p_lats), len(p_longs)+1))
+
+
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                # iterate through target cyclicly and run commands
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
+                                                                            p_alts, [date]*len(p_longs)),
+                                                                            fine_step_size=0.025)
+                pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
+                                                                            p_alts, [date]*len(p_longs)),
+                                                                            fine_step_size=0.05)
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                # collect output
+                x, y, z, olat, olon, oalt = pending.pop(0).get()
+                x2, y2, z2, olat2, olon2, oalt2 = pending.pop(0).get()
+                apex_lat[i,:-1] = np.abs(x2 - x)
+                apex_lon[i,:-1] = np.abs(y2 - y)
+                apex_alt[i,:-1] = np.abs(z2 - z)
+
+        else:
+            # single processor case
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
+                                                                        p_alts, [date]*len(p_longs),
+                                                                        fine_step_size=0.025)
+                x2, y2, z2, olat2, olon2, oalt2 = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
+                                                                           p_alts, [date]*len(p_longs),
+                                                                           fine_step_size=0.05)
+
+                apex_lat[i,:-1] = np.abs(x2 - x)
+                apex_lon[i,:-1] = np.abs(y2 - y)
+                apex_alt[i,:-1] = np.abs(z2 - z)
+
+        # account for periodicity
+        apex_lat[:,-1] = apex_lat[:,0]
+        apex_lon[:,-1] = apex_lon[:,0]
+        apex_alt[:,-1] = apex_alt[:,0]
+
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
+        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
+        ytickvals = ['-50', '-25', '0', '25', '50']
+
+        try:
+            fig = plt.figure()
+            plt.imshow(np.log10(apex_lat), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ytickvals)
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Apex Location Difference (ECEF-x km)')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('apex_loc_diff_x.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(apex_lon), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ytickvals)
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Apex Location Difference (ECEF-y km)')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('apex_loc_diff_y.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(apex_alt), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ytickvals)
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log Apex Altitude (km) at 120 km')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('apex_loc_diff_z.pdf')
             plt.close()
         except:
             pass
