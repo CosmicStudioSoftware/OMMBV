@@ -433,10 +433,11 @@ def field_line_trace(init, date, direction, height, steps=None,
         # Steps below provide an extra layer of security that output has some
         # semblance to expectations
 
-        x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2])
-        idx = np.argmin(np.abs(check_height - z))
-        if (z[idx] < check_height*1.001) and (idx > 0):
-            trace_north = trace_north[:idx+1,:]
+        if recurse:
+            x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2])
+            idx = np.argmin(np.abs(check_height - z))
+            if (z[idx] < check_height*1.001) and (idx > 0):
+                trace_north = trace_north[:idx+1,:]
         return trace_north
 
 
