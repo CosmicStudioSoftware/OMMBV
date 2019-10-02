@@ -1018,11 +1018,11 @@ class TestCore():
                 # iterate through target cyclicly and run commands
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
-                                                                            p_alts, [date]*len(p_longs)),
-                                                                            fine_step_size=0.025)
+                                                                            p_alts, [date]*len(p_longs),
+                                                                            fine_step_size=0.025))
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
-                                                                            p_alts, [date]*len(p_longs)),
-                                                                            fine_step_size=0.05)
+                                                                            p_alts, [date]*len(p_longs),
+                                                                            fine_step_size=0.05))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 # collect output
@@ -1062,7 +1062,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Apex Location Difference (ECEF-x km)')
+            plt.title('Log Apex Location Difference (ECEF-x km)')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_loc_diff_x.pdf')
@@ -1073,7 +1073,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Apex Location Difference (ECEF-y km)')
+            plt.title('Log Apex Location Difference (ECEF-y km)')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_loc_diff_y.pdf')
@@ -1084,11 +1084,12 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Altitude (km) at 120 km')
+            plt.title('Log Apex Location Difference (ECEF-z km)')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_loc_diff_z.pdf')
             plt.close()
+
         except:
             pass
 
