@@ -392,13 +392,15 @@ def field_line_trace(init, date, direction, height, steps=None,
         check_height = height
 
     # perform trace
-    trace_north = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
+    trace_north, messg = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                          steps,
                                          args=(date, step_size, direction, height),
-                                         full_output=False,
-                                         printmessg=False,
+                                         full_output=True,
+                                         printmessg=True,
                                          ixpr=False) #,
                                          # mxstep=500)
+    if messg['message'] != 'Integration successful.':
+        raise RuntimeError("Field-Line trace not successful.")
 
     # calculate data to check that we reached final altitude
     check = trace_north[-1, :]
@@ -433,7 +435,9 @@ def field_line_trace(init, date, direction, height, steps=None,
 
         x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2])
         idx = np.argmin(np.abs(check_height - z))
-        return trace_north[:idx+1,:]
+        if (z[idx] < check_height*1.001) and (idx > 0):
+            trace_north = trace_north[:idx+1,:]
+        return trace_north
 
 
 def full_field_line(init, date, height, step_size=100., max_steps=1000,
@@ -1110,7 +1114,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
         # determine location that is highest with respect to the geodetic Earth
         max_idx = np.argmax(talt)
-        # print(talt[1]-talt[0])
+
         # collect outputs
         out_x.append(trace[max_idx,0])
         out_y.append(trace[max_idx,1])
