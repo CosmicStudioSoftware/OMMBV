@@ -1774,10 +1774,10 @@ class TestCore():
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
-                                                                        step_size=.1))
+                                                                        step_size=0.15))
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
-                                                                        step_size=.2))
+                                                                        step_size=.3))
 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
@@ -1811,7 +1811,7 @@ class TestCore():
                 print (i, p_lat)
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs,
                                                                                         p_alts, [date]*len(p_longs),
-                                                                                        step_size=.1)
+                                                                                        step_size=0.15)
                 zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
@@ -1819,7 +1819,7 @@ class TestCore():
                 # second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs,
                                                                                         p_alts, [date]*len(p_longs),
-                                                                                        step_size=.2)
+                                                                                        step_size=.3)
                 _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i,:-1] = (zvx[i,:-1] - _a)#/zvx[i,:-1]
