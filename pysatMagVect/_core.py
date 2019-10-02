@@ -337,7 +337,7 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 def field_line_trace(init, date, direction, height, steps=None,
                      max_steps=1E4, step_size=10., recursive_loop_count=None,
-                     recurse=True):
+                     recurse=True, min_check_flag=False):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
 
     Parameters
@@ -433,7 +433,7 @@ def field_line_trace(init, date, direction, height, steps=None,
         # Steps below provide an extra layer of security that output has some
         # semblance to expectations
 
-        if recurse:
+        if min_check_flag:
             x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2])
             idx = np.argmin(np.abs(check_height - z))
             if (z[idx] < check_height*1.001) and (idx > 0):
@@ -776,11 +776,24 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
     # make sure this vector is well constrained
     # avoid locations where bobth bx and by are equal to zero
+    idx, = np.where((np.abs(bx) < 1.E-10) & (np.abs(by) > 1.E-10))
+    if len(idx) > 0:
+        tzx[idx] = 1.
+        tzy[idx] = -bx/by
+        # renormalize these vectors
+        tzx[idx], tzy[idx], tzz[idx] = normalize_vector(tzx[idx], tzy[idx], tzz[idx])
+
+    idx, = np.where((np.abs(bx) > 1.E-10) & (np.abs(by) < 1.E-10))
+    if len(idx) > 0:
+        tzx[idx] = -by/bx
+        tzy[idx] = 1.
+        # renormalize these vectors
+        tzx[idx], tzy[idx], tzz[idx] = normalize_vector(tzx[idx], tzy[idx], tzz[idx])
+
     idx, = np.where((np.abs(bx) < 1.E-10) & (np.abs(by) < 1.E-10))
     if len(idx) > 0:
-        # equal values for x and y are good, definitely orthogonal to main z component
         tzx[idx] = 0.8
-        tzy[idx] = 0.2
+        tzy[idx] = 1.
         # renormalize these vectors
         tzx[idx], tzy[idx], tzz[idx] = normalize_vector(tzx[idx], tzy[idx], tzz[idx])
 
