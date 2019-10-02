@@ -847,12 +847,14 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         geo_lat_z, geo_long_z, geo_alt_z = ecef_to_geodetic(ecef_xz, ecef_yz, ecef_zz)
         _, _, _, _, _, apex_z = apex_location_info(geo_lat_z, geo_long_z, geo_alt_z, datetimes)
         diff_apex_z = apex_z - apex_root
+        diff_apex_z /= step_size
 
         # meridional-ish direction
         ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*tmx, ecef_y + step_size*tmy, ecef_z + step_size*tmz
         geo_lat_m, geo_long_m, geo_alt_m = ecef_to_geodetic(ecef_xm, ecef_ym, ecef_zm)
         _, _, _, _, _, apex_m = apex_location_info(geo_lat_m, geo_long_m, geo_alt_m, datetimes)
         diff_apex_m = apex_m - apex_root
+        diff_apex_m /= step_size
 
         # rotation angle
         theta = np.arctan2(diff_apex_z, diff_apex_m)
@@ -886,6 +888,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         # check if we are done
         if (diff < tol) & (np.max(np.abs(diff_apex_z)) < tol_zonal_apex):
             repeat_flag = False
+
         loop_num += 1
         if loop_num > max_loops:
             print('lats:', latitude)
