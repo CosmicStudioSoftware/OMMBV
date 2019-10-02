@@ -1123,14 +1123,19 @@ class TestCore():
                 print (i, p_lat)
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
-                                                                        p_alts, [date]*len(p_longs)))
+                                                                        p_alts, [date]*len(p_longs), full_output=True))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                     # collect output
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pending.pop(0).get()
                 zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                # pull out info about the vector generation
+                grad_zon[i,:-1], grad_mer[i,:-1] = infod['diff_zonal_apex', ], infod['diff_mer_apex']
+                tol_zon[i,:-1], tol_mer[i,:-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
+                init_type[i,:-1] = infod['vector_seed_type']
+                num_loops[i,:-1] = infod['loops']
         else:
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
