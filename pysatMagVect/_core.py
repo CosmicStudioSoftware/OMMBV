@@ -771,11 +771,11 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
     # make sure this vector is well constrained
     # avoid locations where bobth bx and by are equal to zero
-    idx, = np.where((np.abs(bx) < tol/10.) & (np.abs(by) < tol/10.))
+    idx, = np.where((np.abs(bx) < 1.E-10) & (np.abs(by) < 1.E-10))
     if len(idx) > 0:
         # equal values for x and y are good, definitely orthogonal to main z component
-        tzx[idx] = 0.707
-        tzy[idx] = 0.707
+        tzx[idx] = 0.8
+        tzy[idx] = 0.2
         # renormalize these vectors
         tzx[idx], tzy[idx], tzz[idx] = normalize_vector(tzx[idx], tzy[idx], tzz[idx])
 
@@ -1038,7 +1038,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
 
 
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
-                       fine_step_size=0.2):
+                       fine_step_size=0.1):
     """Determine apex location for the field line passing through input point.
 
     Employs a two stage method. A broad step (step_size) field line trace spanning
