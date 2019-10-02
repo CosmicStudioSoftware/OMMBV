@@ -1108,6 +1108,10 @@ class TestCore():
         zvy = zvx.copy(); zvz = zvx.copy()
         mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
         bx = zvx.copy(); by = zvx.copy(); bz = zvx.copy()
+        grad_zon = zvx.copy(); grad_mer = zvx.copy()
+        tol_zon = zvx.copy(); tol_mer = zvx.copy()
+        init_type = zvx.copy(); num_loops = zvx.copy()
+
         date = datetime.datetime(2000,1,1)
         # set up multi
         if self.dc is not None:
@@ -1130,11 +1134,17 @@ class TestCore():
         else:
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs,
-                                                                                        p_alts, [date]*len(p_longs))
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs,
+                                                                                        p_alts, [date]*len(p_longs),
+                                                                                        full_output=True)
                 zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                # pull out info about the vector generation
+                grad_zon[i,:-1], grad_mer[i,:-1] = infod['diff_zonal_apex', ], infod['diff_mer_apex']
+                tol_zon[i,:-1], tol_mer[i,:-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
+                init_type[i,:-1] = infod['vector_seed_type']
+                num_loops[i,:-1] = infod['loops']
 
         # account for periodicity
         zvx[:,-1] = zvx[:,0]
@@ -1146,6 +1156,12 @@ class TestCore():
         mx[:,-1] = mx[:,0]
         my[:,-1] = my[:,0]
         mz[:,-1] = mz[:,0]
+        grad_zon[:,-1] = grad_zon[:,0]
+        grad_mer[:,-1] = grad_mer[:,0]
+        tol_zon[:,-1] = tol_zon[:,0]
+        tol_mer[:,-1] = tol_mer[:,0]
+        init_type[:,-1] = init_type[:,0]
+        num_loops[:,-1] = num_loops[:,0]
 
         ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
@@ -1184,39 +1200,6 @@ class TestCore():
             plt.savefig('zonal_up.pdf')
             plt.close()
 
-#             fig = plt.figure()
-#             plt.imshow(bx, origin='lower')
-#             plt.colorbar()
-#             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-#             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-#             plt.title('Field Aligned Unit Vector - Eastward')
-#             plt.xlabel('Geodetic Longitude (Degrees)')
-#             plt.ylabel('Geodetic Latitude (Degrees)')
-#             plt.savefig('fa_east.pdf')
-#             plt.close()
-#
-#             fig = plt.figure()
-#             plt.imshow(by, origin='lower')
-#             plt.colorbar()
-#             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-#             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-#             plt.title('Field Aligned Unit Vector - Northward')
-#             plt.xlabel('Geodetic Longitude (Degrees)')
-#             plt.ylabel('Geodetic Latitude (Degrees)')
-#             plt.savefig('fa_north.pdf')
-#             plt.close()
-#
-#             fig = plt.figure()
-#             plt.imshow(bz, origin='lower')
-#             plt.colorbar()
-#             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-#             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-#             plt.title('Field Aligned Unit Vector - Upward')
-#             plt.xlabel('Geodetic Longitude (Degrees)')
-#             plt.ylabel('Geodetic Latitude (Degrees)')
-#             plt.savefig('fa_up.pdf')
-#             plt.close()
-
             fig = plt.figure()
             plt.imshow(mx, origin='lower')
             plt.colorbar()
@@ -1249,8 +1232,81 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('mer_up.pdf')
             plt.close()
+
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(grad_zon)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Gradient in Apex Height (km) - Zonal')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('unit_vector_grad_zonal.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(grad_mer)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Gradient in Apex Height (km) - Zonal')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('unit_vector_grad_meridional.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(tol_zon)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Achieved Tolerance - Zonal Unit Vector')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('unit_vector_tol_zonal.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(tol_mer)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Achieved Tolerance - Meridional')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('unit_vector_tol_meridional.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(init_type, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Initial Seed Vector Type')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('unit_vector_seed_vector_type.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(num_loops, origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Number of Iterative Loops')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('unit_vector_num_loops.pdf')
+            plt.close()
+
+
         except:
             pass
+
+        assert np.all(np.abs(tol_zon) <= 1.E-4)
+        assert np.all(np.abs(tol_mer) <= 1.E-4)
+        assert np.all(np.abs(grad_zon) <= 1.E-4)
 
     def test_integrated_unit_vector_component_plots(self):
         import matplotlib.pyplot as plt
