@@ -1019,10 +1019,10 @@ class TestCore():
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
-                                                                            fine_step_size=0.025))
+                                                                            fine_step_size=0.001))
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
-                                                                            fine_step_size=0.05))
+                                                                            fine_step_size=0.002))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 # collect output
@@ -1038,10 +1038,10 @@ class TestCore():
                 print (i, p_lat)
                 x, y, z, olat, olon, oalt = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
-                                                                        fine_step_size=0.025)
+                                                                        fine_step_size=0.001)
                 x2, y2, z2, olat2, olon2, oalt2 = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
                                                                            p_alts, [date]*len(p_longs),
-                                                                           fine_step_size=0.05)
+                                                                           fine_step_size=0.002)
 
                 apex_lat[i,:-1] = np.abs(x2 - x)
                 apex_lon[i,:-1] = np.abs(y2 - y)
@@ -1132,7 +1132,7 @@ class TestCore():
                 bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
                 # pull out info about the vector generation
-                grad_zon[i,:-1], grad_mer[i,:-1] = infod['diff_zonal_apex', ], infod['diff_mer_apex']
+                grad_zon[i,:-1], grad_mer[i,:-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
                 tol_zon[i,:-1], tol_mer[i,:-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
                 init_type[i,:-1] = infod['vector_seed_type']
                 num_loops[i,:-1] = infod['loops']
