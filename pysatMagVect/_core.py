@@ -650,8 +650,10 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=1., tol=.0001, max_loops=100,
-                                          max_steps=None, ref_height=None):
+                                          step_size=0.5, tol=1.E-4, max_loops=1000,
+                                          full_output=False, tol_zonal_apex=1.E-4,
+                                          max_steps=None, ref_height=None,
+                                          steps=None):
     """Calculates local geomagnetic unit vectors expressing the ion drift
     coordinate system organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -673,7 +675,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             Tan(theta) = apex_height_diff_zonal/apex_height_diff_meridional
 
         The method terminates when successive updates to both the zonal and meridional
-        unit vectors differ (magnitude of difference) by less than tol.
+        unit vectors differ (magnitude of difference) by less than tol, and the
+        change in apex_height from input location is less than tol_zonal_apex.
 
 
     Parameters
@@ -692,14 +695,30 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Tolerance goal for the magnitude of the change in unit vectors per loop
     max_loops : int
         Maximum number of iterations
+    tol_zonal_apex : Maximum allowed change in apex height along
+        zonal direction
+    full_output : bool (False)
+        If True, return an additional output parameter (dict) with stats
+        about iterative process
     max_steps : int
         Deprecated
     ref_height : float
+        Deprecated
+    steps : list-like
         Deprecated
 
     Returns
     -------
     zon_x, zon_y, zon_z, fa_x, fa_y, fa_z, mer_x, mer_y, mer_z
+
+    Optional output dictionary
+    --------------------------
+    diff_mer_apex : change in apex height (km) along meridional vector
+    diff_mer_vec : magnitude of vector change for last loop
+    diff_zonal_apex : change in apex height (km) along zonal vector
+    diff_zonal_vec : magnitude of vector change for last loop
+    loops : Number of loops
+    vector_seed_type : Initial vector used for starting calculation
 
     """
 
@@ -707,6 +726,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         raise DeprecationWarning('max_steps is no longer supported.')
     if ref_height is not None:
         raise DeprecationWarning('ref_height is no longer supported.')
+    if steps is not None:
+        raise DeprecationWarning('steps is no longer supported.')
+
     if step_size <= 0:
         raise ValueError('Step Size must be greater than 0.')
     # loop counter
@@ -771,31 +793,46 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
     repeat_flag = True
     # need a vector perpendicular to mag field
-    # infinitely many, I'll pick one where z component zero
-    tzx, tzy, tzz = -by, bx, 0.*bx
-    tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
+    # infinitely many
+    # let's use the east vector as a great place to start
+    tzx, tzy, tzz = enu_to_ecef_vector(np.ones(len(be)), np.zeros(len(be)),
+                                       np.zeros(len(be)), geo_lat, geo_long)
+    init_type = np.zeros(len(be)) - 1
     # make sure this vector is well constrained
-    # avoid locations where bobth bx and by are equal to zero
-    idx, = np.where((np.abs(bx) < 1.E-10) & (np.abs(by) > 1.E-10))
-    if len(idx) > 0:
-        tzx[idx] = 1.
-        tzy[idx] = -bx/by
-        # renormalize these vectors
-        tzx[idx], tzy[idx], tzz[idx] = normalize_vector(tzx[idx], tzy[idx], tzz[idx])
+    # avoid locations where bz near zero
+    idx0, = np.where(np.abs(bz) >= 1.E-10)
+    if len(idx0) > 0:
+        idx, = np.where((np.abs(tzx[idx0]) >= np.abs(tzy[idx0])))
+        if len(idx) > 0:
+            # force y component to zero and use z-x plane
+            tzy[idx0[idx]] = 0
+            tzz[idx0[idx]] = -tzx[idx0[idx]]*bx[idx0[idx]]/bz[idx0[idx]]
+            init_type[idx0[idx]] = 0
+        idx, = np.where((np.abs(tzy[idx0]) > np.abs(tzx[idx0])))
+        if len(idx) > 0:
+            # force x component to zero and use z-y plane
+            tzx[idx0[idx]] = 0
+            tzz[idx0[idx]] = -tzy[idx0[idx]]*by[idx0[idx]]/bz[idx0[idx]]
+            init_type[idx0[idx]] = 1
 
-    idx, = np.where((np.abs(bx) > 1.E-10) & (np.abs(by) < 1.E-10))
-    if len(idx) > 0:
-        tzx[idx] = -by/bx
-        tzy[idx] = 1.
-        # renormalize these vectors
-        tzx[idx], tzy[idx], tzz[idx] = normalize_vector(tzx[idx], tzy[idx], tzz[idx])
+    # dealing with locations with small bz
+    idx0, = np.where(np.abs(bz) < 1.E-10)
+    if len(idx0) > 0:
+        idx, = np.where((np.abs(bx[idx0]) > np.abs(by[idx0])) )
+        if len(idx) > 0:
+            # force z component to zero and use y-x plane
+            tzz[idx0[idx]] = 0
+            tzx[idx0[idx]] = -tzy[idx0[idx]]*by[idx0[idx]]/bx[idx0[idx]]
+            init_type[idx0[idx]] = 2
+        idx, = np.where((np.abs(by[idx0]) >= np.abs(bx[idx0])) )
+        if len(idx) > 0:
+            # force z component to zero and use x-y plane
+            tzz[idx0[idx]] = 0
+            tzy[idx0[idx]] = -tzx[idx0[idx]]*bx[idx0[idx]]/by[idx0[idx]]
+            init_type[idx0[idx]]= 3
 
-    idx, = np.where((np.abs(bx) < 1.E-10) & (np.abs(by) < 1.E-10))
-    if len(idx) > 0:
-        tzx[idx] = 0.8
-        tzy[idx] = 1.
-        # renormalize these vectors
-        tzx[idx], tzy[idx], tzz[idx] = normalize_vector(tzx[idx], tzy[idx], tzz[idx])
+    # normalize these vectors
+    tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
 
     # need another perpendicular vector to both
     tmx, tmy, tmz = cross_product(tzx, tzy, tzz, bx, by, bz)
@@ -836,18 +873,18 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
         # track difference
         dx, dy, dz = (tzx2 - tzx)**2, (tzy2 - tzy)**2, (tzz2 - tzz)**2
-        diff = np.sqrt(dx + dy + dz)
+        diff_z = np.sqrt(dx + dy + dz)
         dx, dy, dz = (tmx2 - tmx)**2, (tmy2 - tmy)**2, (tmz2 - tmz)**2
-        diff2 = np.sqrt(dx + dy + dz)
+        diff_m = np.sqrt(dx + dy + dz)
         # take biggest difference
-        diff = np.max([diff, diff2])
+        diff = np.max([diff_z, diff_m])
 
-        # store info into calculation vectors to refine nsext loop
+        # store info into calculation vectors to refine next loop
         tzx, tzy, tzz = tzx2, tzy2, tzz2
         tmx, tmy, tmz = tmx2, tmy2, tmz2
 
         # check if we are done
-        if diff < tol:
+        if (diff < tol) & (np.max(np.abs(diff_apex_z)) < tol_zonal_apex):
             repeat_flag = False
         loop_num += 1
         if loop_num > max_loops:
@@ -860,6 +897,16 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
     zx, zy, zz = tzx, tzy, tzz
     mx, my, mz = tmx, tmy, tmz
+    if full_output:
+        outd = {'diff_zonal_apex' : diff_apex_z,
+                'diff_mer_apex' : diff_apex_m,
+                'loops' : loop_num,
+                'vector_seed_type' : init_type,
+                'diff_zonal_vec' : diff_z,
+                'diff_mer_vec' : diff_m
+                }
+        return zx, zy, zz, bx, by, bz, mx, my, mz, outd
+
     # return unit vectors for magnetic drifts in ecef coordinates
     return zx, zy, zz, bx, by, bz, mx, my, mz
 
@@ -1058,8 +1105,8 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
     return np.array([x, y, z])
 
 
-def apex_location_info(glats, glons, alts, dates, step_size=100.,
-                       fine_step_size=0.1):
+def apex_location_info(glats, glons, alts, dates, step_size=10.,
+                       fine_step_size=0.001):
     """Determine apex location for the field line passing through input point.
 
     Employs a two stage method. A broad step (step_size) field line trace spanning
