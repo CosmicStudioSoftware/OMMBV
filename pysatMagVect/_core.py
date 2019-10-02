@@ -396,7 +396,7 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          steps,
                                          args=(date, step_size, direction, height),
                                          full_output=True,
-                                         printmessg=True,
+                                         printmessg=False,
                                          ixpr=False) #,
                                          # mxstep=500)
     if messg['message'] != 'Integration successful.':
@@ -851,6 +851,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             repeat_flag = False
         loop_num += 1
         if loop_num > max_loops:
+            print('lats:', latitude)
+            print('longs', longitude)
+            print('alts', altitude)
             raise RuntimeWarning("Didn't converge after reaching max_loops")
             tzx, tzy, tzz = np.nan*tzx, np.nan*tzy, np.nan*tzz
             tmx, tmy, tmz = np.nan*tzx, np.nan*tzy, np.nan*tzz
