@@ -1052,6 +1052,9 @@ class TestCore():
         apex_lon[:,-1] = apex_lon[:,0]
         apex_alt[:,-1] = apex_alt[:,0]
 
+        idx, idy, = np.where(apex_lat > 10.)
+        print('Locations with large apex x (ECEF) location differences.', p_lats[idx], p_longs[idx])
+
         ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
         ytickvals = ['-50', '-25', '0', '25', '50']
