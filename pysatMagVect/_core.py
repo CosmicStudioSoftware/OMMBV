@@ -651,7 +651,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           step_size=0.3, tol=1.E-4, max_loops=1000,
-                                          full_output=False, tol_zonal_apex=1.E-4,
+                                          full_output=False, tol_zonal_apex=1.E-6,
                                           max_steps=None, ref_height=None,
                                           steps=None):
     """Calculates local geomagnetic unit vectors expressing the ion drift
