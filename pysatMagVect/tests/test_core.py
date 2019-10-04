@@ -402,7 +402,9 @@ class TestCore():
         # step size to be tried
         fine_steps_goal = np.array([25.6, 12.8, 6.4, 3.2, 1.6, 0.8, 0.4, 0.2,
                                     0.1, 0.05, .025, .0125, .00625, .003125,
-                                    .0015625, .00078125, .000390625, .0001953125])
+                                    .0015625, .00078125, .000390625, .0001953125,
+                                    .0001953125/2., .0001953125/4., .0001953125/8.,
+                                    .0001953125/16.])
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
@@ -1011,6 +1013,7 @@ class TestCore():
         apex_lat = np.zeros((len(p_lats), len(p_longs)+1))
         apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
         apex_alt = np.zeros((len(p_lats), len(p_longs)+1))
+        apex_z = np.zeros((len(p_lats), len(p_longs)+1))
         norm_lat = np.zeros((len(p_lats), len(p_longs)+1))
         norm_lon = np.zeros((len(p_lats), len(p_longs)+1))
         norm_alt = np.zeros((len(p_lats), len(p_longs)+1))
@@ -1027,10 +1030,12 @@ class TestCore():
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
-                                                                            fine_step_size=1.E-5))
+                                                                            fine_step_size=1.E-5,
+                                                                            return_geodetic=True))
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
-                                                                            fine_step_size=2.E-5))
+                                                                            fine_step_size=2.E-5,
+                                                                            return_geodetic=True))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 # collect output
@@ -1044,22 +1049,23 @@ class TestCore():
             # single processor case
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                x, y, z = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
+                x, y, z, _, _, h = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
-                                                                        fine_step_size=1.E-5)
-                x2, y2, z2 = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
+                                                                        fine_step_size=1.E-5, return_geodetic=True)
+                x2, y2, z2, _, _, h2 = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
                                                                            p_alts, [date]*len(p_longs),
-                                                                           fine_step_size=2.E-5)
-                norm_lat[i,:-1] = x
-                norm_lon[i,:-1] = y
-                norm_alt[i,:-1] = z
+                                                                           fine_step_size=2.E-5, return_geodetic=True)
+
+                norm_alt[i,:-1] = h
                 apex_lat[i,:-1] = np.abs(x2 - x)
                 apex_lon[i,:-1] = np.abs(y2 - y)
-                apex_alt[i,:-1] = np.abs(z2 - z)
+                apex_z[i,:-1] = np.abs(z2 - z)
+                apex_alt[i,:-1] = np.abs(h2 - h)
 
         # account for periodicity
         apex_lat[:,-1] = apex_lat[:,0]
         apex_lon[:,-1] = apex_lon[:,0]
+        apex_z[:,-1] = apex_z[:,0]
         apex_alt[:,-1] = apex_alt[:,0]
 
         idx, idy, = np.where(apex_lat > 10.)
@@ -1093,7 +1099,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(np.log10(apex_alt), origin='lower')
+            plt.imshow(np.log10(apex_z), origin='lower')
             plt.colorbar()
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
@@ -1101,6 +1107,28 @@ class TestCore():
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_loc_diff_z.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(apex_alt/norm_alt), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ytickvals)
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log Apex Altitude Normalized Difference (km)')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('apex_norm_loc_diff_h.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(apex_alt), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ytickvals)
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log Apex Altitude Normalized Difference (km)')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('apex_loc_diff_h.pdf')
             plt.close()
 
         except:
