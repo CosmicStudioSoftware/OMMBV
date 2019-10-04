@@ -1106,15 +1106,16 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
     return np.array([x, y, z])
 
 
-def apex_location_info(glats, glons, alts, dates, step_size=10.,
-                       fine_step_size=0.001):
+def apex_location_info(glats, glons, alts, dates, step_size=100.,
+                       fine_step_size=1.E-5):
     """Determine apex location for the field line passing through input point.
 
     Employs a two stage method. A broad step (step_size) field line trace spanning
     Northern/Southern footpoints is used to find the location with the largest
-    geodetic (WGS84) height. A higher resolution trace (fine_step_size) is then used to
-    get a better fix on this location. Greatest geodetic height is once again
-    selected.
+    geodetic (WGS84) height. A binary search higher resolution trace (goal fine_step_size)
+    is then used to get a better fix on this location. Each loop, step_size halved.
+    Greatest geodetic height is once again selected once the step_size is below
+    fine_step_size.
 
     Parameters
     ----------
@@ -1128,7 +1129,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=10.,
         Date and time for determination of scalars
     step_size : float (100. km)
         Step size (km) used for tracing coarse field line
-    fine_step_size : float (.01 km)
+    fine_step_size : float (1.E-5 km)
         Fine step size for refining apex location height
 
     Returns
@@ -1147,7 +1148,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=10.,
     max_steps = 100
     steps = np.arange(max_steps)
     # high resolution trace parameters
-    fine_max_steps = np.ceil(step_size/fine_step_size)+10
+    fine_max_steps = 4 #np.ceil(step_size/fine_step_size)+10
     fine_steps = np.arange(fine_max_steps)
     # prepare output
     out_x = []
@@ -1170,15 +1171,18 @@ def apex_location_info(glats, glons, alts, dates, step_size=10.,
         # repeat using a high resolution trace one big step size each
         # direction around identified max
         # recurse False ensures only max_steps are taken
-        trace = full_field_line(trace[max_idx,:], date, 0.,
-                                steps=fine_steps,
-                                step_size=fine_step_size,
-                                max_steps=fine_max_steps,
-                                recurse=False)
-        # convert all locations to geodetic coordinates
-        tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
-        # determine location that is highest with respect to the geodetic Earth
-        max_idx = np.argmax(talt)
+        new_step = step_size
+        while new_step > fine_step_size:
+            new_step /= 2.
+            trace = full_field_line(trace[max_idx,:], date, 0.,
+                                    steps=fine_steps,
+                                    step_size=new_step,
+                                    max_steps=fine_max_steps,
+                                    recurse=False)
+            # convert all locations to geodetic coordinates
+            tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
+            # determine location that is highest with respect to the geodetic Earth
+            max_idx = np.argmax(talt)
 
         # collect outputs
         out_x.append(trace[max_idx,0])
@@ -1191,7 +1195,6 @@ def apex_location_info(glats, glons, alts, dates, step_size=10.,
     glat, glon, alt = ecef_to_geodetic(out_x, out_y, out_z)
 
     return out_x, out_y, out_z, glat, glon, alt
-
 
 def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                            vector_direction, step_size=None,
@@ -1770,6 +1773,7 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size
 
 def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                    max_steps=None, e_field_scaling_only=False,
+                                   edge_length=25., edge_steps=5,
                                    **kwargs):
     """
     Calculates scalars for translating ion motions at position
@@ -1816,6 +1820,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
+    # double edge length, used later
+    double_edge = 2.*edge_length
+
     # prepare output
     eq_zon_drifts_scalar = []
     eq_mer_drifts_scalar = []
@@ -1832,8 +1839,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                 'meridional',
                                                 step_size=step_size,
                                                 max_steps=max_steps,
-                                                edge_length=25.,
-                                                edge_steps=5,
+                                                edge_length=edge_length,
+                                                edge_steps=edge_steps,
                                                 **kwargs)
 
     north_mer_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
@@ -1841,8 +1848,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                 'zonal',
                                                 step_size=step_size,
                                                 max_steps=max_steps,
-                                                edge_length=25.,
-                                                edge_steps=5,
+                                                edge_length=edge_length,
+                                                edge_steps=edge_steps,
                                                 **kwargs)
 
     # print ('Starting Southern')
@@ -1851,8 +1858,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                 'meridional',
                                                 step_size=step_size,
                                                 max_steps=max_steps,
-                                                edge_length=25.,
-                                                edge_steps=5,
+                                                edge_length=edge_length,
+                                                edge_steps=edge_steps,
                                                 **kwargs)
 
     south_mer_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
@@ -1860,30 +1867,30 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                 'zonal',
                                                 step_size=step_size,
                                                 max_steps=max_steps,
-                                                edge_length=25.,
-                                                edge_steps=5,
+                                                edge_length=edge_length,
+                                                edge_steps=edge_steps,
                                                 **kwargs)
     # print ('Starting Equatorial')
     eq_zon_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                                         'meridional',
-                                                        edge_length=25.,
-                                                        edge_steps=5)
+                                                        edge_length=edge_length,
+                                                        edge_steps=edge_steps)
     eq_mer_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                                         'zonal',
-                                                        edge_length=25.,
-                                                        edge_steps=1)
+                                                        edge_length=edge_length,
+                                                        edge_steps=edge_steps)
     # print ('Done with core')
     # ratio of apex height difference to step_size across footpoints
     # scales from equator to footpoint
-    north_zon_drifts_scalar = north_zon_drifts_scalar/50.
-    south_zon_drifts_scalar = south_zon_drifts_scalar/50.
-    north_mer_drifts_scalar = north_mer_drifts_scalar/50.
-    south_mer_drifts_scalar = south_mer_drifts_scalar/50.
+    north_zon_drifts_scalar = north_zon_drifts_scalar/double_edge
+    south_zon_drifts_scalar = south_zon_drifts_scalar/double_edge
+    north_mer_drifts_scalar = north_mer_drifts_scalar/double_edge
+    south_mer_drifts_scalar = south_mer_drifts_scalar/double_edge
 
     # equatorial
     # scale from s/c to equator
-    eq_zon_drifts_scalar = 50./eq_zon_drifts_scalar
-    eq_mer_drifts_scalar = 50./eq_mer_drifts_scalar
+    eq_zon_drifts_scalar = double_edge/eq_zon_drifts_scalar
+    eq_mer_drifts_scalar = double_edge/eq_mer_drifts_scalar
 
     # change scaling from equator to footpoint, to s/c to footpoint
     # via s/c to equator
