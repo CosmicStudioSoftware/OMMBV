@@ -1032,7 +1032,7 @@ class TestCore():
                                                                             return_geodetic=True))
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
-                                                                            fine_step_size=2.E-5,
+                                                                            fine_step_size=5.E-6,
                                                                             return_geodetic=True))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
@@ -1052,7 +1052,7 @@ class TestCore():
                                                                         fine_step_size=1.E-5, return_geodetic=True)
                 x2, y2, z2, _, _, h2 = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
                                                                            p_alts, [date]*len(p_longs),
-                                                                           fine_step_size=2.E-5, return_geodetic=True)
+                                                                           fine_step_size=5.E-6, return_geodetic=True)
 
                 norm_alt[i,:-1] = h
                 apex_lat[i,:-1] = np.abs(x2 - x)
@@ -3119,12 +3119,13 @@ class TestCore():
                 south_mer[i,:-1] = scalars['south_zon_fields_scalar']
                 eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
                 eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
+
                 north_zonald[i,:-1] = scalars['north_mer_drifts_scalar']
-                north_merd[i,:-1] = scalars['north_zon_drifts_scalar']
+                north_merd[i,:-1] = scalars['north_zonal_drifts_scalar']
                 south_zonald[i,:-1] = scalars['south_mer_drifts_scalar']
-                south_merd[i,:-1] = scalars['south_zon_drifts_scalar']
+                south_merd[i,:-1] = scalars['south_zonal_drifts_scalar']
                 eq_zonald[i,:-1] = scalars['equator_mer_drifts_scalar']
-                eq_merd[i,:-1] = scalars['equator_zon_drifts_scalar']
+                eq_merd[i,:-1] = scalars['equator_zonal_drifts_scalar']
         else:
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
@@ -3137,11 +3138,11 @@ class TestCore():
                 eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
                 eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
                 north_zonald[i,:-1] = scalars['north_mer_drifts_scalar']
-                north_merd[i,:-1] = scalars['north_zon_drifts_scalar']
+                north_merd[i,:-1] = scalars['north_zonal_drifts_scalar']
                 south_zonald[i,:-1] = scalars['south_mer_drifts_scalar']
-                south_merd[i,:-1] = scalars['south_zon_drifts_scalar']
+                south_merd[i,:-1] = scalars['south_zonal_drifts_scalar']
                 eq_zonald[i,:-1] = scalars['equator_mer_drifts_scalar']
-                eq_merd[i,:-1] = scalars['equator_zon_drifts_scalar']
+                eq_merd[i,:-1] = scalars['equator_zonal_drifts_scalar']
         # account for periodicity
         north_zonal[:,-1] = north_zonal[:,0]
         north_mer[:,-1] = north_mer[:,0]
