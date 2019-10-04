@@ -3120,12 +3120,12 @@ class TestCore():
                 eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
                 eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
 
-                north_zonald[i,:-1] = scalars['north_mer_drifts_scalar']
-                north_merd[i,:-1] = scalars['north_zonal_drifts_scalar']
-                south_zonald[i,:-1] = scalars['south_mer_drifts_scalar']
-                south_merd[i,:-1] = scalars['south_zonal_drifts_scalar']
-                eq_zonald[i,:-1] = scalars['equator_mer_drifts_scalar']
-                eq_merd[i,:-1] = scalars['equator_zonal_drifts_scalar']
+                north_zonald[i,:-1] = scalars['north_zonal_drifts_scalar']
+                north_merd[i,:-1] = scalars['north_mer_drifts_scalar']
+                south_zonald[i,:-1] = scalars['south_zonal_drifts_scalar']
+                south_merd[i,:-1] = scalars['south_mer_drifts_scalar']
+                eq_zonald[i,:-1] = scalars['equator_zonal_drifts_scalar']
+                eq_merd[i,:-1] = scalars['equator_mer_drifts_scalar']
         else:
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
@@ -3137,12 +3137,13 @@ class TestCore():
                 south_mer[i,:-1] = scalars['south_zon_fields_scalar']
                 eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
                 eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
-                north_zonald[i,:-1] = scalars['north_mer_drifts_scalar']
-                north_merd[i,:-1] = scalars['north_zonal_drifts_scalar']
-                south_zonald[i,:-1] = scalars['south_mer_drifts_scalar']
-                south_merd[i,:-1] = scalars['south_zonal_drifts_scalar']
-                eq_zonald[i,:-1] = scalars['equator_mer_drifts_scalar']
-                eq_merd[i,:-1] = scalars['equator_zonal_drifts_scalar']
+
+                north_zonald[i,:-1] = scalars['north_zonal_drifts_scalar']
+                north_merd[i,:-1] = scalars['north_mer_drifts_scalar']
+                south_zonald[i,:-1] = scalars['south_zonal_drifts_scalar']
+                south_merd[i,:-1] = scalars['south_mer_drifts_scalar']
+                eq_zonald[i,:-1] = scalars['equator_zonal_drifts_scalar']
+                eq_merd[i,:-1] = scalars['equator_mer_drifts_scalar']
         # account for periodicity
         north_zonal[:,-1] = north_zonal[:,0]
         north_mer[:,-1] = north_mer[:,0]
