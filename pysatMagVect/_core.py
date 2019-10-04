@@ -543,7 +543,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     """
 
     if steps is None:
-        steps = np.arange(max_steps)
+        steps = np.arange(max_steps+1)
     latitude = np.array(latitude)
     longitude = np.array(longitude)
     altitude = np.array(altitude)
@@ -1282,7 +1282,7 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         step_size = 100.
     if max_steps is None:
         max_steps = 1000
-    steps = np.arange(max_steps)
+    steps = np.arange(max_steps+1)
 
     if direction == 'south':
         direct = -1
@@ -1641,7 +1641,7 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size
         step_size = 100.
     if max_steps is None:
         max_steps = 1000
-    steps = np.arange(max_steps)
+    steps = np.arange(max_steps+1)
 
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)

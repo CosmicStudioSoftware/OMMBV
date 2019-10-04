@@ -2885,6 +2885,9 @@ class TestCore():
             for i,p_lat in enumerate(p_lats):
                 x[i,:-1], y[i,:-1], z[i,:-1] = pending.pop(0).get()
                 x2[i,:-1], y2[i,:-1], z2[i,:-1] = pending.pop(0).get()
+            normx = x.copy()
+            normy = y.copy()
+            normz = z.copy()
             # take difference in locations
             x = x - x2
             y = y - y2
