@@ -1066,6 +1066,7 @@ class TestCore():
         apex_lon[:,-1] = apex_lon[:,0]
         apex_z[:,-1] = apex_z[:,0]
         apex_alt[:,-1] = apex_alt[:,0]
+        norm_alt[:,-1] = norm_alt[:,0]
 
         idx, idy, = np.where(apex_lat > 10.)
         print('Locations with large apex x (ECEF) location differences.', p_lats[idx], p_longs[idx])
