@@ -3061,6 +3061,13 @@ class TestCore():
         eq_zonal = north_zonal.copy()
         eq_mer = north_zonal.copy()
 
+        north_zonald = np.zeros((len(p_lats), len(p_longs)+1))
+        north_merd = north_zonal.copy()
+        south_zonald = north_zonal.copy()
+        south_merd = north_zonal.copy()
+        eq_zonald = north_zonal.copy()
+        eq_merd = north_zonal.copy()
+
         date = datetime.datetime(2000,1,1)
         # set up multi
         if self.dc is not None:
@@ -3072,8 +3079,7 @@ class TestCore():
                 print (i, p_lat)
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,[p_lat]*len(p_longs), p_longs,
-                                                                        p_alts, [date]*len(p_longs),
-                                                                        e_field_scaling_only=True))
+                                                                        p_alts, [date]*len(p_longs)))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                     # collect output
@@ -3084,17 +3090,29 @@ class TestCore():
                 south_mer[i,:-1] = scalars['south_zon_fields_scalar']
                 eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
                 eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
+                north_zonald[i,:-1] = scalars['north_mer_drifts_scalar']
+                north_merd[i,:-1] = scalars['north_zon_drifts_scalar']
+                south_zonald[i,:-1] = scalars['south_mer_drifts_scalar']
+                south_merd[i,:-1] = scalars['south_zon_drifts_scalar']
+                eq_zonald[i,:-1] = scalars['equator_mer_drifts_scalar']
+                eq_merd[i,:-1] = scalars['equator_zon_drifts_scalar']
         else:
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
                 scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
-                                                                p_alts, [date]*len(p_longs), e_field_scaling_only=True)
+                                                                p_alts, [date]*len(p_longs))
                 north_zonal[i,:-1] = scalars['north_mer_fields_scalar']
                 north_mer[i,:-1] = scalars['north_zon_fields_scalar']
                 south_zonal[i,:-1] = scalars['south_mer_fields_scalar']
                 south_mer[i,:-1] = scalars['south_zon_fields_scalar']
                 eq_zonal[i,:-1] = scalars['equator_mer_fields_scalar']
                 eq_mer[i,:-1] = scalars['equator_zon_fields_scalar']
+                north_zonald[i,:-1] = scalars['north_mer_drifts_scalar']
+                north_merd[i,:-1] = scalars['north_zon_drifts_scalar']
+                south_zonald[i,:-1] = scalars['south_mer_drifts_scalar']
+                south_merd[i,:-1] = scalars['south_zon_drifts_scalar']
+                eq_zonald[i,:-1] = scalars['equator_mer_drifts_scalar']
+                eq_merd[i,:-1] = scalars['equator_zon_drifts_scalar']
         # account for periodicity
         north_zonal[:,-1] = north_zonal[:,0]
         north_mer[:,-1] = north_mer[:,0]
@@ -3103,6 +3121,7 @@ class TestCore():
         eq_zonal[:,-1] = eq_zonal[:,0]
         eq_mer[:,-1] = eq_mer[:,0]
 
+        xtickvals = ['-25', '-12.5', '0', '12.5', '25']
         xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
 
@@ -3110,7 +3129,7 @@ class TestCore():
             fig = plt.figure()
             plt.imshow(eq_zonal, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
-            plt.yticks(xtickarr, ['-50', '-25', '0', '25', '50'])
+            plt.yticks(xtickarr, xtickvals)
             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
             plt.title('Meridional Electric Field Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
@@ -3172,75 +3191,11 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('south_zon_field.pdf')
             plt.close()
-        except:
-            pass
 
-    def test_geomag_ion_drift_scalars_plots(self):
-        import matplotlib.pyplot as plt
-        # from mpl_toolkits.mplot3d import Axes3D
-        import os
 
-        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
-        # data returned are the locations along each direction
-        # the full range of points obtained by iterating over all
-        # recasting alts into a more convenient form for later calculation
-        p_alts = [p_alts[0]]*len(p_longs)
 
-        north_zonal = np.zeros((len(p_lats), len(p_longs)+1))
-        north_mer = north_zonal.copy()
-        south_zonal = north_zonal.copy()
-        south_mer = north_zonal.copy()
-        eq_zonal = north_zonal.copy()
-        eq_mer = north_zonal.copy()
-
-        date = datetime.datetime(2000,1,1)
-        # set up multi
-        if self.dc is not None:
-            import itertools
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            for i,p_lat in enumerate(p_lats):
-                # iterate through target cyclicly and run commands
-                dview.targets = targets.next()
-                print ('Targeting ', dview.targets, i, p_lat)
-                pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts, [p_lat]*len(p_longs), p_longs,
-                                                                        p_alts, [date]*len(p_longs)))
-            for i,p_lat in enumerate(p_lats):
-                print ('collecting ', i, p_lat)
-                # collect output
-                scalars = pending.pop(0).get()
-                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
-                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
-                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
-                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
-                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
-                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
-        else:
-            for i,p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
-                                                                        p_alts, [date]*len(p_longs))
-                north_zonal[i,:-1] = scalars['north_zonal_drifts_scalar']
-                north_mer[i,:-1] = scalars['north_mer_drifts_scalar']
-                south_zonal[i,:-1] = scalars['south_zonal_drifts_scalar']
-                south_mer[i,:-1] = scalars['south_mer_drifts_scalar']
-                eq_zonal[i,:-1] = scalars['equator_zonal_drifts_scalar']
-                eq_mer[i,:-1] = scalars['equator_mer_drifts_scalar']
-        # account for periodicity
-        north_zonal[:,-1] = north_zonal[:,0]
-        north_mer[:,-1] = north_mer[:,0]
-        south_zonal[:,-1] = south_zonal[:,0]
-        south_mer[:,-1] = south_mer[:,0]
-        eq_zonal[:,-1] = eq_zonal[:,0]
-        eq_mer[:,-1] = eq_mer[:,0]
-
-        xtickvals = ['-25', '-12.5', '0', '12.5', '25']
-        xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
-        ytickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
-
-        try:
             fig = plt.figure()
-            plt.imshow(np.log10(eq_zonal), origin='lower')#, vmin=0, vmax=2)
+            plt.imshow(np.log10(eq_zonald), origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks(xtickarr, xtickvals)
             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
@@ -3251,7 +3206,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(np.log10(eq_mer), origin='lower')#, vmin=0, vmax=1.)
+            plt.imshow(np.log10(eq_merd), origin='lower')#, vmin=0, vmax=1.)
             plt.colorbar()
             plt.yticks(xtickarr, xtickvals)
             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
@@ -3262,7 +3217,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(north_zonal, origin='lower')#, vmin=0, vmax=2)
+            plt.imshow(north_zonald, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks(xtickarr, xtickvals)
             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
@@ -3273,7 +3228,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(north_mer, origin='lower')#, vmin=0, vmax=2)
+            plt.imshow(north_merd, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks(xtickarr, xtickvals)
             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
@@ -3284,7 +3239,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(south_zonal, origin='lower')#, vmin=0, vmax=2)
+            plt.imshow(south_zonald, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks(xtickarr, xtickvals)
             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
@@ -3295,7 +3250,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(south_mer, origin='lower')#, vmin=0, vmax=2)
+            plt.imshow(south_merd, origin='lower')#, vmin=0, vmax=2)
             plt.colorbar()
             plt.yticks(xtickarr, xtickvals)
             plt.xticks(ytickarr, ['0', '72', '144', '216', '288', '360'])
@@ -3304,8 +3259,11 @@ class TestCore():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('south_mer_drift.pdf')
             plt.close()
+
+
         except:
             pass
+
 
     def test_basic_ecef_to_enu_rotations(self):
         # test basic transformations first
