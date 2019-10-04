@@ -1149,7 +1149,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     max_steps = 100
     steps = np.arange(max_steps)
     # high resolution trace parameters
-    fine_max_steps = 4 #np.ceil(step_size/fine_step_size)+10
+    fine_max_steps = 3 #np.ceil(step_size/fine_step_size)+10
     fine_steps = np.arange(fine_max_steps)
     # prepare output
     out_x = []
@@ -1180,9 +1180,11 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
                                     step_size=new_step,
                                     max_steps=fine_max_steps,
                                     recurse=False)
+
             # convert all locations to geodetic coordinates
             tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
             # determine location that is highest with respect to the geodetic Earth
+            print(talt)
             max_idx = np.argmax(talt)
 
         # collect outputs
