@@ -1041,7 +1041,8 @@ class TestCore():
                 x2, y2, z2, _, _, h2 = pending.pop(0).get()
                 apex_lat[i,:-1] = np.abs(x2 - x)
                 apex_lon[i,:-1] = np.abs(y2 - y)
-                apex_alt[i,:-1] = np.abs(z2 - z)
+                apex_z[i,:-1] = np.abs(z2 - z)
+                apex_alt[i,:-1] = np.abs(h2 - h)
 
         else:
             # single processor case
@@ -2864,10 +2865,10 @@ class TestCore():
         # +1 on length of longitude array supports repeating first element
         # shows nice periodicity on the plots
         x = np.zeros((len(p_lats), len(p_longs)+1))
-        y = x.copy(); z = x.copy()
+        y = x.copy(); z = x.copy(); h = x.copy()
         # second set of outputs
         x2 = np.zeros((len(p_lats), len(p_longs)+1))
-        y2 = x2.copy(); z2 = x2.copy()
+        y2 = x2.copy(); z2 = x2.copy(); h2 = x.copy()
 
         date = datetime.datetime(2000,1,1)
         dates = [date]*len(p_lats)
@@ -2889,7 +2890,7 @@ class TestCore():
                                                                             num_steps=5, step_size=25./10.))
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date,
                                                                             direction=direction,
-                                                                            num_steps=1, step_size=25./5.))
+                                                                            num_steps=1, step_size=25./1.))
             # for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 for j,p_long in enumerate(p_longs):
@@ -2904,20 +2905,24 @@ class TestCore():
                 dview.targets = targets.next()
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])
-                pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates))
+                pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates,
+                                                 return_geodetic=True))
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x2[i,:-1], y2[i,:-1], z2[i,:-1])
-                pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates))
+                pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates,
+                                                 return_geodetic=True))
             for i,p_lat in enumerate(p_lats):
-                x[i,:-1], y[i,:-1], z[i,:-1] = pending.pop(0).get()
-                x2[i,:-1], y2[i,:-1], z2[i,:-1] = pending.pop(0).get()
+                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h2[i,j] = pending.pop(0).get()
+                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, h2[i,j] = pending.pop(0).get()
             normx = x.copy()
             normy = y.copy()
             normz = z.copy()
+            normh = h.copy()
             # take difference in locations
             x = x - x2
             y = y - y2
             z = z - z2
+            h = h - h2
 
         else:
             for i,p_lat in enumerate(p_lats):
@@ -2930,29 +2935,36 @@ class TestCore():
                     # second run
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date,
                                                                             direction=direction,
-                                                                            num_steps=1, step_size=25./5.)
+                                                                            num_steps=1, step_size=25./1.)
             for i,p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])
-                x[i,:-1], y[i,:-1], z[i,:-1] = pymv.apex_location_info(tlat, tlon, talt, dates)
+                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h2[i,j] = pymv.apex_location_info(tlat, tlon, talt, dates,
+                                                                                      return_geodetic=True)
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x2[i,:-1], y2[i,:-1], z2[i,:-1])
-                x2[i,:-1], y2[i,:-1], z2[i,:-1] = pymv.apex_location_info(tlat, tlon, talt, dates)
+                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, h2[i,j] = pymv.apex_location_info(tlat, tlon, talt, dates,
+                                                                                         return_geodetic=True)
             # take difference in locations
             normx = x.copy()
             normy = y.copy()
             normz = z.copy()
+            normh = np.abs(h)
+
             x = x - x2
             y = y - y2
             z = z - z2
+            h = h - h2
 
         # account for periodicity
         x[:,-1] = x[:,0]
         y[:,-1] = y[:,0]
         z[:,-1] = z[:,0]
+        h[:,-1] = h[:,0]
         normx[:,-1] = normx[:,0]
         normy[:,-1] = normy[:,0]
         normz[:,-1] = normz[:,0]
+        normh[:,-1] = normh[:,0]
         # plot tick locations and labels
         ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
         xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
@@ -3012,56 +3024,14 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(np.log10(np.abs(x/normx)), origin='lower')
+            plt.imshow(np.log10(np.abs(h/normh)), origin='lower')
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Normalized Difference in Apex Position (X) After Stepping')
+            plt.title('Log Normalized Difference in Apex Height (h) After Stepping')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig(direction+'_normal_step_diff_apex_height_x.pdf')
-            plt.close()
-
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(y/normy)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Normalized Difference in Apex Position (Y) After Stepping')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig(direction+'_normal_step_diff_apex_height_y.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(z/normz)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Normalized Difference in Apex Position (Z) After Stepping')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig(direction+'_normal_step_diff_apex_height_z.pdf')
-            plt.close()
-
-            # calculate mean and standard deviation and then plot those
-            fig = plt.figure()
-            yerrx = np.nanstd(np.log10(x[:,:-1]/normx[:,:-1]), axis=0)
-            yerry = np.nanstd(np.log10(y[:,:-1]/normy[:,:-1]), axis=0)
-            yerrz = np.nanstd(np.log10(z[:,:-1]/normz[:,:-1]), axis=0)
-            plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(x[:,:-1]/normx[:,:-1]), axis=0)),
-                         yerr=yerrx, label='x')
-            plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(y[:,:-1]/normy[:,:-1]), axis=0)),
-                         yerr=yerry, label='y')
-            plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(z[:,:-1]/normz[:,:-1]), axis=0)),
-                         yerr=yerrz, label='z')
-            plt.xlabel('Longitude (Degrees)')
-            plt.ylabel('Change in ECEF (km)')
-            plt.title('Log Median Normalized Difference in Apex Position')
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig(direction+'_normal_step_diff_v_longitude.pdf' )
+            plt.savefig(direction+'_normal_step_diff_apex_height_h.pdf')
             plt.close()
 
         except:
@@ -3151,6 +3121,12 @@ class TestCore():
         south_mer[:,-1] = south_mer[:,0]
         eq_zonal[:,-1] = eq_zonal[:,0]
         eq_mer[:,-1] = eq_mer[:,0]
+        north_zonald[:,-1] = north_zonald[:,0]
+        north_merd[:,-1] = north_merd[:,0]
+        south_zonald[:,-1] = south_zonald[:,0]
+        south_merd[:,-1] = south_merd[:,0]
+        eq_zonald[:,-1] = eq_zonald[:,0]
+        eq_merd[:,-1] = eq_merd[:,0]
 
         xtickvals = ['-25', '-12.5', '0', '12.5', '25']
         xtickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
