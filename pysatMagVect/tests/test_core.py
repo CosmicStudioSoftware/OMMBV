@@ -1037,8 +1037,8 @@ class TestCore():
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 # collect output
-                x, y, z  = pending.pop(0).get()
-                x2, y2, z2 = pending.pop(0).get()
+                x, y, z, _, _, h = pending.pop(0).get()
+                x2, y2, z2, _, _, h2 = pending.pop(0).get()
                 apex_lat[i,:-1] = np.abs(x2 - x)
                 apex_lon[i,:-1] = np.abs(y2 - y)
                 apex_alt[i,:-1] = np.abs(z2 - z)
