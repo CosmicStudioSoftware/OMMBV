@@ -2912,8 +2912,8 @@ class TestCore():
                 pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates,
                                                  return_geodetic=True))
             for i,p_lat in enumerate(p_lats):
-                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h2[i,j] = pending.pop(0).get()
-                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, h2[i,j] = pending.pop(0).get()
+                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h2[i,:-1] = pending.pop(0).get()
+                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, h2[i,:-1] = pending.pop(0).get()
             normx = x.copy()
             normy = y.copy()
             normz = z.copy()
@@ -2939,11 +2939,11 @@ class TestCore():
             for i,p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])
-                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h2[i,j] = pymv.apex_location_info(tlat, tlon, talt, dates,
+                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h2[i,:-1] = pymv.apex_location_info(tlat, tlon, talt, dates,
                                                                                       return_geodetic=True)
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x2[i,:-1], y2[i,:-1], z2[i,:-1])
-                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, h2[i,j] = pymv.apex_location_info(tlat, tlon, talt, dates,
+                x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, h2[i,:-1] = pymv.apex_location_info(tlat, tlon, talt, dates,
                                                                                          return_geodetic=True)
             # take difference in locations
             normx = x.copy()
