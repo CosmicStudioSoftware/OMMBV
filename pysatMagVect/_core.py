@@ -1082,9 +1082,6 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
         each step_size long.
 
     """
-    # vector_step = None
-    # if direction == 'zonal' & fixed_to_surface:
-    #     vector_step = step_size
 
     for i in np.arange(num_steps):
         # x, y, z in ECEF
