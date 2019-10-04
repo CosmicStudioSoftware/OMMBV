@@ -1612,15 +1612,15 @@ class TestCore():
         except:
             pass
 
-    def test_closed_loop_footpoint_sensitivity_plots(self):
-        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'meridional')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'meridional')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'zonal')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'zonal')
-        yield(f,)
+    # def test_closed_loop_footpoint_sensitivity_plots(self):
+    #     f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'meridional')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'meridional')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'north', 'zonal')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_sensitivity_plots, 'south', 'zonal')
+    #     yield(f,)
 
 
     def closed_loop_footpoint_value_plots(self, direction, vector_direction):
@@ -1734,15 +1734,15 @@ class TestCore():
             pass
 
 
-    def test_closed_loop_footpoint_value_plots(self):
-        f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'meridional')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'meridional')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'zonal')
-        yield(f,)
-        f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'zonal')
-        yield(f,)
+    # def test_closed_loop_footpoint_value_plots(self):
+    #     f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'meridional')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'meridional')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_value_plots, 'north', 'zonal')
+    #     yield(f,)
+    #     f = functools.partial(self.closed_loop_footpoint_value_plots, 'south', 'zonal')
+    #     yield(f,)
 
 
     def test_unit_vector_component_stepsize_sensitivity_plots(self):
