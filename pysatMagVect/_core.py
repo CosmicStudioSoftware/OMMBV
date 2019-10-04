@@ -650,7 +650,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=0.3, tol=1.E-4, max_loops=100,
+                                          step_size=0.5, tol=1.E-4, max_loops=100,
                                           full_output=False, tol_zonal_apex=1.E-4,
                                           max_steps=None, ref_height=None,
                                           steps=None):
@@ -1082,6 +1082,9 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
         each step_size long.
 
     """
+    # vector_step = None
+    # if direction == 'zonal' & fixed_to_surface:
+    #     vector_step = step_size
 
     for i in np.arange(num_steps):
         # x, y, z in ECEF
@@ -1089,7 +1092,8 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
         lat, lon, alt = ecef_to_geodetic(x, y, z)
         # get unit vector directions
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(
-                                                        lat, lon, alt, [date])
+                                                        lat, lon, alt, [date],
+                                                        step_size=step_size)
         # pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
