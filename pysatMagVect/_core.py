@@ -1416,24 +1416,20 @@ def apex_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
 
     # prepare output
     apex_edge_length = []
-
+    sc_root = np.array([0, 0, 0])
     for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs,
                                                              glats, glons, alts,
                                                              dates):
-        # going to try and form close loops via field line integration
         # start at location of interest, map down to northern or southern
         # footpoints then take symmetric steps along meridional and zonal
-        # directions and trace back from location of interest, step along
-        # field line directions until we intersect or hit the distance of
-        # closest approach to the return field line with the known
-        # distances of footpoint steps, and the closet approach distance
-        # we can determine the scalar mapping of one location to another
+        # directions and then get apex locations for these fields.
+        # The difference between apex location used as field line distance.
 
         yr, doy = pysat.utils.time.getyrdoy(date)
         double_date = float(yr) + float(doy) / 366.
 
         # trace to footpoint, starting with input location
-        sc_root = np.array([ecef_x, ecef_y, ecef_z])
+        sc_root[:] = [ecef_x, ecef_y, ecef_z]
         trace = field_line_trace(sc_root, double_date, direct, 120.,
                                  steps=steps,
                                  step_size=step_size,
@@ -1540,24 +1536,11 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
 
     # prepare output
     apex_edge_length = []
-    # outputs for alternative calculation
-    full_local_step = []
-    min_distance_plus = []
-    min_distance_minus = []
 
     for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs,
                                                              glats, glons, alts,
                                                              dates):
 
-        yr, doy = pysat.utils.time.getyrdoy(date)
-        double_date = float(yr) + float(doy) / 366.
-
-        # get location of apex for s/c field line
-        apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info(
-                                                                    [glat], [glon],
-                                                                    [alt], [date])
-        # apex in ecef (maps to input location)
-        apex_root = np.array([apex_x[0], apex_y[0], apex_z[0]])
         # take step from s/c along + vector direction
         # then get the apex location
         plus = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date,
@@ -1567,8 +1550,6 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
         plus_lat, plus_lon, plus_alt = ecef_to_geodetic(*plus)
         plus_apex_x, plus_apex_y, plus_apex_z, plus_apex_lat, plus_apex_lon, plus_apex_alt = \
                     apex_location_info(plus_lat, plus_lon, plus_alt, [date])
-        # plus apex location in ECEF
-        plus_apex_root = np.array([plus_apex_x[0], plus_apex_y[0], plus_apex_z[0]])
 
         # take half step from s/c along - vector direction
         # then get the apex location
@@ -1580,64 +1561,14 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
         minus_lat, minus_lon, minus_alt = ecef_to_geodetic(*minus)
         minus_apex_x, minus_apex_y, minus_apex_z, minus_apex_lat, minus_apex_lon, minus_apex_alt = \
                     apex_location_info(minus_lat, minus_lon, minus_alt, [date])
-        minus_apex_root = np.array([minus_apex_x[0], minus_apex_y[0], minus_apex_z[0]])
 
         # take difference in apex locations
         apex_edge_length.append(np.sqrt((plus_apex_x[0]-minus_apex_x[0])**2 +
                                         (plus_apex_y[0]-minus_apex_y[0])**2 +
                                         (plus_apex_z[0]-minus_apex_z[0])**2))
 
-#         # take an alternative path to calculation
-#         # do field line trace around pos and neg apexes
-#         # then do intersection with field line projection thing
-#
-#         # do a short centered field line trace around plus apex location
-#         other_trace = full_field_line(plus_apex_root, double_date, 0.,
-#                                       step_size=1.,
-#                                       max_steps=10,
-#                                       recurse=False)
-#         # need to determine where the intersection of apex field line
-#         # in relation to the vector direction from the s/c field apex location.
-#         pos_edge_length, _, mind_pos = step_until_intersect(apex_root,
-                                        # other_trace,
-                                        # 1, date,
-                                        # direction=vector_direction,
-                                        # field_step_size=1.,
-                                        # step_size_goal=edge_length/edge_steps)
-#         # do a short centered field line trace around 'minus' apex location
-#         other_trace = full_field_line(minus_apex_root, double_date, 0.,
-#                                       step_size=1.,
-#                                       max_steps=10,
-#                                       recurse=False)
-#         # need to determine where the intersection of apex field line
-#         # in relation to the vector direction from the s/c field apex location.
-#         minus_edge_length, _, mind_minus = step_until_intersect(apex_root,
-                                        # other_trace,
-                                        # -1, date,
-                                        # direction=vector_direction,
-                                        # field_step_size=1.,
-                                        # step_size_goal=edge_length/edge_steps)
-        # full_local_step.append(pos_edge_length + minus_edge_length)
-        # min_distance_plus.append(mind_pos)
-        # min_distance_minus.append(mind_minus)
+    return np.array(apex_edge_length)
 
-        # still sorting out alternative option for this calculation
-        # commented code is 'good' as far as the plan goes
-        # takes more time, so I haven't tested one vs the other yet
-        # having two live methods can lead to problems
-        # THIS IS A TODO (sort it out)
-    return np.array(apex_edge_length)#, np.array(full_local_step), np.array(min_distance_plus), np.array(min_distance_minus)
-
-        # # take step from one apex towards the other
-        # apex_path = step_along_mag_unit_vector(minus_apex_x, minus_apex_y, minus_apex_z, date,
-        #                                        direction=vector_direction,
-        #                                        num_steps=edge_steps,
-        #                                        step_size=apex_edge_length[-1]/(edge_steps*2.))
-        # pos_apex_diff.append((apex_path[0] - plus_apex_x)**2 +
-        #                  (apex_path[1] - plus_apex_y)**2 +
-        #                  (apex_path[2] - plus_apex_z)**2)
-
-    # return apex_edge_length, path_apex_diff
 
 
 def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
