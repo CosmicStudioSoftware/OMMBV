@@ -1928,16 +1928,18 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     north_mer_drifts_scalar *= eq_mer_drifts_scalar
     south_mer_drifts_scalar *= eq_mer_drifts_scalar
 
-    if e_field_scaling_only:
-        # prepare output
-        out['north_mer_fields_scalar'] = north_zon_drifts_scalar
-        out['south_mer_fields_scalar'] = south_zon_drifts_scalar
-        out['north_zon_fields_scalar'] = north_mer_drifts_scalar
-        out['south_zon_fields_scalar'] = south_mer_drifts_scalar
-        out['equator_mer_fields_scalar'] = eq_zon_drifts_scalar
-        out['equator_zon_fields_scalar'] = eq_mer_drifts_scalar
+    # prepare output
+    out['north_mer_fields_scalar'] = north_zon_drifts_scalar
+    out['south_mer_fields_scalar'] = south_zon_drifts_scalar
+    out['north_zon_fields_scalar'] = north_mer_drifts_scalar
+    out['south_zon_fields_scalar'] = south_mer_drifts_scalar
+    out['equator_mer_fields_scalar'] = eq_zon_drifts_scalar
+    out['equator_zon_fields_scalar'] = eq_mer_drifts_scalar
 
+    if e_field_scaling_only:
+        return out
     else:
+        # onward and upward
         # figure out scaling for drifts based upon change in magnetic field
         # strength
         for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs,

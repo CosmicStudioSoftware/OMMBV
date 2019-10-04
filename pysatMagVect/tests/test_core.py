@@ -1014,8 +1014,6 @@ class TestCore():
         apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
         apex_alt = np.zeros((len(p_lats), len(p_longs)+1))
         apex_z = np.zeros((len(p_lats), len(p_longs)+1))
-        norm_lat = np.zeros((len(p_lats), len(p_longs)+1))
-        norm_lon = np.zeros((len(p_lats), len(p_longs)+1))
         norm_alt = np.zeros((len(p_lats), len(p_longs)+1))
 
 
