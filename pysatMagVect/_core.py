@@ -1115,8 +1115,8 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
 
 
 # create global variables here to reduce overhead in creating input arrays
-_apex_fine_steps = np.arange(6)
-_apex_coarse_steps = np.arange(101)
+# _apex_fine_steps = np.arange(6)
+# _apex_coarse_steps = np.arange(101)
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
                        fine_step_size=1.E-5, fine_max_steps=5,
                        return_geodetic=False):
@@ -1162,14 +1162,14 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
     # prepare parameters for field line trace
     max_steps = 100
-    global _apex_coarse_steps
-    if len(_apex_coarse_steps) != max_steps + 1:
-        _apex_coarse_steps = np.arange(max_steps+1)
+    # global _apex_coarse_steps
+    # if len(_apex_coarse_steps) != max_steps + 1:
+    _apex_coarse_steps = np.arange(max_steps+1)
 
     # high resolution trace parameters
-    global _apex_fine_steps
-    if len(_apex_fine_steps) != fine_max_steps + 1:
-        _apex_fine_steps = np.arange(fine_max_steps+1)
+    # global _apex_fine_steps
+    # if len(_apex_fine_steps) != fine_max_steps + 1:
+    _apex_fine_steps = np.arange(fine_max_steps+1)
         # fine_steps = apex_fine_steps
     # prepare output
     _apex_out_x = np.empty(len(glats))

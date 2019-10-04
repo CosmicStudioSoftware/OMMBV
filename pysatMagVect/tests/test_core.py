@@ -1011,6 +1011,9 @@ class TestCore():
         apex_lat = np.zeros((len(p_lats), len(p_longs)+1))
         apex_lon = np.zeros((len(p_lats), len(p_longs)+1))
         apex_alt = np.zeros((len(p_lats), len(p_longs)+1))
+        norm_lat = np.zeros((len(p_lats), len(p_longs)+1))
+        norm_lon = np.zeros((len(p_lats), len(p_longs)+1))
+        norm_alt = np.zeros((len(p_lats), len(p_longs)+1))
 
 
         # set up multi
@@ -1024,10 +1027,10 @@ class TestCore():
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
-                                                                            fine_step_size=0.0001))
+                                                                            fine_step_size=1.E-5))
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
-                                                                            fine_step_size=0.0002))
+                                                                            fine_step_size=2.E-5))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 # collect output
@@ -1043,11 +1046,13 @@ class TestCore():
                 print (i, p_lat)
                 x, y, z = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
-                                                                        fine_step_size=0.0001)
+                                                                        fine_step_size=1.E-5)
                 x2, y2, z2 = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
                                                                            p_alts, [date]*len(p_longs),
-                                                                           fine_step_size=0.0002)
-
+                                                                           fine_step_size=2.E-5)
+                norm_lat[i,:-1] = x
+                norm_lon[i,:-1] = y
+                norm_alt[i,:-1] = z
                 apex_lat[i,:-1] = np.abs(x2 - x)
                 apex_lon[i,:-1] = np.abs(y2 - y)
                 apex_alt[i,:-1] = np.abs(z2 - z)
