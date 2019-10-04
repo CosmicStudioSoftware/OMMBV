@@ -1184,7 +1184,6 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
             # convert all locations to geodetic coordinates
             tlat, tlon, talt = ecef_to_geodetic(trace[:,0], trace[:,1], trace[:,2])
             # determine location that is highest with respect to the geodetic Earth
-            print(talt)
             max_idx = np.argmax(talt)
 
         # collect outputs
