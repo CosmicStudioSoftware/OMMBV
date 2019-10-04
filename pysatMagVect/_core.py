@@ -751,9 +751,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
     # calculate satellite position in ECEF coordinates
     ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
-    # also get position in geocentric coordinates
-    geo_lat, geo_long, geo_alt = ecef_to_geocentric(ecef_x, ecef_y, ecef_z,
-                                                    ref_height=0.)
+
     # prepare output lists
     bn = [];
     be = [];
@@ -763,8 +761,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                 altitude, np.deg2rad(90. - latitude),
                                                 np.deg2rad(longitude), datetimes):
         # get field aligned vector
-        # magnetic field at spacecraft location, using geocentric inputs
-        # to get magnetic field in geocentric output
+        # magnetic field at spacecraft location, using geodetic inputs
+        # to get magnetic field in geodetic output
         # recast from datetime to float, as required by IGRF12 code
         doy = (time - datetime.datetime(time.year,1,1)).days
         # number of days in year, works for leap years
@@ -785,7 +783,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     bd = np.array(bd)
 
     # calculate magnetic unit vector
-    bx, by, bz = enu_to_ecef_vector(be, bn, -bd, geo_lat, geo_long)
+    bx, by, bz = enu_to_ecef_vector(be, bn, -bd, latitude, longitude)
     bx, by, bz = normalize_vector(bx, by, bz)
 
     # get apex location for root point
@@ -796,7 +794,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # infinitely many
     # let's use the east vector as a great place to start
     tzx, tzy, tzz = enu_to_ecef_vector(np.ones(len(be)), np.zeros(len(be)),
-                                       np.zeros(len(be)), geo_lat, geo_long)
+                                       np.zeros(len(be)), latitude, longitude)
     init_type = np.zeros(len(be)) - 1
     # make sure this vector is well constrained
     # avoid locations where bz near zero
