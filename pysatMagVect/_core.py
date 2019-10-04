@@ -1896,61 +1896,70 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     # meridional e-field scalar map, can also be
     # zonal ion drift scalar map
     # print ('Starting Northern')
-    north_zon_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
-                                                        glons, alts, dates, 'north',
-                                                        'meridional',
-                                                        step_size=step_size,
-                                                        max_steps=max_steps,
-                                                        edge_length=25.,
-                                                        edge_steps=5,
-                                                        **kwargs)
+    north_zon_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
+                                                glons, alts, dates, 'north',
+                                                'meridional',
+                                                step_size=step_size,
+                                                max_steps=max_steps,
+                                                edge_length=25.,
+                                                edge_steps=5,
+                                                **kwargs)
 
-    north_mer_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
-                                                        glons, alts, dates, 'north',
-                                                        'zonal',
-                                                        step_size=step_size,
-                                                        max_steps=max_steps,
-                                                        edge_length=25.,
-                                                        edge_steps=1,
-                                                        **kwargs)
+    north_mer_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
+                                                glons, alts, dates, 'north',
+                                                'zonal',
+                                                step_size=step_size,
+                                                max_steps=max_steps,
+                                                edge_length=25.,
+                                                edge_steps=5,
+                                                **kwargs)
 
     # print ('Starting Southern')
-    south_zon_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
-                                                        glons, alts, dates, 'south',
-                                                        'meridional',
-                                                        step_size=step_size,
-                                                        max_steps=max_steps,
-                                                        edge_length=25.,
-                                                        edge_steps=5,
-                                                        **kwargs)
+    south_zon_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
+                                                glons, alts, dates, 'south',
+                                                'meridional',
+                                                step_size=step_size,
+                                                max_steps=max_steps,
+                                                edge_length=25.,
+                                                edge_steps=5,
+                                                **kwargs)
 
-    south_mer_drifts_scalar, mind_plus, mind_minus = closed_loop_edge_lengths_via_footpoint(glats,
-                                                        glons, alts, dates, 'south',
-                                                        'zonal',
-                                                        step_size=step_size,
-                                                        max_steps=max_steps,
-                                                        edge_length=25.,
-                                                        edge_steps=1,
-                                                        **kwargs)
+    south_mer_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
+                                                glons, alts, dates, 'south',
+                                                'zonal',
+                                                step_size=step_size,
+                                                max_steps=max_steps,
+                                                edge_length=25.,
+                                                edge_steps=5,
+                                                **kwargs)
     # print ('Starting Equatorial')
-    # , step_zon_apex2, mind_plus, mind_minus
     eq_zon_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                                         'meridional',
                                                         edge_length=25.,
                                                         edge_steps=5)
-    # , step_mer_apex2, mind_plus, mind_minus
     eq_mer_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                                         'zonal',
                                                         edge_length=25.,
                                                         edge_steps=1)
     # print ('Done with core')
+    # ratio of apex height difference to step_size across footpoints
+    # scales from equator to footpoint
     north_zon_drifts_scalar = north_zon_drifts_scalar/50.
     south_zon_drifts_scalar = south_zon_drifts_scalar/50.
     north_mer_drifts_scalar = north_mer_drifts_scalar/50.
     south_mer_drifts_scalar = south_mer_drifts_scalar/50.
+
     # equatorial
+    # scale from s/c to equator
     eq_zon_drifts_scalar = 50./eq_zon_drifts_scalar
     eq_mer_drifts_scalar = 50./eq_mer_drifts_scalar
+
+    # change scaling from equator to footpoint, to s/c to footpoint
+    # via s/c to equator
+    north_zon_drifts_scalar *= eq_zon_drifts_scalar
+    south_zon_drifts_scalar *= eq_zon_drifts_scalar
+    north_mer_drifts_scalar *= eq_mer_drifts_scalar
+    south_mer_drifts_scalar *= eq_mer_drifts_scalar
 
     if e_field_scaling_only:
         # prepare output
