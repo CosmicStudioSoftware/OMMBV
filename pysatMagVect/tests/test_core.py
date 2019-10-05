@@ -1134,6 +1134,8 @@ class TestCore():
         except:
             pass
 
+### Test apex location info for sensitivity to fine_steps parameters
+
 
     def test_ecef_geodetic_diff_plots(self):
         import matplotlib.pyplot as plt
@@ -1279,7 +1281,7 @@ class TestCore():
                 print (i, p_lat)
                 # iterate through target cyclicly and run commands
                 dview.targets = targets.next()
-                pending.append(dview.apply_async(pymv.geodetic_to_ecef, [p_lat]*len(p_longs), p_longs,
+                pending.append(dview.apply_async(pymv.geodetic_to_ecef, np.array([p_lat]*len(p_longs)), p_longs,
                                                                             p_alts))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
@@ -1297,7 +1299,7 @@ class TestCore():
 
                 # iterate through target cyclicly and run commands
                 dview.targets = targets.next()
-                pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
+                pending.append(dview.apply_async(pymv.apex_location_info, np.array([p_lat]*len(p_longs)), p_longs,
                                                                             p_alts, [date]*len(p_longs),
                                                                             return_geodetic=True))
 
@@ -1332,6 +1334,8 @@ class TestCore():
         apex_x[:,-1] = apex_x[:,0]
         apex_y[:,-1] = apex_y[:,0]
         apex_z[:,-1] = apex_z[:,0]
+        apex_alt[:,-1] = apex_alt[:,0]
+        norm_alt[:,-1] = norm_alt[:,0]
 
 
         ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
