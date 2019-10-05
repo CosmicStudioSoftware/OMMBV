@@ -1471,7 +1471,7 @@ class TestCore():
                 print (i, p_lat)
                 x, y, z = pymv.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
                 lat2, lon2, alt2 = pymv.ecef_to_geodetic(x, y, z)
-                x2, y2, z1 = pymv.geodetic_to_ecef(lat2, lon2, alt2)
+                x2, y2, z2 = pymv.geodetic_to_ecef(lat2, lon2, alt2)
                 apex_x[i,:-1] = np.abs(x2 - x)
                 apex_y[i,:-1] = np.abs(y2 - y)
                 apex_z[i,:-1] = np.abs(z2 - z)
