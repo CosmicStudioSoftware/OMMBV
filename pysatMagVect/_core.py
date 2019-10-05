@@ -656,7 +656,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=0.5, tol=1.E-4, max_loops=100,
+                                          step_size=0.03, tol=1.E-4, max_loops=100,
                                           full_output=False, tol_zonal_apex=1.E-4,
                                           max_steps=None, ref_height=None,
                                           steps=None):
