@@ -1425,7 +1425,7 @@ class TestCore():
 
                 # iterate through target cyclicly and run commands
                 dview.targets = targets.next()
-                pending.append(dview.apply_async(pymv.ecef_to_geodetic, x, y, z))
+                pending.append(dview.apply_async(pymv.python_ecef_to_geodetic, x, y, z))
 
             for i,p_lat in enumerate(p_lats):
                 print ('collecting 2', i, p_lat)
@@ -3290,7 +3290,7 @@ class TestCore():
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date,
                                                                             direction=direction,
-                                                                            num_steps=5, step_size=25./10.))
+                                                                            num_steps=5, step_size=25./5.))
                     pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date,
                                                                             direction=direction,
                                                                             num_steps=1, step_size=25./1.))
@@ -3334,7 +3334,7 @@ class TestCore():
                     in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
                     x[i,j], y[i,j], z[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date,
                                                                              direction=direction,
-                                                                             num_steps=5, step_size=25./10.)
+                                                                             num_steps=5, step_size=25./5.)
                     # second run
                     x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date,
                                                                             direction=direction,
