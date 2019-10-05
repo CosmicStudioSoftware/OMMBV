@@ -1166,7 +1166,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 
     # use input location and convert to ECEF
     if ecef_input:
-        ecef_xs, ecef_ys, ecef_xs = glats, glons, alts
+        ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
     else:
         ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
     # prepare parameters for field line trace
