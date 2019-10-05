@@ -1118,7 +1118,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
 # _apex_fine_steps = np.arange(6)
 # _apex_coarse_steps = np.arange(101)
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
-                       fine_step_size=1.E-5, fine_max_steps=15,
+                       fine_step_size=1.E-5, fine_max_steps=5,
                        return_geodetic=False):
     """Determine apex location for the field line passing through input point.
 
