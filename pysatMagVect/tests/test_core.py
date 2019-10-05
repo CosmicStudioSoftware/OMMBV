@@ -228,13 +228,25 @@ class TestCore():
                                                   longs,
                                                   alts)
         lat, elong, alt = pymv.ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
+        lat2, elong2, alt2 = pymv.python_ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
 
         idx, = np.where(elong < 0)
         elong[idx] += 360.
 
+        idx, = np.where(elong2 < 0)
+        elong2[idx] += 360.
+
         d_lat = lat - lats
         d_long = elong - longs
         d_alt = alt - alts
+
+        assert np.all(np.abs(d_lat) < 1.E-5)
+        assert np.all(np.abs(d_long) < 1.E-5)
+        assert np.all(np.abs(d_alt) < 1.E-5)
+
+        d_lat = lat2 - lats
+        d_long = elong2 - longs
+        d_alt = alt2 - alts
 
         assert np.all(np.abs(d_lat) < 1.E-5)
         assert np.all(np.abs(d_long) < 1.E-5)
@@ -1166,11 +1178,11 @@ class TestCore():
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
-                                                                            fine_max_step=5,
+                                                                            fine_max_steps=5,
                                                                             return_geodetic=True))
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
-                                                                            fine_max_step=10,
+                                                                            fine_max_steps=10,
                                                                             return_geodetic=True))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
@@ -1188,10 +1200,10 @@ class TestCore():
                 print (i, p_lat)
                 x, y, z, _, _, h = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
-                                                                        fine_max_step=5, return_geodetic=True)
+                                                                        fine_max_steps=5, return_geodetic=True)
                 x2, y2, z2, _, _, h2 = pymv.apex_location_info([p_lat]*len(p_longs), p_longs,
                                                                            p_alts, [date]*len(p_longs),
-                                                                           fine_max_step=10, return_geodetic=True)
+                                                                           fine_max_steps=10, return_geodetic=True)
 
                 norm_alt[i,:-1] = h
                 apex_lat[i,:-1] = np.abs(x2 - x)
