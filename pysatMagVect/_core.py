@@ -397,7 +397,9 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          args=(date, step_size, direction, height),
                                          full_output=True,
                                          printmessg=False,
-                                         ixpr=False) #,
+                                         # ixpr=False,
+                                         rtol=1.E-10,
+                                         atol=1.E-10) #,
                                          # mxstep=500)
     if messg['message'] != 'Integration successful.':
         raise RuntimeError("Field-Line trace not successful.")
@@ -788,9 +790,10 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     bx, by, bz = normalize_vector(bx, by, bz)
 
     # get apex location for root point
-    _, _, _, _, _, apex_root = apex_location_info(latitude, longitude, altitude,
+    _, _, _, _, _, apex_root = apex_location_info(ecef_x, ecef_y, ecef_z,
                                                   datetimes,
-                                                  return_geodetic=True)
+                                                  return_geodetic=True,
+                                                  ecef_input=True)
 
     repeat_flag = True
     # need a vector perpendicular to mag field
@@ -845,19 +848,21 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
         # zonal-ish direction
         ecef_xz, ecef_yz, ecef_zz = ecef_x + step_size*tzx, ecef_y + step_size*tzy, ecef_z + step_size*tzz
-        geo_lat_z, geo_long_z, geo_alt_z = ecef_to_geodetic(ecef_xz, ecef_yz, ecef_zz)
-        _, _, _, _, _, apex_z = apex_location_info(geo_lat_z, geo_long_z, geo_alt_z,
+        # geo_lat_z, geo_long_z, geo_alt_z = ecef_to_geodetic(ecef_xz, ecef_yz, ecef_zz)
+        _, _, _, _, _, apex_z = apex_location_info(ecef_xz, ecef_yz, ecef_zz,
                                                    datetimes,
-                                                   return_geodetic=True)
+                                                   return_geodetic=True,
+                                                   ecef_input=True)
         diff_apex_z = apex_z - apex_root
         diff_apex_z /= step_size
 
         # meridional-ish direction
         ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*tmx, ecef_y + step_size*tmy, ecef_z + step_size*tmz
-        geo_lat_m, geo_long_m, geo_alt_m = ecef_to_geodetic(ecef_xm, ecef_ym, ecef_zm)
-        _, _, _, _, _, apex_m = apex_location_info(geo_lat_m, geo_long_m, geo_alt_m,
+        # geo_lat_m, geo_long_m, geo_alt_m = ecef_to_geodetic(ecef_xm, ecef_ym, ecef_zm)
+        _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
                                                    datetimes,
-                                                   return_geodetic=True)
+                                                   return_geodetic=True,
+                                                   ecef_input=True)
         diff_apex_m = apex_m - apex_root
         diff_apex_m /= step_size
 
@@ -1119,7 +1124,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
 # _apex_coarse_steps = np.arange(101)
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
                        fine_step_size=1.E-5, fine_max_steps=5,
-                       return_geodetic=False):
+                       return_geodetic=False, ecef_input=False):
     """Determine apex location for the field line passing through input point.
 
     Employs a two stage method. A broad step (step_size) field line trace spanning
@@ -1146,7 +1151,8 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     fine_max_steps : int (1.E-5 km)
         Fine number of steps passed along to full_field_trace. Do not
         change unless youknow exactly what you are doing.
-
+    ecef_input : bool
+        If True, glats, glons, and alts are treated as x, y, z (ECEF).
     Returns
     -------
     (float, float, float, float, float, float)
@@ -1159,7 +1165,10 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     """
 
     # use input location and convert to ECEF
-    ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+    if ecef_input:
+        ecef_xs, ecef_ys, ecef_xs = glats, glons, alts
+    else:
+        ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
     # prepare parameters for field line trace
     max_steps = 100
     # global _apex_coarse_steps
@@ -1172,14 +1181,12 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     _apex_fine_steps = np.arange(fine_max_steps+1)
         # fine_steps = apex_fine_steps
     # prepare output
-    _apex_out_x = np.empty(len(glats))
-    _apex_out_y = np.empty(len(glats))
-    _apex_out_z = np.empty(len(glats))
+    _apex_out_x = np.empty(len(ecef_xs))
+    _apex_out_y = np.empty(len(ecef_xs))
+    _apex_out_z = np.empty(len(ecef_xs))
 
     i = 0
-    for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs,
-                                                             glats, glons, alts,
-                                                             dates):
+    for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
         # to get the apex location we need to do a field line trace
         # then find the highest point
         trace = full_field_line(np.array([ecef_x, ecef_y, ecef_z]), date, 0.,
