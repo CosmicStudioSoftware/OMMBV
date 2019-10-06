@@ -810,6 +810,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
     if ecef_input:
         ecef_x, ecef_y, ecef_z = latitude, longitude, altitude
+        # lat and long needed for initial zonal and meridional vector
+        # generation later on
+        latitude, longitude, altitude = ecef_to_geocentric(ecef_x, ecef_y, ecef_z)
 
     else:
         # ensure latitude reasonable
