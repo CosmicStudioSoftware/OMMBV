@@ -1137,12 +1137,11 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
 
     for i in np.arange(num_steps):
         # x, y, z in ECEF
-        # convert to geodetic
-        lat, lon, alt = ecef_to_geodetic(x, y, z)
         # get unit vector directions
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(
-                                                        lat, lon, alt, [date],
-                                                        step_size=step_size)
+                                                        x, y, z, [date],
+                                                        step_size=step_size,
+                                                        ecef_input=True)
         # pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
