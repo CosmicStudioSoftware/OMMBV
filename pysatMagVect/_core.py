@@ -655,11 +655,79 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     return zvx, zvy, zvz, bx, by, bz, mx, my, mz
 
 
+def magnetic_vector(x, y, z, dates, normalize=False):
+    """Uses IGRF to calculate geomagnetic field.
+
+    Parameters
+    ----------
+    x : array-like
+        Position in ECEF (km), X
+    y : array-like
+        Position in ECEF (km), Y
+    z : array-like
+        Position in ECEF (km), Z
+    normalize : bool (False)
+        If True, return unit vector
+
+    Returns
+    -------
+    array, array, array
+        Magnetic field along ECEF directions
+
+    """
+
+    # prepare output lists
+    bn = []
+    be = []
+    bd = []
+    bm = []
+
+    # need a double variable for time
+    doy = np.array([(time - datetime.datetime(time.year,1,1)).days for time in dates])
+    years = np.array([time.year for time in dates])
+    num_doy_year = np.array([(datetime.datetime(time.year+1,1,1) - datetime.datetime(time.year,1,1)).days for time in dates])
+    time = np.array([(time.hour + time.minute/60. + time.second/3600.)/24. for time in dates])
+    ddates = years + (doy + time)/(num_doy_year + 1)
+
+    # use geocentric coordinates for calculating magnetic field
+    # transformation between it and ECEF is robust
+    # geodetic translations introduce error
+    latitudes, longitudes, altitudes = ecef_to_geocentric(x, y, z, ref_height=0.)
+
+    for colat, elong, alt, date in zip(np.deg2rad(90. - latitudes),
+                                       np.deg2rad(longitudes),
+                                       altitudes,
+                                       ddates):
+        # tbn, tbe, tbd, tbmag are in nT
+        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 2, alt, colat, elong)
+
+        # collect outputs
+        bn.append(tbn)
+        be.append(tbe)
+        bd.append(tbd)
+        bm.append(tbmag)
+    # repackage
+    bn = np.array(bn)
+    be = np.array(be)
+    bd = np.array(bd)
+
+    if normalize:
+        bm = np.array(bm)
+        bn /= bm
+        be /= bm
+        bd /= bm
+
+    # calculate magnetic unit vector
+    bx, by, bz = enu_to_ecef_vector(be, bn, -bd, latitudes, longitudes)
+
+    return bx, by, bz
+
+
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           step_size=0.03, tol=1.E-4, max_loops=100,
                                           full_output=False, tol_zonal_apex=1.E-4,
-                                          max_steps=None, ref_height=None,
-                                          steps=None):
+                                          ecef_input=False, max_steps=None,
+                                          ref_height=None, steps=None):
     """Calculates local geomagnetic unit vectors expressing the ion drift
     coordinate system organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -706,6 +774,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     full_output : bool (False)
         If True, return an additional output parameter (dict) with stats
         about iterative process
+    ecef_input : bool (False)
+        If True, inputs latitude, longitude, altitude are interpreted as
+        x, y, and z in ECEF coordinates (km).
     max_steps : int
         Deprecated
     ref_height : float
@@ -736,58 +807,24 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         raise DeprecationWarning('steps is no longer supported.')
     if step_size <= 0:
         raise ValueError('Step Size must be greater than 0.')
-    # loop counter
-    loop_num = 0
-    # convert inputs to arrays
-    latitude = np.array(latitude)
-    longitude = np.array(longitude)
-    altitude = np.array(altitude)
 
-    # ensure latitude reasonable
-    idx, = np.where(np.abs(latitude) > 90.)
-    if len(idx) > 0:
-        raise RuntimeWarning('Latitude out of bounds [-90., 90.].')
-    # ensure longitude reasonable
-    idx, = np.where((longitude < -180.) | (longitude > 360.))
-    if len(idx) > 0:
-        raise RuntimeWarning('Longitude out of bounds [-180., 360.].')
+    if ecef_input:
+        ecef_x, ecef_y, ecef_z = latitude, longitude, altitude
 
-    # calculate satellite position in ECEF coordinates
-    ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
+    else:
+        # ensure latitude reasonable
+        idx, = np.where(np.abs(latitude) > 90.)
+        if len(idx) > 0:
+            raise RuntimeWarning('Latitude out of bounds [-90., 90.].')
+        # ensure longitude reasonable
+        idx, = np.where((longitude < -180.) | (longitude > 360.))
+        if len(idx) > 0:
+            raise RuntimeWarning('Longitude out of bounds [-180., 360.].')
 
-    # prepare output lists
-    bn = [];
-    be = [];
-    bd = []
+        # calculate satellite position in ECEF coordinates
+        ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
 
-    for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z,
-                                                altitude, np.deg2rad(90. - latitude),
-                                                np.deg2rad(longitude), datetimes):
-        # get field aligned vector
-        # magnetic field at spacecraft location, using geodetic inputs
-        # to get magnetic field in geodetic output
-        # recast from datetime to float, as required by IGRF12 code
-        doy = (time - datetime.datetime(time.year,1,1)).days
-        # number of days in year, works for leap years
-        num_doy_year = (datetime.datetime(time.year+1,1,1) - datetime.datetime(time.year,1,1)).days
-        date = time.year + float(doy)/float(num_doy_year+1)
-        date += (time.hour + time.minute/60. + time.second/3600.)/24./float(num_doy_year+1)
-        # get IGRF field components
-        # tbn, tbe, tbd, tbmag are in nT
-        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 1, alt, colat, elong)
-
-        # collect outputs
-        bn.append(tbn);
-        be.append(tbe);
-        bd.append(tbd)
-    # repackage
-    bn = np.array(bn)
-    be = np.array(be)
-    bd = np.array(bd)
-
-    # calculate magnetic unit vector
-    bx, by, bz = enu_to_ecef_vector(be, bn, -bd, latitude, longitude)
-    bx, by, bz = normalize_vector(bx, by, bz)
+    bx, by, bz = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes, normalize=True)
 
     # get apex location for root point
     _, _, _, _, _, apex_root = apex_location_info(ecef_x, ecef_y, ecef_z,
@@ -795,13 +832,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                   return_geodetic=True,
                                                   ecef_input=True)
 
-    repeat_flag = True
     # need a vector perpendicular to mag field
     # infinitely many
     # let's use the east vector as a great place to start
-    tzx, tzy, tzz = enu_to_ecef_vector(np.ones(len(be)), np.zeros(len(be)),
-                                       np.zeros(len(be)), latitude, longitude)
-    init_type = np.zeros(len(be)) - 1
+    tzx, tzy, tzz = enu_to_ecef_vector(np.ones(len(bx)), np.zeros(len(bx)),
+                                       np.zeros(len(bx)), latitude, longitude)
+    init_type = np.zeros(len(bx)) - 1
     # make sure this vector is well constrained
     # avoid locations where bz near zero
     idx0, = np.where(np.abs(bz) >= 1.E-10)
@@ -841,6 +877,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     # need another perpendicular vector to both
     tmx, tmy, tmz = cross_product(tzx, tzy, tzz, bx, by, bz)
 
+    # loop variables
+    loop_num = 0
+    repeat_flag = True
     while repeat_flag:
 
         # get apex field height location info for both places
@@ -848,7 +887,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
         # zonal-ish direction
         ecef_xz, ecef_yz, ecef_zz = ecef_x + step_size*tzx, ecef_y + step_size*tzy, ecef_z + step_size*tzz
-        # geo_lat_z, geo_long_z, geo_alt_z = ecef_to_geodetic(ecef_xz, ecef_yz, ecef_zz)
         _, _, _, _, _, apex_z = apex_location_info(ecef_xz, ecef_yz, ecef_zz,
                                                    datetimes,
                                                    return_geodetic=True,
@@ -858,7 +896,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
         # meridional-ish direction
         ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*tmx, ecef_y + step_size*tmy, ecef_z + step_size*tmz
-        # geo_lat_m, geo_long_m, geo_alt_m = ecef_to_geodetic(ecef_xm, ecef_ym, ecef_zm)
         _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
                                                    datetimes,
                                                    return_geodetic=True,
@@ -1454,9 +1491,7 @@ def apex_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
     # prepare output
     apex_edge_length = []
     sc_root = np.array([0, 0, 0])
-    for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs,
-                                                             glats, glons, alts,
-                                                             dates):
+    for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
         # start at location of interest, map down to northern or southern
         # footpoints then take symmetric steps along meridional and zonal
         # directions and then get apex locations for these fields.
