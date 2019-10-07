@@ -396,10 +396,10 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          steps,
                                          args=(date, step_size, direction, height),
                                          full_output=True,
-                                         printmessg=False,
+                                         printmessg=False)#,
                                          # ixpr=False,
-                                         rtol=1.E-11,
-                                         atol=1.E-11) #,
+                                         # rtol=1.E-11,
+                                         # atol=1.E-11) #,
                                          # mxstep=500)
     if messg['message'] != 'Integration successful.':
         raise RuntimeError("Field-Line trace not successful.")
@@ -724,8 +724,8 @@ def magnetic_vector(x, y, z, dates, normalize=False):
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=0.03, tol=1.E-4, max_loops=100,
-                                          full_output=False, tol_zonal_apex=5.E-5,
+                                          step_size=0.3, tol=1.E-4, max_loops=100,
+                                          full_output=False, tol_zonal_apex=1.E-4,
                                           ecef_input=False, max_steps=None,
                                           ref_height=None, steps=None):
     """Calculates local geomagnetic unit vectors expressing the ion drift
