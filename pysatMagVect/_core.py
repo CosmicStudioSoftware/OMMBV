@@ -725,7 +725,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           step_size=0.03, tol=1.E-4, max_loops=100,
-                                          full_output=False, tol_zonal_apex=1.E-4,
+                                          full_output=False, tol_zonal_apex=5.E-5,
                                           ecef_input=False, max_steps=None,
                                           ref_height=None, steps=None):
     """Calculates local geomagnetic unit vectors expressing the ion drift
