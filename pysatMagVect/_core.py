@@ -710,9 +710,9 @@ def magnetic_vector(x, y, z, dates, normalize=False):
     bn = np.array(bn)
     be = np.array(be)
     bd = np.array(bd)
+    bm = np.array(bm)
 
     if normalize:
-        bm = np.array(bm)
         bn /= bm
         be /= bm
         bd /= bm
@@ -720,7 +720,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
     # calculate magnetic unit vector
     bx, by, bz = enu_to_ecef_vector(be, bn, -bd, latitudes, longitudes)
 
-    return bx, by, bz
+    return bx, by, bz, bm
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
@@ -831,7 +831,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         # calculate satellite position in ECEF coordinates
         ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
 
-    bx, by, bz = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes, normalize=True)
+    bx, by, bz, bm = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes, normalize=True)
 
     # get apex location for root point
     _, _, _, _, _, apex_root = apex_location_info(ecef_x, ecef_y, ecef_z,
@@ -1113,11 +1113,11 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
     Parameters
     ----------
     x : ECEF-x (km)
-        Location to step from in ECEF (km). Scalar input.
+        Location to step from in ECEF (km).
     y : ECEF-y (km)
-        Location to step from in ECEF (km). Scalar input.
+        Location to step from in ECEF (km).
     z : ECEF-z (km)
-        Location to step from in ECEF (km). Scalar input.
+        Location to step from in ECEF (km).
     date : list-like of datetimes
         Date and time for magnetic field
     direction : string
@@ -1159,7 +1159,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
         y = y + step_size*uy*scalar
         z = z + step_size*uz*scalar
 
-    return np.array([x, y, z])
+    return x, y, z
 
 
 # create global variables here to reduce overhead in creating input arrays
@@ -1214,15 +1214,9 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
     # prepare parameters for field line trace
     max_steps = 100
-    # global _apex_coarse_steps
-    # if len(_apex_coarse_steps) != max_steps + 1:
     _apex_coarse_steps = np.arange(max_steps+1)
-
     # high resolution trace parameters
-    # global _apex_fine_steps
-    # if len(_apex_fine_steps) != fine_max_steps + 1:
     _apex_fine_steps = np.arange(fine_max_steps+1)
-        # fine_steps = apex_fine_steps
     # prepare output
     _apex_out_x = np.empty(len(ecef_xs))
     _apex_out_y = np.empty(len(ecef_xs))
@@ -1526,25 +1520,25 @@ def apex_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         i += 1
 
     # take step from footpoint along + vector direction
-    plus_step = step_along_mag_unit_vector(ftpnts[:,0], ftpnts[:,1], ftpnts[:,2],
+    plus_x, plus_y, plus_z = step_along_mag_unit_vector(ftpnts[:,0], ftpnts[:,1], ftpnts[:,2],
                                             dates,
                                             direction=vector_direction,
                                             num_steps=edge_steps,
                                             step_size=edge_length/edge_steps)
     plus_apex_x, plus_apex_y, plus_apex_z = \
-                apex_location_info(plus_step[0,:], plus_step[1,:], plus_step[2,:],
-                                    [date], ecef_input=True)
+                apex_location_info(plus_x, plus_y, plus_z,
+                                   dates, ecef_input=True)
 
     # take half step from first footpoint along - vector direction
-    minus_step = step_along_mag_unit_vector(ftpnts[:,0], ftpnts[:,1], ftpnts[:,2],
+    minus_x, minus_y, minus_z = step_along_mag_unit_vector(ftpnts[:,0], ftpnts[:,1], ftpnts[:,2],
                                             dates,
                                             direction=vector_direction,
                                             scalar=-1,
                                             num_steps=edge_steps,
                                             step_size=edge_length/edge_steps)
     minus_apex_x, minus_apex_y, minus_apex_z = \
-                apex_location_info(minus_step[0,:], minus_step[1,:], minus_step[2,:],
-                                    [date], ecef_input=True)
+                apex_location_info(minus_x, minus_y, minus_z,
+                                    dates, ecef_input=True)
     # take difference in apex locations
     apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2 +
                                (plus_apex_y - minus_apex_y)**2 +
@@ -1626,23 +1620,23 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
 
     # take step from s/c along + vector direction
     # then get the apex location
-    plus = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
+    plus_x, plus_y, plus_z = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
                                       direction=vector_direction,
                                       num_steps=edge_steps,
                                       step_size=edge_length/edge_steps)
     plus_apex_x, plus_apex_y, plus_apex_z = \
-                apex_location_info(plus[0,:], plus[1,:], plus[2,:], dates,
+                apex_location_info(plus_x, plus_y, plus_z, dates,
                                    ecef_input=True)
 
     # take half step from s/c along - vector direction
     # then get the apex location
-    minus = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
+    minus_x, minus_y, minus_z = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
                                        direction=vector_direction,
                                        scalar=-1,
                                        num_steps=edge_steps,
                                        step_size=edge_length/edge_steps)
     minus_apex_x, minus_apex_y, minus_apex_z = \
-                apex_location_info(minus[0,:], minus[1,:], minus[2,:], dates,
+                apex_location_info(minus_x, minus_y, minus_z, dates,
                                    ecef_input=True)
 
     # take difference in apex locations
@@ -2004,18 +1998,24 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
         # onward and upward
         # figure out scaling for drifts based upon change in magnetic field
         # strength
-        for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs,
-                                                                glats, glons, alts,
-                                                                dates):
+        north_ftpnt = np.empty((len(ecef_xs), 3))
+        south_ftpnt = np.empty((len(ecef_xs), 3))
+        # get location of apex for s/c field line
+        apex_xs, apex_ys, apex_zs = apex_location_info(ecef_xs, ecef_ys, ecef_zs,
+                                                        dates, ecef_input=True)
+
+        # magnetic field values at spacecraft
+        _, _, _, b_sc = magnetic_vector(ecef_xs, ecef_ys, ecef_zs, dates)
+        # magnetic field at apex
+        _, _, _, b_apex = magnetic_vector(apex_xs, apex_ys, apex_zs, dates)
+
+        sc_root = np.array([0, 0, 0])
+        i = 0
+        for apex_x, apex_y, apex_z, date in zip(apex_xs, apex_ys, apex_zs, dates):
             yr, doy = pysat.utils.time.getyrdoy(date)
             double_date = float(yr) + float(doy) / 366.
-            # get location of apex for s/c field line
-            apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info(
-                                                                        [glat], [glon],
-                                                                        [alt], [date],
-                                                                        return_geodetic=True)
-            # trace to northern footpoint
-            sc_root = np.array([ecef_x, ecef_y, ecef_z])
+
+            sc_root[:] = (apex_x, apex_y, apex_z)
             trace_north = field_line_trace(sc_root, double_date, 1., 120.,
                                         steps=steps,
                                         step_size=step_size,
@@ -2026,37 +2026,74 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                         step_size=step_size,
                                         max_steps=max_steps)
             # footpoint location
-            north_ftpnt = trace_north[-1, :]
-            nft_glat, nft_glon, nft_alt = ecef_to_geodetic(*north_ftpnt)
-            south_ftpnt = trace_south[-1, :]
-            sft_glat, sft_glon, sft_alt = ecef_to_geodetic(*south_ftpnt)
+            north_ftpnt[i, :] = trace_north[-1, :]
+            south_ftpnt[i, :] = trace_south[-1, :]
+            i += 1
 
-            # scalar for the northern footpoint electric field based on distances
-            # for drift also need to include the magnetic field, drift = E/B
-            tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt,
-                                                np.deg2rad(90.-glat),
-                                                np.deg2rad(glon))
-            # get mag field and scalar for northern footpoint
-            tbn, tbe, tbd, b_nft = igrf.igrf12syn(0, double_date, 1, nft_alt,
-                                                np.deg2rad(90.-nft_glat),
-                                                np.deg2rad(nft_glon))
-            north_mag_scalar.append(b_sc/b_nft)
-            # equatorial values
-            tbn, tbe, tbd, b_eq = igrf.igrf12syn(0, double_date, 1, apex_alt,
-                                                 np.deg2rad(90.-apex_lat),
-                                                 np.deg2rad(apex_lon))
-            eq_mag_scalar.append(b_sc/b_eq)
-            # scalar for the southern footpoint
-            tbn, tbe, tbd, b_sft = igrf.igrf12syn(0, double_date, 1, sft_alt,
-                                                  np.deg2rad(90.-sft_glat),
-                                                  np.deg2rad(sft_glon))
-            south_mag_scalar.append(b_sc/b_sft)
+        # magnetic field at northern footpoint
+        _, _, _, b_nft = magnetic_vector(north_ftpnt[:, 0], north_ftpnt[:, 1],
+                                           north_ftpnt[:, 2], dates)
 
-        # make E-Field scalars to drifts
-        # lists to arrays
-        north_mag_scalar = np.array(north_mag_scalar)
-        south_mag_scalar = np.array(south_mag_scalar)
-        eq_mag_scalar = np.array(eq_mag_scalar)
+        # magnetic field at southern footpoint
+        _, _, _, b_sft = magnetic_vector(south_ftpnt[:, 0], south_ftpnt[:, 1],
+                                           south_ftpnt[:, 2], dates)
+        # scalars account for change in magnetic field between locations
+        south_mag_scalar = b_sc/b_sft
+        north_mag_scalar = b_sc/b_nft
+        eq_mag_scalar = b_sc/b_apex
+#         for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs,
+#                                                                 glats, glons, alts,
+#                                                                 dates):
+#             yr, doy = pysat.utils.time.getyrdoy(date)
+#             double_date = float(yr) + float(doy) / 366.
+#             # get location of apex for s/c field line
+#             apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info(
+#                                                                         [glat], [glon],
+#                                                                         [alt], [date],
+#                                                                         return_geodetic=True)
+#             # trace to northern footpoint
+#             sc_root = np.array([ecef_x, ecef_y, ecef_z])
+#             trace_north = field_line_trace(sc_root, double_date, 1., 120.,
+#                                         steps=steps,
+#                                         step_size=step_size,
+#                                         max_steps=max_steps)
+#             # southern tracing
+#             trace_south = field_line_trace(sc_root, double_date, -1., 120.,
+#                                         steps=steps,
+#                                         step_size=step_size,
+#                                         max_steps=max_steps)
+#             # footpoint location
+#             north_ftpnt = trace_north[-1, :]
+#             nft_glat, nft_glon, nft_alt = ecef_to_geodetic(*north_ftpnt)
+#             south_ftpnt = trace_south[-1, :]
+#             sft_glat, sft_glon, sft_alt = ecef_to_geodetic(*south_ftpnt)
+#
+#             # scalar for the northern footpoint electric field based on distances
+#             # for drift also need to include the magnetic field, drift = E/B
+#             tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt,
+#                                                 np.deg2rad(90.-glat),
+#                                                 np.deg2rad(glon))
+#             # get mag field and scalar for northern footpoint
+#             tbn, tbe, tbd, b_nft = igrf.igrf12syn(0, double_date, 1, nft_alt,
+#                                                 np.deg2rad(90.-nft_glat),
+#                                                 np.deg2rad(nft_glon))
+#             north_mag_scalar.append(b_sc/b_nft)
+#             # equatorial values
+#             tbn, tbe, tbd, b_eq = igrf.igrf12syn(0, double_date, 1, apex_alt,
+#                                                  np.deg2rad(90.-apex_lat),
+#                                                  np.deg2rad(apex_lon))
+#             eq_mag_scalar.append(b_sc/b_eq)
+#             # scalar for the southern footpoint
+#             tbn, tbe, tbd, b_sft = igrf.igrf12syn(0, double_date, 1, sft_alt,
+#                                                   np.deg2rad(90.-sft_glat),
+#                                                   np.deg2rad(sft_glon))
+#             south_mag_scalar.append(b_sc/b_sft)
+#
+#         # make E-Field scalars to drifts
+#         # lists to arrays
+#         north_mag_scalar = np.array(north_mag_scalar)
+#         south_mag_scalar = np.array(south_mag_scalar)
+#         eq_mag_scalar = np.array(eq_mag_scalar)
         # apply to electric field scaling to get ion drift values
         north_zon_drifts_scalar = north_zon_drifts_scalar*north_mag_scalar
         south_zon_drifts_scalar = south_zon_drifts_scalar*south_mag_scalar
