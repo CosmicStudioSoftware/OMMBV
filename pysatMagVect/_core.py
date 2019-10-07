@@ -1155,9 +1155,9 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
             ux, uy, uz = bx, by, bz
 
         # take steps along direction
-        x = x + step_size*ux[0]*scalar
-        y = y + step_size*uy[0]*scalar
-        z = z + step_size*uz[0]*scalar
+        x = x + step_size*ux*scalar
+        y = y + step_size*uy*scalar
+        z = z + step_size*uz*scalar
 
     return np.array([x, y, z])
 
@@ -1532,7 +1532,7 @@ def apex_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                             num_steps=edge_steps,
                                             step_size=edge_length/edge_steps)
     plus_apex_x, plus_apex_y, plus_apex_z = \
-                apex_location_info(plus_step[:,0], plus_step[:,1], plus_step[:,2],
+                apex_location_info(plus_step[0,:], plus_step[1,:], plus_step[2,:],
                                     [date], ecef_input=True)
 
     # take half step from first footpoint along - vector direction
@@ -1543,7 +1543,7 @@ def apex_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                             num_steps=edge_steps,
                                             step_size=edge_length/edge_steps)
     minus_apex_x, minus_apex_y, minus_apex_z = \
-                apex_location_info(minus_step[:,0], minus_step[:,1], minus_step[:,2],
+                apex_location_info(minus_step[0,:], minus_step[1,:], minus_step[2,:],
                                     [date], ecef_input=True)
     # take difference in apex locations
     apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2 +
@@ -1631,7 +1631,7 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                       num_steps=edge_steps,
                                       step_size=edge_length/edge_steps)
     plus_apex_x, plus_apex_y, plus_apex_z = \
-                apex_location_info(plus[:,0], plus[:,1], plus[:,2], dates,
+                apex_location_info(plus[0,:], plus[1,:], plus[2,:], dates,
                                    ecef_input=True)
 
     # take half step from s/c along - vector direction
@@ -1642,7 +1642,7 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                        num_steps=edge_steps,
                                        step_size=edge_length/edge_steps)
     minus_apex_x, minus_apex_y, minus_apex_z = \
-                apex_location_info(minus[:,0], minus[:,1], minus[:,2], dates,
+                apex_location_info(minus[0,:], minus[1,:], minus[2,:], dates,
                                    ecef_input=True)
 
     # take difference in apex locations
