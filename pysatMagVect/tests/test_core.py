@@ -627,7 +627,7 @@ class TestCore():
                                                   longs,
                                                   alts)
         # step size to be tried
-        steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5., 5., 5.])
+        steps_goal = np.array([5.]*13)
         # max number of steps (fixed)
         max_steps_goal = np.arange(13)
         max_steps_goal = 100000./2**max_steps_goal
@@ -673,7 +673,7 @@ class TestCore():
             plt.legend()
             plt.tight_layout()
             plt.ylabel('Log Change in Foot Point Position (km)')
-            plt.savefig('Footpoint_position_vs_max_steps__recursion.pdf' )
+            plt.savefig('Footpoint_position_vs_max_steps_recursion.pdf' )
             plt.close()
         except:
             pass
@@ -687,7 +687,7 @@ class TestCore():
         steps_goal = np.arange(13)
         steps_goal = 500./2**steps_goal
         # max number of steps (fixed)
-        max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
+        max_steps_goal = np.array([10000.]*13)
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
