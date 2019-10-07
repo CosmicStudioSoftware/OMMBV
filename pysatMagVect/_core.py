@@ -1161,6 +1161,51 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
     return x, y, z
 
 
+
+def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
+                            num_steps=1000,
+                            return_geodetic=False, ecef_input=False):
+
+   # use input location and convert to ECEF
+    if ecef_input:
+        ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
+    else:
+        ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+
+    north_ftpnt = np.empty((len(ecef_xs), 3))
+    south_ftpnt = np.empty((len(ecef_xs), 3))
+
+    root = np.array([0, 0, 0])
+    i = 0
+    steps = np.arange(num_steps+1)
+    for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
+        yr, doy = pysat.utils.time.getyrdoy(date)
+        double_date = float(yr) + float(doy) / 366.
+
+        root[:] = (ecef_x, ecef_y, ecef_z)
+        trace_north = field_line_trace(root, double_date, 1., 120.,
+                                    steps=steps,
+                                    step_size=step_size,
+                                    max_steps=num_steps)
+        # southern tracing
+        trace_south = field_line_trace(root, double_date, -1., 120.,
+                                    steps=steps,
+                                    step_size=step_size,
+                                    max_steps=num_steps)
+        # footpoint location
+        north_ftpnt[i, :] = trace_north[-1, :]
+        south_ftpnt[i, :] = trace_south[-1, :]
+        i += 1
+
+    if return_geodetic:
+        north_ftpnt[:, 0], north_ftpnt[:, 1], north_ftpnt[:, 2] = ecef_to_geodetic(
+                                            north_ftpnt[:, 0], north_ftpnt[:, 1],
+                                            north_ftpnt[:, 2])
+        south_ftpnt[:, 0], south_ftpnt[:, 1], south_ftpnt[:, 2] = ecef_to_geodetic(
+                                            south_ftpnt[:, 0], south_ftpnt[:, 1],
+                                            south_ftpnt[:, 2])
+    return north_ftpnt, south_ftpnt
+
 # create global variables here to reduce overhead in creating input arrays
 # _apex_fine_steps = np.arange(6)
 # _apex_coarse_steps = np.arange(101)
