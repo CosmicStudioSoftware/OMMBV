@@ -815,6 +815,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         latitude, longitude, altitude = ecef_to_geocentric(ecef_x, ecef_y, ecef_z)
 
     else:
+        latitude = np.array(latitude)
+        longitude = np.array(longitude)
+        altitude = np.array(altitude)
         # ensure latitude reasonable
         idx, = np.where(np.abs(latitude) > 90.)
         if len(idx) > 0:
@@ -822,6 +825,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         # ensure longitude reasonable
         idx, = np.where((longitude < -180.) | (longitude > 360.))
         if len(idx) > 0:
+            print('Out of spec :', longitude[idx])
             raise RuntimeWarning('Longitude out of bounds [-180., 360.].')
 
         # calculate satellite position in ECEF coordinates
@@ -1139,7 +1143,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
         # x, y, z in ECEF
         # get unit vector directions
         zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(
-                                                        x, y, z, [date],
+                                                        x, y, z, date,
                                                         step_size=step_size,
                                                         ecef_input=True)
         # pull out the direction we need
@@ -1421,7 +1425,8 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
 def apex_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                     vector_direction, step_size=None,
                                     max_steps=None, steps=None,
-                                    edge_length=25., edge_steps=5):
+                                    edge_length=25., edge_steps=5,
+                                    ecef_input=False):
     """
     Calculates the distance between apex locations mapping to the input location
     footpoints.
@@ -1464,6 +1469,9 @@ def apex_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
     edge_steps : int
         Number of steps taken from footpoint towards new field line
         in a given direction (positive/negative) along unit vector
+    ecef_input : bool (False)
+        If True, latitude, longitude, and altitude are treated as
+        ECEF positions (km).
 
     Returns
     -------
@@ -1487,12 +1495,18 @@ def apex_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         direct = -1
     elif direction == 'north':
         direct = 1
+
     # use spacecraft location to get ECEF
-    ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+    if ecef_input:
+        ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
+    else:
+        ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
     # prepare output
     apex_edge_length = []
     sc_root = np.array([0, 0, 0])
+    ftpnts = np.zeros((len(ecef_xs), 3))
+    i = 0
     for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
         # start at location of interest, map down to northern or southern
         # footpoints then take symmetric steps along meridional and zonal
@@ -1508,43 +1522,41 @@ def apex_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
                                  step_size=step_size,
                                  max_steps=max_steps)
         # pull out footpoint location
-        ftpnt = trace[-1, :]
-        ft_glat, ft_glon, ft_alt = ecef_to_geodetic(*ftpnt)
-        if np.isnan([ft_glat, ft_glon, ft_alt]).any():
-            raise RuntimeError('Unable to find footpoint location, NaN.')
-        if ft_alt < 0:
-            raise RuntimeError('Footpoint altitude negative.')
-        # take step from footpoint along + vector direction
-        plus_step = step_along_mag_unit_vector(ftpnt[0], ftpnt[1], ftpnt[2],
-                                               date,
-                                               direction=vector_direction,
-                                               num_steps=edge_steps,
-                                               step_size=edge_length/edge_steps)
-        plus_lat, plus_lon, plus_alt = ecef_to_geodetic(*plus_step)
-        plus_apex_x, plus_apex_y, plus_apex_z = \
-                    apex_location_info(plus_lat, plus_lon, plus_alt, [date])
+        ftpnts[i,:] = trace[-1, :]
+        i += 1
 
-        # take half step from first footpoint along - vector direction
-        minus_step = step_along_mag_unit_vector(ftpnt[0], ftpnt[1], ftpnt[2],
-                                               date,
-                                               direction=vector_direction,
-                                               scalar=-1,
-                                               num_steps=edge_steps,
-                                               step_size=edge_length/edge_steps)
-        minus_lat, minus_lon, minus_alt = ecef_to_geodetic(*minus_step)
-        minus_apex_x, minus_apex_y, minus_apex_z = \
-                    apex_location_info(minus_lat, minus_lon, minus_alt, [date])
-        # take difference in apex locations
-        apex_edge_length.append(np.sqrt((plus_apex_x[0]-minus_apex_x[0])**2 +
-                                        (plus_apex_y[0]-minus_apex_y[0])**2 +
-                                        (plus_apex_z[0]-minus_apex_z[0])**2))
+    # take step from footpoint along + vector direction
+    plus_step = step_along_mag_unit_vector(ftpnts[:,0], ftpnts[:,1], ftpnts[:,2],
+                                            dates,
+                                            direction=vector_direction,
+                                            num_steps=edge_steps,
+                                            step_size=edge_length/edge_steps)
+    plus_apex_x, plus_apex_y, plus_apex_z = \
+                apex_location_info(plus_step[:,0], plus_step[:,1], plus_step[:,2],
+                                    [date], ecef_input=True)
 
-    return np.array(apex_edge_length)
+    # take half step from first footpoint along - vector direction
+    minus_step = step_along_mag_unit_vector(ftpnts[:,0], ftpnts[:,1], ftpnts[:,2],
+                                            dates,
+                                            direction=vector_direction,
+                                            scalar=-1,
+                                            num_steps=edge_steps,
+                                            step_size=edge_length/edge_steps)
+    minus_apex_x, minus_apex_y, minus_apex_z = \
+                apex_location_info(minus_step[:,0], minus_step[:,1], minus_step[:,2],
+                                    [date], ecef_input=True)
+    # take difference in apex locations
+    apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2 +
+                               (plus_apex_y - minus_apex_y)**2 +
+                               (plus_apex_z - minus_apex_z)**2)
+
+    return apex_edge_length
 
 def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
                                          vector_direction,
                                          edge_length=25.,
-                                         edge_steps=5):
+                                         edge_steps=5,
+                                         ecef_input=False):
     """
     Calculates the distance between apex locations mapping to the input location.
 
@@ -1603,42 +1615,42 @@ def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
     """
 
     # use spacecraft location to get ECEF
-    ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+    if ecef_input:
+        ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
+    else:
+        ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
     # prepare output
     apex_edge_length = []
 
-    for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs,
-                                                             glats, glons, alts,
-                                                             dates):
 
-        # take step from s/c along + vector direction
-        # then get the apex location
-        plus = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date,
-                                          direction=vector_direction,
-                                          num_steps=edge_steps,
-                                          step_size=edge_length/edge_steps)
-        plus_lat, plus_lon, plus_alt = ecef_to_geodetic(*plus)
-        plus_apex_x, plus_apex_y, plus_apex_z, plus_apex_lat, plus_apex_lon, plus_apex_alt = \
-                    apex_location_info(plus_lat, plus_lon, plus_alt, [date], return_geodetic=True)
+    # take step from s/c along + vector direction
+    # then get the apex location
+    plus = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
+                                      direction=vector_direction,
+                                      num_steps=edge_steps,
+                                      step_size=edge_length/edge_steps)
+    plus_apex_x, plus_apex_y, plus_apex_z = \
+                apex_location_info(plus[:,0], plus[:,1], plus[:,2], dates,
+                                   ecef_input=True)
 
-        # take half step from s/c along - vector direction
-        # then get the apex location
-        minus = step_along_mag_unit_vector(ecef_x, ecef_y, ecef_z, date,
-                                               direction=vector_direction,
-                                               scalar=-1,
-                                               num_steps=edge_steps,
-                                               step_size=edge_length/edge_steps)
-        minus_lat, minus_lon, minus_alt = ecef_to_geodetic(*minus)
-        minus_apex_x, minus_apex_y, minus_apex_z, minus_apex_lat, minus_apex_lon, minus_apex_alt = \
-                    apex_location_info(minus_lat, minus_lon, minus_alt, [date], return_geodetic=True)
+    # take half step from s/c along - vector direction
+    # then get the apex location
+    minus = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
+                                       direction=vector_direction,
+                                       scalar=-1,
+                                       num_steps=edge_steps,
+                                       step_size=edge_length/edge_steps)
+    minus_apex_x, minus_apex_y, minus_apex_z = \
+                apex_location_info(minus[:,0], minus[:,1], minus[:,2], dates,
+                                   ecef_input=True)
 
-        # take difference in apex locations
-        apex_edge_length.append(np.sqrt((plus_apex_x[0]-minus_apex_x[0])**2 +
-                                        (plus_apex_y[0]-minus_apex_y[0])**2 +
-                                        (plus_apex_z[0]-minus_apex_z[0])**2))
+    # take difference in apex locations
+    apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2 +
+                               (plus_apex_y - minus_apex_y)**2 +
+                               (plus_apex_z - minus_apex_z)**2)
 
-    return np.array(apex_edge_length)
+    return apex_edge_length
 
 
 
@@ -1903,55 +1915,61 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     # meridional e-field scalar map, can also be
     # zonal ion drift scalar map
     # print ('Starting Northern')
-    north_zon_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
-                                                glons, alts, dates, 'north',
+    north_zon_drifts_scalar = apex_edge_lengths_via_footpoint(ecef_xs, ecef_ys, ecef_zs,
+                                                dates, 'north',
                                                 'meridional',
                                                 step_size=step_size,
                                                 max_steps=max_steps,
                                                 edge_length=edge_length,
                                                 edge_steps=edge_steps,
                                                 steps=steps,
+                                                ecef_input=True,
                                                 **kwargs)
 
-    north_mer_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
-                                                glons, alts, dates, 'north',
+    north_mer_drifts_scalar = apex_edge_lengths_via_footpoint(ecef_xs, ecef_ys, ecef_zs,
+                                                dates, 'north',
                                                 'zonal',
                                                 step_size=step_size,
                                                 max_steps=max_steps,
                                                 edge_length=edge_length,
                                                 edge_steps=edge_steps,
                                                 steps=steps,
+                                                ecef_input=True,
                                                 **kwargs)
 
     # print ('Starting Southern')
-    south_zon_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
-                                                glons, alts, dates, 'south',
+    south_zon_drifts_scalar = apex_edge_lengths_via_footpoint(ecef_xs, ecef_ys, ecef_zs,
+                                                dates, 'south',
                                                 'meridional',
                                                 step_size=step_size,
                                                 max_steps=max_steps,
                                                 edge_length=edge_length,
                                                 edge_steps=edge_steps,
                                                 steps=steps,
+                                                ecef_input=True,
                                                 **kwargs)
 
-    south_mer_drifts_scalar = apex_edge_lengths_via_footpoint(glats,
-                                                glons, alts, dates, 'south',
+    south_mer_drifts_scalar = apex_edge_lengths_via_footpoint(ecef_xs, ecef_ys, ecef_zs,
+                                                dates, 'south',
                                                 'zonal',
                                                 step_size=step_size,
                                                 max_steps=max_steps,
                                                 edge_length=edge_length,
                                                 edge_steps=edge_steps,
                                                 steps=steps,
+                                                ecef_input=True,
                                                 **kwargs)
     # print ('Starting Equatorial')
-    eq_zon_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
+    eq_zon_drifts_scalar = closed_loop_edge_lengths_via_equator(ecef_xs, ecef_ys, ecef_zs, dates,
                                                         'meridional',
                                                         edge_length=edge_length,
-                                                        edge_steps=edge_steps)
-    eq_mer_drifts_scalar = closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
+                                                        edge_steps=edge_steps,
+                                                        ecef_input=True)
+    eq_mer_drifts_scalar = closed_loop_edge_lengths_via_equator(ecef_xs, ecef_ys, ecef_zs, dates,
                                                         'zonal',
                                                         edge_length=edge_length,
-                                                        edge_steps=edge_steps)
+                                                        edge_steps=edge_steps,
+                                                        ecef_input=True)
     # print ('Done with core')
     # ratio of apex height difference to step_size across footpoints
     # scales from equator to footpoint
