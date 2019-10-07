@@ -551,6 +551,7 @@ class TestCore():
             for lat, lon, alt in zip(lats, longs, alts):
                 out = []
                 for steps in steps_goal:
+
                     zx, zy, zz, _, _, _, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef([lat],
                                                                          [lon], [alt], [date],
                                                                          step_size=steps)
@@ -628,7 +629,8 @@ class TestCore():
         # step size to be tried
         steps_goal = np.array([5., 5., 5., 5., 5., 5., 5., 5., 5., 5.])
         # max number of steps (fixed)
-        max_steps_goal = np.array([100000, 30000, 10000, 3000, 1000, 500, 300, 100, 50, 30])
+        max_steps_goal = np.arange(13)
+        max_steps_goal = 100000./2**max_steps_goal
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
@@ -682,7 +684,8 @@ class TestCore():
                                                   longs,
                                                   alts)
         # step size to be tried
-        steps_goal = np.array([.05, .1, .5, 1., 5., 10., 50., 100., 500.])
+        steps_goal = np.arange(13)
+        steps_goal = 500./2**steps_goal
         # max number of steps (fixed)
         max_steps_goal = np.array([10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000., 10000.])
 
@@ -712,13 +715,13 @@ class TestCore():
             yerrx = np.nanstd(np.log10(dx), axis=0)
             yerry = np.nanstd(np.log10(dy), axis=0)
             yerrz = np.nanstd(np.log10(dz), axis=0)
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dx.mean(axis=0)),
+            plt.errorbar(np.log10(steps_goal[:-1]), np.log10(dx.mean(axis=0)),
                           yerr=yerrx,
                           label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dy.mean(axis=0)),
+            plt.errorbar(np.log10(steps_goal[:-1]), np.log10(dy.mean(axis=0)),
                           yerr=yerry,
                           label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dz.mean(axis=0)),
+            plt.errorbar(np.log10(steps_goal[:-1]), np.log10(dz.mean(axis=0)),
                           yerr=yerrz,
                           label='z')
             plt.xlabel('Log Step Size (km)')
@@ -3286,7 +3289,7 @@ class TestCore():
         y2 = x2.copy(); z2 = x2.copy(); h2 = x.copy()
 
         date = datetime.datetime(2000,1,1)
-        dates = [date]*len(p_lats)
+        dates = [date]*len(p_longs)
         # set up multi
         if self.dc is not None:
             import itertools
@@ -3294,25 +3297,23 @@ class TestCore():
             pending = []
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                for j,p_long in enumerate(p_longs):
-                    # iterate through target cyclicly and run commands
+                # iterate through target cyclicly and run commands
 
-                    dview.targets = targets.next()
-                    # inputs are ECEF locations
-                    in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
-                    pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date,
-                                                                            direction=direction,
-                                                                            num_steps=5, step_size=25./5.))
-                    pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, date,
-                                                                            direction=direction,
-                                                                            num_steps=1, step_size=25./1.))
-            # for i,p_lat in enumerate(p_lats):
+                dview.targets = targets.next()
+                # inputs are ECEF locations
+                in_x, in_y, in_z = pymv.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
+                pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, dates,
+                                                                        direction=direction,
+                                                                        num_steps=5, step_size=25./5.))
+                pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, dates,
+                                                                        direction=direction,
+                                                                        num_steps=1, step_size=25./1.))
+            for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
-                for j,p_long in enumerate(p_longs):
-                    # collect output from first run
-                    x[i,j], y[i,j], z[i,j] = pending.pop(0).get()
-                    # collect output from second run
-                    x2[i,j], y2[i,j], z2[i,j] = pending.pop(0).get()
+                # collect output from first run
+                x[i,:-1], y[i,:-1], z[i,:-1] = pending.pop(0).get()
+                # collect output from second run
+                x2[i,:-1], y2[i,:-1], z2[i,:-1] = pending.pop(0).get()
             # trace each location to its apex
             # this provides an increase in the spatial difference that results
             # from innacurate movement between field lines from step_along_mag_unit_vector
@@ -3341,16 +3342,16 @@ class TestCore():
 
         else:
             for i,p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                for j,p_long in enumerate(p_longs):
-                    in_x, in_y, in_z = pymv.geodetic_to_ecef(p_lat, p_long, p_alts[0])
-                    x[i,j], y[i,j], z[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date,
-                                                                             direction=direction,
-                                                                             num_steps=5, step_size=25./5.)
-                    # second run
-                    x2[i,j], y2[i,j], z2[i,j] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, date,
-                                                                            direction=direction,
-                                                                            num_steps=1, step_size=25./1.)
+                in_x, in_y, in_z = pymv.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
+
+                x[i,:-1], y[i,:-1], z[i,:-1] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, dates,
+                                                            direction=direction,
+                                                            num_steps=5, step_size=25./5.)
+                # second run
+                x2[i,:-1], y2[i,:-1], z2[i,:-1] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, dates,
+                                                                        direction=direction,
+                                                                        num_steps=1, step_size=25./1.)
+
             for i,p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])
