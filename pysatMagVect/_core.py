@@ -396,11 +396,10 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          steps,
                                          args=(date, step_size, direction, height),
                                          full_output=True,
-                                         printmessg=False)#,
-                                         # ixpr=False,
-                                         # rtol=1.E-11,
-                                         # atol=1.E-11) #,
-                                         # mxstep=500)
+                                         printmessg=False,
+                                         ixpr=False,
+                                         rtol=1.E-11,
+                                         atol=1.E-11)
     if messg['message'] != 'Integration successful.':
         raise RuntimeError("Field-Line trace not successful.")
 
