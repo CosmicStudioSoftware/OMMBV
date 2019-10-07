@@ -2041,59 +2041,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
         south_mag_scalar = b_sc/b_sft
         north_mag_scalar = b_sc/b_nft
         eq_mag_scalar = b_sc/b_apex
-#         for ecef_x, ecef_y, ecef_z, glat, glon, alt, date in zip(ecef_xs, ecef_ys, ecef_zs,
-#                                                                 glats, glons, alts,
-#                                                                 dates):
-#             yr, doy = pysat.utils.time.getyrdoy(date)
-#             double_date = float(yr) + float(doy) / 366.
-#             # get location of apex for s/c field line
-#             apex_x, apex_y, apex_z, apex_lat, apex_lon, apex_alt = apex_location_info(
-#                                                                         [glat], [glon],
-#                                                                         [alt], [date],
-#                                                                         return_geodetic=True)
-#             # trace to northern footpoint
-#             sc_root = np.array([ecef_x, ecef_y, ecef_z])
-#             trace_north = field_line_trace(sc_root, double_date, 1., 120.,
-#                                         steps=steps,
-#                                         step_size=step_size,
-#                                         max_steps=max_steps)
-#             # southern tracing
-#             trace_south = field_line_trace(sc_root, double_date, -1., 120.,
-#                                         steps=steps,
-#                                         step_size=step_size,
-#                                         max_steps=max_steps)
-#             # footpoint location
-#             north_ftpnt = trace_north[-1, :]
-#             nft_glat, nft_glon, nft_alt = ecef_to_geodetic(*north_ftpnt)
-#             south_ftpnt = trace_south[-1, :]
-#             sft_glat, sft_glon, sft_alt = ecef_to_geodetic(*south_ftpnt)
-#
-#             # scalar for the northern footpoint electric field based on distances
-#             # for drift also need to include the magnetic field, drift = E/B
-#             tbn, tbe, tbd, b_sc = igrf.igrf12syn(0, double_date, 1, alt,
-#                                                 np.deg2rad(90.-glat),
-#                                                 np.deg2rad(glon))
-#             # get mag field and scalar for northern footpoint
-#             tbn, tbe, tbd, b_nft = igrf.igrf12syn(0, double_date, 1, nft_alt,
-#                                                 np.deg2rad(90.-nft_glat),
-#                                                 np.deg2rad(nft_glon))
-#             north_mag_scalar.append(b_sc/b_nft)
-#             # equatorial values
-#             tbn, tbe, tbd, b_eq = igrf.igrf12syn(0, double_date, 1, apex_alt,
-#                                                  np.deg2rad(90.-apex_lat),
-#                                                  np.deg2rad(apex_lon))
-#             eq_mag_scalar.append(b_sc/b_eq)
-#             # scalar for the southern footpoint
-#             tbn, tbe, tbd, b_sft = igrf.igrf12syn(0, double_date, 1, sft_alt,
-#                                                   np.deg2rad(90.-sft_glat),
-#                                                   np.deg2rad(sft_glon))
-#             south_mag_scalar.append(b_sc/b_sft)
-#
-#         # make E-Field scalars to drifts
-#         # lists to arrays
-#         north_mag_scalar = np.array(north_mag_scalar)
-#         south_mag_scalar = np.array(south_mag_scalar)
-#         eq_mag_scalar = np.array(eq_mag_scalar)
         # apply to electric field scaling to get ion drift values
         north_zon_drifts_scalar = north_zon_drifts_scalar*north_mag_scalar
         south_zon_drifts_scalar = south_zon_drifts_scalar*south_mag_scalar
