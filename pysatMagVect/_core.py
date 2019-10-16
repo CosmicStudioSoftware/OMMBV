@@ -1026,11 +1026,36 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
 
     return x, y, z
 
-
-
 def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
-                            num_steps=1000,
-                            return_geodetic=False, ecef_input=False):
+                            num_steps=1000, return_geodetic=False,
+                            ecef_input=False):
+    """Return ECEF location of footpoints in Northern/Southern hemisphere
+
+    Parameters
+    ----------
+    glats : list-like of floats (degrees)
+        Geodetic (WGS84) latitude
+    glons : list-like of floats (degrees)
+        Geodetic (WGS84) longitude
+    alts : list-like of floats (km)
+        Geodetic (WGS84) altitude, height above surface
+    dates : list-like of datetimes
+        Date and time for determination of scalars
+    step_size : float (100. km)
+        Step size (km) used for tracing coarse field line
+    num_steps : int (1.E-5 km)
+        Number of steps passed along to field_line_trace as max_steps.
+    ecef_input : bool
+        If True, glats, glons, and alts are treated as x, y, z (ECEF).
+    return_geodetic : bool
+        If True, footpoint locations returned as lat, long, alt.
+
+    Returns
+    -------
+    array(len(glats), 3), array(len(glats), 3)
+        Northern and Southern ECEF X,Y,Z locations
+
+    """
 
    # use input location and convert to ECEF
     if ecef_input:
@@ -1103,6 +1128,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         change unless youknow exactly what you are doing.
     ecef_input : bool
         If True, glats, glons, and alts are treated as x, y, z (ECEF).
+
     Returns
     -------
     (float, float, float, float, float, float)
@@ -1173,7 +1199,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 
 def apex_edge_lengths_via_footpoint(*args, **kwargs):
     raise DeprecationWarning('This method now called apex_distance_after_footpoint_step.')
-    apex_distance_after_step(*args, **kwargs)
+    apex_distance_after_footpoint_step(*args, **kwargs)
 
 def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
                                     vector_direction, step_size=None,
@@ -1302,13 +1328,6 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
     distance between magnetic field lines at the magnetic apex when starting
     locally with a field line half distance of edge_length.
 
-    An alternative method has been implemented, then commented out.
-    This technique takes multiple steps from the origin apex towards the apex
-    locations identified along vector_direction. In principle this is more accurate
-    but more computationally intensive, similar to the footpoint model.
-    A comparison is planned.
-
-
     Note
     ----
         vector direction refers to the magnetic unit vector direction
@@ -1338,14 +1357,8 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
 
     Returns
     -------
-    np.array, ### np.array, np.array
+    np.array
         The change in field line apex locations.
-
-        ## Pending ## The return edge length through input location is provided.
-
-        ## Pending ## The distances of closest approach for the positive step
-                      along vector direction, and the negative step are returned.
-
 
     """
 
