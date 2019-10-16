@@ -1253,10 +1253,10 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
     # prepare output
     apex_edge_length = []
 
-    if direction == 'south':
+    if direction == 'north':
         ftpnts, _ = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs, dates,
                                             ecef_input=True)
-    elif direction == 'north':
+    elif direction == 'south':
         _, ftpnts = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs, dates,
                                             ecef_input=True)
 
@@ -1547,26 +1547,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
         # magnetic field at apex
         _, _, _, b_apex = magnetic_vector(apex_xs, apex_ys, apex_zs, dates)
 
-        sc_root = np.array([0, 0, 0])
-        i = 0
-        for apex_x, apex_y, apex_z, date in zip(apex_xs, apex_ys, apex_zs, dates):
-            yr, doy = pysat.utils.time.getyrdoy(date)
-            double_date = float(yr) + float(doy) / 366.
-
-            sc_root[:] = (apex_x, apex_y, apex_z)
-            trace_north = field_line_trace(sc_root, double_date, 1., 120.,
-                                        steps=steps,
-                                        step_size=step_size,
-                                        max_steps=max_steps)
-            # southern tracing
-            trace_south = field_line_trace(sc_root, double_date, -1., 120.,
-                                        steps=steps,
-                                        step_size=step_size,
-                                        max_steps=max_steps)
-            # footpoint location
-            north_ftpnt[i, :] = trace_north[-1, :]
-            south_ftpnt[i, :] = trace_south[-1, :]
-            i += 1
+        north_ftpnt, south_ftpnt = footpoint_location_info(apex_xs, apex_ys,
+                                                           apex_zs, dates,
+                                                           ecef_input=True)
 
         # magnetic field at northern footpoint
         _, _, _, b_nft = magnetic_vector(north_ftpnt[:, 0], north_ftpnt[:, 1],
