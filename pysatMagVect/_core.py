@@ -820,12 +820,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         # ensure latitude reasonable
         idx, = np.where(np.abs(latitude) > 90.)
         if len(idx) > 0:
-            raise RuntimeWarning('Latitude out of bounds [-90., 90.].')
+            raise RuntimeError('Latitude out of bounds [-90., 90.].')
         # ensure longitude reasonable
         idx, = np.where((longitude < -180.) | (longitude > 360.))
         if len(idx) > 0:
             print('Out of spec :', longitude[idx])
-            raise RuntimeWarning('Longitude out of bounds [-180., 360.].')
+            raise RuntimeError('Longitude out of bounds [-180., 360.].')
 
         # calculate satellite position in ECEF coordinates
         ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
@@ -944,12 +944,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
         loop_num += 1
         if loop_num > max_loops:
-            print('lats:', latitude)
-            print('longs', longitude)
-            print('alts', altitude)
-            raise RuntimeWarning("Didn't converge after reaching max_loops")
             tzx, tzy, tzz = np.nan*tzx, np.nan*tzy, np.nan*tzz
             tmx, tmy, tmz = np.nan*tzx, np.nan*tzy, np.nan*tzz
+            raise RuntimeWarning("Didn't converge after reaching max_loops")
 
     zx, zy, zz = tzx, tzy, tzz
     mx, my, mz = tmx, tmy, tmz
