@@ -1247,11 +1247,6 @@ def apex_distance_after_step(glats, glons, alts, dates, direction,
     if steps is None:
         steps = np.arange(max_steps+1)
 
-    if direction == 'south':
-        direct = -1
-    elif direction == 'north':
-        direct = 1
-
     # use spacecraft location to get ECEF
     if ecef_input:
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
@@ -1260,26 +1255,13 @@ def apex_distance_after_step(glats, glons, alts, dates, direction,
 
     # prepare output
     apex_edge_length = []
-    sc_root = np.array([0, 0, 0])
-    ftpnts = np.zeros((len(ecef_xs), 3))
-    i = 0
-    for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
-        # start at location of interest, map down to northern or southern
-        # footpoints then take symmetric steps along meridional and zonal
-        # directions and then get apex locations for these fields.
-        # The difference between apex location used as field line distance.
-        yr, doy = pysat.utils.time.getyrdoy(date)
-        double_date = float(yr) + float(doy) / 366.
 
-        # trace to footpoint, starting with input location
-        sc_root[:] = [ecef_x, ecef_y, ecef_z]
-        trace = field_line_trace(sc_root, double_date, direct, 120.,
-                                 steps=steps,
-                                 step_size=step_size,
-                                 max_steps=max_steps)
-        # pull out footpoint location
-        ftpnts[i,:] = trace[-1, :]
-        i += 1
+    if direction == 'south':
+        ftpnts, _ = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs, dates,
+                                            ecef_input=True)
+    elif direction == 'north':
+        _, ftpnts = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs, dates,
+                                            ecef_input=True)
 
     # take step from footpoint along + vector direction
     plus_x, plus_y, plus_z = step_along_mag_unit_vector(ftpnts[:,0], ftpnts[:,1], ftpnts[:,2],
