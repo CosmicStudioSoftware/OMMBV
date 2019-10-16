@@ -1175,10 +1175,10 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         return _apex_out_x, _apex_out_y, _apex_out_z
 
 def apex_edge_lengths_via_footpoint(*args, **kwargs):
-    raise DeprecationWarning('This method now called apex_distance_after_step.')
+    raise DeprecationWarning('This method now called apex_distance_after_footpoint_step.')
     apex_distance_after_step(*args, **kwargs)
 
-def apex_distance_after_step(glats, glons, alts, dates, direction,
+def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
                                     vector_direction, step_size=None,
                                     max_steps=None, steps=None,
                                     edge_length=25., edge_steps=5,
@@ -1290,7 +1290,7 @@ def apex_distance_after_step(glats, glons, alts, dates, direction,
 
     return apex_edge_length
 
-def closed_loop_edge_lengths_via_equator(glats, glons, alts, dates,
+def apex_distance_after_local_step(glats, glons, alts, dates,
                                          vector_direction,
                                          edge_length=25.,
                                          edge_steps=5,
@@ -1452,8 +1452,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
     out = {}
     # meridional e-field scalar map, can also be
     # zonal ion drift scalar map
-    # print ('Starting Northern')
-    north_zon_drifts_scalar = apex_distance_after_step(ecef_xs, ecef_ys, ecef_zs,
+    north_zon_drifts_scalar = apex_distance_after_footpoint_step(ecef_xs, ecef_ys, ecef_zs,
                                                 dates, 'north',
                                                 'meridional',
                                                 step_size=step_size,
@@ -1464,7 +1463,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                 ecef_input=True,
                                                 **kwargs)
 
-    north_mer_drifts_scalar = apex_distance_after_step(ecef_xs, ecef_ys, ecef_zs,
+    north_mer_drifts_scalar = apex_distance_after_footpoint_step(ecef_xs, ecef_ys, ecef_zs,
                                                 dates, 'north',
                                                 'zonal',
                                                 step_size=step_size,
@@ -1475,8 +1474,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                 ecef_input=True,
                                                 **kwargs)
 
-    # print ('Starting Southern')
-    south_zon_drifts_scalar = apex_distance_after_step(ecef_xs, ecef_ys, ecef_zs,
+    south_zon_drifts_scalar = apex_distance_after_footpoint_step(ecef_xs, ecef_ys, ecef_zs,
                                                 dates, 'south',
                                                 'meridional',
                                                 step_size=step_size,
@@ -1487,7 +1485,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                 ecef_input=True,
                                                 **kwargs)
 
-    south_mer_drifts_scalar = apex_distance_after_step(ecef_xs, ecef_ys, ecef_zs,
+    south_mer_drifts_scalar = apex_distance_after_footpoint_step(ecef_xs, ecef_ys, ecef_zs,
                                                 dates, 'south',
                                                 'zonal',
                                                 step_size=step_size,
@@ -1497,18 +1495,17 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                 steps=steps,
                                                 ecef_input=True,
                                                 **kwargs)
-    # print ('Starting Equatorial')
-    eq_zon_drifts_scalar = closed_loop_edge_lengths_via_equator(ecef_xs, ecef_ys, ecef_zs, dates,
+
+    eq_zon_drifts_scalar = apex_distance_after_local_step(ecef_xs, ecef_ys, ecef_zs, dates,
                                                         'meridional',
                                                         edge_length=edge_length,
                                                         edge_steps=edge_steps,
                                                         ecef_input=True)
-    eq_mer_drifts_scalar = closed_loop_edge_lengths_via_equator(ecef_xs, ecef_ys, ecef_zs, dates,
+    eq_mer_drifts_scalar = apex_distance_after_local_step(ecef_xs, ecef_ys, ecef_zs, dates,
                                                         'zonal',
                                                         edge_length=edge_length,
                                                         edge_steps=edge_steps,
                                                         ecef_input=True)
-    # print ('Done with core')
     # ratio of apex height difference to step_size across footpoints
     # scales from equator to footpoint
     north_zon_drifts_scalar = north_zon_drifts_scalar/double_edge
