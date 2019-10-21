@@ -433,7 +433,6 @@ def field_line_trace(init, date, direction, height, steps=None,
         # that steps out early, the output we receive would be problematic.
         # Steps below provide an extra layer of security that output has some
         # semblance to expectations
-
         if min_check_flag:
             x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2])
             idx = np.argmin(np.abs(check_height - z))
@@ -652,7 +651,6 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
                                bx, by, bz)
     # add unit vectors for magnetic drifts in ecef coordinates
     return zvx, zvy, zvz, bx, by, bz, mx, my, mz
-
 
 def magnetic_vector(x, y, z, dates, normalize=False):
     """Uses IGRF to calculate geomagnetic field.
