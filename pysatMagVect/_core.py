@@ -10,7 +10,8 @@ import numpy as np
 import datetime
 import pysat
 # import reference IGRF fortran code within the package
-from pysatMagVect import igrf
+from pysatMagVect import igrf as igrf
+
 
 # parameters used to define Earth ellipsoid
 # WGS84 parameters below
@@ -371,9 +372,11 @@ def field_line_trace(init, date, direction, height, steps=None,
 
     if recursive_loop_count is None:
         recursive_loop_count = 0
-    #
+
+    # number of times integration routine must output step location
     if steps is None:
         steps = np.arange(max_steps)
+    # ensure date is a float for IGRF call
     if not isinstance(date, float):
         # recast from datetime to float, as required by IGRF12 code
         doy = (date - datetime.datetime(date.year,1,1)).days
@@ -382,6 +385,13 @@ def field_line_trace(init, date, direction, height, steps=None,
         date = float(date.year) + \
                (float(doy) + float(date.hour + date.minute/60. + date.second/3600.)/24.)/float(num_doy_year+1)
 
+    # set altitude to terminate trace
+    if height == 0:
+        check_height = 1.
+    else:
+        check_height = height
+
+    # perform trace
     trace_north = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                          steps,
                                          args=(date, step_size, direction, height),
@@ -389,15 +399,13 @@ def field_line_trace(init, date, direction, height, steps=None,
                                          printmessg=False,
                                          ixpr=False) #,
                                          # mxstep=500)
-
-    # check that we reached final altitude
+    
+    # calculate data to check that we reached final altitude
     check = trace_north[-1, :]
     x, y, z = ecef_to_geodetic(*check)
-    if height == 0:
-        check_height = 1.
-    else:
-        check_height = height
-    # fortran integration gets close to target height
+
+    # fortran integration gets close to target height        
+
     if recurse & (z > check_height*1.000001):
         if (recursive_loop_count < 1000):
             # When we have not reached the reference height, call field_line_trace
@@ -410,18 +418,23 @@ def field_line_trace(init, date, direction, height, steps=None,
                                             steps=steps)
         else:
             raise RuntimeError("After 1000 iterations couldn't reach target altitude")
+        # append new trace data to existing trace data
+        # this return is taken as part of recursive loop
         return np.vstack((trace_north, trace_north1))
     else:
         # return results if we make it to the target altitude
 
         # filter points to terminate at point closest to target height
-        # code below not correct, we want the first poiint that goes below target
-        # height
         # code also introduces a variable length return, though I suppose
         # that already exists with the recursive functionality
-        # x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2])
-        # idx = np.argmin(np.abs(check_height - z))
-        return trace_north #[:idx+1,:]
+        # while this check is done innternally within Fortran integrand, if
+        # that steps out early, the output we receive would be problematic.
+        # Steps below provide an extra layer of security that output has some
+        # semblance to expectations
+        
+        x, y, z = ecef_to_geodetic(trace_north[:,0], trace_north[:,1], trace_north[:,2]) 
+        idx = np.argmin(np.abs(check_height - z)) 
+        return trace_north[:idx+1,:]
 
 
 def full_field_line(init, date, height, step_size=100., max_steps=1000,
@@ -638,27 +651,27 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
 
 def step_until_intersect(pos, field_line, sign, time,  direction=None,
-                        step_size_goal=5.,
-                        field_step_size=None):
-    """Starting at pos, method steps along magnetic unit vector direction
-    towards the supplied field line trace. Determines the distance of
+                        step_size_goal=5., field_step_size=None,
+                        tol=1.E-2):   
+    """Starting at pos, method steps along magnetic unit vector direction 
+    towards the supplied field line trace. Determines the distance of 
     closest approach to field line.
 
-    Routine is used when calculting the mapping of electric fields along
-    magnetic field lines. Voltage remains constant along the field but the
-    distance between field lines does not.This routine may be used to form the
+    Routine is used when calculting the mapping of electric fields along 
+    magnetic field lines. Voltage remains constant along the field but the 
+    distance between field lines does not. This routine may be used to form the 
     last leg when trying to trace out a closed field line loop.
 
-    Routine will create a high resolution field line trace (.01 km step size)
-    near the location of closest approach to better determine where the
-    intersection occurs.
-
+    Routine will create a high resolution field line trace (tol km step size) 
+    around the location of closest approach (using the field line supplied by
+    user) to better determine where the intersection occurs. 
+    
     Parameters
     ----------
     pos : array-like
-        X, Y, and Z ECEF locations to start from
+        X, Y, and Z ECEF (km) locations to start from
     field_line : array-like (:,3)
-        X, Y, and Z ECEF locations of field line trace, produced by the
+        X, Y, and Z ECEF (km) locations of field line trace, produced by the
         field_line_trace method.
     sign : int
         if 1, move along positive unit vector. Negwtive direction for -1.
@@ -669,8 +682,13 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         Which unit vector direction to move slong when trying to intersect
         with supplied field line trace. See step_along_mag_unit_vector method
         for more.
-    step_size_goal : float
-        step size goal that method will try to match when stepping towards field line.
+    step_size_goal : float (5 km)
+        step size goal that method will try to match when stepping towards field line. 
+    field_step_size : float
+        step size used (km) for the field_line supplied
+    tol : float (.01 km)
+        tolerance (uncertainty) allowed (km) for calculating closest 
+        approach distance
 
     Returns
     -------
@@ -678,31 +696,31 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         Total distance taken along vector direction; the position after taking
         the step [x, y, z] in ECEF; distance of closest approach from input pos
         towards the input field line trace.
-
-    """
-
-    # work on a copy, probably not needed
+         
+    """ 
+                                                         
     field_copy = field_line
     # set a high last minimum distance to ensure first loop does better than this
-    last_min_dist = 2500000.
+    best_min_dist = 2500000.
     # scalar is the distance along unit vector line that we are taking
     scalar = 0.
     # repeat boolean
-    repeat=True
+    repeat = True
     # first run boolean
-    first=True
-    # factor is a divisor applied to the remaining distance between point and field line
-    # I slowly take steps towards the field line and I don't want to overshoot
-    # each time my minimum distance increases, I step back, increase factor, reducing
-    # my next step size, then I try again
-    factor = 1
+    first = True
+    # factor is a divisor applied to the path length step size used when
+    # looking for location of closest approach
+    factor = 0
+    # distance for each step
+    step = np.NaN
     while repeat:
         # take a total step along magnetic unit vector
         # try to take steps near user provided step_size_goal
         unit_steps = np.abs(scalar//step_size_goal)
         if unit_steps == 0:
             unit_steps = 1
-        # print (unit_steps, scalar/unit_steps)
+
+        # first time through, step_size is zero
         pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2], time,
                                               direction=direction,
                                               num_steps=unit_steps,
@@ -713,66 +731,57 @@ def step_until_intersect(pos, field_line, sign, time,  direction=None,
         diff_mag = np.sqrt((diff ** 2).sum(axis=1))
         min_idx = np.argmin(diff_mag)
         if first:
-            # first time in while loop, create some information
-            # make a high resolution field line trace around closest distance
-            # want to take a field step size in each direction
+            # first time through, the minimum distance just determined 
+            # uses the coarse field line supplied by the user
+            # Now, make a high resolution field line trace around closest distance
+            # Take a field step size in each direction to ensure minimum is covered
             # maintain accuracy of high res trace below to be .01 km
             init = field_copy[min_idx,:]
             field_copy = full_field_line(init, time, 0.,
-                                         step_size=0.01,
-                                         max_steps=int(field_step_size/.01),
+                                         step_size=tol, 
+                                         max_steps=int(round(field_step_size/tol)),
                                          recurse=False)
             # difference with position
             diff = field_copy - pos_step
             diff_mag = np.sqrt((diff ** 2).sum(axis=1))
             # find closest one
             min_idx = np.argmin(diff_mag)
-            # # reduce number of elements we really need to check
-            # field_copy = field_copy[min_idx-100:min_idx+100]
-            # # difference with position
-            # diff = field_copy - pos_step
-            # diff_mag = np.sqrt((diff ** 2).sum(axis=1))
-            # # find closest one
-            # min_idx = np.argmin(diff_mag)
+            # no longer first run through
             first = False
-
-        # pull out distance of closest point
+            # calculate step size for path integration
+            step = diff_mag[min_idx]/3.
+            step_factor = step/(2.**factor)*(-1)**factor
+            
+        # pull out distance of closest point 
         min_dist = diff_mag[min_idx]
 
         # check how the solution is doing
-        # if well, add more distance to the total step and recheck if closer
-        # if worse, step back and try a smaller step
-        if min_dist > last_min_dist:
+        if min_dist > best_min_dist:
             # last step we took made the solution worse
-            if factor > 4:
+            if np.abs(step_factor) < tol:
                 # we've tried enough, stop looping
                 repeat = False
-                # undo increment to last total distance
-                scalar = scalar - last_min_dist/(2*factor)
-                # calculate latest position
-                pos_step = step_along_mag_unit_vector(pos[0], pos[1], pos[2],
-                                        time,
-                                        direction=direction,
-                                        num_steps=unit_steps,
-                                        step_size=np.abs(scalar)/unit_steps,
-                                        scalar=sign)
             else:
-                # undo increment to last total distance
-                scalar = scalar - last_min_dist/(2*factor)
-                # increase the divisor used to reduce the distance
-                # actually stepped per increment
+                # undo the last step
+                scalar = scalar - step_factor
+                # decrease the size of the step
+                # and turn around
                 factor = factor + 1.
-                # try a new increment to total distance
-                scalar = scalar + last_min_dist/(2*factor)
+                step_factor = step/(2.**factor)*(-1)**factor
+                # perform step
+                scalar = scalar + step_factor
         else:
-            # we did better, move even closer, a fraction of remaining distance
-            # increment scalar, but only by a fraction
-            scalar = scalar + min_dist/(2*factor)
-            # we have a new standard to judge against, set it
-            last_min_dist = min_dist.copy()
-
+            # things got better
+            # we have a new standard to judge against
+            # store it
+            best_min_dist = min_dist
+            best_scalar = scalar
+            best_pos_step = pos_step
+            # perform another step
+            # same size, same direction
+            scalar = scalar + step_factor
     # return magnitude of step
-    return scalar, pos_step, min_dist
+    return best_scalar, best_pos_step, best_min_dist
 
 
 def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=5.,
@@ -996,7 +1005,6 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         direct = -1
     elif direction == 'north':
         direct = 1
-
     # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
@@ -1020,7 +1028,6 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         yr, doy = pysat.utils.time.getyrdoy(date)
         double_date = float(yr) + float(doy) / 366.
 
-        # print (glat, glon, alt)
         # trace to footpoint, starting with input location
         sc_root = np.array([ecef_x, ecef_y, ecef_z])
         trace = field_line_trace(sc_root, double_date, direct, 120.,
@@ -1030,6 +1037,10 @@ def closed_loop_edge_lengths_via_footpoint(glats, glons, alts, dates, direction,
         # pull out footpoint location
         ftpnt = trace[-1, :]
         ft_glat, ft_glon, ft_alt = ecef_to_geodetic(*ftpnt)
+        if np.isnan([ft_glat, ft_glon, ft_alt]).any():
+            raise RuntimeError('Unable to find footpoint location, NaN.')
+        if ft_alt < 0:
+            raise RuntimeError('Footpoint altitude negative.')
 
         # take step from footpoint along + vector direction
         plus_step = step_along_mag_unit_vector(ftpnt[0], ftpnt[1], ftpnt[2],
