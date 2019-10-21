@@ -830,13 +830,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         # calculate satellite position in ECEF coordinates
         ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
 
-    bx, by, bz, bm = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes, normalize=True)
-
     # get apex location for root point
-    _, _, _, _, _, apex_root = apex_location_info(ecef_x, ecef_y, ecef_z,
-                                                  datetimes,
-                                                  return_geodetic=True,
-                                                  ecef_input=True)
+    a_x, a_y, a_z, _, _, apex_root = apex_location_info(ecef_x, ecef_y, ecef_z,
+                                                        datetimes,
+                                                        return_geodetic=True,
+                                                        ecef_input=True)
+    bx, by, bz, bm = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes, normalize=True)
 
     # need a vector perpendicular to mag field
     # infinitely many
@@ -897,8 +896,14 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                    datetimes,
                                                    return_geodetic=True,
                                                    ecef_input=True)
-        diff_apex_z = apex_z - apex_root
-        diff_apex_z /= step_size
+
+        ecef_xz2, ecef_yz2, ecef_zz2 = ecef_x - step_size*tzx, ecef_y - step_size*tzy, ecef_z - step_size*tzz
+        _, _, _, _, _, apex_z2 = apex_location_info(ecef_xz2, ecef_yz2, ecef_zz2,
+                                                   datetimes,
+                                                   return_geodetic=True,
+                                                   ecef_input=True)
+        diff_apex_z = apex_z - apex_z2
+        diff_apex_z /= 2*step_size
 
         # meridional-ish direction
         ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*tmx, ecef_y + step_size*tmy, ecef_z + step_size*tmz
@@ -906,6 +911,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                    datetimes,
                                                    return_geodetic=True,
                                                    ecef_input=True)
+
         diff_apex_m = apex_m - apex_root
         diff_apex_m /= step_size
 
@@ -939,7 +945,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         tmx, tmy, tmz = tmx2, tmy2, tmz2
 
         # check if we are done
-        if (diff < tol) & (np.max(np.abs(diff_apex_z)) < tol_zonal_apex) & (loop_num > 1):
+        if (diff < tol) & (np.max(np.abs(diff_apex_z)) < tol_zonal_apex) & (loop_num > 3):
             repeat_flag = False
 
         loop_num += 1
@@ -948,15 +954,93 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             tmx, tmy, tmz = np.nan*tzx, np.nan*tzy, np.nan*tzz
             raise RuntimeWarning("Didn't converge after reaching max_loops")
 
+    # store temp arrays into output
     zx, zy, zz = tzx, tzy, tzz
     mx, my, mz = tmx, tmy, tmz
+
     if full_output:
+
+        # calculate zonal gradient
+        ecef_xz, ecef_yz, ecef_zz = ecef_x + step_size*zx, ecef_y + step_size*zy, ecef_z + step_size*zz
+        _, _, _, _, _, apex_z = apex_location_info(ecef_xz, ecef_yz, ecef_zz,
+                                                   datetimes,
+                                                   return_geodetic=True,
+                                                   ecef_input=True)
+
+        ecef_xz2, ecef_yz2, ecef_zz2 = ecef_x - step_size*zx, ecef_y - step_size*zy, ecef_z - step_size*zz
+        _, _, _, _, _, apex_z2 = apex_location_info(ecef_xz2, ecef_yz2, ecef_zz2,
+                                                   datetimes,
+                                                   return_geodetic=True,
+                                                   ecef_input=True)
+        # taking straight distancee between apex points
+        # this would be most correct if I took path
+        # length along constant apex height surface
+        # difference between arc length and straight line
+        # for step_size over Earth Radius produces more than 8 digits
+        # of precision
+        diff_apex_r = np.sqrt((ecef_xz - ecef_xz2)**2 +
+                       (ecef_yz - ecef_yz2)**2 +
+                       (ecef_zz - ecef_zz2)**2)
+        grad_brb = diff_apex_r / (2*step_size)
+
+        # calculate meridional gradient using latest vectors
+        ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*mx, ecef_y + step_size*my, ecef_z + step_size*mz
+        _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
+                                                   datetimes,
+                                                   return_geodetic=True,
+                                                   ecef_input=True)
+        ecef_xm, ecef_ym, ecef_zm = ecef_x - step_size*mx, ecef_y - step_size*my, ecef_z - step_size*mz
+        _, _, _, _, _, apex_m2 = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
+                                                datetimes,
+                                                return_geodetic=True,
+                                                ecef_input=True)
+        diff_apex_m = apex_m - apex_m2
+        diff_apex_m /= 2*step_size
+
+        # mer gradient already calculated
+        grad_apex = diff_apex_m
+
+        # get magnitude of magnetic field at root apex location
+        bax, bay, baz, bam = magnetic_vector(a_x, a_y, a_z, datetimes,
+                                             normalize=True)
+
+        # d vectors
+        d_zon_x, d_zon_y, d_zon_z = grad_brb*zx, grad_brb*zy, grad_brb*zz
+        d_mer_x, d_mer_y, d_mer_z = grad_apex*mx, grad_apex*my, grad_apex*mz
+        d_fa_x, d_fa_y, d_fa_z = bam/bm*bx, bam/bm*by, bam/bm*bz
+
+        # e vectors
+        e_zon_x, e_zon_y, e_zon_z = cross_product(d_fa_x, d_fa_y, d_fa_z,
+                                                  d_mer_x, d_mer_y, d_mer_z)
+        e_mer_x, e_mer_y, e_mer_z = cross_product(d_zon_x, d_zon_y, d_zon_z,
+                                                  d_fa_x, d_fa_y, d_fa_z)
+        e_fa_x, e_fa_y, e_fa_z = cross_product(d_mer_x, d_mer_y, d_mer_z,
+                                               d_zon_x, d_zon_y, d_zon_z)
+
         outd = {'diff_zonal_apex' : diff_apex_z,
                 'diff_mer_apex' : diff_apex_m,
                 'loops' : loop_num,
                 'vector_seed_type' : init_type,
                 'diff_zonal_vec' : diff_z,
-                'diff_mer_vec' : diff_m
+                'diff_mer_vec' : diff_m,
+                'd_zon_x' : d_zon_x,
+                'd_zon_y' : d_zon_y,
+                'd_zon_z' : d_zon_z,
+                'd_mer_x' : d_mer_x,
+                'd_mer_y' : d_mer_y,
+                'd_mer_z' : d_mer_z,
+                'd_fa_x' : d_fa_x,
+                'd_fa_y' : d_fa_y,
+                'd_fa_z' : d_fa_z,
+                'e_zon_x' : e_zon_x,
+                'e_zon_y' : e_zon_y,
+                'e_zon_z' : e_zon_z,
+                'e_mer_x' : e_mer_x,
+                'e_mer_y' : e_mer_y,
+                'e_mer_z' : e_mer_z,
+                'e_fa_x' : e_fa_x,
+                'e_fa_y' : e_fa_y,
+                'e_fa_z' : e_fa_z,
                 }
         return zx, zy, zz, bx, by, bz, mx, my, mz, outd
 
