@@ -1570,6 +1570,8 @@ class TestCore():
 
         d_zvx = np.zeros((len(p_lats), len(p_longs)+1))
         d_zvy = d_zvx.copy(); d_zvz = d_zvx.copy()
+        d2_zvx = np.zeros((len(p_lats), len(p_longs)+1))
+        d2_zvy = d_zvx.copy(); d2_zvz = d_zvx.copy()
         d_mx = d_zvx.copy(); d_my = d_zvx.copy(); d_mz = d_zvx.copy()
         d_fax = d_zvx.copy(); d_fay = d_zvx.copy(); d_faz = d_zvx.copy()
         d2_mx = d_zvx.copy(); d2_my = d_zvx.copy(); d2_mz = d_zvx.copy()
@@ -1609,6 +1611,8 @@ class TestCore():
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
                 d_zvx[i,:-1], d_zvy[i,:-1], d_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
+                dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
+                d2_zvx[i,:-1], d2_zvy[i,:-1], d2_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
                 d_fax[i,:-1], d_fay[i,:-1], d_faz[i,:-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz, [p_lat]*len(p_longs), p_longs)
                 d_mx[i,:-1], d_my[i,:-1], d_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
@@ -1642,6 +1646,8 @@ class TestCore():
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
                 d_zvx[i,:-1], d_zvy[i,:-1], d_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
+                dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
+                d2_zvx[i,:-1], d2_zvy[i,:-1], d2_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
                 d_fax[i,:-1], d_fay[i,:-1], d_faz[i,:-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz, [p_lat]*len(p_longs), p_longs)
                 d_mx[i,:-1], d_my[i,:-1], d_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
@@ -1675,6 +1681,9 @@ class TestCore():
         d_zvx[:,-1] = d_zvx[:,0]
         d_zvy[:,-1] = d_zvy[:,0]
         d_zvz[:,-1] = d_zvz[:,0]
+        d2_zvx[:,-1] = d2_zvx[:,0]
+        d2_zvy[:,-1] = d2_zvy[:,0]
+        d2_zvz[:,-1] = d2_zvz[:,0]
         d_fax[:,-1] = d_fax[:,0]
         d_fay[:,-1] = d_fay[:,0]
         d_faz[:,-1] = d_faz[:,0]
@@ -1932,6 +1941,38 @@ class TestCore():
             plt.savefig('d_diff_mer_up.pdf')
             plt.close()
 
+            dmag = np.sqrt(d_zvx**2 + d_zvy**2 + d_zvz**2)
+            plt.imshow(np.log10(np.abs(d2_zvx - d_zvx)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Zonal Vector Difference - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_zon_east.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(d2_zvy - d_zvy)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Zonal Vector Difference - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_zon_north.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(d2_zvz - d_zvz)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Zonal Vector Difference - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_zon_up.pdf')
+            plt.close()
 
             # E Vectors
             fig = plt.figure()
