@@ -1592,7 +1592,8 @@ class TestCore():
                 print (i, p_lat)
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
-                                                                        p_alts, [date]*len(p_longs), full_output=True))
+                                                                        p_alts, [date]*len(p_longs), full_output=True,
+                                                                        include_alternates=True))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                     # collect output
@@ -1631,7 +1632,8 @@ class TestCore():
                 print (i, p_lat)
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs,
                                                                                         p_alts, [date]*len(p_longs),
-                                                                                        full_output=True)
+                                                                                        full_output=True,
+                                                                                        include_alternates=True)
                 zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
@@ -3745,7 +3747,7 @@ class TestCore():
                 pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates,
                                                  return_geodetic=True))
             for i,p_lat in enumerate(p_lats):
-                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h2[i,:-1] = pending.pop(0).get()
+                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h[i,:-1] = pending.pop(0).get()
                 x2[i,:-1], y2[i,:-1], z2[i,:-1], _, _, h2[i,:-1] = pending.pop(0).get()
             normx = x.copy()
             normy = y.copy()
@@ -3772,7 +3774,7 @@ class TestCore():
             for i,p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])
-                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h2[i,:-1] = pymv.apex_location_info(tlat, tlon, talt, dates,
+                x[i,:-1], y[i,:-1], z[i,:-1], _, _, h[i,:-1] = pymv.apex_location_info(tlat, tlon, talt, dates,
                                                                                       return_geodetic=True)
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x2[i,:-1], y2[i,:-1], z2[i,:-1])
