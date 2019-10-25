@@ -17,6 +17,7 @@ before_install:
   - pip install future
   - pip install matplotlib
   - pip install pysatCDF >/dev/null
+  - pip install apexpy
 
   # Prepare modified pysat install
   - pip install numpy
