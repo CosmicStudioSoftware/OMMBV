@@ -971,36 +971,14 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
         # support secondary calc for validation testing
         if include_alternates:
-
-            # calculate zonal gradient
-            ecef_xz, ecef_yz, ecef_zz = step_along_mag_unit_vector(ecef_x, ecef_y,
-                                                                ecef_z, datetimes,
-                                                                direction='zonal',
-                                                                scalar=1,
-                                                                step_size=step_size/200.)
-            ecef_xz, ecef_yz, ecef_zz, _, _, apex_z = apex_location_info(ecef_xz, ecef_yz, ecef_zz,
-                                                                datetimes,
-                                                                return_geodetic=True,
-                                                                ecef_input=True)
-            ecef_xz2, ecef_yz2, ecef_zz2 = step_along_mag_unit_vector(ecef_x, ecef_y,
-                                                                ecef_z, datetimes,
-                                                                direction='zonal',
-                                                                scalar=-1,
-                                                                step_size=step_size/200.)
-
-            ecef_xz2, ecef_yz2, ecef_zz2, _, _, apex_z2 = apex_location_info(ecef_xz2, ecef_yz2, ecef_zz2,
-                                                                datetimes,
-                                                                return_geodetic=True,
-                                                                ecef_input=True)
-            # taking straight distancee between apex points
-            # this would be most correct if I took path
-            # length along constant apex height surface
-            # difference between arc length and straight line
-            # for step_size over Earth Radius produces more than 8 digits
-            # of precision
-            diff_apex_r = np.sqrt((ecef_xz - ecef_xz2)**2 +
-                        (ecef_yz - ecef_yz2)**2 +
-                        (ecef_zz - ecef_zz2)**2)
+            diff_apex_r, diff_h = apex_distance_after_local_step(ecef_x, ecef_y, ecef_z,
+                                                         datetimes,
+                                                         direction='zonal',
+                                                         ecef_input=True,
+                                                         edge_length=step_size/200.,
+                                                         edge_steps=1,
+                                                         return_geodetic=True)
+            grad_zonal = diff_h/(step_size/200.)
             grad_brb = diff_apex_r / (2.*step_size/200.)
             # this is actually the chord length
             # need to translate to arc length
@@ -1062,7 +1040,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         e_mer_x, e_mer_y, e_mer_z = cross_product(d_zon_x, d_zon_y, d_zon_z,
                                                   d_fa_x, d_fa_y, d_fa_z)
 
-        outd = {'diff_zonal_apex' : np.abs(apex_z - apex_z2)/step_size,
+        outd = {'diff_zonal_apex' : grad_zonal,
                 'diff_mer_apex' : grad_apex,
                 'loops' : loop_num,
                 'vector_seed_type' : init_type,
@@ -1465,7 +1443,8 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
                                          vector_direction,
                                          edge_length=25.,
                                          edge_steps=5,
-                                         ecef_input=False):
+                                         ecef_input=False,
+                                         return_geodetic=False):
     """
     Calculates the distance between apex locations mapping to the input location.
 
@@ -1492,10 +1471,6 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
         Date and time for determination of scalars
     vector_direction : string
         'meridional' or 'zonal' unit vector directions
-    step_size : float (km)
-        Step size (km) used for field line integration
-    max_steps : int
-        Number of steps taken for field line integration
     edge_length : float (km)
         Half of total edge length (step) taken at footpoint location.
         edge_length step in both positive and negative directions.
@@ -1526,9 +1501,6 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
                                       direction=vector_direction,
                                       num_steps=edge_steps,
                                       step_size=edge_length/edge_steps)
-    plus_apex_x, plus_apex_y, plus_apex_z = \
-                apex_location_info(plus_x, plus_y, plus_z, dates,
-                                   ecef_input=True)
 
     # take half step from s/c along - vector direction
     # then get the apex location
@@ -1537,16 +1509,35 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
                                        scalar=-1,
                                        num_steps=edge_steps,
                                        step_size=edge_length/edge_steps)
-    minus_apex_x, minus_apex_y, minus_apex_z = \
+
+    # get apex locations
+    if return_geodetic:
+        plus_apex_x, plus_apex_y, plus_apex_z, _, _, plus_h = \
+                apex_location_info(plus_x, plus_y, plus_z, dates,
+                                   ecef_input=True,
+                                   return_geodetic=True)
+
+        minus_apex_x, minus_apex_y, minus_apex_z, _, _, minus_h = \
                 apex_location_info(minus_x, minus_y, minus_z, dates,
+                                   ecef_input=True,
+                                   return_geodetic=True)
+    else:
+        plus_apex_x, plus_apex_y, plus_apex_z = \
+                apex_location_info(plus_x, plus_y, plus_z, dates,
                                    ecef_input=True)
+
+        minus_apex_x, minus_apex_y, minus_apex_z = \
+                apex_location_info(minus_x, minus_y, minus_z, dates,
+                                ecef_input=True)
 
     # take difference in apex locations
     apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2 +
                                (plus_apex_y - minus_apex_y)**2 +
                                (plus_apex_z - minus_apex_z)**2)
-
-    return apex_edge_length
+    if return_geodetic:
+        return apex_edge_length, plus_h - minus_h
+    else:
+        return apex_edge_length
 
 def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                    max_steps=None, e_field_scaling_only=False,
