@@ -1015,7 +1015,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         mag = d_zon_x**2 + d_zon_y**2 + d_zon_z**2
         d_zon_x, d_zon_y, d_zon_z = d_zon_x/mag, d_zon_y/mag, d_zon_z/mag
 
-        if include_alternates:
+        if include_debug:
             # second path to zonal
             d_zon2_x, d_zon2_y, d_zon2_z = grad_brb*zx, grad_brb*zy, grad_brb*zz
             # second path to meridional
