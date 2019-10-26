@@ -728,7 +728,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                           ecef_input=False, max_steps=None,
                                           ref_height=None, steps=None,
                                           centered_diff=True,
-                                          include_alternates=False,
+                                          include_debug=False,
                                           scalar=1.):
     """Calculates local geomagnetic unit vectors expressing the ion drift
     coordinate system organized by the geomagnetic field. Unit vectors are expressed
@@ -891,7 +891,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     loop_num = 0
     repeat_flag = True
     while repeat_flag:
-
         # get apex field height location info for both places
         # after taking step along these directions
 
@@ -970,7 +969,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     if full_output:
 
         # support secondary calc for validation testing
-        if include_alternates:
+        if include_debug:
             diff_apex_r, diff_h = apex_distance_after_local_step(ecef_x, ecef_y, ecef_z,
                                                          datetimes,
                                                          direction='zonal',
@@ -978,23 +977,17 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                          edge_length=step_size/200.,
                                                          edge_steps=1,
                                                          return_geodetic=True)
-            grad_zonal = diff_h/(step_size/200.)
+            grad_zonal = diff_h/(2.*step_size/200.)
             grad_brb = diff_apex_r / (2.*step_size/200.)
             # this is actually the chord length
             # need to translate to arc length
-            radial_loc = np.sqrt(ecef_xz2**2 + ecef_yz2**2 + ecef_zz2**2)
+            radial_loc = np.sqrt(a_x**2 + a_y**2 + a_z**2)
             subtend_angle = np.arcsin(diff_apex_r/2./radial_loc)
             diff_apex_circ = radial_loc*2*subtend_angle
             grad_brb = diff_apex_circ / (2.*step_size/200.)
 
         # calculate meridional gradient using latest vectors
         ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*mx, ecef_y + step_size*my, ecef_z + step_size*mz
-        # ecef_xm, ecef_ym, ecef_zm = step_along_mag_unit_vector(ecef_x, ecef_y,
-        #                                                     ecef_z, datetimes,
-        #                                                     direction='meridional',
-        #                                                     scalar=1,
-        #                                                     step_size=step_size,
-        #                                                     centered_diff=True)
         _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
                                                    datetimes,
                                                    return_geodetic=True,
@@ -1040,12 +1033,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         e_mer_x, e_mer_y, e_mer_z = cross_product(d_zon_x, d_zon_y, d_zon_z,
                                                   d_fa_x, d_fa_y, d_fa_z)
 
-        outd = {'diff_zonal_apex' : grad_zonal,
-                'diff_mer_apex' : grad_apex,
-                'loops' : loop_num,
-                'vector_seed_type' : init_type,
-                'diff_zonal_vec' : diff_z,
-                'diff_mer_vec' : diff_m,
+        outd = {
                 'd_zon_x' : d_zon_x,
                 'd_zon_y' : d_zon_y,
                 'd_zon_z' : d_zon_z,
@@ -1066,8 +1054,13 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                 'e_fa_z' : e_fa_z,
                 }
 
-        if include_alternates:
-            tempd = {
+        if include_debug:
+            tempd = {'diff_zonal_apex' : grad_zonal,
+                    'diff_mer_apex' : grad_apex,
+                    'loops' : loop_num,
+                    'vector_seed_type' : init_type,
+                    'diff_zonal_vec' : diff_z,
+                    'diff_mer_vec' : diff_m,
                     'd_zon2_x' : d_zon2_x,
                     'd_zon2_y' : d_zon2_y,
                     'd_zon2_z' : d_zon2_z,
