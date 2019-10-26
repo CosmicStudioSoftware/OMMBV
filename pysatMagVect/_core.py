@@ -723,7 +723,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=1., tol=1.E-4, max_loops=100,
+                                          step_size=2., tol=1.E-4, max_loops=100,
                                           full_output=False, tol_zonal_apex=1.E-4,
                                           ecef_input=False, max_steps=None,
                                           ref_height=None, steps=None,
@@ -970,9 +970,11 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
         # support secondary calc for validation testing
         if include_debug:
+            # recalculating zonal vector without centered difference
+            # keeps locations along same apex height
             diff_apex_r, diff_h = apex_distance_after_local_step(ecef_x, ecef_y, ecef_z,
                                                          datetimes,
-                                                         direction='zonal',
+                                                         vector_direction='zonal',
                                                          ecef_input=True,
                                                          edge_length=step_size/200.,
                                                          edge_steps=1,
