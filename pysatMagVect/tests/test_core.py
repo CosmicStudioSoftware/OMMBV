@@ -1593,7 +1593,7 @@ class TestCore():
                 dview.targets = targets.next()
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs), full_output=True,
-                                                                        include_alternates=True))
+                                                                        include_debug=True))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                     # collect output
@@ -1633,7 +1633,7 @@ class TestCore():
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs,
                                                                                         p_alts, [date]*len(p_longs),
                                                                                         full_output=True,
-                                                                                        include_alternates=True)
+                                                                                        include_debug=True)
                 zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
