@@ -416,7 +416,9 @@ class TestCore():
                                     0.1, 0.05, .025, .0125, .00625, .003125,
                                     .0015625, .00078125, .000390625, .0001953125,
                                     .0001953125/2., .0001953125/4., .0001953125/8.,
-                                    .0001953125/16.])
+                                    .0001953125/16., .0001953125/32., .0001953125/64.,
+                                    .0001953125/128., .0001953125/256., .0001953125/512.,
+                                    .0001953125/1024., .0001953125/2048., .0001953125/4096.])
 
         date = datetime.datetime(2000, 1, 1)
         dx = []
@@ -1911,7 +1913,7 @@ class TestCore():
 
             fig = plt.figure()
             dmag = np.sqrt(d_mx**2 + d_my**2 + d_mz**2)
-            plt.imshow(np.log10(np.abs(d2_mx - d_mx)/dmag), origin='lower')
+            plt.imshow(np.log10(np.abs(d2_mx - d_mx)), origin='lower')
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
@@ -1922,7 +1924,18 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_my - d_my)/dmag), origin='lower')
+            plt.imshow(np.log10(np.abs(d2_mx - d_mx)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Meridional Vector Difference - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_mer_east_norm.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(d2_my - d_my)), origin='lower')
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
@@ -1933,7 +1946,18 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_mz - d_mz)/dmag), origin='lower')
+            plt.imshow(np.log10(np.abs(d2_my - d_my)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Meridional Vector Difference - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_mer_north_norm.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(d2_mz - d_mz)), origin='lower')
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
@@ -1943,8 +1967,19 @@ class TestCore():
             plt.savefig('d_diff_mer_up.pdf')
             plt.close()
 
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(d2_mz - d_mz)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Meridional Vector Difference - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_mer_up_norm.pdf')
+            plt.close()
+
             dmag = np.sqrt(d_zvx**2 + d_zvy**2 + d_zvz**2)
-            plt.imshow(np.log10(np.abs(d2_zvx - d_zvx)/dmag), origin='lower')
+            plt.imshow(np.log10(np.abs(d2_zvx - d_zvx)), origin='lower')
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
@@ -1955,7 +1990,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_zvy - d_zvy)/dmag), origin='lower')
+            plt.imshow(np.log10(np.abs(d2_zvy - d_zvy)), origin='lower')
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
@@ -1966,7 +2001,7 @@ class TestCore():
             plt.close()
 
             fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_zvz - d_zvz)/dmag), origin='lower')
+            plt.imshow(np.log10(np.abs(d2_zvz - d_zvz)), origin='lower')
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
@@ -1974,6 +2009,38 @@ class TestCore():
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('d_diff_zon_up.pdf')
+            plt.close()
+
+            plt.imshow(np.log10(np.abs(d2_zvx - d_zvx)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Zonal Vector Difference - Eastward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_zon_east_norm.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(d2_zvy - d_zvy)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Zonal Vector Difference - Northward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_zon_north_norm.pdf')
+            plt.close()
+
+            fig = plt.figure()
+            plt.imshow(np.log10(np.abs(d2_zvz - d_zvz)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Zonal Vector Difference - Upward')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_zon_up_norm.pdf')
             plt.close()
 
             # E Vectors
