@@ -968,7 +968,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     mx, my, mz = ss*tmx, ss*tmy, ss*tmz
 
     if full_output:
-        dstep_size = .03
+        dstep_size = .016
         # calculate expansion of zonal vector
         # recalculating zonal vector without centered difference
         # keeps locations along same apex height
@@ -1029,9 +1029,10 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                 }
 
         if include_debug:
+            step_size = .01
             # calculate zonal gradient using latest vectors
             ecef_xz, ecef_yz, ecef_zz = ecef_x + step_size*zx, ecef_y + step_size*zy, ecef_z + step_size*zz
-            _, _, _, _, _, apex_z = apex_location_info(ecef_xz, ecef_yz, ecef_zz,
+            a_x2, a_y2, a_z2, _, _, apex_z = apex_location_info(ecef_xz, ecef_yz, ecef_zz,
                                                        datetimes,
                                                        return_geodetic=True,
                                                        ecef_input=True)
@@ -1043,6 +1044,11 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             diff_apex_z = apex_z - apex_z2
             grad_zonal = diff_apex_z/(2.*step_size)
 
+            # get magnitude of zonal gradient of magnetic field at apex locations
+            bax2, bay2, baz2, bam2 = magnetic_vector(a_x2, a_y2, a_z2,
+                                                     datetimes,
+                                                     normalize=True)
+            # print((bam - bam2)/bam, bam, bam2)
             # calculate meridional gradient using latest vectors
             ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*mx, ecef_y + step_size*my, ecef_z + step_size*mz
             _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
