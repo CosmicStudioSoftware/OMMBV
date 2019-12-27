@@ -1142,7 +1142,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Altitude Normalized Difference (km)')
+            plt.title('Log Apex Altitude Difference (km)')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('apex_loc_diff_h.pdf')
