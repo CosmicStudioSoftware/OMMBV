@@ -26,16 +26,15 @@ before_install:
   - git clone https://github.com/pysat/pysat.git >/dev/null
   - echo 'installing pysat'
   - cd ./pysat
-  - git checkout no_sgp4
+  - git checkout develop
   # set up data directory
-  - mkdir /home/travis/build/pysat/pysatData
+  - mkdir /home/travis/build/pysatData
   # install pysat
-  - cd /home/travis/build/pysat/pysat
   - python setup.py install >/dev/null
 
 install:
   # install pysatMagVect
-  - cd /home/travis/build/pysat/pysatMagVect
+  - cd ../pysatMagVect
   - python setup.py develop
 
 # command to run tests
