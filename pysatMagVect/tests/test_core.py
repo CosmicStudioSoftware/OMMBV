@@ -3934,6 +3934,17 @@ class TestCore():
             plt.savefig(direction+'_step_diff_apex_height_z.pdf')
             plt.close()
 
+            fig = plt.figure()
+            plt.imshow(np.log10(np.sqrt(x**2 + y**2 + z**2)), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log Difference in Apex Position After Stepping')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig(direction+'_step_diff_apex_height_r.pdf')
+            plt.close()
+
             # calculate mean and standard deviation and then plot those
             fig = plt.figure()
             yerrx = np.nanstd(np.log10(x[:,:-1]), axis=0)
