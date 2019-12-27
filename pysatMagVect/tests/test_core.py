@@ -1750,7 +1750,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Unit Vector - Eastward')
+            plt.title('Field-Aligned Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('fa_east.pdf')
@@ -1761,7 +1761,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Unit Vector - Northward')
+            plt.title('Field-Aligned Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('fa_north.pdf')
@@ -1772,7 +1772,7 @@ class TestCore():
             plt.colorbar()
             plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Unit Vector - Upward')
+            plt.title('Field-Aligned Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.savefig('fa_up.pdf')
@@ -3939,12 +3939,15 @@ class TestCore():
             yerrx = np.nanstd(np.log10(x[:,:-1]), axis=0)
             yerry = np.nanstd(np.log10(y[:,:-1]), axis=0)
             yerrz = np.nanstd(np.log10(z[:,:-1]), axis=0)
-            plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(x[:,:-1]), axis=0)),
-                         yerr=yerrx, label='x')
-            plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(y[:,:-1]), axis=0)),
-                         yerr=yerry, label='y')
-            plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(z[:,:-1]), axis=0)),
-                         yerr=yerrz, label='z')
+            vals = np.log10(np.nanmedian(np.abs(x[:,:-1]), axis=0))
+            plt.errorbar(p_longs, vals,
+                         yerr=yerrx - vals, label='x')
+            vals = np.log10(np.nanmedian(np.abs(y[:,:-1]), axis=0))
+            plt.errorbar(p_longs, vals,
+                         yerr=yerry - vals, label='y')
+            vals = np.log10(np.nanmedian(np.abs(z[:,:-1]), axis=0))
+            plt.errorbar(p_longs, vals,
+                         yerr=yerrz - vals, label='z')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Change in ECEF (km)')
             plt.title('Log Median Difference in Apex Position')
