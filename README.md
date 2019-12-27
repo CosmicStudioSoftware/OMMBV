@@ -1,6 +1,6 @@
 # pysatMagVect
-[![Build Status](https://travis-ci.org/rstoneback/pysatMagVect.svg?branch=master)](https://travis-ci.org/rstoneback/pysatMagVect)
-[![Coverage Status](https://coveralls.io/repos/github/rstoneback/pysatMagVect/badge.svg?branch=master)](https://coveralls.io/github/rstoneback/pysatMagVect?branch=master)
+[![Build Status](https://travis-ci.org/pysat/pysatMagVect.svg?branch=master)](https://travis-ci.org/rstoneback/pysatMagVect)
+[![Coverage Status](https://coveralls.io/repos/github/pysat/pysatMagVect/badge.svg?branch=master)](https://coveralls.io/github/pysat/pysatMagVect?branch=master)
 [![Documentation Status](https://readthedocs.org/projects/pysatmagvect/badge/?version=latest)](https://pysatmagvect.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/138220240.svg)](https://zenodo.org/badge/latestdoi/138220240)
 
