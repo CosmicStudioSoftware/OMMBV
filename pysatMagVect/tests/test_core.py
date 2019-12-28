@@ -965,9 +965,13 @@ class TestCore():
         # process degrees a bit to make the degree difference the most meaningful (close to 0)
         idx, idy, = np.where(apex_lon < 0.)
         apex_lon[idx, idy] += 360.
+        idx, idy, = np.where(apex_lon >= 360.)
+        apex_lon[idx, idy] -= 360.
         apex_lon[:, :-1] -= p_longs
         idx, idy, = np.where(apex_lon > 180.)
         apex_lon[idx, idy] -= 360.
+        idx, idy, = np.where(apex_lon <= -180.)
+        apex_lon[idx, idy] += 360.
 
         # account for periodicity
         apex_lat[:,-1] = apex_lat[:,0]
