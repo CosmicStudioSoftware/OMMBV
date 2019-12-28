@@ -847,44 +847,15 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     tzx, tzy, tzz = enu_to_ecef_vector(ss*np.ones(len(bx)), np.zeros(len(bx)),
                                        np.zeros(len(bx)), latitude, longitude)
     init_type = np.zeros(len(bx)) - 1
-    # make sure this vector is well constrained
-    # avoid locations where bz near zero
-    idx0, = np.where(np.abs(bz) >= 1.E-10)
-    if len(idx0) > 0:
-        idx, = np.where((np.abs(tzx[idx0]) >= np.abs(tzy[idx0])))
-        if len(idx) > 0:
-            # force y component to zero and use z-x plane
-            tzy[idx0[idx]] = 0
-            tzz[idx0[idx]] = -tzx[idx0[idx]]*bx[idx0[idx]]/bz[idx0[idx]]
-            init_type[idx0[idx]] = 0
-        idx, = np.where((np.abs(tzy[idx0]) > np.abs(tzx[idx0])))
-        if len(idx) > 0:
-            # force x component to zero and use z-y plane
-            tzx[idx0[idx]] = 0
-            tzz[idx0[idx]] = -tzy[idx0[idx]]*by[idx0[idx]]/bz[idx0[idx]]
-            init_type[idx0[idx]] = 1
 
-    # dealing with locations with small bz
-    idx0, = np.where(np.abs(bz) < 1.E-10)
-    if len(idx0) > 0:
-        idx, = np.where((np.abs(bx[idx0]) > np.abs(by[idx0])) )
-        if len(idx) > 0:
-            # force z component to zero and use y-x plane
-            tzz[idx0[idx]] = 0
-            tzx[idx0[idx]] = -tzy[idx0[idx]]*by[idx0[idx]]/bx[idx0[idx]]
-            init_type[idx0[idx]] = 2
-        idx, = np.where((np.abs(by[idx0]) >= np.abs(bx[idx0])) )
-        if len(idx) > 0:
-            # force z component to zero and use x-y plane
-            tzz[idx0[idx]] = 0
-            tzy[idx0[idx]] = -tzx[idx0[idx]]*bx[idx0[idx]]/by[idx0[idx]]
-            init_type[idx0[idx]]= 3
-
-    # normalize these vectors
-    tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
-
-    # need another perpendicular vector to both
+    # get meridional from this
     tmx, tmy, tmz = cross_product(tzx, tzy, tzz, bx, by, bz)
+    # normalize
+    tmx, tmy, tmz = normalize_vector(tmx, tmy, tmz)
+    # get orthogonal zonal now
+    tzx, tzy, tzz = cross_product(bx, by, bz, tmx, tmy, tmz)
+    # normalize
+    tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
 
     # loop variables
     loop_num = 0
