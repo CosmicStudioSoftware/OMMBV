@@ -1557,6 +1557,129 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
         return apex_edge_length
 
 def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
+                                   max_steps=None, e_field_scaling_only=None,
+                                   edge_length=None, edge_steps=None,
+                                   **kwargs):
+    """
+    Calculates scalars for translating ion motions at position
+    glat, glon, and alt, for date, to the footpoints of the field line
+    as well as at the magnetic equator.
+
+    All inputs are assumed to be 1D arrays.
+
+    Parameters
+    ----------
+    glats : list-like of floats (degrees)
+        Geodetic (WGS84) latitude
+    glons : list-like of floats (degrees)
+        Geodetic (WGS84) longitude
+    alts : list-like of floats (km)
+        Geodetic (WGS84) altitude, height above surface
+    dates : list-like of datetimes
+        Date and time for determination of scalars
+    step_size : float
+        Step size, in km, used when calculating geomagnetic basis vectors
+    e_field_scaling_only : Deprecated
+    max_steps : Deprecated
+    edge_length : Deprecated
+    edge_steps : Deprecated
+
+    Returns
+    -------
+    dict
+        array-like of scalars for translating ion drifts. Keys are,
+        'north_zonal_drifts_scalar', 'north_mer_drifts_scalar', and similarly
+        for southern locations. 'equator_mer_drifts_scalar' and
+        'equator_zonal_drifts_scalar' cover the mappings to the equator.
+
+    Note
+    ----
+        Directions refer to the ion motion direction e.g. the zonal
+        scalar applies to zonal ion motions (meridional E field assuming ExB ion motion)
+
+    """
+
+    if e_field_scaling_only is not None:
+        raise DeprecationWarning('e_field_scaling_only no longer supported.')
+    if max_steps is not None:
+        raise DeprecationWarning('max_steps no longer supported.')
+    if edge_length is not None:
+        raise DeprecationWarning('edge_length no longer supported.')
+    if edge_steps is not None:
+        raise DeprecationWarning('edge_steps no longer supported.')
+
+    # use spacecraft location to get ECEF
+    ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+
+    # get footpoint location information
+    north_ftpnt, south_ftpnt = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs,
+                                                       ecef_input=True)
+
+    # prepare output memory
+    out = {}
+
+    # D and E vectors at user supplied location
+    # good for mapping to magnetic equator
+    _, _, _, _, _, _, _, _, _, infod = calculate_mag_drift_unit_vectors_ecef(ecef_xs, ecef_ys, ecef_zs, dates,
+                                                                             full_output=True,
+                                                                             include_debug=True,
+                                                                             ecef_input=True,
+                                                                             step_size=step_size,
+                                                                             **kwargs)
+
+    out['equator_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
+    out['equator_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2 + infod['e_mer_y']**2 + infod['e_mer_z']**2)
+
+    out['equator_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2 + infod['d_zon_y']**2 + infod['d_zon_z']**2)
+    out['equator_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2 + infod['d_mer_y']**2 + infod['d_mer_z']**2)
+
+    # D and E vectors at northern footpoint
+    _, _, _, _, _, _, _, _, _, northd = calculate_mag_drift_unit_vectors_ecef(north_ftpnt[:,0], north_ftpnt[:,1], north_ftpnt[:,2], dates,
+                                                                             full_output=True,
+                                                                             include_debug=True,
+                                                                             ecef_input=True,
+                                                                             step_size=step_size,
+                                                                             **kwargs)
+
+    # D and E vectors at northern footpoint
+    _, _, _, _, _, _, _, _, _, southd = calculate_mag_drift_unit_vectors_ecef(south_ftpnt[:,0], south_ftpnt[:,1], south_ftpnt[:,2], dates,
+                                                                             full_output=True,
+                                                                             include_debug=True,
+                                                                             ecef_input=True,
+                                                                             step_size=step_size,
+                                                                             **kwargs)
+
+    # prepare output
+    # to map fields from r1 to r2, (E dot e1) d2
+    out['north_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2 + infod['e_mer_y']**2 + infod['e_mer_z']**2)
+    out['north_mer_fields_scalar'] *= np.sqrt(northd['d_mer_x']**2 + northd['d_mer_y']**2 + northd['d_mer_z']**2)
+    # to map drifts from r1 to r2, (v dot d1) e2
+    out['north_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2 + infod['d_mer_y']**2 + infod['d_mer_z']**2)
+    out['north_mer_drifts_scalar'] *= np.sqrt(northd['e_mer_x']**2 + northd['e_mer_y']**2 + northd['e_mer_z']**2)
+    # to map fields from r1 to r2, (E dot e1) d2
+    out['north_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
+    out['north_zon_fields_scalar'] *= np.sqrt(northd['d_zon_x']**2 + northd['d_zon_y']**2 + northd['d_zon_z']**2)
+    # to map drifts from r1 to r2, (v dot d1) e2
+    out['north_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2 + infod['d_zon_y']**2 + infod['d_zon_z']**2)
+    out['north_zon_drifts_scalar'] *= np.sqrt(northd['e_zon_x']**2 + northd['e_zon_y']**2 + northd['e_zon_z']**2)
+
+    # to map fields from r1 to r2, (E dot e1) d2
+    out['south_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2 + infod['e_mer_y']**2 + infod['e_mer_z']**2)
+    out['south_mer_fields_scalar'] *= np.sqrt(southd['d_mer_x']**2 + southd['d_mer_y']**2 + southd['d_mer_z']**2)
+    # to map drifts from r1 to r2, (v dot d1) e2
+    out['south_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2 + infod['d_mer_y']**2 + infod['d_mer_z']**2)
+    out['south_mer_drifts_scalar'] *= np.sqrt(southd['e_mer_x']**2 + southd['e_mer_y']**2 + southd['e_mer_z']**2)
+    # to map fields from r1 to r2, (E dot e1) d2
+    out['south_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
+    out['south_zon_fields_scalar'] *= np.sqrt(southd['d_zon_x']**2 + southd['d_zon_y']**2 + southd['d_zon_z']**2)
+    # to map drifts from r1 to r2, (v dot d1) e2
+    out['south_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2 + infod['d_zon_y']**2 + infod['d_zon_z']**2)
+    out['south_zon_drifts_scalar'] *= np.sqrt(southd['e_zon_x']**2 + southd['e_zon_y']**2 + southd['e_zon_z']**2)
+
+    return out
+
+
+def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                    max_steps=None, e_field_scaling_only=False,
                                    edge_length=25., edge_steps=1,
                                    **kwargs):
