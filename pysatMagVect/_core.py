@@ -721,13 +721,14 @@ def magnetic_vector(x, y, z, dates, normalize=False):
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=2., tol=1.E-4, max_loops=100,
-                                          full_output=False, tol_zonal_apex=1.E-4,
-                                          ecef_input=False, max_steps=None,
-                                          ref_height=None, steps=None,
-                                          centered_diff=True,
-                                          include_debug=False,
-                                          scalar=1.):
+                                          step_size=.016, tol=1.E-4,
+                                          tol_zonal_apex=1.E-4, max_loops=100,
+                                          ecef_input=False, centered_diff=True,
+                                          full_output=False, include_debug=False,
+                                          scalar=1.,
+                                          edge_steps=1, dstep_size=.016,
+                                          max_steps=None, ref_height=None,
+                                          steps=None,):
     """Calculates local geomagnetic unit vectors expressing the ion drift
     coordinate system organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -767,16 +768,32 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Step size (km) to use when calculating changes in apex height
     tol : float
         Tolerance goal for the magnitude of the change in unit vectors per loop
-    max_loops : int
-        Maximum number of iterations
     tol_zonal_apex : Maximum allowed change in apex height along
         zonal direction
-    full_output : bool (False)
-        If True, return an additional output parameter (dict) with stats
-        about iterative process
+    max_loops : int
+        Maximum number of iterations
     ecef_input : bool (False)
         If True, inputs latitude, longitude, altitude are interpreted as
         x, y, and z in ECEF coordinates (km).
+    full_output : bool (False)
+        If True, return an additional dictionary with the E and D mapping
+        vectors
+    include_deubg : bool (False)
+        If True, include stats about iterative process in optional dictionary.
+        Requires full_output=True
+    centered_diff : bool (True)
+        If True, a symmetric centered difference is used when calculating
+        the change in apex height along the zonal direction, used within
+        the zonal unit vector calculation
+    scalar : int
+        Used to modify unit magnetic field within algorithm. Generally
+        speaking, this should not be modified
+    edge_steps : int (1)
+        Number of steps taken when moving across field lines and calculating
+        the change in apex location. This parameter impacts both runtime
+        and accuracy of the D, E vectors.
+    dstep_size : float (.016 km)
+        Step size (km) used when calculting the expansion of field line surfaces.
     max_steps : int
         Deprecated
     ref_height : float
@@ -786,16 +803,29 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
     Returns
     -------
-    zon_x, zon_y, zon_z, fa_x, fa_y, fa_z, mer_x, mer_y, mer_z
+    zon_x, zon_y, zon_z, fa_x, fa_y, fa_z, mer_x, mer_y, mer_z, (optional dictionary)
 
     Optional output dictionary
     --------------------------
+    Full Output Parameters
+
+    d_zon_x (y,z) : D zonal vector components along ECEF X, Y, and Z directions
+    d_mer_x (y,z) : D meridional vector components along ECEF X, Y, and Z directions
+    d_fa_x (y,z) : D field aligneed vector components along ECEF X, Y, and Z directions
+
+    e_zon_x (y,z) : E zonal vector components along ECEF X, Y, and Z directions
+    e_mer_x (y,z) : E meridional vector components along ECEF X, Y, and Z directions
+    e_fa_x (y,z) : E field aligneed vector components along ECEF X, Y, and Z directions
+
+
+    Debug Parameters
+
     diff_mer_apex : rate of change in apex height (km) along meridional vector
     diff_mer_vec : magnitude of vector change for last loop
     diff_zonal_apex : rate of change in apex height (km) along zonal vector
     diff_zonal_vec : magnitude of vector change for last loop
     loops : Number of loops
-    vector_seed_type : Initial vector used for starting calculation
+    vector_seed_type : Initial vector used for starting calculation (deprecated)
 
     """
 
@@ -937,7 +967,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     mx, my, mz = ss*tmx, ss*tmy, ss*tmz
 
     if full_output:
-        dstep_size = .016
         # calculate expansion of zonal vector
         # recalculating zonal vector without centered difference
         # keeps locations along same apex height
@@ -946,7 +975,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                         vector_direction='zonal',
                                                         ecef_input=True,
                                                         edge_length=dstep_size,
-                                                        edge_steps=1,
+                                                        edge_steps=edge_steps,
                                                         return_geodetic=True)
         # need to translate to arc length
         radial_loc = np.sqrt(a_x**2 + a_y**2 + a_z**2)
@@ -1013,11 +1042,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             diff_apex_z = apex_z - apex_z2
             grad_zonal = diff_apex_z/(2.*step_size)
 
-            # get magnitude of zonal gradient of magnetic field at apex locations
-            bax2, bay2, baz2, bam2 = magnetic_vector(a_x2, a_y2, a_z2,
-                                                     datetimes,
-                                                     normalize=True)
+            # # get magnitude of zonal gradient of magnetic field at apex locations
+            # bax2, bay2, baz2, bam2 = magnetic_vector(a_x2, a_y2, a_z2,
+            #                                          datetimes,
+            #                                          normalize=True)
             # print((bam - bam2)/bam, bam, bam2)
+
             # calculate meridional gradient using latest vectors
             ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*mx, ecef_y + step_size*my, ecef_z + step_size*mz
             _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
