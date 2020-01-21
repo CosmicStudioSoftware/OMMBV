@@ -1115,7 +1115,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
     date : list-like of datetimes
         Date and time for magnetic field
     direction : string
-        String identifier for which unit vector directino to move along.
+        String identifier for which unit vector direction to move along.
         Supported inputs, 'meridional', 'zonal', 'aligned'
     num_steps : int
         Number of steps to take along unit vector direction
@@ -1130,6 +1130,13 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
     np.array
         [x, y, z] of ECEF location after taking num_steps along direction,
         each step_size long.
+
+    Notes
+    -----
+        centered_diff=True is passed along to calculate_mag_drift_unit_vectors_ecef
+        when direction='meridional', while centered_diff=False is used
+        for the 'zonal' direction. This ensures that when moving along the
+        zonal direction there is a minimal change in apex height.
 
     """
 
