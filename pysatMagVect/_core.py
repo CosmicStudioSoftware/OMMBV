@@ -1592,10 +1592,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
         for southern locations. 'equator_mer_drifts_scalar' and
         'equator_zonal_drifts_scalar' cover the mappings to the equator.
 
-    Note
-    ----
-        Directions refer to the ion motion direction e.g. the zonal
-        scalar applies to zonal ion motions (meridional E field assuming ExB ion motion)
 
     """
 
