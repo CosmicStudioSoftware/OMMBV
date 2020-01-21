@@ -794,6 +794,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         and accuracy of the D, E vectors.
     dstep_size : float (.016 km)
         Step size (km) used when calculting the expansion of field line surfaces.
+        Generally, this should be the same as step_size.
     max_steps : int
         Deprecated
     ref_height : float
@@ -811,11 +812,11 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
     d_zon_x (y,z) : D zonal vector components along ECEF X, Y, and Z directions
     d_mer_x (y,z) : D meridional vector components along ECEF X, Y, and Z directions
-    d_fa_x (y,z) : D field aligneed vector components along ECEF X, Y, and Z directions
+    d_fa_x (y,z) : D field aligned vector components along ECEF X, Y, and Z directions
 
     e_zon_x (y,z) : E zonal vector components along ECEF X, Y, and Z directions
     e_mer_x (y,z) : E meridional vector components along ECEF X, Y, and Z directions
-    e_fa_x (y,z) : E field aligneed vector components along ECEF X, Y, and Z directions
+    e_fa_x (y,z) : E field aligned vector components along ECEF X, Y, and Z directions
 
 
     Debug Parameters
@@ -1027,20 +1028,19 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                 }
 
         if include_debug:
-            step_size = .01
             # calculate zonal gradient using latest vectors
-            ecef_xz, ecef_yz, ecef_zz = ecef_x + step_size*zx, ecef_y + step_size*zy, ecef_z + step_size*zz
+            ecef_xz, ecef_yz, ecef_zz = ecef_x + dstep_size*zx, ecef_y + dstep_size*zy, ecef_z + dstep_size*zz
             a_x2, a_y2, a_z2, _, _, apex_z = apex_location_info(ecef_xz, ecef_yz, ecef_zz,
                                                        datetimes,
                                                        return_geodetic=True,
                                                        ecef_input=True)
-            ecef_xz2, ecef_yz2, ecef_zz2 = ecef_x - step_size*zx, ecef_y - step_size*zy, ecef_z - step_size*zz
+            ecef_xz2, ecef_yz2, ecef_zz2 = ecef_x - dstep_size*zx, ecef_y - dstep_size*zy, ecef_z - dstep_size*zz
             _, _, _, _, _, apex_z2 = apex_location_info(ecef_xz2, ecef_yz2, ecef_zz2,
                                                         datetimes,
                                                         return_geodetic=True,
                                                         ecef_input=True)
             diff_apex_z = apex_z - apex_z2
-            grad_zonal = diff_apex_z/(2.*step_size)
+            grad_zonal = diff_apex_z/(2.*dstep_size)
 
             # # get magnitude of zonal gradient of magnetic field at apex locations
             # bax2, bay2, baz2, bam2 = magnetic_vector(a_x2, a_y2, a_z2,
@@ -1049,18 +1049,18 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             # print((bam - bam2)/bam, bam, bam2)
 
             # calculate meridional gradient using latest vectors
-            ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*mx, ecef_y + step_size*my, ecef_z + step_size*mz
+            ecef_xm, ecef_ym, ecef_zm = ecef_x + dstep_size*mx, ecef_y + dstep_size*my, ecef_z + dstep_size*mz
             _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
                                                     datetimes,
                                                     return_geodetic=True,
                                                     ecef_input=True)
-            ecef_xm2, ecef_ym2, ecef_zm2 = ecef_x - step_size*mx, ecef_y - step_size*my, ecef_z - step_size*mz
+            ecef_xm2, ecef_ym2, ecef_zm2 = ecef_x - dstep_size*mx, ecef_y - dstep_size*my, ecef_z - dstep_size*mz
             _, _, _, _, _, apex_m2 = apex_location_info(ecef_xm2, ecef_ym2, ecef_zm2,
                                                         datetimes,
                                                         return_geodetic=True,
                                                         ecef_input=True)
             diff_apex_m = apex_m - apex_m2
-            grad_apex = diff_apex_m/(2.*step_size)
+            grad_apex = diff_apex_m/(2.*dstep_size)
 
             # second path D, E vectors
             # d meridional vector via apex height gradient
