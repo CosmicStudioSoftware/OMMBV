@@ -1,6 +1,4 @@
-import pysatMagVect
 import pysatMagVect as pymv
-
 import pysat
 
 class TestSatellite():
