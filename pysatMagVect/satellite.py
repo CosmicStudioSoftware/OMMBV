@@ -1,6 +1,6 @@
 import pysatMagVect as pymv
 
-def add_mag_drift_unit_vectors_ecef(inst, step_size=.01):
+def add_mag_drift_unit_vectors_ecef(inst, **kwargs):
     """Adds unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -11,8 +11,8 @@ def add_mag_drift_unit_vectors_ecef(inst, step_size=.01):
         Instrument object that will get unit vectors
     max_steps : int
         Maximum number of steps allowed for field line tracing
-    step_size : float
-        Maximum step size (km) allowed when field line tracing
+    **kwargs
+        Passed along to calculate_mag_drift_unit_vectors_ecef
 
     Returns
     -------
@@ -28,7 +28,7 @@ def add_mag_drift_unit_vectors_ecef(inst, step_size=.01):
     # add unit vectors for magnetic drifts in ecef coordinates
     zvx, zvy, zvz, bx, by, bz, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef(inst['latitude'],
                                                             inst['longitude'], inst['altitude'], inst.data.index,
-                                                            step_size=step_size)
+                                                            **kwargs)
 
     inst['unit_zon_ecef_x'] = zvx
     inst['unit_zon_ecef_y'] = zvy
@@ -165,7 +165,7 @@ def add_mag_drift_unit_vectors_ecef(inst, step_size=.01):
     return
 
 
-def add_mag_drift_unit_vectors(inst, step_size=0.01):
+def add_mag_drift_unit_vectors(inst, **kwargs):
     """Add unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
     in S/C coordinates.
@@ -182,8 +182,8 @@ def add_mag_drift_unit_vectors(inst, step_size=0.01):
         Instrument object to be modified
     max_steps : int
         Maximum number of steps taken for field line integration
-    step_size : float
-        Maximum step size (km) allowed for field line tracer
+    **kwargs
+        Passed along to calculate_mag_drift_unit_vectors_ecef
 
     Returns
     -------
@@ -195,7 +195,7 @@ def add_mag_drift_unit_vectors(inst, step_size=0.01):
     """
 
     # vectors are returned in geo/ecef coordinate system
-    add_mag_drift_unit_vectors_ecef(inst, step_size=step_size)
+    add_mag_drift_unit_vectors_ecef(inst, **kwargs)
     # convert them to S/C using transformation supplied by OA
     inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = pymv.project_ecef_vector_onto_basis(inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
                                                                                                 inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
