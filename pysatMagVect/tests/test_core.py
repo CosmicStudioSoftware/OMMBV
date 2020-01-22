@@ -688,7 +688,7 @@ class TestUnitVectors():
             plt.title('Zonal Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_east.pdf')
+            plt.tight_layout(); plt.savefig('zonal_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -699,7 +699,7 @@ class TestUnitVectors():
             plt.title('Zonal Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_north.pdf')
+            plt.tight_layout(); plt.savefig('zonal_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -710,7 +710,7 @@ class TestUnitVectors():
             plt.title('Zonal Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_up.pdf')
+            plt.tight_layout(); plt.savefig('zonal_up.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -721,7 +721,7 @@ class TestUnitVectors():
             plt.title('Field-Aligned Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_east.pdf')
+            plt.tight_layout(); plt.savefig('fa_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -732,7 +732,7 @@ class TestUnitVectors():
             plt.title('Field-Aligned Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_north.pdf')
+            plt.tight_layout(); plt.savefig('fa_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -743,7 +743,7 @@ class TestUnitVectors():
             plt.title('Field-Aligned Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_up.pdf')
+            plt.tight_layout(); plt.savefig('fa_up.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -754,7 +754,7 @@ class TestUnitVectors():
             plt.title('Meridional Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_east.pdf')
+            plt.tight_layout(); plt.savefig('mer_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -765,7 +765,7 @@ class TestUnitVectors():
             plt.title('Meridional Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_north.pdf')
+            plt.tight_layout(); plt.savefig('mer_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -776,7 +776,7 @@ class TestUnitVectors():
             plt.title('Meridional Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_up.pdf')
+            plt.tight_layout(); plt.savefig('mer_up.pdf')
             plt.close()
 
             # D Vectors
@@ -788,7 +788,7 @@ class TestUnitVectors():
             plt.title('D Field Aligned Magnitude')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_zon.pdf')
+            plt.tight_layout(); plt.savefig('d_zon.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -799,7 +799,7 @@ class TestUnitVectors():
             plt.title('D Zonal Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_zonal_east.pdf')
+            plt.tight_layout(); plt.savefig('d_zonal_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -810,7 +810,7 @@ class TestUnitVectors():
             plt.title('D Zonal Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_zonal_north.pdf')
+            plt.tight_layout(); plt.savefig('d_zonal_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -821,7 +821,7 @@ class TestUnitVectors():
             plt.title('D Zonal Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_zonal_up.pdf')
+            plt.tight_layout(); plt.savefig('d_zonal_up.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -832,7 +832,7 @@ class TestUnitVectors():
             plt.title('D Field Aligned Magnitude')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_fa.pdf')
+            plt.tight_layout(); plt.savefig('d_fa.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -843,7 +843,7 @@ class TestUnitVectors():
             plt.title('D Field Aligned Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_fa_east.pdf')
+            plt.tight_layout(); plt.savefig('d_fa_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -854,7 +854,7 @@ class TestUnitVectors():
             plt.title('D Field Aligned Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_fa_north.pdf')
+            plt.tight_layout(); plt.savefig('d_fa_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -865,7 +865,7 @@ class TestUnitVectors():
             plt.title('D Field Aligned Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_fa_up.pdf')
+            plt.tight_layout(); plt.savefig('d_fa_up.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -876,7 +876,7 @@ class TestUnitVectors():
             plt.title('D Meridional Magnitude')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_mer.pdf')
+            plt.tight_layout(); plt.savefig('d_mer.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -887,7 +887,7 @@ class TestUnitVectors():
             plt.title('D Meridional Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_mer_east.pdf')
+            plt.tight_layout(); plt.savefig('d_mer_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -898,7 +898,7 @@ class TestUnitVectors():
             plt.title('D Meridional Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_mer_north.pdf')
+            plt.tight_layout(); plt.savefig('d_mer_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -909,7 +909,7 @@ class TestUnitVectors():
             plt.title('D Meridional Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_mer_up.pdf')
+            plt.tight_layout(); plt.savefig('d_mer_up.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -922,7 +922,7 @@ class TestUnitVectors():
             plt.title('Log D Meridional Vector Normalized Difference')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_mer_norm.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_mer_norm.pdf')
             plt.close()
 
 
@@ -935,7 +935,7 @@ class TestUnitVectors():
             plt.title('Log D Meridional Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_mer_east.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_mer_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -946,7 +946,7 @@ class TestUnitVectors():
             plt.title('Log D Meridional Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_mer_east_norm.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_mer_east_norm.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -957,7 +957,7 @@ class TestUnitVectors():
             plt.title('Log D Meridional Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_mer_north.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_mer_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -968,7 +968,7 @@ class TestUnitVectors():
             plt.title('Log D Meridional Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_mer_north_norm.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_mer_north_norm.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -979,7 +979,7 @@ class TestUnitVectors():
             plt.title('Log D Meridional Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_mer_up.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_mer_up.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -990,7 +990,7 @@ class TestUnitVectors():
             plt.title('Log D Meridional Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_mer_up_norm.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_mer_up_norm.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1003,7 +1003,7 @@ class TestUnitVectors():
             plt.title('Log D Zonal Vector Normalized Difference')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_zon_norm.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_zon_norm.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1015,7 +1015,7 @@ class TestUnitVectors():
             plt.title('Log D Zonal Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_zon_east.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_zon_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1026,7 +1026,7 @@ class TestUnitVectors():
             plt.title('Log D Zonal Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_zon_north.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_zon_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1037,7 +1037,7 @@ class TestUnitVectors():
             plt.title('Log D Zonal Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_zon_up.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_zon_up.pdf')
             plt.close()
 
             plt.imshow(np.log10(np.abs(d2_zvx - d_zvx)/dmag), origin='lower')
@@ -1047,7 +1047,7 @@ class TestUnitVectors():
             plt.title('Log D Zonal Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_zon_east_norm.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_zon_east_norm.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1058,7 +1058,7 @@ class TestUnitVectors():
             plt.title('Log D Zonal Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_zon_north_norm.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_zon_north_norm.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1069,7 +1069,7 @@ class TestUnitVectors():
             plt.title('Log D Zonal Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_zon_up_norm.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_zon_up_norm.pdf')
             plt.close()
 
             # E Vectors
@@ -1081,7 +1081,7 @@ class TestUnitVectors():
             plt.title('E Field Aligned Magnitude')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_zon.pdf')
+            plt.tight_layout(); plt.savefig('e_zon.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1092,7 +1092,7 @@ class TestUnitVectors():
             plt.title('E Zonal Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_zonal_east.pdf')
+            plt.tight_layout(); plt.savefig('e_zonal_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1103,7 +1103,7 @@ class TestUnitVectors():
             plt.title('E Zonal Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_zonal_north.pdf')
+            plt.tight_layout(); plt.savefig('e_zonal_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1114,7 +1114,7 @@ class TestUnitVectors():
             plt.title('E Zonal Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_zonal_up.pdf')
+            plt.tight_layout(); plt.savefig('e_zonal_up.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1125,7 +1125,7 @@ class TestUnitVectors():
             plt.title('E Field Aligned Magnitude')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_fa.pdf')
+            plt.tight_layout(); plt.savefig('e_fa.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1136,7 +1136,7 @@ class TestUnitVectors():
             plt.title('E Field Aligned Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_fa_east.pdf')
+            plt.tight_layout(); plt.savefig('e_fa_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1147,7 +1147,7 @@ class TestUnitVectors():
             plt.title('E Field Aligned Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_fa_north.pdf')
+            plt.tight_layout(); plt.savefig('e_fa_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1158,7 +1158,7 @@ class TestUnitVectors():
             plt.title('E Field Aligned Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_fa_up.pdf')
+            plt.tight_layout(); plt.savefig('e_fa_up.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1169,7 +1169,7 @@ class TestUnitVectors():
             plt.title('E Meridional Magnitude')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_mer.pdf')
+            plt.tight_layout(); plt.savefig('e_mer.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1180,7 +1180,7 @@ class TestUnitVectors():
             plt.title('E Meridional Unit Vector - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_mer_east.pdf')
+            plt.tight_layout(); plt.savefig('e_mer_east.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1191,7 +1191,7 @@ class TestUnitVectors():
             plt.title('E Meridional Unit Vector - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_mer_north.pdf')
+            plt.tight_layout(); plt.savefig('e_mer_north.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1202,7 +1202,7 @@ class TestUnitVectors():
             plt.title('E Meridional Unit Vector - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('e_mer_up.pdf')
+            plt.tight_layout(); plt.savefig('e_mer_up.pdf')
             plt.close()
 
 
@@ -1216,7 +1216,7 @@ class TestUnitVectors():
             plt.title('ED Zonal - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('ed_dot_zonal.pdf')
+            plt.tight_layout(); plt.savefig('ed_dot_zonal.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1227,7 +1227,7 @@ class TestUnitVectors():
             plt.title('ED Field Aligned - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('ed_dot_fa.pdf')
+            plt.tight_layout(); plt.savefig('ed_dot_fa.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1238,7 +1238,7 @@ class TestUnitVectors():
             plt.title('ED Meridional - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('ed_dot_mer.pdf')
+            plt.tight_layout(); plt.savefig('ed_dot_mer.pdf')
             plt.close()
 
 
@@ -1250,7 +1250,7 @@ class TestUnitVectors():
             plt.title('Log Gradient in Apex Height (km/km) - Zonal')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('unit_vector_grad_zonal.pdf')
+            plt.tight_layout(); plt.savefig('unit_vector_grad_zonal.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1261,7 +1261,7 @@ class TestUnitVectors():
             plt.title('Log Gradient in Apex Height (km/km) - Meridional')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('unit_vector_grad_meridional.pdf')
+            plt.tight_layout(); plt.savefig('unit_vector_grad_meridional.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1272,7 +1272,7 @@ class TestUnitVectors():
             plt.title('Log Achieved Tolerance - Zonal Unit Vector')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('unit_vector_tol_zonal.pdf')
+            plt.tight_layout(); plt.savefig('unit_vector_tol_zonal.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1283,7 +1283,7 @@ class TestUnitVectors():
             plt.title('Log Achieved Tolerance - Meridional')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('unit_vector_tol_meridional.pdf')
+            plt.tight_layout(); plt.savefig('unit_vector_tol_meridional.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1294,7 +1294,7 @@ class TestUnitVectors():
             plt.title('Initial Seed Vector Type')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('unit_vector_seed_vector_type.pdf')
+            plt.tight_layout(); plt.savefig('unit_vector_seed_vector_type.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1305,7 +1305,7 @@ class TestUnitVectors():
             plt.title('Number of Iterative Loops')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('unit_vector_num_loops.pdf')
+            plt.tight_layout(); plt.savefig('unit_vector_num_loops.pdf')
             plt.close()
 
 
@@ -1423,7 +1423,7 @@ class TestUnitVectors():
             plt.title('Log D Meridional Vector Normalized Difference')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_mer_norm_edgesteps.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_mer_norm_edgesteps.pdf')
             plt.close()
 
 
@@ -1437,7 +1437,7 @@ class TestUnitVectors():
             plt.title('Log D Zonal Vector Normalized Difference')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('d_diff_zon_norm_edegesteps.pdf')
+            plt.tight_layout(); plt.savefig('d_diff_zon_norm_edegesteps.pdf')
             plt.close()
 
 
@@ -1578,7 +1578,7 @@ class TestUnitVectors():
             plt.title('Log Zonal Unit Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_east_diff.pdf')
+            plt.tight_layout(); plt.savefig('zonal_east_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1589,7 +1589,7 @@ class TestUnitVectors():
             plt.title('Log Zonal Unit Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_north_diff.pdf')
+            plt.tight_layout(); plt.savefig('zonal_north_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1600,7 +1600,7 @@ class TestUnitVectors():
             plt.title('Log Zonal Unit Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('zonal_up_diff.pdf')
+            plt.tight_layout(); plt.savefig('zonal_up_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1611,7 +1611,7 @@ class TestUnitVectors():
             plt.title('Log Field Aligned Unit Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_east_diff.pdf')
+            plt.tight_layout(); plt.savefig('fa_east_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1622,7 +1622,7 @@ class TestUnitVectors():
             plt.title('Log Field Aligned Unit Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_north_diff.pdf')
+            plt.tight_layout(); plt.savefig('fa_north_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1633,7 +1633,7 @@ class TestUnitVectors():
             plt.title('Log Field Aligned Unit Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('fa_up_diff.pdf')
+            plt.tight_layout(); plt.savefig('fa_up_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1644,7 +1644,7 @@ class TestUnitVectors():
             plt.title('Log Meridional Unit Vector Difference - Eastward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_east_diff.pdf')
+            plt.tight_layout(); plt.savefig('mer_east_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1655,7 +1655,7 @@ class TestUnitVectors():
             plt.title('Log Meridional Unit Vector Difference - Northward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_north_diff.pdf')
+            plt.tight_layout(); plt.savefig('mer_north_diff.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1666,7 +1666,7 @@ class TestUnitVectors():
             plt.title('Log Meridional Unit Vector Difference - Upward')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('mer_up_diff.pdf')
+            plt.tight_layout(); plt.savefig('mer_up_diff.pdf')
             plt.close()
 
             # calculate mean and standard deviation and then plot those
@@ -1686,7 +1686,7 @@ class TestUnitVectors():
             plt.title("Sensitivity of Zonal Unit Vector")
             plt.legend()
             plt.tight_layout()
-            plt.savefig('zonal_diff_v_longitude.pdf' )
+            plt.tight_layout(); plt.savefig('zonal_diff_v_longitude.pdf' )
             plt.close()
             print('yo yo')
 
@@ -1703,7 +1703,7 @@ class TestUnitVectors():
             plt.title("Sensitivity of Meridional Unit Vector")
             plt.legend()
             plt.tight_layout()
-            plt.savefig('mer_diff_v_longitude.pdf' )
+            plt.tight_layout(); plt.savefig('mer_diff_v_longitude.pdf' )
             plt.close()
 
         except:
@@ -1840,7 +1840,7 @@ class TestUnitVectors():
             plt.title('Log Difference in Apex Position (X - km) After Stepping')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig(direction+'_step_diff_apex_height_x.pdf')
+            plt.tight_layout(); plt.savefig(direction+'_step_diff_apex_height_x.pdf')
             plt.close()
 
 
@@ -1852,7 +1852,7 @@ class TestUnitVectors():
             plt.title('Log Difference in Apex Position (Y - km) After Stepping')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig(direction+'_step_diff_apex_height_y.pdf')
+            plt.tight_layout(); plt.savefig(direction+'_step_diff_apex_height_y.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1863,7 +1863,7 @@ class TestUnitVectors():
             plt.title('Log Difference in Apex Position (Z - km) After Stepping')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig(direction+'_step_diff_apex_height_z.pdf')
+            plt.tight_layout(); plt.savefig(direction+'_step_diff_apex_height_z.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -1874,7 +1874,7 @@ class TestUnitVectors():
             plt.title('Log Difference in Apex Position After Stepping')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig(direction+'_step_diff_apex_height_r.pdf')
+            plt.tight_layout(); plt.savefig(direction+'_step_diff_apex_height_r.pdf')
             plt.close()
 
             # calculate mean and standard deviation and then plot those
@@ -1896,7 +1896,7 @@ class TestUnitVectors():
             plt.title('Log Median Difference in Apex Position')
             plt.legend()
             plt.tight_layout()
-            plt.savefig(direction+'_step_diff_v_longitude.pdf' )
+            plt.tight_layout(); plt.savefig(direction+'_step_diff_v_longitude.pdf' )
             plt.close()
 
             fig = plt.figure()
@@ -1907,7 +1907,7 @@ class TestUnitVectors():
             plt.title('Log Normalized Difference in Apex Height (h) After Stepping')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig(direction+'_normal_step_diff_apex_height_h.pdf')
+            plt.tight_layout(); plt.savefig(direction+'_normal_step_diff_apex_height_h.pdf')
             plt.close()
 
         except:
@@ -2019,7 +2019,7 @@ class TestUnitVectors():
             plt.title('Meridional Electric Field Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_mer_field.pdf')
+            plt.tight_layout(); plt.savefig('eq_mer_field.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2030,7 +2030,7 @@ class TestUnitVectors():
             plt.title('Zonal Electric Field Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_zon_field.pdf')
+            plt.tight_layout(); plt.savefig('eq_zon_field.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2041,7 +2041,7 @@ class TestUnitVectors():
             plt.title('Meridional Electric Field Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_mer_field.pdf')
+            plt.tight_layout(); plt.savefig('north_mer_field.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2052,7 +2052,7 @@ class TestUnitVectors():
             plt.title('Zonal Electric Field Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_zon_field.pdf')
+            plt.tight_layout(); plt.savefig('north_zon_field.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2063,7 +2063,7 @@ class TestUnitVectors():
             plt.title('Meridional Electric Field Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_mer_field.pdf')
+            plt.tight_layout(); plt.savefig('south_mer_field.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2074,7 +2074,7 @@ class TestUnitVectors():
             plt.title('Zonal Electric Field Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_zon_field.pdf')
+            plt.tight_layout(); plt.savefig('south_zon_field.pdf')
             plt.close()
 
 
@@ -2087,7 +2087,7 @@ class TestUnitVectors():
             plt.title('Log Zonal Ion Drift Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_zonal_drift.pdf')
+            plt.tight_layout(); plt.savefig('eq_zonal_drift.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2098,7 +2098,7 @@ class TestUnitVectors():
             plt.title('Log Meridional Ion Drift Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_mer_drift.pdf')
+            plt.tight_layout(); plt.savefig('eq_mer_drift.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2109,7 +2109,7 @@ class TestUnitVectors():
             plt.title('Zonal Ion Drift Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_zonal_drift.pdf')
+            plt.tight_layout(); plt.savefig('north_zonal_drift.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2120,7 +2120,7 @@ class TestUnitVectors():
             plt.title('Meridional Ion Drift Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_mer_drift.pdf')
+            plt.tight_layout(); plt.savefig('north_mer_drift.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2131,7 +2131,7 @@ class TestUnitVectors():
             plt.title('Zonal Ion Drift Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_zonal_drift.pdf')
+            plt.tight_layout(); plt.savefig('south_zonal_drift.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2142,7 +2142,7 @@ class TestUnitVectors():
             plt.title('Meridional Ion Drift Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_mer_drift.pdf')
+            plt.tight_layout(); plt.savefig('south_mer_drift.pdf')
             plt.close()
 
 
@@ -2249,7 +2249,7 @@ class TestUnitVectors():
             plt.title('Meridional Electric Field Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_mer_field_heritage.pdf')
+            plt.tight_layout(); plt.savefig('eq_mer_field_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2260,7 +2260,7 @@ class TestUnitVectors():
             plt.title('Zonal Electric Field Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_zon_field_heritage.pdf')
+            plt.tight_layout(); plt.savefig('eq_zon_field_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2271,7 +2271,7 @@ class TestUnitVectors():
             plt.title('Meridional Electric Field Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_mer_field_heritage.pdf')
+            plt.tight_layout(); plt.savefig('north_mer_field_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2282,7 +2282,7 @@ class TestUnitVectors():
             plt.title('Zonal Electric Field Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_zon_field_heritage.pdf')
+            plt.tight_layout(); plt.savefig('north_zon_field_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2293,7 +2293,7 @@ class TestUnitVectors():
             plt.title('Meridional Electric Field Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_mer_field_heritage.pdf')
+            plt.tight_layout(); plt.savefig('south_mer_field_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2304,7 +2304,7 @@ class TestUnitVectors():
             plt.title('Zonal Electric Field Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_zon_field_heritage.pdf')
+            plt.tight_layout(); plt.savefig('south_zon_field_heritage.pdf')
             plt.close()
 
 
@@ -2317,7 +2317,7 @@ class TestUnitVectors():
             plt.title('Log Zonal Ion Drift Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_zonal_drift_heritage.pdf')
+            plt.tight_layout(); plt.savefig('eq_zonal_drift_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2328,7 +2328,7 @@ class TestUnitVectors():
             plt.title('Log Meridional Ion Drift Mapping to Magnetic Equator')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('eq_mer_drift_heritage.pdf')
+            plt.tight_layout(); plt.savefig('eq_mer_drift_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2339,7 +2339,7 @@ class TestUnitVectors():
             plt.title('Zonal Ion Drift Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_zonal_drift_heritage.pdf')
+            plt.tight_layout(); plt.savefig('north_zonal_drift_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2350,7 +2350,7 @@ class TestUnitVectors():
             plt.title('Meridional Ion Drift Mapping to Northern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('north_mer_drift_heritage.pdf')
+            plt.tight_layout(); plt.savefig('north_mer_drift_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2361,7 +2361,7 @@ class TestUnitVectors():
             plt.title('Zonal Ion Drift Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_zonal_drift_heritage.pdf')
+            plt.tight_layout(); plt.savefig('south_zonal_drift_heritage.pdf')
             plt.close()
 
             fig = plt.figure()
@@ -2372,7 +2372,7 @@ class TestUnitVectors():
             plt.title('Meridional Ion Drift Mapping to Southern Footpoint')
             plt.xlabel('Geodetic Longitude (Degrees)')
             plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('south_mer_drift_heritage.pdf')
+            plt.tight_layout(); plt.savefig('south_mer_drift_heritage.pdf')
             plt.close()
 
 
@@ -2501,7 +2501,7 @@ class TestUnitVectors():
 
 
             if not on_travis:
-                plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.pdf')))
+                plt.tight_layout(); plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.pdf')))
                 plt.close()
 
         ## plot Earth
