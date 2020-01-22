@@ -588,7 +588,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
         # get IGRF field components
         # tbn, tbe, tbd, tbmag are in nT
         # geodetic input
-        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 1, alt, colat, elong)
+        tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, date, 1, alt, colat, elong)
 
         # collect outputs
         south_x.append(trace_south[0])
@@ -696,7 +696,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
                                        altitudes,
                                        ddates):
         # tbn, tbe, tbd, tbmag are in nT
-        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 2, alt, colat, elong)
+        tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, date, 2, alt, colat, elong)
 
         # collect outputs
         bn.append(tbn)
