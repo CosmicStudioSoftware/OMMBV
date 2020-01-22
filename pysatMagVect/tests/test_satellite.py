@@ -8,13 +8,13 @@ class TestSatellite():
     def setup(self):
 
         self.inst = pysat.Instrument('pysat', 'testing', sat_id='32')
-
-
         return
 
 
     def test_application_add_unit_vectors(self):
-        self.inst.load(2019, 365)
+        self.inst.load(2010, 365)
+        self.inst['altitude'] = 550.
+        print(self.inst)
         pymv.satellite.add_mag_drift_unit_vectors_ecef(self.inst)
         items = ['unit_zon_ecef_x', 'unit_zon_ecef_y', 'unit_zon_ecef_z',
                  'unit_fa_ecef_x', 'unit_fa_ecef_y', 'unit_fa_ecef_z',
@@ -24,7 +24,8 @@ class TestSatellite():
 
 
     def test_application_add_mag_drifts(self):
-        self.inst.load(2019, 365)
+        self.inst.load(2010, 365)
+        self.inst['altitude'] = 550.
         # create false orientation signal
         self.inst['sc_xhat_x'] = 1.
         self.inst['sc_xhat_y'] = 0.
