@@ -1319,6 +1319,141 @@ class TestUnitVectors():
 
 
 
+
+    def test_unit_vector_component_plots_edge_steps(self):
+        import matplotlib.pyplot as plt
+
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)
+
+        d_zvx = np.zeros((len(p_lats), len(p_longs)+1))
+        d_zvy = d_zvx.copy(); d_zvz = d_zvx.copy()
+        d2_zvx = np.zeros((len(p_lats), len(p_longs)+1))
+        d2_zvy = d_zvx.copy(); d2_zvz = d_zvx.copy()
+        d_mx = d_zvx.copy(); d_my = d_zvx.copy(); d_mz = d_zvx.copy()
+        d_fax = d_zvx.copy(); d_fay = d_zvx.copy(); d_faz = d_zvx.copy()
+        d2_mx = d_zvx.copy(); d2_my = d_zvx.copy(); d2_mz = d_zvx.copy()
+
+
+        date = datetime.datetime(2000,1,1)
+        # set up multi
+        if self.dc is not None:
+            import itertools
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i,p_lat in enumerate(p_lats):
+                # iterate through target cyclicly and run commands
+                print (i, p_lat)
+                dview.targets = targets.next()
+                pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
+                                                                        p_alts, [date]*len(p_longs), full_output=True,
+                                                                        include_debug=True, edge_steps=5))
+            for i,p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                    # collect output
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pending.pop(0).get()
+
+                # collect outputs on E and D vectors
+                dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
+                dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
+                dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
+                d_zvx[i,:-1], d_zvy[i,:-1], d_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
+                dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
+                d2_zvx[i,:-1], d2_zvy[i,:-1], d2_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
+                d_fax[i,:-1], d_fay[i,:-1], d_faz[i,:-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz, [p_lat]*len(p_longs), p_longs)
+                d_mx[i,:-1], d_my[i,:-1], d_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
+                dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
+                d2_mx[i,:-1], d2_my[i,:-1], d2_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
+
+
+        else:
+            for i,p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pymv.calculate_mag_drift_unit_vectors_ecef([p_lat]*len(p_longs), p_longs,
+                                                                                        p_alts, [date]*len(p_longs),
+                                                                                        full_output=True,
+                                                                                        include_debug=True,
+                                                                                        edge_steps=5)
+
+                # collect outputs on E and D vectors
+                dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
+                dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
+                dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
+                d_zvx[i,:-1], d_zvy[i,:-1], d_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
+                dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
+                d2_zvx[i,:-1], d2_zvy[i,:-1], d2_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
+                d_fax[i,:-1], d_fay[i,:-1], d_faz[i,:-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz, [p_lat]*len(p_longs), p_longs)
+                d_mx[i,:-1], d_my[i,:-1], d_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
+                dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
+                d2_mx[i,:-1], d2_my[i,:-1], d2_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
+
+
+        # account for periodicity
+
+        d_zvx[:,-1] = d_zvx[:,0]
+        d_zvy[:,-1] = d_zvy[:,0]
+        d_zvz[:,-1] = d_zvz[:,0]
+        d2_zvx[:,-1] = d2_zvx[:,0]
+        d2_zvy[:,-1] = d2_zvy[:,0]
+        d2_zvz[:,-1] = d2_zvz[:,0]
+        d_fax[:,-1] = d_fax[:,0]
+        d_fay[:,-1] = d_fay[:,0]
+        d_faz[:,-1] = d_faz[:,0]
+        d_mx[:,-1] = d_mx[:,0]
+        d_my[:,-1] = d_my[:,0]
+        d_mz[:,-1] = d_mz[:,0]
+        d2_mx[:,-1] = d2_mx[:,0]
+        d2_my[:,-1] = d2_my[:,0]
+        d2_mz[:,-1] = d2_mz[:,0]
+
+        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats)-1)
+        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
+
+        try:
+            fig = plt.figure()
+            dmag = np.sqrt(d_mx**2 + d_my**2 + d_mz**2)
+            dmag2 = np.sqrt(d2_mx**2 + d2_my**2 + d2_mz**2)
+            plt.imshow(np.log10(np.abs(dmag - dmag2)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Meridional Vector Normalized Difference')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_mer_norm_edgesteps.pdf')
+            plt.close()
+
+
+            fig = plt.figure()
+            dmag = np.sqrt(d_zvx**2 + d_zvy**2 + d_zvz**2)
+            dmag2 = np.sqrt(d2_zvx**2 + d2_zvy**2 + d2_zvz**2)
+            plt.imshow(np.log10(np.abs(dmag2 - dmag)/dmag), origin='lower')
+            plt.colorbar()
+            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+            plt.title('Log D Zonal Vector Normalized Difference')
+            plt.xlabel('Geodetic Longitude (Degrees)')
+            plt.ylabel('Geodetic Latitude (Degrees)')
+            plt.savefig('d_diff_zon_norm_edegesteps.pdf')
+            plt.close()
+
+
+
+
+        except:
+            pass
+
+        assert np.all(np.abs(tol_zon) <= 1.E-4)
+        assert np.all(np.abs(tol_mer) <= 1.E-4)
+        assert np.all(np.abs(grad_zon) <= 1.E-4)
+
+
+
+
+
     def test_unit_vector_component_stepsize_sensitivity_plots(self):
         import matplotlib.pyplot as plt
 
