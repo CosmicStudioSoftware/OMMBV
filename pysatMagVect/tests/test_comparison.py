@@ -104,7 +104,7 @@ class TestComparison():
         igrf_e = []
         igrf_u = []
         for lat, lon, alt in zip(eq_lat, eq_long, eq_z):
-            out = pysatMagVect.igrf.igrf12syn(0, date.year, 1, alt,
+            out = pysatMagVect.igrf.igrf13syn(0, date.year, 1, alt,
                                             np.deg2rad(90-lat), np.deg2rad(lon))
             out = np.array(out)
             # normalize
