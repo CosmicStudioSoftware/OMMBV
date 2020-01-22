@@ -1556,7 +1556,7 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
     else:
         return apex_edge_length
 
-def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
+def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
                                    max_steps=None, e_field_scaling_only=None,
                                    edge_length=None, edge_steps=None,
                                    **kwargs):
@@ -1577,8 +1577,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
         Geodetic (WGS84) altitude, height above surface
     dates : list-like of datetimes
         Date and time for determination of scalars
-    step_size : float
-        Step size, in km, used when calculating geomagnetic basis vectors
     e_field_scaling_only : Deprecated
     max_steps : Deprecated
     edge_length : Deprecated
@@ -1620,7 +1618,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                                              full_output=True,
                                                                              include_debug=True,
                                                                              ecef_input=True,
-                                                                             step_size=step_size,
                                                                              **kwargs)
 
     out['equator_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
@@ -1634,7 +1631,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                                              full_output=True,
                                                                              include_debug=True,
                                                                              ecef_input=True,
-                                                                             step_size=step_size,
                                                                              **kwargs)
 
     # D and E vectors at northern footpoint
@@ -1642,7 +1638,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                                                              full_output=True,
                                                                              include_debug=True,
                                                                              ecef_input=True,
-                                                                             step_size=step_size,
                                                                              **kwargs)
 
     # prepare output
