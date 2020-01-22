@@ -1241,7 +1241,7 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     return north_ftpnt, south_ftpnt
 
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
-                       fine_step_size=1.E-5, fine_max_steps=5,
+                       fine_step_size=1.E-4, fine_max_steps=5,
                        return_geodetic=False, ecef_input=False):
     """Determine apex location for the field line passing through input point.
 
