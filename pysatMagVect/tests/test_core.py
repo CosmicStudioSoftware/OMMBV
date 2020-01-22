@@ -2017,7 +2017,7 @@ class TestUnitVectors():
 
                 north_zonald[i,:-1] = scalars['north_zonal_drifts_scalar']
                 north_merd[i,:-1] = scalars['north_mer_drifts_scalar']
-                south_zonald[i,:-1] = scalars['south_zon_drifts_scalar']
+                south_zonald[i,:-1] = scalars['south_zonal_drifts_scalar']
                 south_merd[i,:-1] = scalars['south_mer_drifts_scalar']
                 eq_zonald[i,:-1] = scalars['equator_zonal_drifts_scalar']
                 eq_merd[i,:-1] = scalars['equator_mer_drifts_scalar']

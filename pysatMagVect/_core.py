@@ -1609,7 +1609,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
 
     # get footpoint location information
     north_ftpnt, south_ftpnt = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs,
-                                                       ecef_input=True)
+                                                       dates, ecef_input=True)
 
     # prepare output memory
     out = {}
