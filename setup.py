@@ -39,7 +39,7 @@ numpy.distutils.core.setup(
     include_package_data=True,
 
     # required modules
-    install_requires = ['numpy', 'scipy', 'pysat'],
+    install_requires = ['numpy', 'scipy'],
     ext_modules = extensions,
 
 )
