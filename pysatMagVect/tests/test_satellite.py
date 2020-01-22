@@ -44,10 +44,25 @@ class TestSatellite():
         for item in items:
             assert item in self.inst.data
 
+        # check adding drifts now
         self.inst['iv_x'] = 150.
         self.inst['iv_y'] = 50.
         self.inst['iv_z'] = -50.
         pymv.satellite.add_mag_drifts(self.inst)
         items = ['iv_zon', 'iv_fa', 'iv_mer']
+        for item in items:
+            assert item in self.inst.data
+
+        # check scaling to footpoints and equator
+        self.inst['equ_mer_drifts_scalar'] = 1.
+        self.inst['equ_zon_drifts_scalar'] = 1.
+        self.inst['north_footpoint_mer_drifts_scalar'] = 1.
+        self.inst['north_footpoint_zon_drifts_scalar'] = 1.
+        self.inst['south_footpoint_mer_drifts_scalar'] = 1.
+        self.inst['south_footpoint_zon_drifts_scalar'] = 1.
+        pymv.satellite.add_footpoint_and_equatorial_drifts(self.inst)
+        items = ['equ_mer_drifts_scalar', 'equ_zon_drifts_scalar',
+                 'north_footpoint_mer_drifts_scalar', 'north_footpoint_zon_drifts_scalar',
+                  'south_footpoint_mer_drifts_scalar', 'south_footpoint_zon_drifts_scalar']
         for item in items:
             assert item in self.inst.data
