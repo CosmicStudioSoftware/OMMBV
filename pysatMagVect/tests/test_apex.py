@@ -15,6 +15,57 @@ from pysatMagVect.tests.test_core import gen_plot_grid_fixed_alt
 
 from pysatMagVect.tests.test_core import dview, dc
 
+class TestMaxApexHeight():
+
+    def test_plot_apex_heights(self):
+
+        date = pysat.datetime(2010, 1, 1)
+
+        delta = 1.
+
+        ecef_x, ecef_y, ecef_z = pymv.geodetic_to_ecef([0.], [320.], [550.])
+
+        # get basis vectors
+        zx, zy, zz, _, _, _, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef(ecef_x, ecef_y, ecef_z, [date], ecef_input=True)
+
+        # get apex height for step along meridional directions, then around that direction
+        _,_,_,_,_,nominal_max = pymv.apex_location_info(ecef_x + delta*mx,
+                                                        ecef_y + delta*my,
+                                                        ecef_z + delta*mz,
+                                                        [date],
+                                                        ecef_input=True,
+                                                        return_geodetic=True)
+
+        steps = (np.arange(101) - 50.) * delta/10000.
+        output_max = []
+        for step in steps:
+            del_x = delta*mx + step*zx
+            del_y = delta*my + step*zy
+            del_z = delta*mz + step*zz
+            norm = np.sqrt(del_x**2 + del_y**2 + del_z**2)
+            del_x /= norm
+            del_y /= norm
+            del_z /= norm
+            _,_,_,_,_,loop_h = pymv.apex_location_info(ecef_x + del_x,
+                                                       ecef_y + del_y,
+                                                       ecef_z + del_z,
+                                                       [date],
+                                                       ecef_input=True,
+                                                       return_geodetic=True)
+            output_max.append(loop_h)
+
+        plt.figure()
+        plt.plot(steps, output_max)
+        plt.plot([0], nominal_max, color='r', marker='o', markersize=12)
+        plt.ylabel('Apex Height (km)')
+        plt.xlabel('Distance along Zonal Direction (km)')
+        plt.savefig('comparison_apex_heights_and_meridional.pdf')
+        plt.close()
+
+        # make sure meridional direction is correct
+        assert np.all(np.max(output_max) == nominal_max)
+
+
 class TestApex():
 
     def __init__(self):
