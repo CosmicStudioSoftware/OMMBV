@@ -15,21 +15,13 @@ before_install:
   - pip install pytest-cov
   - pip install coveralls
   - pip install future
-  - pip install matplotlib
-  - pip install pysatCDF >/dev/null
-  - pip install apexpy
-
-before_install:
-  - pip install pytest-cov
-  - pip install coveralls
-  - pip install future
   # Install version specific packages for 2.7 and 3.5
   - pip install 'pandas<0.25'
   - pip install xarray
   - pip install matplotlib
   - pip install apexpy
   - pip install numpy
-  
+  - pip install pysatCDF >/dev/null
   - pip install 'pysat>=2.1.0'
   # set up data directory
   - mkdir /home/travis/build/pysatData
