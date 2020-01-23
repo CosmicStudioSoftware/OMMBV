@@ -33,6 +33,7 @@ before_install:
   - pip install 'pysat>=2.1.0'
   # set up data directory
   - mkdir /home/travis/build/pysatData
+  - python -c 'import pysat; pysat.utils.set_data_dir("/home/travis/build/pysatData")'
 
 install:
   # install pysatMagVect
