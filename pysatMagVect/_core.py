@@ -1042,12 +1042,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             diff_apex_z = apex_z - apex_z2
             grad_zonal = diff_apex_z/(2.*dstep_size)
 
-            # # get magnitude of zonal gradient of magnetic field at apex locations
-            # bax2, bay2, baz2, bam2 = magnetic_vector(a_x2, a_y2, a_z2,
-            #                                          datetimes,
-            #                                          normalize=True)
-            # print((bam - bam2)/bam, bam, bam2)
-
             # calculate meridional gradient using latest vectors
             ecef_xm, ecef_ym, ecef_zm = ecef_x + dstep_size*mx, ecef_y + dstep_size*my, ecef_z + dstep_size*mz
             _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
@@ -1062,9 +1056,19 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             diff_apex_m = apex_m - apex_m2
             grad_apex = diff_apex_m/(2.*dstep_size)
 
+            # potentially higher accuracy method of getting height gradient magnitude
+            diff_apex_r, diff_h = apex_distance_after_local_step(ecef_x, ecef_y, ecef_z,
+                                                            datetimes,
+                                                            vector_direction='meridional',
+                                                            ecef_input=True,
+                                                            edge_length=dstep_size,
+                                                            edge_steps=edge_steps,
+                                                            return_geodetic=True)
+
             # second path D, E vectors
+            mer_scal = diff_h/(2.*dstep_size)
             # d meridional vector via apex height gradient
-            d_mer2_x, d_mer2_y, d_mer2_z = grad_apex*mx, grad_apex*my, grad_apex*mz
+            d_mer2_x, d_mer2_y, d_mer2_z = mer_scal*mx, mer_scal*my, mer_scal*mz
             # zonal to complete set (apex height gradient calculation is precise)
             # less so for zonal gradient
             d_zon2_x, d_zon2_y, d_zon2_z = cross_product(d_fa_x, d_fa_y, d_fa_z,
