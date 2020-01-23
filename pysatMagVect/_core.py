@@ -588,7 +588,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
         # get IGRF field components
         # tbn, tbe, tbd, tbmag are in nT
         # geodetic input
-        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 1, alt, colat, elong)
+        tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, date, 1, alt, colat, elong)
 
         # collect outputs
         south_x.append(trace_south[0])
@@ -696,7 +696,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
                                        altitudes,
                                        ddates):
         # tbn, tbe, tbd, tbmag are in nT
-        tbn, tbe, tbd, tbmag = igrf.igrf12syn(0, date, 2, alt, colat, elong)
+        tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, date, 2, alt, colat, elong)
 
         # collect outputs
         bn.append(tbn)
@@ -721,13 +721,14 @@ def magnetic_vector(x, y, z, dates, normalize=False):
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=2., tol=1.E-4, max_loops=100,
-                                          full_output=False, tol_zonal_apex=1.E-4,
-                                          ecef_input=False, max_steps=None,
-                                          ref_height=None, steps=None,
-                                          centered_diff=True,
-                                          include_debug=False,
-                                          scalar=1.):
+                                          step_size=2., tol=1.E-4,
+                                          tol_zonal_apex=1.E-4, max_loops=100,
+                                          ecef_input=False, centered_diff=True,
+                                          full_output=False, include_debug=False,
+                                          scalar=1.,
+                                          edge_steps=1, dstep_size=2.,
+                                          max_steps=None, ref_height=None,
+                                          steps=None,):
     """Calculates local geomagnetic unit vectors expressing the ion drift
     coordinate system organized by the geomagnetic field. Unit vectors are expressed
     in ECEF coordinates.
@@ -767,16 +768,33 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Step size (km) to use when calculating changes in apex height
     tol : float
         Tolerance goal for the magnitude of the change in unit vectors per loop
-    max_loops : int
-        Maximum number of iterations
     tol_zonal_apex : Maximum allowed change in apex height along
         zonal direction
-    full_output : bool (False)
-        If True, return an additional output parameter (dict) with stats
-        about iterative process
+    max_loops : int
+        Maximum number of iterations
     ecef_input : bool (False)
         If True, inputs latitude, longitude, altitude are interpreted as
         x, y, and z in ECEF coordinates (km).
+    full_output : bool (False)
+        If True, return an additional dictionary with the E and D mapping
+        vectors
+    include_deubg : bool (False)
+        If True, include stats about iterative process in optional dictionary.
+        Requires full_output=True
+    centered_diff : bool (True)
+        If True, a symmetric centered difference is used when calculating
+        the change in apex height along the zonal direction, used within
+        the zonal unit vector calculation
+    scalar : int
+        Used to modify unit magnetic field within algorithm. Generally
+        speaking, this should not be modified
+    edge_steps : int (1)
+        Number of steps taken when moving across field lines and calculating
+        the change in apex location. This parameter impacts both runtime
+        and accuracy of the D, E vectors.
+    dstep_size : float (.016 km)
+        Step size (km) used when calculting the expansion of field line surfaces.
+        Generally, this should be the same as step_size.
     max_steps : int
         Deprecated
     ref_height : float
@@ -786,16 +804,29 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
     Returns
     -------
-    zon_x, zon_y, zon_z, fa_x, fa_y, fa_z, mer_x, mer_y, mer_z
+    zon_x, zon_y, zon_z, fa_x, fa_y, fa_z, mer_x, mer_y, mer_z, (optional dictionary)
 
     Optional output dictionary
     --------------------------
+    Full Output Parameters
+
+    d_zon_x (y,z) : D zonal vector components along ECEF X, Y, and Z directions
+    d_mer_x (y,z) : D meridional vector components along ECEF X, Y, and Z directions
+    d_fa_x (y,z) : D field aligned vector components along ECEF X, Y, and Z directions
+
+    e_zon_x (y,z) : E zonal vector components along ECEF X, Y, and Z directions
+    e_mer_x (y,z) : E meridional vector components along ECEF X, Y, and Z directions
+    e_fa_x (y,z) : E field aligned vector components along ECEF X, Y, and Z directions
+
+
+    Debug Parameters
+
     diff_mer_apex : rate of change in apex height (km) along meridional vector
     diff_mer_vec : magnitude of vector change for last loop
     diff_zonal_apex : rate of change in apex height (km) along zonal vector
     diff_zonal_vec : magnitude of vector change for last loop
     loops : Number of loops
-    vector_seed_type : Initial vector used for starting calculation
+    vector_seed_type : Initial vector used for starting calculation (deprecated)
 
     """
 
@@ -847,44 +878,15 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     tzx, tzy, tzz = enu_to_ecef_vector(ss*np.ones(len(bx)), np.zeros(len(bx)),
                                        np.zeros(len(bx)), latitude, longitude)
     init_type = np.zeros(len(bx)) - 1
-    # make sure this vector is well constrained
-    # avoid locations where bz near zero
-    idx0, = np.where(np.abs(bz) >= 1.E-10)
-    if len(idx0) > 0:
-        idx, = np.where((np.abs(tzx[idx0]) >= np.abs(tzy[idx0])))
-        if len(idx) > 0:
-            # force y component to zero and use z-x plane
-            tzy[idx0[idx]] = 0
-            tzz[idx0[idx]] = -tzx[idx0[idx]]*bx[idx0[idx]]/bz[idx0[idx]]
-            init_type[idx0[idx]] = 0
-        idx, = np.where((np.abs(tzy[idx0]) > np.abs(tzx[idx0])))
-        if len(idx) > 0:
-            # force x component to zero and use z-y plane
-            tzx[idx0[idx]] = 0
-            tzz[idx0[idx]] = -tzy[idx0[idx]]*by[idx0[idx]]/bz[idx0[idx]]
-            init_type[idx0[idx]] = 1
 
-    # dealing with locations with small bz
-    idx0, = np.where(np.abs(bz) < 1.E-10)
-    if len(idx0) > 0:
-        idx, = np.where((np.abs(bx[idx0]) > np.abs(by[idx0])) )
-        if len(idx) > 0:
-            # force z component to zero and use y-x plane
-            tzz[idx0[idx]] = 0
-            tzx[idx0[idx]] = -tzy[idx0[idx]]*by[idx0[idx]]/bx[idx0[idx]]
-            init_type[idx0[idx]] = 2
-        idx, = np.where((np.abs(by[idx0]) >= np.abs(bx[idx0])) )
-        if len(idx) > 0:
-            # force z component to zero and use x-y plane
-            tzz[idx0[idx]] = 0
-            tzy[idx0[idx]] = -tzx[idx0[idx]]*bx[idx0[idx]]/by[idx0[idx]]
-            init_type[idx0[idx]]= 3
-
-    # normalize these vectors
-    tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
-
-    # need another perpendicular vector to both
+    # get meridional from this
     tmx, tmy, tmz = cross_product(tzx, tzy, tzz, bx, by, bz)
+    # normalize
+    tmx, tmy, tmz = normalize_vector(tmx, tmy, tmz)
+    # get orthogonal zonal now
+    tzx, tzy, tzz = cross_product(bx, by, bz, tmx, tmy, tmz)
+    # normalize
+    tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
 
     # loop variables
     loop_num = 0
@@ -966,7 +968,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     mx, my, mz = ss*tmx, ss*tmy, ss*tmz
 
     if full_output:
-        dstep_size = .016
         # calculate expansion of zonal vector
         # recalculating zonal vector without centered difference
         # keeps locations along same apex height
@@ -975,7 +976,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                         vector_direction='zonal',
                                                         ecef_input=True,
                                                         edge_length=dstep_size,
-                                                        edge_steps=1,
+                                                        edge_steps=edge_steps,
                                                         return_geodetic=True)
         # need to translate to arc length
         radial_loc = np.sqrt(a_x**2 + a_y**2 + a_z**2)
@@ -1027,43 +1028,49 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                 }
 
         if include_debug:
-            step_size = .01
             # calculate zonal gradient using latest vectors
-            ecef_xz, ecef_yz, ecef_zz = ecef_x + step_size*zx, ecef_y + step_size*zy, ecef_z + step_size*zz
+            ecef_xz, ecef_yz, ecef_zz = ecef_x + dstep_size*zx, ecef_y + dstep_size*zy, ecef_z + dstep_size*zz
             a_x2, a_y2, a_z2, _, _, apex_z = apex_location_info(ecef_xz, ecef_yz, ecef_zz,
                                                        datetimes,
                                                        return_geodetic=True,
                                                        ecef_input=True)
-            ecef_xz2, ecef_yz2, ecef_zz2 = ecef_x - step_size*zx, ecef_y - step_size*zy, ecef_z - step_size*zz
+            ecef_xz2, ecef_yz2, ecef_zz2 = ecef_x - dstep_size*zx, ecef_y - dstep_size*zy, ecef_z - dstep_size*zz
             _, _, _, _, _, apex_z2 = apex_location_info(ecef_xz2, ecef_yz2, ecef_zz2,
                                                         datetimes,
                                                         return_geodetic=True,
                                                         ecef_input=True)
             diff_apex_z = apex_z - apex_z2
-            grad_zonal = diff_apex_z/(2.*step_size)
+            grad_zonal = diff_apex_z/(2.*dstep_size)
 
-            # get magnitude of zonal gradient of magnetic field at apex locations
-            bax2, bay2, baz2, bam2 = magnetic_vector(a_x2, a_y2, a_z2,
-                                                     datetimes,
-                                                     normalize=True)
-            # print((bam - bam2)/bam, bam, bam2)
             # calculate meridional gradient using latest vectors
-            ecef_xm, ecef_ym, ecef_zm = ecef_x + step_size*mx, ecef_y + step_size*my, ecef_z + step_size*mz
+            ecef_xm, ecef_ym, ecef_zm = ecef_x + dstep_size*mx, ecef_y + dstep_size*my, ecef_z + dstep_size*mz
             _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
                                                     datetimes,
                                                     return_geodetic=True,
                                                     ecef_input=True)
-            ecef_xm2, ecef_ym2, ecef_zm2 = ecef_x - step_size*mx, ecef_y - step_size*my, ecef_z - step_size*mz
+            ecef_xm2, ecef_ym2, ecef_zm2 = ecef_x - dstep_size*mx, ecef_y - dstep_size*my, ecef_z - dstep_size*mz
             _, _, _, _, _, apex_m2 = apex_location_info(ecef_xm2, ecef_ym2, ecef_zm2,
                                                         datetimes,
                                                         return_geodetic=True,
                                                         ecef_input=True)
             diff_apex_m = apex_m - apex_m2
-            grad_apex = diff_apex_m/(2.*step_size)
+            grad_apex = diff_apex_m/(2.*dstep_size)
+
+            # # potentially higher accuracy method of getting height gradient magnitude
+            # did not increase accuracy
+            # leaving here as a reminder that this code path has been checked out
+            # diff_apex_r, diff_h = apex_distance_after_local_step(ecef_x, ecef_y, ecef_z,
+            #                                                 datetimes,
+            #                                                 vector_direction='meridional',
+            #                                                 ecef_input=True,
+            #                                                 edge_length=dstep_size,
+            #                                                 edge_steps=edge_steps,
+            #                                                 return_geodetic=True)
 
             # second path D, E vectors
+            mer_scal = grad_apex
             # d meridional vector via apex height gradient
-            d_mer2_x, d_mer2_y, d_mer2_z = grad_apex*mx, grad_apex*my, grad_apex*mz
+            d_mer2_x, d_mer2_y, d_mer2_z = mer_scal*mx, mer_scal*my, mer_scal*mz
             # zonal to complete set (apex height gradient calculation is precise)
             # less so for zonal gradient
             d_zon2_x, d_zon2_y, d_zon2_z = cross_product(d_fa_x, d_fa_y, d_fa_z,
@@ -1114,7 +1121,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
     date : list-like of datetimes
         Date and time for magnetic field
     direction : string
-        String identifier for which unit vector directino to move along.
+        String identifier for which unit vector direction to move along.
         Supported inputs, 'meridional', 'zonal', 'aligned'
     num_steps : int
         Number of steps to take along unit vector direction
@@ -1129,6 +1136,13 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
     np.array
         [x, y, z] of ECEF location after taking num_steps along direction,
         each step_size long.
+
+    Notes
+    -----
+        centered_diff=True is passed along to calculate_mag_drift_unit_vectors_ecef
+        when direction='meridional', while centered_diff=False is used
+        for the 'zonal' direction. This ensures that when moving along the
+        zonal direction there is a minimal change in apex height.
 
     """
 
@@ -1233,7 +1247,7 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     return north_ftpnt, south_ftpnt
 
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
-                       fine_step_size=1.E-5, fine_max_steps=5,
+                       fine_step_size=1.E-4, fine_max_steps=5,
                        return_geodetic=False, ecef_input=False):
     """Determine apex location for the field line passing through input point.
 
@@ -1548,7 +1562,121 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
     else:
         return apex_edge_length
 
-def scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
+def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
+                                   max_steps=None, e_field_scaling_only=None,
+                                   edge_length=None, edge_steps=None,
+                                   **kwargs):
+    """
+    Calculates scalars for translating ion motions at position
+    glat, glon, and alt, for date, to the footpoints of the field line
+    as well as at the magnetic equator.
+
+    All inputs are assumed to be 1D arrays.
+
+    Parameters
+    ----------
+    glats : list-like of floats (degrees)
+        Geodetic (WGS84) latitude
+    glons : list-like of floats (degrees)
+        Geodetic (WGS84) longitude
+    alts : list-like of floats (km)
+        Geodetic (WGS84) altitude, height above surface
+    dates : list-like of datetimes
+        Date and time for determination of scalars
+    e_field_scaling_only : Deprecated
+    max_steps : Deprecated
+    edge_length : Deprecated
+    edge_steps : Deprecated
+
+    Returns
+    -------
+    dict
+        array-like of scalars for translating ion drifts. Keys are,
+        'north_zonal_drifts_scalar', 'north_mer_drifts_scalar', and similarly
+        for southern locations. 'equator_mer_drifts_scalar' and
+        'equator_zonal_drifts_scalar' cover the mappings to the equator.
+
+
+    """
+
+    if e_field_scaling_only is not None:
+        raise DeprecationWarning('e_field_scaling_only no longer supported.')
+    if max_steps is not None:
+        raise DeprecationWarning('max_steps no longer supported.')
+    if edge_length is not None:
+        raise DeprecationWarning('edge_length no longer supported.')
+    if edge_steps is not None:
+        raise DeprecationWarning('edge_steps no longer supported.')
+
+    # use spacecraft location to get ECEF
+    ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+
+    # get footpoint location information
+    north_ftpnt, south_ftpnt = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs,
+                                                       dates, ecef_input=True)
+
+    # prepare output memory
+    out = {}
+
+    # D and E vectors at user supplied location
+    # good for mapping to magnetic equator
+    _, _, _, _, _, _, _, _, _, infod = calculate_mag_drift_unit_vectors_ecef(ecef_xs, ecef_ys, ecef_zs, dates,
+                                                                             full_output=True,
+                                                                             include_debug=True,
+                                                                             ecef_input=True,
+                                                                             **kwargs)
+
+    out['equator_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
+    out['equator_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2 + infod['e_mer_y']**2 + infod['e_mer_z']**2)
+
+    out['equator_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2 + infod['d_zon_y']**2 + infod['d_zon_z']**2)
+    out['equator_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2 + infod['d_mer_y']**2 + infod['d_mer_z']**2)
+
+    # D and E vectors at northern footpoint
+    _, _, _, _, _, _, _, _, _, northd = calculate_mag_drift_unit_vectors_ecef(north_ftpnt[:,0], north_ftpnt[:,1], north_ftpnt[:,2], dates,
+                                                                             full_output=True,
+                                                                             include_debug=True,
+                                                                             ecef_input=True,
+                                                                             **kwargs)
+
+    # D and E vectors at northern footpoint
+    _, _, _, _, _, _, _, _, _, southd = calculate_mag_drift_unit_vectors_ecef(south_ftpnt[:,0], south_ftpnt[:,1], south_ftpnt[:,2], dates,
+                                                                             full_output=True,
+                                                                             include_debug=True,
+                                                                             ecef_input=True,
+                                                                             **kwargs)
+
+    # prepare output
+    # to map fields from r1 to r2, (E dot e1) d2
+    out['north_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2 + infod['e_mer_y']**2 + infod['e_mer_z']**2)
+    out['north_mer_fields_scalar'] *= np.sqrt(northd['d_mer_x']**2 + northd['d_mer_y']**2 + northd['d_mer_z']**2)
+    # to map drifts from r1 to r2, (v dot d1) e2
+    out['north_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2 + infod['d_mer_y']**2 + infod['d_mer_z']**2)
+    out['north_mer_drifts_scalar'] *= np.sqrt(northd['e_mer_x']**2 + northd['e_mer_y']**2 + northd['e_mer_z']**2)
+    # to map fields from r1 to r2, (E dot e1) d2
+    out['north_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
+    out['north_zon_fields_scalar'] *= np.sqrt(northd['d_zon_x']**2 + northd['d_zon_y']**2 + northd['d_zon_z']**2)
+    # to map drifts from r1 to r2, (v dot d1) e2
+    out['north_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2 + infod['d_zon_y']**2 + infod['d_zon_z']**2)
+    out['north_zon_drifts_scalar'] *= np.sqrt(northd['e_zon_x']**2 + northd['e_zon_y']**2 + northd['e_zon_z']**2)
+
+    # to map fields from r1 to r2, (E dot e1) d2
+    out['south_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2 + infod['e_mer_y']**2 + infod['e_mer_z']**2)
+    out['south_mer_fields_scalar'] *= np.sqrt(southd['d_mer_x']**2 + southd['d_mer_y']**2 + southd['d_mer_z']**2)
+    # to map drifts from r1 to r2, (v dot d1) e2
+    out['south_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2 + infod['d_mer_y']**2 + infod['d_mer_z']**2)
+    out['south_mer_drifts_scalar'] *= np.sqrt(southd['e_mer_x']**2 + southd['e_mer_y']**2 + southd['e_mer_z']**2)
+    # to map fields from r1 to r2, (E dot e1) d2
+    out['south_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
+    out['south_zon_fields_scalar'] *= np.sqrt(southd['d_zon_x']**2 + southd['d_zon_y']**2 + southd['d_zon_z']**2)
+    # to map drifts from r1 to r2, (v dot d1) e2
+    out['south_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2 + infod['d_zon_y']**2 + infod['d_zon_z']**2)
+    out['south_zon_drifts_scalar'] *= np.sqrt(southd['e_zon_x']**2 + southd['e_zon_y']**2 + southd['e_zon_z']**2)
+
+    return out
+
+
+def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
                                    max_steps=None, e_field_scaling_only=False,
                                    edge_length=25., edge_steps=1,
                                    **kwargs):

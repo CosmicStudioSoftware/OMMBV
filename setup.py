@@ -10,7 +10,7 @@ from numpy.distutils.core import setup, Extension
 
 # create extension for calling IGRF
 extensions = [Extension(name='pysatMagVect.igrf',
-                        sources = [os.path.join('pysatMagVect', 'igrf12.f')]),
+                        sources = [os.path.join('pysatMagVect', 'igrf13.f')]),
               Extension(name='pysatMagVect.fortran_coords',
                         sources = [os.path.join('pysatMagVect', '_coords.f')])]
 
@@ -39,7 +39,7 @@ numpy.distutils.core.setup(
     include_package_data=True,
 
     # required modules
-    install_requires = ['numpy', 'scipy', 'pysat'],
+    install_requires = ['numpy', 'scipy'],
     ext_modules = extensions,
 
 )

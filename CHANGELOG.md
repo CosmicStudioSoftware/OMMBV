@@ -2,8 +2,20 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.x.x] - 2019-09-22
+## [0.5.0] - 2020-02-01
 - Added community documents
+- Implemented new algorithm for basis vectors. First system valid for multipole fields.
+- Implemented new E and D scaling vectors similar to Richmond (apexpy)
+- Implemented high accuracy numerical path that minimizes geodetic transformations
+- Reviewed and updated default parameters based upon observed peformance
+- Validated meridional vector along maximum apex height gradient
+- Retained previous basis methods, identified by heritage or integrated
+- Improved accuracy and robustness of heritage techniques though new methods recommended
+- Validated accuracy of scaling methods
+- Incorporated IGRF13
+- Expanded and organized unit tests
+- Removed pysat as a dependency
+- Docstring improvements
 
 ## [0.4.0] - 2018-11-26
 - Testing routines have been expanded significantly.
