@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Retained previous basis methods, identified by heritage or integrated
 - Improved accuracy and robustness of heritage techniques though new methods recommended
 - Validated accuracy of scaling methods
+- Incorporated IGRF13
 - Expanded and organized unit tests
 - Removed pysat as a dependency
 - Docstring improvements
