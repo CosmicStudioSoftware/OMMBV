@@ -32,7 +32,7 @@ before_install:
 
 install:
   # install pysatMagVect
-  - cd ../pysatMagVect
+  - cd ./pysatMagVect
   - python setup.py develop
 
 # command to run tests
