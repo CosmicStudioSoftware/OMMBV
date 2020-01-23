@@ -54,13 +54,16 @@ class TestMaxApexHeight():
                                                        return_geodetic=True)
             output_max.append(loop_h)
 
-        plt.figure()
-        plt.plot(steps, output_max)
-        plt.plot([0], nominal_max, color='r', marker='o', markersize=12)
-        plt.ylabel('Apex Height (km)')
-        plt.xlabel('Distance along Zonal Direction (km)')
-        plt.savefig('comparison_apex_heights_and_meridional.pdf')
-        plt.close()
+        try:
+            plt.figure()
+            plt.plot(steps, output_max)
+            plt.plot([0], nominal_max, color='r', marker='o', markersize=12)
+            plt.ylabel('Apex Height (km)')
+            plt.xlabel('Distance along Zonal Direction (km)')
+            plt.savefig('comparison_apex_heights_and_meridional.pdf')
+            plt.close()
+        except:
+            pass
 
         # make sure meridional direction is correct
         assert np.all(np.max(output_max) == nominal_max)
