@@ -1056,17 +1056,19 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
             diff_apex_m = apex_m - apex_m2
             grad_apex = diff_apex_m/(2.*dstep_size)
 
-            # potentially higher accuracy method of getting height gradient magnitude
-            diff_apex_r, diff_h = apex_distance_after_local_step(ecef_x, ecef_y, ecef_z,
-                                                            datetimes,
-                                                            vector_direction='meridional',
-                                                            ecef_input=True,
-                                                            edge_length=dstep_size,
-                                                            edge_steps=edge_steps,
-                                                            return_geodetic=True)
+            # # potentially higher accuracy method of getting height gradient magnitude
+            # did not increase accuracy
+            # leaving here as a reminder that this code path has been checked out
+            # diff_apex_r, diff_h = apex_distance_after_local_step(ecef_x, ecef_y, ecef_z,
+            #                                                 datetimes,
+            #                                                 vector_direction='meridional',
+            #                                                 ecef_input=True,
+            #                                                 edge_length=dstep_size,
+            #                                                 edge_steps=edge_steps,
+            #                                                 return_geodetic=True)
 
             # second path D, E vectors
-            mer_scal = diff_h/(2.*dstep_size)
+            mer_scal = grad_apex
             # d meridional vector via apex height gradient
             d_mer2_x, d_mer2_y, d_mer2_z = mer_scal*mx, mer_scal*my, mer_scal*mz
             # zonal to complete set (apex height gradient calculation is precise)
