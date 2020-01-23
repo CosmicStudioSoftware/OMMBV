@@ -6,10 +6,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Added community documents
 - Implemented new algorithm for basis vectors. First system valid for multipole fields.
 - Implemented new E and D scaling vectors similar to Richmond (apexpy)
+- Implemented high accuracy numerical path that minimizes geodetic transformations
 - Reviewed and updated default parameters based upon observed peformance
-- Expanded unit tests
+- Expanded and organized unit tests
 - Removed pysat as a dependency
 - Retained previous basis methods, identified by heritage or integrated
+- Improved accuracy and robustness of heritage techniques though new methods recommended
 - Validated accuracy of scaling methods
 - Docstring improvements
 
