@@ -8,11 +8,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Implemented new E and D scaling vectors similar to Richmond (apexpy)
 - Implemented high accuracy numerical path that minimizes geodetic transformations
 - Reviewed and updated default parameters based upon observed peformance
-- Expanded and organized unit tests
-- Removed pysat as a dependency
+- Validated meridional vector along maximum apex height gradient
 - Retained previous basis methods, identified by heritage or integrated
 - Improved accuracy and robustness of heritage techniques though new methods recommended
 - Validated accuracy of scaling methods
+- Expanded and organized unit tests
+- Removed pysat as a dependency
 - Docstring improvements
 
 ## [0.4.0] - 2018-11-26
