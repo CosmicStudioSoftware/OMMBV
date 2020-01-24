@@ -48,7 +48,7 @@ class TestIntegratedMethods():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_integrated_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
                                                                         steps=None, max_steps=10000, step_size=10.,
@@ -213,7 +213,7 @@ class TestIntegratedMethods():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.closed_loop_edge_lengths_via_footpoint,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
                                                                         direction,
@@ -362,7 +362,7 @@ class TestIntegratedMethods():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.closed_loop_edge_lengths_via_footpoint,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
                                                                         direction,
@@ -488,7 +488,7 @@ class TestIntegratedMethods():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_integrated_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
                                                                         steps=None, max_steps=10000, step_size=10.,
@@ -762,7 +762,7 @@ class TestIntegratedMethods():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_integrated_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
                                                                         steps=None, max_steps=1000, step_size=10.,
@@ -1034,7 +1034,7 @@ class TestIntegratedMethods():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_integrated_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs)))
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
