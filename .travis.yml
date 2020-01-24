@@ -22,6 +22,7 @@ before_install:
   - pip install apexpy
   - pip install numpy
   - pip install pysatCDF >/dev/null
+  - cd ..
   - git clone https://github.com/pysat/pysat.git >/dev/null
   - cd ./pysat
   - python setup.py install >/dev/null
@@ -32,7 +33,7 @@ before_install:
 
 install:
   # install pysatMagVect
-  - cd ../pysatMagVect
+  - cd ./pysatMagVect
   - python setup.py develop
 
 # command to run tests
