@@ -128,7 +128,7 @@ class TestUnitVectors():
         p_alts = [p_alts[0]]*len(p_longs)
 
         # step size to be tried
-        steps_goal = np.arange(13)
+        steps_goal = np.arange(7)
         steps_goal = 20./2**steps_goal
 
         date = datetime.datetime(2000, 1, 1)
@@ -252,7 +252,7 @@ class TestUnitVectors():
         p_alts = [p_alts[0]]*len(p_longs)
 
         # step size to be tried
-        steps_goal = np.arange(13)
+        steps_goal = np.arange(7)
         steps_goal = 20./2**steps_goal
 
         date = datetime.datetime(2000, 1, 1)
@@ -379,7 +379,7 @@ class TestUnitVectors():
         p_alts = [p_alts[0]]*len(p_longs)
 
         # step size to be tried
-        steps_goal = np.arange(13)
+        steps_goal = np.arange(7)
         steps_goal = 20./2**steps_goal
 
         date = datetime.datetime(2000, 1, 1)
