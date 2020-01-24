@@ -112,7 +112,7 @@ class TestApex():
             for lat, lon, alt in zip(lats, longs, alts):
                 for steps in fine_steps_goal:
                     # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
+                    dview.targets = next(targets)
                     pending.append(dview.apply_async(pymv.apex_location_info, [lat],
                                                      [lon], [alt], [date], fine_step_size=steps,
                                                      return_geodetic=True))
@@ -209,7 +209,7 @@ class TestApex():
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
                 # iterate through target cyclicly and run commands
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
                                                                             return_geodetic=True))
@@ -318,7 +318,7 @@ class TestApex():
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
                 # iterate through target cyclicly and run commands
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
                                                                             fine_step_size=1.E-5,
@@ -456,7 +456,7 @@ class TestApex():
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
                 # iterate through target cyclicly and run commands
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.apex_location_info, [p_lat]*len(p_longs), p_longs,
                                                                             p_alts, [date]*len(p_longs),
                                                                             fine_max_steps=5,
@@ -594,7 +594,7 @@ class TestApex():
             for i,p_lat in enumerate(p_lats):
                 print (i, p_lat)
                 # iterate through target cyclicly and run commands
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.geodetic_to_ecef, np.array([p_lat]*len(p_longs)), p_longs,
                                                                             p_alts))
             for i,p_lat in enumerate(p_lats):
@@ -603,7 +603,7 @@ class TestApex():
                 x, y, z = pending.pop(0).get()
 
                 # iterate through target cyclicly and run commands
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.python_ecef_to_geodetic, x, y, z))
 
             for i,p_lat in enumerate(p_lats):
@@ -612,7 +612,7 @@ class TestApex():
                 lat2, lon2, alt2 = pending.pop(0).get()
 
                 # iterate through target cyclicly and run commands
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.apex_location_info, np.array([p_lat]*len(p_longs)), p_longs,
                                                                             p_alts, [date]*len(p_longs),
                                                                             return_geodetic=True))

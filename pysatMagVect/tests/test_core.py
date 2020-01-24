@@ -121,9 +121,14 @@ class TestUnitVectors():
 
     def test_unit_vector_step_size_sensitivity(self):
         import numpy as np
-        lats, longs, alts = gen_trace_data_fixed_alt(550., step_long=10., step_lat=5.)
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)
+
         # step size to be tried
-        steps_goal = np.arange(13)
+        steps_goal = np.arange(7)
         steps_goal = 20./2**steps_goal
 
         date = datetime.datetime(2000, 1, 1)
@@ -139,45 +144,63 @@ class TestUnitVectors():
             import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
-            for lat, lon, alt in zip(lats, longs, alts):
-                for steps in steps_goal:
-                    # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
-                    pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, [lat],
-                                                     [lon], [alt], [date], step_size=steps))
-            # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+            steps_out = []
+            for steps in steps_goal:
                 out = []
-                for steps in steps_goal:
+                for lat in p_lats:
+                    lats = [lat] * len(p_longs)
+                    # iterate through target cyclicly and run commands
+                    dview.targets = next(targets)
+                    pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, lats,
+                                                     p_longs, p_alts, [date]*len(p_longs), step_size=steps))
+                for lat in p_lats:
                     # collect output
                     zx, zy, zz, _, _, _, mx, my, mz = pending.pop(0).get()
-                    pt = [zx[0], zy[0], zz[0], mx[0], my[0], mz[0]]
-                    out.append(pt)
+                    pt = {'zx': zx,
+                          'zy': zy,
+                          'zz': zz,
+                          'mx': mx,
+                          'my': my,
+                          'mz': mz}
+                    out.append(pds.DataFrame(pt))
+                    # merge all values for single step size together
+                out = pds.concat(out)
+                steps_out.append(out)
 
-                final_pt = pds.DataFrame(out, columns = ['zx', 'zy', 'zz', 'mx', 'my', 'mz'])
-                dzx.append(np.abs(final_pt.ix[1:, 'zx'].values - final_pt.ix[:,'zx'].values[:-1]))
-                dzy.append(np.abs(final_pt.ix[1:, 'zy'].values - final_pt.ix[:,'zy'].values[:-1]))
-                dzz.append(np.abs(final_pt.ix[1:, 'zz'].values - final_pt.ix[:,'zz'].values[:-1]))
-                dmx.append(np.abs(final_pt.ix[1:, 'mx'].values - final_pt.ix[:,'mx'].values[:-1]))
-                dmy.append(np.abs(final_pt.ix[1:, 'my'].values - final_pt.ix[:,'my'].values[:-1]))
-                dmz.append(np.abs(final_pt.ix[1:, 'mz'].values - final_pt.ix[:,'mz'].values[:-1]))
+            for i in np.arange(len(steps_out) - 1):
+                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i + 1]['zx'].values))
+                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i + 1]['zy'].values))
+                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i + 1]['zz'].values))
+                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i + 1]['mx'].values))
+                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i + 1]['my'].values))
+                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i + 1]['mz'].values))
         else:
-            for lat, lon, alt in zip(lats, longs, alts):
+            steps_out = []
+            for steps in steps_goal:
                 out = []
-                for steps in steps_goal:
-
-                    zx, zy, zz, _, _, _, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef([lat],
-                                                                         [lon], [alt], [date],
+                for lat in p_lats:
+                    lats = [lat] * len(p_longs)
+                    zx, zy, zz, _, _, _, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef(lats,
+                                                                         p_longs, p_alts, [date]*len(p_longs),
                                                                          step_size=steps)
-                    pt = [zx[0], zy[0], zz[0], mx[0], my[0], mz[0]]
-                    out.append(pt)
+                    pt = {'zx': zx,
+                          'zy': zy,
+                          'zz': zz,
+                          'mx': mx,
+                          'my': my,
+                          'mz': mz}
+                    out.append(pds.DataFrame(pt))
+                # merge all values for single step size together
+                out = pds.concat(out)
+                steps_out.append(out)
 
-                final_pt = pds.DataFrame(out, columns = ['zx', 'zy', 'zz', 'mx', 'my', 'mz'])
-                dzx.append(np.abs(final_pt.ix[1:, 'zx'].values - final_pt.ix[:,'zx'].values[:-1]))
-                dzy.append(np.abs(final_pt.ix[1:, 'zy'].values - final_pt.ix[:,'zy'].values[:-1]))
-                dzz.append(np.abs(final_pt.ix[1:, 'zz'].values - final_pt.ix[:,'zz'].values[:-1]))
-                dmx.append(np.abs(final_pt.ix[1:, 'mx'].values - final_pt.ix[:,'mx'].values[:-1]))
-                dmy.append(np.abs(final_pt.ix[1:, 'my'].values - final_pt.ix[:,'my'].values[:-1]))
-                dmz.append(np.abs(final_pt.ix[1:, 'mz'].values - final_pt.ix[:,'mz'].values[:-1]))
+            for i in np.arange(len(steps_out) - 1):
+                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i+1]['zx'].values))
+                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i+1]['zy'].values))
+                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i+1]['zz'].values))
+                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i+1]['mx'].values))
+                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i+1]['my'].values))
+                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i+1]['mz'].values))
 
         dzx = pds.DataFrame(dzx)
         dzy = pds.DataFrame(dzy)
@@ -188,19 +211,12 @@ class TestUnitVectors():
 
         try:
             plt.figure()
-            yerrx = np.nanstd(np.log10(dzx), axis=0)
-            yerry = np.nanstd(np.log10(dzy), axis=0)
-            yerrz = np.nanstd(np.log10(dzz), axis=0)
-
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=0)),
-                          yerr=yerrx,
-                          label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=0)),
-                          yerr=yerry,
-                          label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=0)),
-                          yerr=yerrz,
-                          label='z')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=1)),
+                     label='x')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=1)),
+                     label='y')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=1)),
+                     label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Vector Component')
             plt.title("Change in Zonal Unit Vector (ECEF)")
@@ -210,18 +226,12 @@ class TestUnitVectors():
             plt.close()
 
             plt.figure()
-            yerrx = np.nanstd(np.log10(dmx), axis=0)
-            yerry = np.nanstd(np.log10(dmy), axis=0)
-            yerrz = np.nanstd(np.log10(dmz), axis=0)
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=0)),
-                          yerr=yerrx,
-                          label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=0)),
-                          yerr=yerry,
-                          label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=0)),
-                          yerr=yerrz,
-                          label='z')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=1)),
+                     label='x')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=1)),
+                     label='y')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=1)),
+                     label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Vector Component')
             plt.title("Change in Meridional Unit Vector (ECEF)")
@@ -233,13 +243,16 @@ class TestUnitVectors():
         except:
             pass
 
-
-
     def test_D_vector_step_size_sensitivity(self):
         import numpy as np
-        lats, longs, alts = gen_trace_data_fixed_alt(550., step_long=10., step_lat=5.)
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)
+
         # step size to be tried
-        steps_goal = np.arange(13)
+        steps_goal = np.arange(7)
         steps_goal = 20./2**steps_goal
 
         date = datetime.datetime(2000, 1, 1)
@@ -255,50 +268,66 @@ class TestUnitVectors():
             import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
-            for lat, lon, alt in zip(lats, longs, alts):
-                for steps in steps_goal:
-                    # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
-                    pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, [lat],
-                                                     [lon], [alt], [date], step_size=steps,
-                                                     dstep_size=steps, full_output=True))
-            # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+            steps_out = []
+            for steps in steps_goal:
                 out = []
-                for steps in steps_goal:
+                for lat in p_lats:
+                    lats = [lat] * len(p_longs)
+                    # iterate through target cyclicly and run commands
+                    dview.targets = next(targets)
+                    pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, lats,
+                                                     p_longs, p_alts, [date]*len(p_longs), step_size=steps,
+                                                     dstep_size=steps, full_output=True))
+                for lat in p_lats:
                     # collect output
                     zx, zy, zz, _, _, _, mx, my, mz, d = pending.pop(0).get()
-                    pt = [d['d_zon_x'][0], d['d_zon_y'][0], d['d_zon_z'][0],
-                          d['d_mer_x'][0], d['d_mer_y'][0], d['d_mer_z'][0]]
-                    out.append(pt)
+                    pt = {'zx': d['d_zon_x'],
+                          'zy': d['d_zon_y'],
+                          'zz': d['d_zon_z'],
+                          'mx': d['d_mer_x'],
+                          'my': d['d_mer_y'],
+                          'mz': d['d_mer_z']}
+                    out.append(pds.DataFrame(pt))
+                    # merge all values for single step size together
+                out = pds.concat(out)
+                steps_out.append(out)
 
-                final_pt = pds.DataFrame(out, columns = ['zx', 'zy', 'zz', 'mx', 'my', 'mz'])
-                dzx.append(np.abs(final_pt.ix[1:, 'zx'].values - final_pt.ix[:,'zx'].values[:-1]))
-                dzy.append(np.abs(final_pt.ix[1:, 'zy'].values - final_pt.ix[:,'zy'].values[:-1]))
-                dzz.append(np.abs(final_pt.ix[1:, 'zz'].values - final_pt.ix[:,'zz'].values[:-1]))
-                dmx.append(np.abs(final_pt.ix[1:, 'mx'].values - final_pt.ix[:,'mx'].values[:-1]))
-                dmy.append(np.abs(final_pt.ix[1:, 'my'].values - final_pt.ix[:,'my'].values[:-1]))
-                dmz.append(np.abs(final_pt.ix[1:, 'mz'].values - final_pt.ix[:,'mz'].values[:-1]))
+            for i in np.arange(len(steps_out) - 1):
+                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i + 1]['zx'].values))
+                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i + 1]['zy'].values))
+                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i + 1]['zz'].values))
+                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i + 1]['mx'].values))
+                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i + 1]['my'].values))
+                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i + 1]['mz'].values))
         else:
-            for lat, lon, alt in zip(lats, longs, alts):
+            steps_out = []
+            for steps in steps_goal:
                 out = []
-                for steps in steps_goal:
-
-                    zx, zy, zz, _, _, _, mx, my, mz, d = pymv.calculate_mag_drift_unit_vectors_ecef([lat],
-                                                                         [lon], [alt], [date],
+                for lat in p_lats:
+                    lats = [lat] * len(p_longs)
+                    zx, zy, zz, _, _, _, mx, my, mz, d = pymv.calculate_mag_drift_unit_vectors_ecef(lats,
+                                                                         p_longs, p_alts, [date]*len(p_longs),
                                                                          step_size=steps,
                                                                          dstep_size=steps,
                                                                          full_output=True)
-                    pt = [d['d_zon_x'][0], d['d_zon_y'][0], d['d_zon_z'][0],
-                          d['d_mer_x'][0], d['d_mer_y'][0], d['d_mer_z'][0]]
-                    out.append(pt)
+                    pt = {'zx': d['d_zon_x'],
+                          'zy': d['d_zon_y'],
+                          'zz': d['d_zon_z'],
+                          'mx': d['d_mer_x'],
+                          'my': d['d_mer_y'],
+                          'mz': d['d_mer_z']}
+                    out.append(pds.DataFrame(pt))
+                # merge all values for single step size together
+                out = pds.concat(out)
+                steps_out.append(out)
 
-                final_pt = pds.DataFrame(out, columns = ['zx', 'zy', 'zz', 'mx', 'my', 'mz'])
-                dzx.append(np.abs(final_pt.ix[1:, 'zx'].values - final_pt.ix[:,'zx'].values[:-1]))
-                dzy.append(np.abs(final_pt.ix[1:, 'zy'].values - final_pt.ix[:,'zy'].values[:-1]))
-                dzz.append(np.abs(final_pt.ix[1:, 'zz'].values - final_pt.ix[:,'zz'].values[:-1]))
-                dmx.append(np.abs(final_pt.ix[1:, 'mx'].values - final_pt.ix[:,'mx'].values[:-1]))
-                dmy.append(np.abs(final_pt.ix[1:, 'my'].values - final_pt.ix[:,'my'].values[:-1]))
-                dmz.append(np.abs(final_pt.ix[1:, 'mz'].values - final_pt.ix[:,'mz'].values[:-1]))
+            for i in np.arange(len(steps_out) - 1):
+                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i+1]['zx'].values))
+                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i+1]['zy'].values))
+                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i+1]['zz'].values))
+                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i+1]['mx'].values))
+                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i+1]['my'].values))
+                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i+1]['mz'].values))
 
         dzx = pds.DataFrame(dzx)
         dzy = pds.DataFrame(dzy)
@@ -309,21 +338,14 @@ class TestUnitVectors():
 
         try:
             plt.figure()
-            yerrx = np.nanstd(np.log10(dzx), axis=0)
-            yerry = np.nanstd(np.log10(dzy), axis=0)
-            yerrz = np.nanstd(np.log10(dzz), axis=0)
-
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=0)),
-                          yerr=yerrx,
-                          label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=0)),
-                          yerr=yerry,
-                          label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=0)),
-                          yerr=yerrz,
-                          label='z')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=1)),
+                     label='x')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=1)),
+                     label='y')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=1)),
+                     label='z')
             plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in Vector Component')
+            plt.ylabel('Change in D Vector Component')
             plt.title("Change in D Zonal Vector (ECEF)")
             plt.legend()
             plt.tight_layout()
@@ -331,21 +353,15 @@ class TestUnitVectors():
             plt.close()
 
             plt.figure()
-            yerrx = np.nanstd(np.log10(dmx), axis=0)
-            yerry = np.nanstd(np.log10(dmy), axis=0)
-            yerrz = np.nanstd(np.log10(dmz), axis=0)
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=0)),
-                          yerr=yerrx,
-                          label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=0)),
-                          yerr=yerry,
-                          label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=0)),
-                          yerr=yerrz,
-                          label='z')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=1)),
+                     label='x')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=1)),
+                     label='y')
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=1)),
+                     label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Vector Component')
-            plt.title("Change in D Meridional Vector (ECEF)")
+            plt.title("Change in Meridional D Vector (ECEF)")
             plt.legend()
             plt.tight_layout()
             plt.savefig('overall_D_mer_diff_vs_step_size.pdf' )
@@ -354,12 +370,16 @@ class TestUnitVectors():
         except:
             pass
 
-
     def test_E_vector_step_size_sensitivity(self):
         import numpy as np
-        lats, longs, alts = gen_trace_data_fixed_alt(550., step_long=10., step_lat=5.)
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]]*len(p_longs)
+
         # step size to be tried
-        steps_goal = np.arange(13)
+        steps_goal = np.arange(7)
         steps_goal = 20./2**steps_goal
 
         date = datetime.datetime(2000, 1, 1)
@@ -375,50 +395,66 @@ class TestUnitVectors():
             import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
-            for lat, lon, alt in zip(lats, longs, alts):
-                for steps in steps_goal:
-                    # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
-                    pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, [lat],
-                                                     [lon], [alt], [date], step_size=steps,
-                                                     dstep_size=steps, full_output=True))
-            # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
+            steps_out = []
+            for steps in steps_goal:
                 out = []
-                for steps in steps_goal:
+                for lat in p_lats:
+                    lats = [lat] * len(p_longs)
+                    # iterate through target cyclicly and run commands
+                    dview.targets = next(targets)
+                    pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, lats,
+                                                     p_longs, p_alts, [date]*len(p_longs), step_size=steps,
+                                                     dstep_size=steps, full_output=True))
+                for lat in p_lats:
                     # collect output
                     zx, zy, zz, _, _, _, mx, my, mz, d = pending.pop(0).get()
-                    pt = [d['e_zon_x'][0], d['e_zon_y'][0], d['e_zon_z'][0],
-                          d['e_mer_x'][0], d['e_mer_y'][0], d['e_mer_z'][0]]
-                    out.append(pt)
+                    pt = {'zx': d['e_zon_x'],
+                          'zy': d['e_zon_y'],
+                          'zz': d['e_zon_z'],
+                          'mx': d['e_mer_x'],
+                          'my': d['e_mer_y'],
+                          'mz': d['e_mer_z']}
+                    out.append(pds.DataFrame(pt))
+                    # merge all values for single step size together
+                out = pds.concat(out)
+                steps_out.append(out)
 
-                final_pt = pds.DataFrame(out, columns = ['zx', 'zy', 'zz', 'mx', 'my', 'mz'])
-                dzx.append(np.abs(final_pt.ix[1:, 'zx'].values - final_pt.ix[:,'zx'].values[:-1]))
-                dzy.append(np.abs(final_pt.ix[1:, 'zy'].values - final_pt.ix[:,'zy'].values[:-1]))
-                dzz.append(np.abs(final_pt.ix[1:, 'zz'].values - final_pt.ix[:,'zz'].values[:-1]))
-                dmx.append(np.abs(final_pt.ix[1:, 'mx'].values - final_pt.ix[:,'mx'].values[:-1]))
-                dmy.append(np.abs(final_pt.ix[1:, 'my'].values - final_pt.ix[:,'my'].values[:-1]))
-                dmz.append(np.abs(final_pt.ix[1:, 'mz'].values - final_pt.ix[:,'mz'].values[:-1]))
+            for i in np.arange(len(steps_out) - 1):
+                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i + 1]['zx'].values))
+                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i + 1]['zy'].values))
+                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i + 1]['zz'].values))
+                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i + 1]['mx'].values))
+                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i + 1]['my'].values))
+                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i + 1]['mz'].values))
         else:
-            for lat, lon, alt in zip(lats, longs, alts):
+            steps_out = []
+            for steps in steps_goal:
                 out = []
-                for steps in steps_goal:
-
-                    zx, zy, zz, _, _, _, mx, my, mz, d = pymv.calculate_mag_drift_unit_vectors_ecef([lat],
-                                                                         [lon], [alt], [date],
+                for lat in p_lats:
+                    lats = [lat] * len(p_longs)
+                    zx, zy, zz, _, _, _, mx, my, mz, d = pymv.calculate_mag_drift_unit_vectors_ecef(lats,
+                                                                         p_longs, p_alts, [date]*len(p_longs),
                                                                          step_size=steps,
                                                                          dstep_size=steps,
                                                                          full_output=True)
-                    pt = [d['e_zon_x'][0], d['e_zon_y'][0], d['e_zon_z'][0],
-                          d['e_mer_x'][0], d['e_mer_y'][0], d['e_mer_z'][0]]
-                    out.append(pt)
+                    pt = {'zx': d['e_zon_x'],
+                          'zy': d['e_zon_y'],
+                          'zz': d['e_zon_z'],
+                          'mx': d['e_mer_x'],
+                          'my': d['e_mer_y'],
+                          'mz': d['e_mer_z']}
+                    out.append(pds.DataFrame(pt))
+                # merge all values for single step size together
+                out = pds.concat(out)
+                steps_out.append(out)
 
-                final_pt = pds.DataFrame(out, columns = ['zx', 'zy', 'zz', 'mx', 'my', 'mz'])
-                dzx.append(np.abs(final_pt.ix[1:, 'zx'].values - final_pt.ix[:,'zx'].values[:-1]))
-                dzy.append(np.abs(final_pt.ix[1:, 'zy'].values - final_pt.ix[:,'zy'].values[:-1]))
-                dzz.append(np.abs(final_pt.ix[1:, 'zz'].values - final_pt.ix[:,'zz'].values[:-1]))
-                dmx.append(np.abs(final_pt.ix[1:, 'mx'].values - final_pt.ix[:,'mx'].values[:-1]))
-                dmy.append(np.abs(final_pt.ix[1:, 'my'].values - final_pt.ix[:,'my'].values[:-1]))
-                dmz.append(np.abs(final_pt.ix[1:, 'mz'].values - final_pt.ix[:,'mz'].values[:-1]))
+            for i in np.arange(len(steps_out) - 1):
+                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i+1]['zx'].values))
+                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i+1]['zy'].values))
+                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i+1]['zz'].values))
+                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i+1]['mx'].values))
+                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i+1]['my'].values))
+                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i+1]['mz'].values))
 
         dzx = pds.DataFrame(dzx)
         dzy = pds.DataFrame(dzy)
@@ -429,21 +465,14 @@ class TestUnitVectors():
 
         try:
             plt.figure()
-            yerrx = np.nanstd(np.log10(dzx), axis=0)
-            yerry = np.nanstd(np.log10(dzy), axis=0)
-            yerrz = np.nanstd(np.log10(dzz), axis=0)
-
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=0)),
-                          yerr=yerrx,
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=1)),
                           label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=0)),
-                          yerr=yerry,
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=1)),
                           label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=0)),
-                          yerr=yerrz,
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=1)),
                           label='z')
             plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in Vector Component')
+            plt.ylabel('Change in E Vector Component')
             plt.title("Change in E Zonal Vector (ECEF)")
             plt.legend()
             plt.tight_layout()
@@ -451,21 +480,15 @@ class TestUnitVectors():
             plt.close()
 
             plt.figure()
-            yerrx = np.nanstd(np.log10(dmx), axis=0)
-            yerry = np.nanstd(np.log10(dmy), axis=0)
-            yerrz = np.nanstd(np.log10(dmz), axis=0)
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=0)),
-                          yerr=yerrx,
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=1)),
                           label='x')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=0)),
-                          yerr=yerry,
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=1)),
                           label='y')
-            plt.errorbar(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=0)),
-                          yerr=yerrz,
+            plt.plot(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=1)),
                           label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Vector Component')
-            plt.title("Change in E Meridional Vector (ECEF)")
+            plt.title("Change in Meridional E Vector (ECEF)")
             plt.legend()
             plt.tight_layout()
             plt.savefig('overall_E_mer_diff_vs_step_size.pdf' )
@@ -473,52 +496,6 @@ class TestUnitVectors():
 
         except:
             pass
-
-
-
-#     def test_geomag_drift_scalars_accuracy_vs_settings(self):
-#         import matplotlib.pyplot as plt
-#         # from mpl_toolkits.mplot3d import Axes3D
-#         import os
-#         on_travis = os.environ.get('ONTRAVIS') == 'True'
-#
-#         delta = 10.
-#         p_lats = np.arange(-50., 50.+delta, delta)
-#         p_longs = np.arange(0.,360.,12.)
-#         p_alt = 550.
-#
-#         step_sizes = [.01, 0.1, 1., 2., 4., 8., 16., 32., 64., 128.]
-#
-#         north_zonal = np.zeros((len(p_lats), len(p_longs), len(step_sizes)))
-#         north_mer = north_zonal.copy()
-#         south_zonal = north_zonal.copy()
-#         south_mer = north_zonal.copy()
-#         eq_zonal = north_zonal.copy()
-#         eq_mer = north_zonal.copy()
-#
-#         if not on_travis:
-#             fig = plt.figure()
-#             ax = fig.add_subplot(111)
-#
-#         date = datetime.datetime(2000,1,1)
-#         for i,p_lat in enumerate(p_lats):
-#             for j, p_long in enumerate(p_longs):
-#                 for k, step_size in enumerate(step_sizes):
-#                     # print (i,j, date)
-#                     # print (p_lat, p_long, p_alt)
-#                     scalars = pymv.scalars_for_mapping_ion_drifts([p_lat], [p_long], [p_alt], [date], step_size=step_size)
-#                     north_zonal[i,j,k] = scalars['north_zonal_drifts_scalar'][0]
-#                     north_mer[i,j,k] = scalars['north_mer_drifts_scalar'][0]
-#                     south_zonal[i,j,k] = scalars['south_zonal_drifts_scalar'][0]
-#                     south_mer[i,j,k] = scalars['south_mer_drifts_scalar'][0]
-#                     eq_zonal[i,j,k] = scalars['equator_zonal_drifts_scalar'][0]
-#                     eq_mer[i,j,k] = scalars['equator_mer_drifts_scalar'][0]
-#
-#         n_z_diff = north_zonal[:,:,1:] - north_zonal[:,:,:-1]
-#         n_z_diff.mean(axis=0).mean(axis=0)
-#
-
-
 
     def test_unit_vector_component_plots(self):
         import matplotlib.pyplot as plt
@@ -559,7 +536,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs), full_output=True,
                                                                         include_debug=True))
@@ -1241,7 +1218,6 @@ class TestUnitVectors():
             plt.tight_layout(); plt.savefig('ed_dot_mer.pdf')
             plt.close()
 
-
             fig = plt.figure()
             plt.imshow(np.log10(np.abs(grad_zon)), origin='lower')
             plt.colorbar()
@@ -1316,10 +1292,6 @@ class TestUnitVectors():
         assert np.all(np.abs(tol_mer) <= 1.E-4)
         assert np.all(np.abs(grad_zon) <= 1.E-4)
 
-
-
-
-
     def test_unit_vector_component_plots_edge_steps(self):
         import matplotlib.pyplot as plt
 
@@ -1347,7 +1319,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs), full_output=True,
                                                                         include_debug=True, edge_steps=5))
@@ -1440,9 +1412,6 @@ class TestUnitVectors():
             plt.tight_layout(); plt.savefig('d_diff_zon_norm_edegesteps.pdf')
             plt.close()
 
-
-
-
         except:
             pass
 
@@ -1475,7 +1444,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
                                                                         step_size=1.))
@@ -1739,7 +1708,7 @@ class TestUnitVectors():
                 print (i, p_lat)
                 # iterate through target cyclicly and run commands
 
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 # inputs are ECEF locations
                 in_x, in_y, in_z = pymv.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
                 pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, dates,
@@ -1758,7 +1727,7 @@ class TestUnitVectors():
             # this provides an increase in the spatial difference that results
             # from innacurate movement between field lines from step_along_mag_unit_vector
             for i,p_lat in enumerate(p_lats):
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])
                 pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates,
@@ -1948,7 +1917,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs)))
             for i,p_lat in enumerate(p_lats):
@@ -2178,7 +2147,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.heritage_scalars_for_mapping_ion_drifts,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs)))
             for i,p_lat in enumerate(p_lats):
@@ -2373,8 +2342,6 @@ class TestUnitVectors():
         except:
             pass
 
-
-
     def test_unit_vector_and_field_line_plots(self):
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
@@ -2408,35 +2375,36 @@ class TestUnitVectors():
                 trace = pds.DataFrame(trace, columns=['x','y','z'])
                 # plot field-line
                 if not on_travis:
-                    ax.plot(trace['x'],trace['y'],trace['z'] , 'b')
+                    ax.plot(trace['x'], trace['y'], trace['z'] , 'b')
                     plt.xlabel('X')
                     plt.ylabel('Y')
                     ax.set_zlabel('Z')
                 # clear stored data
                 self.inst.data = pds.DataFrame()
                 # downselect, reduce number of points
-                trace = trace.ix[::1000,:]
+                trace = trace.loc[::1000,:]
 
                 # compute magnetic field vectors
                 # need to provide alt, latitude, and longitude in geodetic coords
                 latitude, longitude, altitude = pymv.ecef_to_geodetic(trace['x'], trace['y'], trace['z'])
-                self.inst[:,'latitude'] = latitude
-                self.inst[:,'longitude'] = longitude
-                self.inst[:,'altitude'] = altitude
+                self.inst[:, 'latitude'] = latitude
+                self.inst[:, 'longitude'] = longitude
+                self.inst[:, 'altitude'] = altitude
                 # store values for plotting locations for vectors
-                self.inst[:,'x'] = trace['x'].values
-                self.inst[:,'y'] = trace['y'].values
-                self.inst[:,'z'] = trace['z'].values
+                self.inst[:, 'x'] = trace['x'].values
+                self.inst[:, 'y'] = trace['y'].values
+                self.inst[:, 'z'] = trace['z'].values
                 self.inst.data = self.inst[self.inst['altitude'] > 250.]
 
                 # also need to provide transformation from ECEF to S/C
                 # going to leave that a null transformation so we can plot in ECF
-                self.inst[:,'sc_xhat_x'], self.inst[:,'sc_xhat_y'], self.inst[:,'sc_xhat_z'] = 1., 0., 0.
-                self.inst[:,'sc_yhat_x'], self.inst[:,'sc_yhat_y'], self.inst[:,'sc_yhat_z'] = 0., 1., 0.
-                self.inst[:,'sc_zhat_x'], self.inst[:,'sc_zhat_y'], self.inst[:,'sc_zhat_z'] = 0., 0., 1.
-                self.inst.data.index = pysat.utils.time.create_date_range(pysat.datetime(2000,1,1),
-                                                                    pysat.datetime(2000,1,1)+pds.DateOffset(seconds=len(self.inst.data)-1),
-                                                                    freq='S')
+                self.inst[:, 'sc_xhat_x'], self.inst[:, 'sc_xhat_y'], self.inst[:, 'sc_xhat_z'] = 1., 0., 0.
+                self.inst[:, 'sc_yhat_x'], self.inst[:, 'sc_yhat_y'], self.inst[:, 'sc_yhat_z'] = 0., 1., 0.
+                self.inst[:, 'sc_zhat_x'], self.inst[:, 'sc_zhat_y'], self.inst[:, 'sc_zhat_z'] = 0., 0., 1.
+                self.inst.data.index = pysat.utils.time.create_date_range(pysat.datetime(2000, 1, 1),
+                                                                          pysat.datetime(2000, 1, 1) +
+                                                                          pds.DateOffset(seconds=len(self.inst.data)-1),
+                                                                          freq='S')
                 pymv.satellite.add_mag_drift_unit_vectors(self.inst)
 
                 #if i % 2 == 0:
@@ -2470,9 +2438,9 @@ class TestUnitVectors():
                 assert np.all(np.sqrt(self.inst['unit_fa_x']**2 + self.inst['unit_fa_y']**2 + self.inst['unit_fa_z']**2) > 0.999999)
                 assert np.all(np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2) > 0.999999)
                 # confirm vectors are mutually orthogonal
-                dot1 =  self.inst['unit_zon_x']*self.inst['unit_fa_x'] + self.inst['unit_zon_y']*self.inst['unit_fa_y']  + self.inst['unit_zon_z']*self.inst['unit_fa_z']
-                dot2 =  self.inst['unit_zon_x']*self.inst['unit_mer_x'] + self.inst['unit_zon_y']*self.inst['unit_mer_y']  + self.inst['unit_zon_z']*self.inst['unit_mer_z']
-                dot3 =  self.inst['unit_fa_x']*self.inst['unit_mer_x'] + self.inst['unit_fa_y']*self.inst['unit_mer_y']  + self.inst['unit_fa_z']*self.inst['unit_mer_z']
+                dot1 = self.inst['unit_zon_x']*self.inst['unit_fa_x'] + self.inst['unit_zon_y']*self.inst['unit_fa_y']  + self.inst['unit_zon_z']*self.inst['unit_fa_z']
+                dot2 = self.inst['unit_zon_x']*self.inst['unit_mer_x'] + self.inst['unit_zon_y']*self.inst['unit_mer_y']  + self.inst['unit_zon_z']*self.inst['unit_mer_z']
+                dot3 = self.inst['unit_fa_x']*self.inst['unit_mer_x'] + self.inst['unit_fa_y']*self.inst['unit_mer_y']  + self.inst['unit_fa_z']*self.inst['unit_mer_z']
                 assert np.all(np.abs(dot1) < 1.E-6)
                 assert np.all(np.abs(dot2) < 1.E-6)
                 assert np.all(np.abs(dot3) < 1.E-6)
@@ -2484,13 +2452,13 @@ class TestUnitVectors():
                 nx, ny, nz = pymv.enu_to_ecef_vector(zeros, ones, zeros, self.inst['latitude'], self.inst['longitude'])
                 ux, uy, uz = pymv.enu_to_ecef_vector(zeros, zeros, ones, self.inst['latitude'], self.inst['longitude'])
 
-                dot1 =  self.inst['unit_zon_x']*ex + self.inst['unit_zon_y']*ey  + self.inst['unit_zon_z']*ez
+                dot1 = self.inst['unit_zon_x']*ex + self.inst['unit_zon_y']*ey  + self.inst['unit_zon_z']*ez
                 assert np.all(dot1 > 0.)
 
-                dot1 =  self.inst['unit_fa_x']*nx + self.inst['unit_fa_y']*ny  + self.inst['unit_fa_z']*nz
+                dot1 = self.inst['unit_fa_x']*nx + self.inst['unit_fa_y']*ny  + self.inst['unit_fa_z']*nz
                 assert np.all(dot1 > 0.)
 
-                dot1 =  self.inst['unit_mer_x']*ux + self.inst['unit_mer_y']*uy  + self.inst['unit_mer_z']*uz
+                dot1 = self.inst['unit_mer_x']*ux + self.inst['unit_mer_y']*uy  + self.inst['unit_mer_z']*uz
                 assert np.all(dot1 > 0.)
 
 

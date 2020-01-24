@@ -165,7 +165,7 @@ class TestTracing():
             for x, y, z in zip(ecf_x, ecf_y, ecf_z):
                 for steps, max_steps in zip(steps_goal, max_steps_goal):
                     # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
+                    dview.targets = next(targets)
                     pending.append(dview.apply_async(pymv.field_line_trace, np.array([x,y,z]), date, 1., 0.,
                                                     step_size=steps,
                                                     max_steps=max_steps))
@@ -413,7 +413,7 @@ class TestTransformations():
                                                   alts)
         geo_lat, geo_long, geo_alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
 
-        ecfs_x,ecfs_y,ecfs_z = pymv.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
+        ecfs_x, ecfs_y, ecfs_z = pymv.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
 
         lat, elong, alt = pymv.ecef_to_geodetic(ecfs_x, ecfs_y, ecfs_z)
 
@@ -430,7 +430,6 @@ class TestTransformations():
         assert np.all(np.abs(ecf_x-ecfs_x) < 1.E-5)
         assert np.all(np.abs(ecf_y-ecfs_y) < 1.E-5)
         assert np.all(np.abs(ecf_z-ecfs_z) < 1.E-5)
-
 
     def test_geocentric_to_ecef_to_geocentric(self):
 
@@ -451,7 +450,6 @@ class TestTransformations():
         assert np.all(np.abs(d_long) < 1.E-5)
         assert np.all(np.abs(d_alt) < 1.E-5)
 
-
     def test_ecef_geodetic_diff_plots(self):
         import matplotlib.pyplot as plt
         import os
@@ -463,7 +461,7 @@ class TestTransformations():
         # recasting alts into a more convenient form for later calculation
         p_alts = [p_alts[0]]*len(p_longs)
         # set the date
-        date = datetime.datetime(2000,1,1)
+        date = datetime.datetime(2000, 1, 1)
         # memory for results
         apex_x = np.zeros((len(p_lats), len(p_longs)+1))
         apex_y = np.zeros((len(p_lats), len(p_longs)+1))
