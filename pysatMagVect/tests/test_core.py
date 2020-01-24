@@ -142,7 +142,7 @@ class TestUnitVectors():
             for lat, lon, alt in zip(lats, longs, alts):
                 for steps in steps_goal:
                     # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
+                    dview.targets = next(targets)
                     pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, [lat],
                                                      [lon], [alt], [date], step_size=steps))
             # for x, y, z in zip(ecf_x, ecf_y, ecf_z):
@@ -258,7 +258,7 @@ class TestUnitVectors():
             for lat, lon, alt in zip(lats, longs, alts):
                 for steps in steps_goal:
                     # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
+                    dview.targets = next(targets)
                     pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, [lat],
                                                      [lon], [alt], [date], step_size=steps,
                                                      dstep_size=steps, full_output=True))
@@ -378,7 +378,7 @@ class TestUnitVectors():
             for lat, lon, alt in zip(lats, longs, alts):
                 for steps in steps_goal:
                     # iterate through target cyclicly and run commands
-                    dview.targets = targets.next()
+                    dview.targets = next(targets)
                     pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, [lat],
                                                      [lon], [alt], [date], step_size=steps,
                                                      dstep_size=steps, full_output=True))
@@ -559,7 +559,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs), full_output=True,
                                                                         include_debug=True))
@@ -1347,7 +1347,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs), full_output=True,
                                                                         include_debug=True, edge_steps=5))
@@ -1475,7 +1475,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
                                                                         step_size=1.))
@@ -1739,7 +1739,7 @@ class TestUnitVectors():
                 print (i, p_lat)
                 # iterate through target cyclicly and run commands
 
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 # inputs are ECEF locations
                 in_x, in_y, in_z = pymv.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
                 pending.append(dview.apply_async(pymv.step_along_mag_unit_vector, in_x, in_y, in_z, dates,
@@ -1758,7 +1758,7 @@ class TestUnitVectors():
             # this provides an increase in the spatial difference that results
             # from innacurate movement between field lines from step_along_mag_unit_vector
             for i,p_lat in enumerate(p_lats):
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = pymv.ecef_to_geodetic(x[i,:-1], y[i,:-1], z[i,:-1])
                 pending.append(dview.apply_async(pymv.apex_location_info, tlat, tlon, talt, dates,
@@ -1948,7 +1948,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs)))
             for i,p_lat in enumerate(p_lats):
@@ -2178,7 +2178,7 @@ class TestUnitVectors():
             for i,p_lat in enumerate(p_lats):
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
-                dview.targets = targets.next()
+                dview.targets = next(targets)
                 pending.append(dview.apply_async(pymv.heritage_scalars_for_mapping_ion_drifts,[p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs)))
             for i,p_lat in enumerate(p_lats):
