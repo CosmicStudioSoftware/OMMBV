@@ -1,6 +1,7 @@
 import pysatMagVect as pymv
 import pysat
 
+
 class TestSatellite():
 
     def setup(self):
@@ -8,8 +9,8 @@ class TestSatellite():
         self.inst = pysat.Instrument('pysat', 'testing', sat_id='32')
         return
 
-
     def test_application_add_unit_vectors(self):
+        """Check application of unit_vectors to satellite data"""
         self.inst.load(2010, 365)
         self.inst['altitude'] = 550.
         print(self.inst)
@@ -20,8 +21,8 @@ class TestSatellite():
         for item in items:
             assert item in self.inst.data
 
-
     def test_application_add_mag_drifts(self):
+        """Check application of unit vectors to drift measurements"""
         self.inst.load(2010, 365)
         self.inst['altitude'] = 550.
         # create false orientation signal
@@ -61,6 +62,6 @@ class TestSatellite():
         pymv.satellite.add_footpoint_and_equatorial_drifts(self.inst)
         items = ['equ_mer_drifts_scalar', 'equ_zon_drifts_scalar',
                  'north_footpoint_mer_drifts_scalar', 'north_footpoint_zon_drifts_scalar',
-                  'south_footpoint_mer_drifts_scalar', 'south_footpoint_zon_drifts_scalar']
+                 'south_footpoint_mer_drifts_scalar', 'south_footpoint_zon_drifts_scalar']
         for item in items:
             assert item in self.inst.data
