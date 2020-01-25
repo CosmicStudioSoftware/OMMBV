@@ -1,7 +1,5 @@
-from nose.tools import assert_raises, raises
-import nose.tools
-from nose.tools import assert_almost_equals as asseq
-
+import itertools
+import os
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,12 +26,25 @@ else:
     dview = None
 
 
-
 # Methods to generate data sets used by testing routines.
 def gen_data_fixed_alt(alt):
-    """Generate data between -90 and 90 degrees latitude, almost."""
-    import itertools
-    import os
+    """Generate grid data between -90 and 90 degrees latitude, almost.
+
+    Parameters
+    ----------
+    alt : float
+        Fixed altitude to use over longitude latitude grid
+
+    Returns
+    -------
+    np.array, np.array, np.array
+        Lats, longs, and altitudes.
+
+    Notes
+    -----
+      Maximum latitude is 89.999 degrees
+
+    """
     # generate test data set
     on_travis = os.environ.get('ONTRAVIS') == 'True'
     if on_travis:
@@ -50,15 +61,31 @@ def gen_data_fixed_alt(alt):
     alt_dim = alt
     locs = np.array(list(itertools.product(long_dim, lat_dim)))
     # pull out lats and longs
-    lats = locs[:,1]
-    longs = locs[:,0]
+    lats = locs[:, 1]
+    longs = locs[:, 0]
     alts = longs*0 + alt_dim
     return lats, longs, alts
 
+
 def gen_trace_data_fixed_alt(alt, step_long=80., step_lat=25.):
-    """Generate data between -50 and 50 degrees latitude."""
-    import itertools
-    import os
+    """Generate grid data between -50 and 50 degrees latitude.
+
+    Parameters
+    ----------
+    alt : float
+        Fixed altitude to use over longitude latitude grid
+    step_long : float (80. degrees)
+        Step size used when generating longitudes
+    step_lat : float (25. degrees)
+        Step size used when generating latitudes
+
+    Returns
+    -------
+    np.array, np.array, np.array
+        Lats, longs, and altitudes.
+
+
+    """
     # generate test data set
     on_travis = os.environ.get('ONTRAVIS') == 'True'
     if on_travis:
@@ -72,20 +99,30 @@ def gen_trace_data_fixed_alt(alt, step_long=80., step_lat=25.):
     alt_dim = alt
     locs = np.array(list(itertools.product(long_dim, lat_dim)))
     # pull out lats and longs
-    lats = locs[:,1]
-    longs = locs[:,0]
+    lats = locs[:, 1]
+    longs = locs[:, 0]
     alts = longs*0 + alt_dim
     return lats, longs, alts
 
+
 def gen_plot_grid_fixed_alt(alt):
     """Generate dimensional data between -50 and 50 degrees latitude.
+
+    Parameters
+    ----------
+    alt : float
+        Fixed altitude to use over longitude latitude grid
+
+    Returns
+    -------
+    np.array, np.array, np.array
+        Lats, longs, and altitudes.
 
     Note
     ----
     Output is different than routines above.
 
     """
-    import itertools
     import os
     # generate test data set
     on_travis = os.environ.get('ONTRAVIS') == 'True'
@@ -101,11 +138,7 @@ def gen_plot_grid_fixed_alt(alt):
     return lat_dim, long_dim, alt_dim
 
 
-
-
 ################## UNIT VECTOR TESTS ###############################
-
-
 class TestUnitVectors():
 
     def __init__(self):
@@ -118,9 +151,8 @@ class TestUnitVectors():
 
         return
 
-
     def test_unit_vector_step_size_sensitivity(self):
-        import numpy as np
+        """Test sensitivity of unit vectors as step_size decreased"""
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
         # data returned are the locations along each direction
         # the full range of points obtained by iterating over all
@@ -141,7 +173,6 @@ class TestUnitVectors():
 
         # set up multi
         if self.dc is not None:
-            import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
             steps_out = []
@@ -181,8 +212,9 @@ class TestUnitVectors():
                 for lat in p_lats:
                     lats = [lat] * len(p_longs)
                     zx, zy, zz, _, _, _, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef(lats,
-                                                                         p_longs, p_alts, [date]*len(p_longs),
-                                                                         step_size=steps)
+                                                                                                 p_longs, p_alts,
+                                                                                                 [date]*len(p_longs),
+                                                                                                 step_size=steps)
                     pt = {'zx': zx,
                           'zy': zy,
                           'zz': zz,
@@ -244,7 +276,7 @@ class TestUnitVectors():
             pass
 
     def test_D_vector_step_size_sensitivity(self):
-        import numpy as np
+        """Test sensitivity of D vectors as step_size decreased"""
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
         # data returned are the locations along each direction
         # the full range of points obtained by iterating over all
@@ -265,7 +297,6 @@ class TestUnitVectors():
 
         # set up multi
         if self.dc is not None:
-            import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
             steps_out = []
@@ -306,10 +337,11 @@ class TestUnitVectors():
                 for lat in p_lats:
                     lats = [lat] * len(p_longs)
                     zx, zy, zz, _, _, _, mx, my, mz, d = pymv.calculate_mag_drift_unit_vectors_ecef(lats,
-                                                                         p_longs, p_alts, [date]*len(p_longs),
-                                                                         step_size=steps,
-                                                                         dstep_size=steps,
-                                                                         full_output=True)
+                                                                                                    p_longs, p_alts,
+                                                                                                    [date]*len(p_longs),
+                                                                                                     step_size=steps,
+                                                                                                     dstep_size=steps,
+                                                                                                     full_output=True)
                     pt = {'zx': d['d_zon_x'],
                           'zy': d['d_zon_y'],
                           'zz': d['d_zon_z'],
@@ -349,7 +381,7 @@ class TestUnitVectors():
             plt.title("Change in D Zonal Vector (ECEF)")
             plt.legend()
             plt.tight_layout()
-            plt.savefig('overall_D_zonal_diff_vs_step_size.pdf' )
+            plt.savefig('overall_D_zonal_diff_vs_step_size.pdf')
             plt.close()
 
             plt.figure()
@@ -364,14 +396,14 @@ class TestUnitVectors():
             plt.title("Change in Meridional D Vector (ECEF)")
             plt.legend()
             plt.tight_layout()
-            plt.savefig('overall_D_mer_diff_vs_step_size.pdf' )
+            plt.savefig('overall_D_mer_diff_vs_step_size.pdf')
             plt.close()
 
         except:
             pass
 
     def test_E_vector_step_size_sensitivity(self):
-        import numpy as np
+        """Test sensitivity of E vectors as step_size decreased"""
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
         # data returned are the locations along each direction
         # the full range of points obtained by iterating over all
@@ -392,7 +424,6 @@ class TestUnitVectors():
 
         # set up multi
         if self.dc is not None:
-            import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
             steps_out = []
@@ -433,10 +464,11 @@ class TestUnitVectors():
                 for lat in p_lats:
                     lats = [lat] * len(p_longs)
                     zx, zy, zz, _, _, _, mx, my, mz, d = pymv.calculate_mag_drift_unit_vectors_ecef(lats,
-                                                                         p_longs, p_alts, [date]*len(p_longs),
-                                                                         step_size=steps,
-                                                                         dstep_size=steps,
-                                                                         full_output=True)
+                                                                                                    p_longs, p_alts,
+                                                                                                    [date]*len(p_longs),
+                                                                                                    step_size=steps,
+                                                                                                    dstep_size=steps,
+                                                                                                    full_output=True)
                     pt = {'zx': d['e_zon_x'],
                           'zy': d['e_zon_y'],
                           'zz': d['e_zon_z'],
@@ -466,11 +498,11 @@ class TestUnitVectors():
         try:
             plt.figure()
             plt.plot(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=1)),
-                          label='x')
+                     label='x')
             plt.plot(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=1)),
-                          label='y')
+                     label='y')
             plt.plot(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=1)),
-                          label='z')
+                     label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in E Vector Component')
             plt.title("Change in E Zonal Vector (ECEF)")
@@ -481,11 +513,11 @@ class TestUnitVectors():
 
             plt.figure()
             plt.plot(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=1)),
-                          label='x')
+                     label='x')
             plt.plot(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=1)),
-                          label='y')
+                     label='y')
             plt.plot(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=1)),
-                          label='z')
+                     label='z')
             plt.xlabel('Log Step Size (km)')
             plt.ylabel('Change in Vector Component')
             plt.title("Change in Meridional E Vector (ECEF)")
@@ -498,6 +530,9 @@ class TestUnitVectors():
             pass
 
     def test_unit_vector_component_plots(self):
+        """Ensure unit vector generation satisfies tolerance and gradient goals.
+
+        Produces variety of plots."""
         import matplotlib.pyplot as plt
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
@@ -527,10 +562,9 @@ class TestUnitVectors():
         e_mx = d_zvx.copy(); e_my = d_zvx.copy(); e_mz = d_zvx.copy()
         e_fax = d_zvx.copy(); e_fay = d_zvx.copy(); e_faz = d_zvx.copy()
 
-        date = datetime.datetime(2000,1,1)
+        date = datetime.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
-            import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
             for i,p_lat in enumerate(p_lats):
@@ -544,9 +578,12 @@ class TestUnitVectors():
                 print ('collecting ', i, p_lat)
                     # collect output
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pending.pop(0).get()
-                zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
-                bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
-                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                [p_lat]*len(p_longs), p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                             [p_lat]*len(p_longs), p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [
+                                                                             p_lat]*len(p_longs), p_longs)
 
                 # pull out info about the vector generation
                 grad_zon[i,:-1], grad_mer[i,:-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
@@ -558,21 +595,28 @@ class TestUnitVectors():
                 dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i,:-1], d_zvy[i,:-1], d_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
+                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                                                                                      [p_lat]*len(p_longs), p_longs)
                 dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i,:-1], d2_zvy[i,:-1], d2_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
-                d_fax[i,:-1], d_fay[i,:-1], d_faz[i,:-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz, [p_lat]*len(p_longs), p_longs)
-                d_mx[i,:-1], d_my[i,:-1], d_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
+                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                                                                                         [p_lat]*len(p_longs), p_longs)
+                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz,
+                                                                                      [p_lat]*len(p_longs), p_longs)
+                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                                                                                   [p_lat]*len(p_longs), p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i,:-1], d2_my[i,:-1], d2_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
-
+                d2_mx[i, :-1], d2_my[i,:-1], d2_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                                                                                     [p_lat]*len(p_longs), p_longs)
 
                 ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
                 efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
                 emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
-                e_zvx[i,:-1], e_zvy[i,:-1], e_zvz[i,:-1] = pymv.ecef_to_enu_vector(ezx, ezy, ezz, [p_lat]*len(p_longs), p_longs)
-                e_fax[i,:-1], e_fay[i,:-1], e_faz[i,:-1] = pymv.ecef_to_enu_vector(efx, efy, efz, [p_lat]*len(p_longs), p_longs)
-                e_mx[i,:-1], e_my[i,:-1], e_mz[i,:-1] = pymv.ecef_to_enu_vector(emx, emy, emz, [p_lat]*len(p_longs), p_longs)
+                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = pymv.ecef_to_enu_vector(ezx, ezy, ezz,
+                                                        `                             [p_lat]*len(p_longs), p_longs)
+                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = pymv.ecef_to_enu_vector(efx, efy, efz,
+                                                                  `                   [p_lat]*len(p_longs), p_longs)
+                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = pymv.ecef_to_enu_vector(emx, emy, emz,
+                                                                                   [p_lat]*len(p_longs), p_longs)
 
         else:
             for i,p_lat in enumerate(p_lats):
@@ -581,34 +625,53 @@ class TestUnitVectors():
                                                                                         p_alts, [date]*len(p_longs),
                                                                                         full_output=True,
                                                                                         include_debug=True)
-                zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
-                bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
-                mx[i,:-1], my[i,:-1], mz[i,:-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                [p_lat]*len(p_longs), p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                             [p_lat]*len(p_longs), p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz,
+                                                                             [p_lat]*len(p_longs), p_longs)
                 # pull out info about the vector generation
-                grad_zon[i,:-1], grad_mer[i,:-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
-                tol_zon[i,:-1], tol_mer[i,:-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
-                init_type[i,:-1] = infod['vector_seed_type']
-                num_loops[i,:-1] = infod['loops']
+                grad_zon[i, :-1], grad_mer[i, :-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
+                tol_zon[i, :-1], tol_mer[i, :-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
+                init_type[i, :-1] = infod['vector_seed_type']
+                num_loops[i, :-1] = infod['loops']
 
                 # collect outputs on E and D vectors
                 dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i,:-1], d_zvy[i,:-1], d_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
+                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                                                                                      [p_lat]*len(p_longs),
+                                                                                      p_longs)
                 dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i,:-1], d2_zvy[i,:-1], d2_zvz[i,:-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz, [p_lat]*len(p_longs), p_longs)
-                d_fax[i,:-1], d_fay[i,:-1], d_faz[i,:-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz, [p_lat]*len(p_longs), p_longs)
-                d_mx[i,:-1], d_my[i,:-1], d_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
+                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                                                                                         [p_lat]*len(p_longs),
+                                                                                         p_longs)
+                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz,
+                                                                                      [p_lat]*len(p_longs),
+                                                                                      p_longs)
+                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                                                                                   [p_lat]*len(p_longs),
+                                                                                   p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i,:-1], d2_my[i,:-1], d2_mz[i,:-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz, [p_lat]*len(p_longs), p_longs)
+                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                                                                                      [p_lat]*len(p_longs),
+                                                                                      p_longs)
 
 
                 ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
                 efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
                 emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
-                e_zvx[i,:-1], e_zvy[i,:-1], e_zvz[i,:-1] = pymv.ecef_to_enu_vector(ezx, ezy, ezz, [p_lat]*len(p_longs), p_longs)
-                e_fax[i,:-1], e_fay[i,:-1], e_faz[i,:-1] = pymv.ecef_to_enu_vector(efx, efy, efz, [p_lat]*len(p_longs), p_longs)
-                e_mx[i,:-1], e_my[i,:-1], e_mz[i,:-1] = pymv.ecef_to_enu_vector(emx, emy, emz, [p_lat]*len(p_longs), p_longs)
+                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = pymv.ecef_to_enu_vector(ezx, ezy, ezz,
+                                                                                      [p_lat]*len(p_longs),
+                                                                                      p_longs)
+                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = pymv.ecef_to_enu_vector(efx, efy, efz,
+                                                                                      [p_lat]*len(p_longs),
+                                                                                      p_longs)
+                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = pymv.ecef_to_enu_vector(emx, emy, emz,
+                                                                                   [p_lat]*len(p_longs),
+                                                                                   p_longs)
 
         # account for periodicity
         zvx[:,-1] = zvx[:,0]
@@ -1293,6 +1356,7 @@ class TestUnitVectors():
         assert np.all(np.abs(grad_zon) <= 1.E-4)
 
     def test_unit_vector_component_plots_edge_steps(self):
+        """Check precision D of vectors as edge_steps increased"""
         import matplotlib.pyplot as plt
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
@@ -1313,7 +1377,6 @@ class TestUnitVectors():
         date = datetime.datetime(2000,1,1)
         # set up multi
         if self.dc is not None:
-            import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
             for i,p_lat in enumerate(p_lats):
@@ -1411,13 +1474,11 @@ class TestUnitVectors():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.tight_layout(); plt.savefig('d_diff_zon_norm_edegesteps.pdf')
             plt.close()
-
         except:
             pass
 
-
-
     def test_unit_vector_component_stepsize_sensitivity_plots(self):
+        """Produce spatial plots of unit vector output sensitivity at the default step_size"""
         import matplotlib.pyplot as plt
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
@@ -1438,7 +1499,6 @@ class TestUnitVectors():
         date = datetime.datetime(2000,1,1)
         # set up multi
         if self.dc is not None:
-            import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
             for i,p_lat in enumerate(p_lats):
@@ -1633,17 +1693,13 @@ class TestUnitVectors():
             plt.close()
 
             # calculate mean and standard deviation and then plot those
-            # print (p_longs)
-            # print (np.nanmean(np.abs(zvx), axis=0))
-            # print (np.nanstd(np.abs(zvx), axis=0))
-            print('yo')
             plt.figure()
             plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(zvx[:,:-1]), axis=0)),
-                            yerr=np.abs(np.log10(np.nanstd(zvx[:,:-1], axis=0)) - np.log10(np.abs(np.nanmedian(zvx[:,:-1], axis=0)))), label='East')
+                            yerr=np.abs(np.log10(np.nanstd(zvx[:,:-1], axis=0))), label='East')
             plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(zvy[:,:-1]), axis=0)),
-                            yerr=np.abs(np.log10(np.nanstd(zvy[:,:-1], axis=0)) - np.log10(np.abs(np.nanmedian(zvy[:,:-1], axis=0)))), label='North')
+                            yerr=np.abs(np.log10(np.nanstd(zvy[:,:-1], axis=0))), label='North')
             plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(zvz[:,:-1]), axis=0)),
-                            yerr=np.abs(np.log10(np.nanstd(zvz[:,:-1], axis=0)) - np.log10(np.abs(np.nanmedian(zvz[:,:-1], axis=0)))), label='Up')
+                            yerr=np.abs(np.log10(np.nanstd(zvz[:,:-1], axis=0))), label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Change in Zonal Vector')
             plt.title("Sensitivity of Zonal Unit Vector")
@@ -1651,16 +1707,15 @@ class TestUnitVectors():
             plt.tight_layout()
             plt.tight_layout(); plt.savefig('zonal_diff_v_longitude.pdf' )
             plt.close()
-            print('yo yo')
 
             # calculate mean and standard deviation and then plot those
             plt.figure()
             plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(mx[:,:-1]), axis=0)),
-                         yerr=np.abs(np.log10(np.nanstd(mx[:,:-1], axis=0)) - np.log10(np.abs(np.nanmedian(mx[:,:-1], axis=0)))), label='East')
+                         yerr=np.abs(np.log10(np.nanstd(mx[:,:-1], axis=0))), label='East')
             plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(my[:,:-1]), axis=0)),
-                         yerr=np.abs(np.log10(np.nanstd(my[:,:-1], axis=0)) - np.log10(np.abs(np.nanmedian(my[:,:-1], axis=0)))), label='North')
+                         yerr=np.abs(np.log10(np.nanstd(my[:,:-1], axis=0))), label='North')
             plt.errorbar(p_longs, np.log10(np.nanmedian(np.abs(mz[:,:-1]), axis=0)),
-                         yerr=np.abs(np.log10(np.nanstd(mz[:,:-1], axis=0)) - np.log10(np.abs(np.nanmedian(mz[:,:-1], axis=0)))), label='Up')
+                         yerr=np.abs(np.log10(np.nanstd(mz[:,:-1], axis=0))), label='Up')
             plt.xlabel('Longitude (Degrees)')
             plt.ylabel('Log Change in Meridional Vector')
             plt.title("Sensitivity of Meridional Unit Vector")
@@ -1672,12 +1727,8 @@ class TestUnitVectors():
         except:
             print('Skipping plots due to error.')
 
-
-
-
-
-
     def step_along_mag_unit_vector_sensitivity_plots(self, direction=None):
+        """Characterize the uncertainty associated with obtaining the apex location of neighboring field lines"""
         import matplotlib.pyplot as plt
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
@@ -1701,7 +1752,6 @@ class TestUnitVectors():
         dates = [date]*len(p_longs)
         # set up multi
         if self.dc is not None:
-            import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
             for i,p_lat in enumerate(p_lats):
@@ -1872,7 +1922,6 @@ class TestUnitVectors():
             plt.ylabel('Geodetic Latitude (Degrees)')
             plt.tight_layout(); plt.savefig(direction+'_normal_step_diff_apex_height_h.pdf')
             plt.close()
-
         except:
             pass
 
@@ -1882,11 +1931,9 @@ class TestUnitVectors():
         f = functools.partial(self.step_along_mag_unit_vector_sensitivity_plots, direction='meridional')
         yield (f, )
 
-
-
     def test_geomag_efield_scalars_plots(self):
+        """Produce summary plots of the electric field and drift mapping values """
         import matplotlib.pyplot as plt
-        import os
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
         # data returned are the locations along each direction
@@ -1911,7 +1958,6 @@ class TestUnitVectors():
         date = datetime.datetime(2000,1,1)
         # set up multi
         if self.dc is not None:
-            import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
             for i,p_lat in enumerate(p_lats):
@@ -2108,15 +2154,12 @@ class TestUnitVectors():
             plt.tight_layout(); plt.savefig('south_mer_drift.pdf')
             plt.close()
 
-
         except:
             pass
 
-
-
     def test_heritage_geomag_efield_scalars_plots(self):
+        """Summary plots of the heritage code path for scaling electric fields and ion drifts"""
         import matplotlib.pyplot as plt
-        import os
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
         # data returned are the locations along each direction
@@ -2141,7 +2184,6 @@ class TestUnitVectors():
         date = datetime.datetime(2000,1,1)
         # set up multi
         if self.dc is not None:
-            import itertools
             targets = itertools.cycle(dc.ids)
             pending = []
             for i,p_lat in enumerate(p_lats):
@@ -2338,14 +2380,18 @@ class TestUnitVectors():
             plt.tight_layout(); plt.savefig('south_mer_drift_heritage.pdf')
             plt.close()
 
-
         except:
             pass
 
     def test_unit_vector_and_field_line_plots(self):
+        """Test basic vector properties along field lines.
+
+        Produce visualization of field lines around globe
+        as well as unit vectors along those field lines
+
+        """
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
-        import os
         on_travis = os.environ.get('ONTRAVIS') == 'True'
 
         # convert OMNI position to ECEF
@@ -2434,13 +2480,19 @@ class TestUnitVectors():
                                 color='red') #, pivot='tail')
 
                 # check that vectors norm to 1
-                assert np.all(np.sqrt(self.inst['unit_zon_x']**2 + self.inst['unit_zon_y']**2 + self.inst['unit_zon_z']**2) > 0.999999)
-                assert np.all(np.sqrt(self.inst['unit_fa_x']**2 + self.inst['unit_fa_y']**2 + self.inst['unit_fa_z']**2) > 0.999999)
-                assert np.all(np.sqrt(self.inst['unit_mer_x']**2 + self.inst['unit_mer_y']**2 + self.inst['unit_mer_z']**2) > 0.999999)
+                assert np.all(np.sqrt(self.inst['unit_zon_x']**2 +
+                                      self.inst['unit_zon_y']**2 +
+                                      self.inst['unit_zon_z']**2) > 0.999999)
+                assert np.all(np.sqrt(self.inst['unit_fa_x']**2 +
+                                      self.inst['unit_fa_y']**2 +
+                                      self.inst['unit_fa_z']**2) > 0.999999)
+                assert np.all(np.sqrt(self.inst['unit_mer_x']**2 +
+                                      self.inst['unit_mer_y']**2 +
+                                      self.inst['unit_mer_z']**2) > 0.999999)
                 # confirm vectors are mutually orthogonal
-                dot1 = self.inst['unit_zon_x']*self.inst['unit_fa_x'] + self.inst['unit_zon_y']*self.inst['unit_fa_y']  + self.inst['unit_zon_z']*self.inst['unit_fa_z']
-                dot2 = self.inst['unit_zon_x']*self.inst['unit_mer_x'] + self.inst['unit_zon_y']*self.inst['unit_mer_y']  + self.inst['unit_zon_z']*self.inst['unit_mer_z']
-                dot3 = self.inst['unit_fa_x']*self.inst['unit_mer_x'] + self.inst['unit_fa_y']*self.inst['unit_mer_y']  + self.inst['unit_fa_z']*self.inst['unit_mer_z']
+                dot1 = self.inst['unit_zon_x']*self.inst['unit_fa_x'] + self.inst['unit_zon_y']*self.inst['unit_fa_y'] + self.inst['unit_zon_z']*self.inst['unit_fa_z']
+                dot2 = self.inst['unit_zon_x']*self.inst['unit_mer_x'] + self.inst['unit_zon_y']*self.inst['unit_mer_y'] + self.inst['unit_zon_z']*self.inst['unit_mer_z']
+                dot3 = self.inst['unit_fa_x']*self.inst['unit_mer_x'] + self.inst['unit_fa_y']*self.inst['unit_mer_y'] + self.inst['unit_fa_z']*self.inst['unit_mer_z']
                 assert np.all(np.abs(dot1) < 1.E-6)
                 assert np.all(np.abs(dot2) < 1.E-6)
                 assert np.all(np.abs(dot3) < 1.E-6)
@@ -2461,18 +2513,8 @@ class TestUnitVectors():
                 dot1 = self.inst['unit_mer_x']*ux + self.inst['unit_mer_y']*uy  + self.inst['unit_mer_z']*uz
                 assert np.all(dot1 > 0.)
 
-
             if not on_travis:
                 plt.tight_layout(); plt.savefig(''.join(('magnetic_unit_vectors_',str(int(p_lat)),'.pdf')))
                 plt.close()
 
-        ## plot Earth
-        #u = np.linspace(0, 2 * np.pi, 100)
-        #v = np.linspace(60.*np.pi/180., 120.*np.pi/180., 100)
-        #xx = 6371. * np.outer(np.cos(u), np.sin(v))
-        #yy = 6371. * np.outer(np.sin(u), np.sin(v))
-        #zz = 6371. * np.outer(np.ones(np.size(u)), np.cos(v))
-        #ax.plot_surface(xx, yy, zz, rstride=4, cstride=4, color='darkgray')
-        #plt.savefig('magnetic_unit_vectors_w_globe.pdf')
-        #print truthiness
         assert np.all(truthiness)

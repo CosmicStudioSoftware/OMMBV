@@ -1,19 +1,12 @@
-import nose.tools
-from nose.tools import assert_raises, raises
-from nose.tools import assert_almost_equals as asseq
-
 import datetime
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pds
 
 import pysatMagVect as pymv
 import pysat
 
-from pysatMagVect.tests.test_core import gen_data_fixed_alt, gen_trace_data_fixed_alt
 from pysatMagVect.tests.test_core import gen_plot_grid_fixed_alt
-
 from pysatMagVect.tests.test_core import dview, dc
+
 
 class TestIntegratedMethods():
 
@@ -28,6 +21,7 @@ class TestIntegratedMethods():
         return
 
     def test_integrated_unit_vector_component_plots(self):
+        """Generate Field-Line Integrated Unit Vector Plots"""
         import matplotlib.pyplot as plt
 
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
@@ -39,7 +33,7 @@ class TestIntegratedMethods():
         zvy = zvx.copy(); zvz = zvx.copy()
         mx = zvx.copy(); my = zvx.copy(); mz = zvx.copy()
         bx = zvx.copy(); by = zvx.copy(); bz = zvx.copy()
-        date = datetime.datetime(2000,1,1)
+        date = datetime.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             import itertools
@@ -55,7 +49,7 @@ class TestIntegratedMethods():
                                                                         ref_height=120.))
             for i,p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
-                    # collect output
+                # collect output
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
                 zvx[i,:-1], zvy[i,:-1], zvz[i,:-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 bx[i,:-1], by[i,:-1], bz[i,:-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
