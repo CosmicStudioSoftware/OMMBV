@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -30,9 +29,9 @@ class TestComparison():
         date = self.inst.date
         # map to the magnetic equator
         ecef_x, ecef_y, ecef_z, eq_lat, eq_long, eq_z = pymv.apex_location_info(
-                                                            glats, glongs, alts,
-                                                            [date]*len(alts),
-                                                            return_geodetic=True)
+            glats, glongs, alts,
+            [date]*len(alts),
+            return_geodetic=True)
         idx = np.argsort(eq_long)
         eq_long = eq_long[idx]
         eq_lat = eq_lat[idx]
@@ -45,16 +44,16 @@ class TestComparison():
         apex_zon = apex_vecs[6]
 
         # normalize into unit vectors
-        apex_mer[0,:], apex_mer[1,:], apex_mer[2,:] = pysatMagVect.normalize_vector(-apex_mer[0,:],
-                                                                                    -apex_mer[1,:],
-                                                                                    -apex_mer[2,:])
+        apex_mer[0, :], apex_mer[1, :], apex_mer[2, :] = pysatMagVect.normalize_vector(-apex_mer[0, :],
+                                                                                       -apex_mer[1, :],
+                                                                                       -apex_mer[2, :])
 
-        apex_zon[0,:], apex_zon[1,:], apex_zon[2,:] = pysatMagVect.normalize_vector(apex_zon[0,:],
-                                                                                    apex_zon[1,:],
-                                                                                    apex_zon[2,:])
-        apex_fa[0,:], apex_fa[1,:], apex_fa[2,:] = pysatMagVect.normalize_vector(apex_fa[0,:],
-                                                                                 apex_fa[1,:],
-                                                                                 apex_fa[2,:])
+        apex_zon[0, :], apex_zon[1, :], apex_zon[2, :] = pysatMagVect.normalize_vector(apex_zon[0, :],
+                                                                                       apex_zon[1, :],
+                                                                                       apex_zon[2, :])
+        apex_fa[0, :], apex_fa[1, :], apex_fa[2, :] = pysatMagVect.normalize_vector(apex_fa[0, :],
+                                                                                    apex_fa[1, :],
+                                                                                    apex_fa[2, :])
 
         # calculate mag unit vectors in ECEF coordinates
         out = pysatMagVect.calculate_mag_drift_unit_vectors_ecef(eq_lat, eq_long, eq_z,
@@ -72,7 +71,7 @@ class TestComparison():
         igrf_u = []
         for lat, lon, alt in zip(eq_lat, eq_long, eq_z):
             out = pysatMagVect.igrf.igrf13syn(0, date.year, 1, alt,
-                                              np.deg2rad(90-lat), np.deg2rad(lon))
+                                              np.deg2rad(90 - lat), np.deg2rad(lon))
             out = np.array(out)
             # normalize
             out /= out[-1]
@@ -81,8 +80,8 @@ class TestComparison():
             igrf_u.append(-out[2])
 
         # dot product of zonal and field aligned
-        dot_apex_zonal = apex_fa[0,:]*apex_zon[0,:] + apex_fa[1,:]*apex_zon[1,:] + apex_fa[2,:]*apex_zon[2,:]
-        dot_apex_mer = apex_fa[0,:]*apex_mer[0,:] + apex_fa[1,:]*apex_mer[1,:] + apex_fa[2,:]*apex_mer[2,:]
+        dot_apex_zonal = apex_fa[0, :]*apex_zon[0, :] + apex_fa[1, :]*apex_zon[1, :] + apex_fa[2, :]*apex_zon[2, :]
+        dot_apex_mer = apex_fa[0, :]*apex_mer[0, :] + apex_fa[1, :]*apex_mer[1, :] + apex_fa[2, :]*apex_mer[2, :]
 
         dotmagvect_zonal = ze*fe + zn*fn + zu*fu
         dotmagvect_mer = me*fe + mn*fn + mu*fu
@@ -107,9 +106,9 @@ class TestComparison():
             plt.plot(eq_long, fn, label='fa_n', color='k')
             plt.plot(eq_long, fu, label='fa_u', color='b')
 
-            plt.plot(eq_long, apex_fa[0,:], label='apexpy_e', color='r', linestyle='dotted')
-            plt.plot(eq_long, apex_fa[1,:], label='apexpy_n', color='k', linestyle='dotted')
-            plt.plot(eq_long, apex_fa[2,:], label='apexpy_u', color='b', linestyle='dotted')
+            plt.plot(eq_long, apex_fa[0, :], label='apexpy_e', color='r', linestyle='dotted')
+            plt.plot(eq_long, apex_fa[1, :], label='apexpy_n', color='k', linestyle='dotted')
+            plt.plot(eq_long, apex_fa[2, :], label='apexpy_u', color='b', linestyle='dotted')
 
             plt.plot(eq_long, igrf_e, label='igrf_e', color='r', linestyle='-.')
             plt.plot(eq_long, igrf_n, label='igrf_n', color='k', linestyle='-.')
@@ -127,9 +126,9 @@ class TestComparison():
             plt.plot(eq_long, zn, label='zonal_n', color='k')
             plt.plot(eq_long, zu, label='zonal_u', color='b')
 
-            plt.plot(eq_long, apex_zon[0,:], label='apexpy_e', color='r', linestyle='dotted')
-            plt.plot(eq_long, apex_zon[1,:], label='apexpy_n', color='k', linestyle='dotted')
-            plt.plot(eq_long, apex_zon[2,:], label='apexpy_u', color='b', linestyle='dotted')
+            plt.plot(eq_long, apex_zon[0, :], label='apexpy_e', color='r', linestyle='dotted')
+            plt.plot(eq_long, apex_zon[1, :], label='apexpy_n', color='k', linestyle='dotted')
+            plt.plot(eq_long, apex_zon[2, :], label='apexpy_u', color='b', linestyle='dotted')
 
             plt.legend()
             plt.xlabel('Longitude')
@@ -143,9 +142,9 @@ class TestComparison():
             plt.plot(eq_long, mn, label='mer_n', color='k')
             plt.plot(eq_long, mu, label='mer_u', color='b')
 
-            plt.plot(eq_long, apex_mer[0,:], label='apexpy_e', color='r', linestyle='dotted')
-            plt.plot(eq_long, apex_mer[1,:], label='apexpy_n', color='k', linestyle='dotted')
-            plt.plot(eq_long, apex_mer[2,:], label='apexpy_u', color='b', linestyle='dotted')
+            plt.plot(eq_long, apex_mer[0, :], label='apexpy_e', color='r', linestyle='dotted')
+            plt.plot(eq_long, apex_mer[1, :], label='apexpy_n', color='k', linestyle='dotted')
+            plt.plot(eq_long, apex_mer[2, :], label='apexpy_u', color='b', linestyle='dotted')
 
             plt.legend()
             plt.xlabel('Longitude')
