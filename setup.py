@@ -19,9 +19,8 @@ with open(os.path.join(here, version_filename)) as version_file:
 numpy.distutils.core.setup(
     name='pysatMagVect',
     version=version,
-    packages=['pysatMagVect','pysatMagVect.tests'],
-    description=''.join(('Calculates geomagnetic unit vectors (field aligned, zonal, and meridional) '
-                          'and includes supporting routines for characterizing the motion of ionospheric plasma.')),
+    packages=['pysatMagVect', 'pysatMagVect.tests'],
+    description='Orthogonal geomagnetic vector basis and field-line mapping for multipole magnetic fields.',
     url='http://github.com/pysat/pysatMagVect',
 
     # Author details
