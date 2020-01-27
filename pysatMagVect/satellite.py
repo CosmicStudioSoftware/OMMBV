@@ -1,5 +1,6 @@
 import pysatMagVect as pymv
 
+
 def add_mag_drift_unit_vectors_ecef(inst, **kwargs):
     """Adds unit vectors expressing the ion drift coordinate system
     organized by the geomagnetic field. Unit vectors are expressed
@@ -27,8 +28,10 @@ def add_mag_drift_unit_vectors_ecef(inst, **kwargs):
 
     # add unit vectors for magnetic drifts in ecef coordinates
     zvx, zvy, zvz, bx, by, bz, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef(inst['latitude'],
-                                                            inst['longitude'], inst['altitude'], inst.data.index,
-                                                            **kwargs)
+                                                                                       inst['longitude'],
+                                                                                       inst['altitude'],
+                                                                                       inst.data.index,
+                                                                                       **kwargs)
 
     inst['unit_zon_ecef_x'] = zvx
     inst['unit_zon_ecef_y'] = zvy
@@ -83,44 +86,44 @@ def add_mag_drift_unit_vectors_ecef(inst, **kwargs):
                                     }
 
     inst.meta['unit_fa_ecef_x'] = {'long_name': 'Field-aligned unit vector along ECEF-x',
-                                    'desc': 'Field-aligned unit vector along ECEF-x',
-                                    'label': 'Field-aligned unit vector along ECEF-x',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Field-aligned unit vector along ECEF-x',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
+                                   'desc': 'Field-aligned unit vector along ECEF-x',
+                                   'label': 'Field-aligned unit vector along ECEF-x',
+                                   'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
+                                             'Vector system is calcluated by field-line tracing along IGRF values '
+                                             'down to reference altitudes of 120 km in both the Northern and Southern '
+                                             'hemispheres. These two points, along with the satellite position, are '
+                                             'used to define the magnetic meridian. Vector math from here generates '
+                                             'the orthogonal system.'),
+                                   'axis': 'Field-aligned unit vector along ECEF-x',
+                                   'value_min': -1.,
+                                   'value_max': 1.,
+                                   }
     inst.meta['unit_fa_ecef_y'] = {'long_name': 'Field-aligned unit vector along ECEF-y',
-                                    'desc': 'Field-aligned unit vector along ECEF-y',
-                                    'label': 'Field-aligned unit vector along ECEF-y',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Field-aligned unit vector along ECEF-y',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
+                                   'desc': 'Field-aligned unit vector along ECEF-y',
+                                   'label': 'Field-aligned unit vector along ECEF-y',
+                                   'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
+                                             'Vector system is calcluated by field-line tracing along IGRF values '
+                                             'down to reference altitudes of 120 km in both the Northern and Southern '
+                                             'hemispheres. These two points, along with the satellite position, are '
+                                             'used to define the magnetic meridian. Vector math from here generates '
+                                             'the orthogonal system.'),
+                                   'axis': 'Field-aligned unit vector along ECEF-y',
+                                   'value_min': -1.,
+                                   'value_max': 1.,
+                                   }
     inst.meta['unit_fa_ecef_z'] = {'long_name': 'Field-aligned unit vector along ECEF-z',
-                                    'desc': 'Field-aligned unit vector along ECEF-z',
-                                    'label': 'Field-aligned unit vector along ECEF-z',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
-                                    'axis': 'Field-aligned unit vector along ECEF-z',
-                                    'value_min': -1.,
-                                    'value_max': 1.,
-                                    }
+                                   'desc': 'Field-aligned unit vector along ECEF-z',
+                                   'label': 'Field-aligned unit vector along ECEF-z',
+                                   'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
+                                             'Vector system is calcluated by field-line tracing along IGRF values '
+                                             'down to reference altitudes of 120 km in both the Northern and Southern '
+                                             'hemispheres. These two points, along with the satellite position, are '
+                                             'used to define the magnetic meridian. Vector math from here generates '
+                                             'the orthogonal system.'),
+                                   'axis': 'Field-aligned unit vector along ECEF-z',
+                                   'value_min': -1.,
+                                   'value_max': 1.,
+                                   }
 
     inst.meta['unit_mer_ecef_x'] = {'long_name': 'Meridional unit vector along ECEF-x',
                                     'desc': 'Meridional unit vector along ECEF-x',
@@ -197,144 +200,153 @@ def add_mag_drift_unit_vectors(inst, **kwargs):
     # vectors are returned in geo/ecef coordinate system
     add_mag_drift_unit_vectors_ecef(inst, **kwargs)
     # convert them to S/C using transformation supplied by OA
-    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = pymv.project_ecef_vector_onto_basis(inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
-                                                                                                inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
-                                                                                                inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
-                                                                                                inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = pymv.project_ecef_vector_onto_basis(inst['unit_fa_ecef_x'], inst['unit_fa_ecef_y'], inst['unit_fa_ecef_z'],
-                                                                                                inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
-                                                                                                inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
-                                                                                                inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = pymv.project_ecef_vector_onto_basis(inst['unit_mer_ecef_x'], inst['unit_mer_ecef_y'], inst['unit_mer_ecef_z'],
-                                                                                                inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
-                                                                                                inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
-                                                                                                inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
+    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = pymv.project_ecef_vector_onto_basis(
+        inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
+        inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
+        inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
+        inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
+    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = pymv.project_ecef_vector_onto_basis(
+        inst['unit_fa_ecef_x'], inst['unit_fa_ecef_y'], inst['unit_fa_ecef_z'],
+        inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
+        inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
+        inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
+    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = pymv.project_ecef_vector_onto_basis(
+        inst['unit_mer_ecef_x'], inst['unit_mer_ecef_y'], inst['unit_mer_ecef_z'],
+        inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
+        inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
+        inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
 
-    inst.meta['unit_zon_x'] = { 'long_name':'Zonal direction along IVM-x',
-                                'desc': 'Unit vector for the zonal geomagnetic direction.',
-                                'label': 'Zonal Unit Vector: IVM-X component',
-                                'axis': 'Zonal Unit Vector: IVM-X component',
-                                'notes': ('Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1.,
-                               'value_max':1}
-    inst.meta['unit_zon_y'] = {'long_name':'Zonal direction along IVM-y',
-                                'desc': 'Unit vector for the zonal geomagnetic direction.',
-                                'label': 'Zonal Unit Vector: IVM-Y component',
-                                'axis': 'Zonal Unit Vector: IVM-Y component',
-                                'notes': ('Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1.,
-                               'value_max':1}
-    inst.meta['unit_zon_z'] = {'long_name':'Zonal direction along IVM-z',
-                                'desc': 'Unit vector for the zonal geomagnetic direction.',
-                                'label': 'Zonal Unit Vector: IVM-Z component',
-                                'axis': 'Zonal Unit Vector: IVM-Z component',
-                                'notes': ('Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1.,
-                               'value_max':1}
+    inst.meta['unit_zon_x'] = {'long_name': 'Zonal direction along IVM-x',
+                               'desc': 'Unit vector for the zonal geomagnetic direction.',
+                               'label': 'Zonal Unit Vector: IVM-X component',
+                               'axis': 'Zonal Unit Vector: IVM-X component',
+                               'notes': (
+                                   'Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
+                                   'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
+                                   'z - towards nadir, y - completes the system, generally southward. '
+                                   'Calculated using the corresponding unit vector in ECEF and the orientation '
+                                   'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                               'scale': 'linear',
+                               'units': '',
+                               'value_min': -1.,
+                               'value_max': 1}
+    inst.meta['unit_zon_y'] = {'long_name': 'Zonal direction along IVM-y',
+                               'desc': 'Unit vector for the zonal geomagnetic direction.',
+                               'label': 'Zonal Unit Vector: IVM-Y component',
+                               'axis': 'Zonal Unit Vector: IVM-Y component',
+                               'notes': (
+                                   'Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
+                                   'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
+                                   'z - towards nadir, y - completes the system, generally southward. '
+                                   'Calculated using the corresponding unit vector in ECEF and the orientation '
+                                   'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                               'scale': 'linear',
+                               'units': '',
+                               'value_min': -1.,
+                               'value_max': 1}
+    inst.meta['unit_zon_z'] = {'long_name': 'Zonal direction along IVM-z',
+                               'desc': 'Unit vector for the zonal geomagnetic direction.',
+                               'label': 'Zonal Unit Vector: IVM-Z component',
+                               'axis': 'Zonal Unit Vector: IVM-Z component',
+                               'notes': (
+                                   'Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
+                                   'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
+                                   'z - towards nadir, y - completes the system, generally southward. '
+                                   'Calculated using the corresponding unit vector in ECEF and the orientation '
+                                   'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                               'scale': 'linear',
+                               'units': '',
+                               'value_min': -1.,
+                               'value_max': 1}
 
-    inst.meta['unit_fa_x'] = {'long_name':'Field-aligned direction along IVM-x',
-                                'desc': 'Unit vector for the geomagnetic field line direction.',
-                                'label': 'Field Aligned Unit Vector: IVM-X component',
-                                'axis': 'Field Aligned Unit Vector: IVM-X component',
-                                'notes': ('Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1.,
-                               'value_max':1}
-    inst.meta['unit_fa_y'] = {'long_name':'Field-aligned direction along IVM-y',
-                                'desc': 'Unit vector for the geomagnetic field line direction.',
-                                'label': 'Field Aligned Unit Vector: IVM-Y component',
-                                'axis': 'Field Aligned Unit Vector: IVM-Y component',
-                                'notes': ('Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1.,
-                               'value_max':1}
-    inst.meta['unit_fa_z'] = {'long_name':'Field-aligned direction along IVM-z',
-                                'desc': 'Unit vector for the geomagnetic field line direction.',
-                                'label': 'Field Aligned Unit Vector: IVM-Z component',
-                                'axis': 'Field Aligned Unit Vector: IVM-Z component',
-                                'notes': ('Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1.,
-                               'value_max':1}
+    inst.meta['unit_fa_x'] = {'long_name': 'Field-aligned direction along IVM-x',
+                              'desc': 'Unit vector for the geomagnetic field line direction.',
+                              'label': 'Field Aligned Unit Vector: IVM-X component',
+                              'axis': 'Field Aligned Unit Vector: IVM-X component',
+                              'notes': (
+                                  'Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
+                                  'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
+                                  'z - towards nadir, y - completes the system, generally southward. '
+                                  'Calculated using the corresponding unit vector in ECEF and the orientation '
+                                  'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                              'scale': 'linear',
+                              'units': '',
+                              'value_min': -1.,
+                              'value_max': 1}
+    inst.meta['unit_fa_y'] = {'long_name': 'Field-aligned direction along IVM-y',
+                              'desc': 'Unit vector for the geomagnetic field line direction.',
+                              'label': 'Field Aligned Unit Vector: IVM-Y component',
+                              'axis': 'Field Aligned Unit Vector: IVM-Y component',
+                              'notes': (
+                                  'Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
+                                  'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
+                                  'z - towards nadir, y - completes the system, generally southward. '
+                                  'Calculated using the corresponding unit vector in ECEF and the orientation '
+                                  'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                              'scale': 'linear',
+                              'units': '',
+                              'value_min': -1.,
+                              'value_max': 1}
+    inst.meta['unit_fa_z'] = {'long_name': 'Field-aligned direction along IVM-z',
+                              'desc': 'Unit vector for the geomagnetic field line direction.',
+                              'label': 'Field Aligned Unit Vector: IVM-Z component',
+                              'axis': 'Field Aligned Unit Vector: IVM-Z component',
+                              'notes': (
+                                  'Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
+                                  'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
+                                  'z - towards nadir, y - completes the system, generally southward. '
+                                  'Calculated using the corresponding unit vector in ECEF and the orientation '
+                                  'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                              'scale': 'linear',
+                              'units': '',
+                              'value_min': -1.,
+                              'value_max': 1}
 
-    inst.meta['unit_mer_x'] = {'long_name':'Meridional direction along IVM-x',
-                                'desc': 'Unit vector for the geomagnetic meridional direction.',
-                                'label': 'Meridional Unit Vector: IVM-X component',
-                                'axis': 'Meridional Unit Vector: IVM-X component',
-                                'notes': ('Positive is aligned with vertical at '
-                                          'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
-                                          'and in the plane of the meridian.'
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1.,
-                               'value_max':1}
-    inst.meta['unit_mer_y'] = {'long_name':'Meridional direction along IVM-y',
-                                'desc': 'Unit vector for the geomagnetic meridional direction.',
-                                'label': 'Meridional Unit Vector: IVM-Y component',
-                                'axis': 'Meridional Unit Vector: IVM-Y component',
-                                'notes': ('Positive is aligned with vertical at '
-                                          'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
-                                          'and in the plane of the meridian.'
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1.,
-                               'value_max':1}
-    inst.meta['unit_mer_z'] = {'long_name':'Meridional direction along IVM-z',
-                                'desc': 'Unit vector for the geomagnetic meridional direction.',
-                                'label': 'Meridional Unit Vector: IVM-Z component',
-                                'axis': 'Meridional Unit Vector: IVM-Z component',
-                                'notes': ('Positive is aligned with vertical at '
-                                          'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
-                                          'and in the plane of the meridian.'
-                                          'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                          'z - towards nadir, y - completes the system, generally southward. '
-                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
-                                'scale': 'linear',
-                                'units': '',
-                               'value_min':-1.,
-                               'value_max':1}
+    inst.meta['unit_mer_x'] = {'long_name': 'Meridional direction along IVM-x',
+                               'desc': 'Unit vector for the geomagnetic meridional direction.',
+                               'label': 'Meridional Unit Vector: IVM-X component',
+                               'axis': 'Meridional Unit Vector: IVM-X component',
+                               'notes': ('Positive is aligned with vertical at '
+                                         'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
+                                         'and in the plane of the meridian.'
+                                         'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
+                                         'z - towards nadir, y - completes the system, generally southward. '
+                                         'Calculated using the corresponding unit vector in ECEF and the orientation '
+                                         'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                               'scale': 'linear',
+                               'units': '',
+                               'value_min': -1.,
+                               'value_max': 1}
+    inst.meta['unit_mer_y'] = {'long_name': 'Meridional direction along IVM-y',
+                               'desc': 'Unit vector for the geomagnetic meridional direction.',
+                               'label': 'Meridional Unit Vector: IVM-Y component',
+                               'axis': 'Meridional Unit Vector: IVM-Y component',
+                               'notes': ('Positive is aligned with vertical at '
+                                         'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
+                                         'and in the plane of the meridian.'
+                                         'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
+                                         'z - towards nadir, y - completes the system, generally southward. '
+                                         'Calculated using the corresponding unit vector in ECEF and the orientation '
+                                         'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                               'scale': 'linear',
+                               'units': '',
+                               'value_min': -1.,
+                               'value_max': 1}
+    inst.meta['unit_mer_z'] = {'long_name': 'Meridional direction along IVM-z',
+                               'desc': 'Unit vector for the geomagnetic meridional direction.',
+                               'label': 'Meridional Unit Vector: IVM-Z component',
+                               'axis': 'Meridional Unit Vector: IVM-Z component',
+                               'notes': ('Positive is aligned with vertical at '
+                                         'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
+                                         'and in the plane of the meridian.'
+                                         'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
+                                         'z - towards nadir, y - completes the system, generally southward. '
+                                         'Calculated using the corresponding unit vector in ECEF and the orientation '
+                                         'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                               'scale': 'linear',
+                               'units': '',
+                               'value_min': -1.,
+                               'value_max': 1}
 
     return
 
@@ -362,64 +374,67 @@ def add_mag_drifts(inst):
 
     """
 
-    inst['iv_zon'] = {'data':inst['unit_zon_x'] * inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
-                      'units':'m/s',
-                      'long_name':'Zonal ion velocity',
-                      'notes':('Ion velocity relative to co-rotation along zonal '
-                               'direction, normal to meridional plane. Positive east. '
-                               'Velocity obtained using ion velocities relative '
-                               'to co-rotation in the instrument frame along '
-                               'with the corresponding unit vectors expressed in '
-                               'the instrument frame. '),
-                      'label': 'Zonal Ion Velocity',
-                      'axis': 'Zonal Ion Velocity',
-                      'desc': 'Zonal ion velocity',
-                      'scale': 'Linear',
-                      'value_min':-500.,
-                      'value_max':500.}
+    inst['iv_zon'] = {
+        'data': inst['unit_zon_x']*inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
+        'units': 'm/s',
+        'long_name': 'Zonal ion velocity',
+        'notes': ('Ion velocity relative to co-rotation along zonal '
+                  'direction, normal to meridional plane. Positive east. '
+                  'Velocity obtained using ion velocities relative '
+                  'to co-rotation in the instrument frame along '
+                  'with the corresponding unit vectors expressed in '
+                  'the instrument frame. '),
+        'label': 'Zonal Ion Velocity',
+        'axis': 'Zonal Ion Velocity',
+        'desc': 'Zonal ion velocity',
+        'scale': 'Linear',
+        'value_min': -500.,
+        'value_max': 500.}
 
-    inst['iv_fa'] = {'data':inst['unit_fa_x'] * inst['iv_x'] + inst['unit_fa_y'] * inst['iv_y'] + inst['unit_fa_z'] * inst['iv_z'],
-                      'units':'m/s',
-                      'long_name':'Field-Aligned ion velocity',
-                      'notes':('Ion velocity relative to co-rotation along magnetic field line. Positive along the field. ',
-                               'Velocity obtained using ion velocities relative '
-                               'to co-rotation in the instrument frame along '
-                               'with the corresponding unit vectors expressed in '
-                               'the instrument frame. '),
-                      'label':'Field-Aligned Ion Velocity',
-                      'axis':'Field-Aligned Ion Velocity',
-                      'desc':'Field-Aligned Ion Velocity',
-                      'scale':'Linear',
-                      'value_min':-500.,
-                      'value_max':500.}
+    inst['iv_fa'] = {
+        'data': inst['unit_fa_x']*inst['iv_x'] + inst['unit_fa_y']*inst['iv_y'] + inst['unit_fa_z']*inst['iv_z'],
+        'units': 'm/s',
+        'long_name': 'Field-Aligned ion velocity',
+        'notes': ('Ion velocity relative to co-rotation along magnetic field line. Positive along the field. ',
+                  'Velocity obtained using ion velocities relative '
+                  'to co-rotation in the instrument frame along '
+                  'with the corresponding unit vectors expressed in '
+                  'the instrument frame. '),
+        'label': 'Field-Aligned Ion Velocity',
+        'axis': 'Field-Aligned Ion Velocity',
+        'desc': 'Field-Aligned Ion Velocity',
+        'scale': 'Linear',
+        'value_min': -500.,
+        'value_max': 500.}
 
-    inst['iv_mer'] = {'data':inst['unit_mer_x'] * inst['iv_x'] + inst['unit_mer_y']*inst['iv_y'] + inst['unit_mer_z']*inst['iv_z'],
-                      'units':'m/s',
-                      'long_name':'Meridional ion velocity',
-                      'notes':('Velocity along meridional direction, perpendicular '
-                               'to field and within meridional plane. Positive is up at magnetic equator. ',
-                               'Velocity obtained using ion velocities relative '
-                               'to co-rotation in the instrument frame along '
-                               'with the corresponding unit vectors expressed in '
-                               'the instrument frame. '),
-                      'label':'Meridional Ion Velocity',
-                      'axis':'Meridional Ion Velocity',
-                      'desc':'Meridional Ion Velocity',
-                      'scale':'Linear',
-                      'value_min':-500.,
-                      'value_max':500.}
+    inst['iv_mer'] = {
+        'data': inst['unit_mer_x']*inst['iv_x'] + inst['unit_mer_y']*inst['iv_y'] + inst['unit_mer_z']*inst['iv_z'],
+        'units': 'm/s',
+        'long_name': 'Meridional ion velocity',
+        'notes': ('Velocity along meridional direction, perpendicular '
+                  'to field and within meridional plane. Positive is up at magnetic equator. ',
+                  'Velocity obtained using ion velocities relative '
+                  'to co-rotation in the instrument frame along '
+                  'with the corresponding unit vectors expressed in '
+                  'the instrument frame. '),
+        'label': 'Meridional Ion Velocity',
+        'axis': 'Meridional Ion Velocity',
+        'desc': 'Meridional Ion Velocity',
+        'scale': 'Linear',
+        'value_min': -500.,
+        'value_max': 500.}
 
     return
 
 
 def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_scalar',
-                                              equ_zonal_scalar='equ_zon_drifts_scalar',
-                                              north_mer_scalar='north_footpoint_mer_drifts_scalar',
-                                              north_zon_scalar='north_footpoint_zon_drifts_scalar',
-                                              south_mer_scalar='south_footpoint_mer_drifts_scalar',
-                                              south_zon_scalar='south_footpoint_zon_drifts_scalar',
-                                              mer_drift='iv_mer',
-                                              zon_drift='iv_zon'):
+                                        equ_zonal_scalar='equ_zon_drifts_scalar',
+                                        north_mer_scalar='north_footpoint_mer_drifts_scalar',
+                                        north_zon_scalar='north_footpoint_zon_drifts_scalar',
+                                        south_mer_scalar='south_footpoint_mer_drifts_scalar',
+                                        south_zon_scalar='south_footpoint_zon_drifts_scalar',
+                                        mer_drift='iv_mer',
+                                        zon_drift='iv_zon'):
     """Translates geomagnetic ion velocities to those at footpoints and magnetic equator.
     Note
     ----
@@ -462,146 +477,146 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
         'south_footpoint_zon_drift'. Similarly for the northern hemisphere.
     """
 
-    inst['equ_mer_drift'] = {'data' : inst[equ_mer_scalar]*inst[mer_drift],
-                            'units':'m/s',
-                            'long_name':'Equatorial meridional ion velocity',
-                            'notes':('Velocity along meridional direction, perpendicular '
-                                    'to field and within meridional plane, scaled to '
-                                    'magnetic equator. Positive is up at magnetic equator. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the magnetic equator. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Equatorial Meridional Ion Velocity',
-                            'axis':'Equatorial Meridional Ion Velocity',
-                            'desc':'Equatorial Meridional Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500.,
-                            'value_max':500.}
+    inst['equ_mer_drift'] = {'data': inst[equ_mer_scalar]*inst[mer_drift],
+                             'units': 'm/s',
+                             'long_name': 'Equatorial meridional ion velocity',
+                             'notes': ('Velocity along meridional direction, perpendicular '
+                                       'to field and within meridional plane, scaled to '
+                                       'magnetic equator. Positive is up at magnetic equator. '
+                                       'Velocity obtained using ion velocities relative '
+                                       'to co-rotation in the instrument frame along '
+                                       'with the corresponding unit vectors expressed in '
+                                       'the instrument frame. Field-line mapping and '
+                                       'the assumption of equi-potential field lines '
+                                       'is used to translate the locally measured ion '
+                                       'motion to the magnetic equator. The mapping '
+                                       'is used to determine the change in magnetic '
+                                       'field line distance, which, under assumption of '
+                                       'equipotential field lines, in turn alters '
+                                       'the electric field at that location (E=V/d). '),
+                             'label': 'Equatorial Meridional Ion Velocity',
+                             'axis': 'Equatorial Meridional Ion Velocity',
+                             'desc': 'Equatorial Meridional Ion Velocity',
+                             'scale': 'Linear',
+                             'value_min': -500.,
+                             'value_max': 500.}
 
-    inst['equ_zon_drift'] = {'data' : inst[equ_zonal_scalar]*inst[zon_drift],
-                            'units':'m/s',
-                            'long_name':'Equatorial zonal ion velocity',
-                            'notes':('Velocity along zonal direction, perpendicular '
-                                    'to field and the meridional plane, scaled to '
-                                    'magnetic equator. Positive is generally eastward. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the magnetic equator. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Equatorial Zonal Ion Velocity',
-                            'axis':'Equatorial Zonal Ion Velocity',
-                            'desc':'Equatorial Zonal Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500.,
-                            'value_max':500.}
+    inst['equ_zon_drift'] = {'data': inst[equ_zonal_scalar]*inst[zon_drift],
+                             'units': 'm/s',
+                             'long_name': 'Equatorial zonal ion velocity',
+                             'notes': ('Velocity along zonal direction, perpendicular '
+                                       'to field and the meridional plane, scaled to '
+                                       'magnetic equator. Positive is generally eastward. '
+                                       'Velocity obtained using ion velocities relative '
+                                       'to co-rotation in the instrument frame along '
+                                       'with the corresponding unit vectors expressed in '
+                                       'the instrument frame. Field-line mapping and '
+                                       'the assumption of equi-potential field lines '
+                                       'is used to translate the locally measured ion '
+                                       'motion to the magnetic equator. The mapping '
+                                       'is used to determine the change in magnetic '
+                                       'field line distance, which, under assumption of '
+                                       'equipotential field lines, in turn alters '
+                                       'the electric field at that location (E=V/d). '),
+                             'label': 'Equatorial Zonal Ion Velocity',
+                             'axis': 'Equatorial Zonal Ion Velocity',
+                             'desc': 'Equatorial Zonal Ion Velocity',
+                             'scale': 'Linear',
+                             'value_min': -500.,
+                             'value_max': 500.}
 
-    inst['south_footpoint_mer_drift'] = {'data' : inst[south_mer_scalar]*inst[mer_drift],
-                            'units':'m/s',
-                            'long_name':'Southern meridional ion velocity',
-                            'notes':('Velocity along meridional direction, perpendicular '
-                                    'to field and within meridional plane, scaled to '
-                                    'southern footpoint. Positive is up at magnetic equator. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the magnetic footpoint. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Southern Meridional Ion Velocity',
-                            'axis':'Southern Meridional Ion Velocity',
-                            'desc':'Southern Meridional Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500.,
-                            'value_max':500.}
+    inst['south_footpoint_mer_drift'] = {'data': inst[south_mer_scalar]*inst[mer_drift],
+                                         'units': 'm/s',
+                                         'long_name': 'Southern meridional ion velocity',
+                                         'notes': ('Velocity along meridional direction, perpendicular '
+                                                   'to field and within meridional plane, scaled to '
+                                                   'southern footpoint. Positive is up at magnetic equator. '
+                                                   'Velocity obtained using ion velocities relative '
+                                                   'to co-rotation in the instrument frame along '
+                                                   'with the corresponding unit vectors expressed in '
+                                                   'the instrument frame. Field-line mapping and '
+                                                   'the assumption of equi-potential field lines '
+                                                   'is used to translate the locally measured ion '
+                                                   'motion to the magnetic footpoint. The mapping '
+                                                   'is used to determine the change in magnetic '
+                                                   'field line distance, which, under assumption of '
+                                                   'equipotential field lines, in turn alters '
+                                                   'the electric field at that location (E=V/d). '),
+                                         'label': 'Southern Meridional Ion Velocity',
+                                         'axis': 'Southern Meridional Ion Velocity',
+                                         'desc': 'Southern Meridional Ion Velocity',
+                                         'scale': 'Linear',
+                                         'value_min': -500.,
+                                         'value_max': 500.}
 
-    inst['south_footpoint_zon_drift'] = {'data':inst[south_zon_scalar]*inst[zon_drift],
-                            'units':'m/s',
-                            'long_name':'Southern zonal ion velocity',
-                            'notes':('Velocity along zonal direction, perpendicular '
-                                    'to field and the meridional plane, scaled to '
-                                    'southern footpoint. Positive is generally eastward. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the southern footpoint. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Southern Zonal Ion Velocity',
-                            'axis':'Southern Zonal Ion Velocity',
-                            'desc':'Southern Zonal Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500.,
-                            'value_max':500.}
+    inst['south_footpoint_zon_drift'] = {'data': inst[south_zon_scalar]*inst[zon_drift],
+                                         'units': 'm/s',
+                                         'long_name': 'Southern zonal ion velocity',
+                                         'notes': ('Velocity along zonal direction, perpendicular '
+                                                   'to field and the meridional plane, scaled to '
+                                                   'southern footpoint. Positive is generally eastward. '
+                                                   'Velocity obtained using ion velocities relative '
+                                                   'to co-rotation in the instrument frame along '
+                                                   'with the corresponding unit vectors expressed in '
+                                                   'the instrument frame. Field-line mapping and '
+                                                   'the assumption of equi-potential field lines '
+                                                   'is used to translate the locally measured ion '
+                                                   'motion to the southern footpoint. The mapping '
+                                                   'is used to determine the change in magnetic '
+                                                   'field line distance, which, under assumption of '
+                                                   'equipotential field lines, in turn alters '
+                                                   'the electric field at that location (E=V/d). '),
+                                         'label': 'Southern Zonal Ion Velocity',
+                                         'axis': 'Southern Zonal Ion Velocity',
+                                         'desc': 'Southern Zonal Ion Velocity',
+                                         'scale': 'Linear',
+                                         'value_min': -500.,
+                                         'value_max': 500.}
 
-    inst['north_footpoint_mer_drift'] = {'data':inst[north_mer_scalar]*inst[mer_drift],
-                            'units':'m/s',
-                            'long_name':'Northern meridional ion velocity',
-                            'notes':('Velocity along meridional direction, perpendicular '
-                                    'to field and within meridional plane, scaled to '
-                                    'northern footpoint. Positive is up at magnetic equator. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the magnetic footpoint. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Northern Meridional Ion Velocity',
-                            'axis':'Northern Meridional Ion Velocity',
-                            'desc':'Northern Meridional Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500.,
-                            'value_max':500.}
+    inst['north_footpoint_mer_drift'] = {'data': inst[north_mer_scalar]*inst[mer_drift],
+                                         'units': 'm/s',
+                                         'long_name': 'Northern meridional ion velocity',
+                                         'notes': ('Velocity along meridional direction, perpendicular '
+                                                   'to field and within meridional plane, scaled to '
+                                                   'northern footpoint. Positive is up at magnetic equator. '
+                                                   'Velocity obtained using ion velocities relative '
+                                                   'to co-rotation in the instrument frame along '
+                                                   'with the corresponding unit vectors expressed in '
+                                                   'the instrument frame. Field-line mapping and '
+                                                   'the assumption of equi-potential field lines '
+                                                   'is used to translate the locally measured ion '
+                                                   'motion to the magnetic footpoint. The mapping '
+                                                   'is used to determine the change in magnetic '
+                                                   'field line distance, which, under assumption of '
+                                                   'equipotential field lines, in turn alters '
+                                                   'the electric field at that location (E=V/d). '),
+                                         'label': 'Northern Meridional Ion Velocity',
+                                         'axis': 'Northern Meridional Ion Velocity',
+                                         'desc': 'Northern Meridional Ion Velocity',
+                                         'scale': 'Linear',
+                                         'value_min': -500.,
+                                         'value_max': 500.}
 
-    inst['north_footpoint_zon_drift'] = {'data':inst[north_zon_scalar]*inst[zon_drift],
-                            'units':'m/s',
-                            'long_name':'Northern zonal ion velocity',
-                            'notes':('Velocity along zonal direction, perpendicular '
-                                    'to field and the meridional plane, scaled to '
-                                    'northern footpoint. Positive is generally eastward. '
-                                    'Velocity obtained using ion velocities relative '
-                                    'to co-rotation in the instrument frame along '
-                                    'with the corresponding unit vectors expressed in '
-                                    'the instrument frame. Field-line mapping and '
-                                    'the assumption of equi-potential field lines '
-                                    'is used to translate the locally measured ion '
-                                    'motion to the northern footpoint. The mapping '
-                                    'is used to determine the change in magnetic '
-                                    'field line distance, which, under assumption of '
-                                    'equipotential field lines, in turn alters '
-                                    'the electric field at that location (E=V/d). '),
-                            'label':'Northern Zonal Ion Velocity',
-                            'axis':'Northern Zonal Ion Velocity',
-                            'desc':'Northern Zonal Ion Velocity',
-                            'scale':'Linear',
-                            'value_min':-500.,
-                            'value_max':500.}
+    inst['north_footpoint_zon_drift'] = {'data': inst[north_zon_scalar]*inst[zon_drift],
+                                         'units': 'm/s',
+                                         'long_name': 'Northern zonal ion velocity',
+                                         'notes': ('Velocity along zonal direction, perpendicular '
+                                                   'to field and the meridional plane, scaled to '
+                                                   'northern footpoint. Positive is generally eastward. '
+                                                   'Velocity obtained using ion velocities relative '
+                                                   'to co-rotation in the instrument frame along '
+                                                   'with the corresponding unit vectors expressed in '
+                                                   'the instrument frame. Field-line mapping and '
+                                                   'the assumption of equi-potential field lines '
+                                                   'is used to translate the locally measured ion '
+                                                   'motion to the northern footpoint. The mapping '
+                                                   'is used to determine the change in magnetic '
+                                                   'field line distance, which, under assumption of '
+                                                   'equipotential field lines, in turn alters '
+                                                   'the electric field at that location (E=V/d). '),
+                                         'label': 'Northern Zonal Ion Velocity',
+                                         'axis': 'Northern Zonal Ion Velocity',
+                                         'desc': 'Northern Zonal Ion Velocity',
+                                         'scale': 'Linear',
+                                         'value_min': -500.,
+                                         'value_max': 500.}
