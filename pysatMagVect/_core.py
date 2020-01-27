@@ -1560,10 +1560,6 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
     distance between magnetic field lines at the magnetic apex when starting
     locally with a field line half distance of edge_length.
 
-    Note
-    ----
-        vector direction refers to the magnetic unit vector direction
-
     Parameters
     ----------
     glats : list-like of floats (degrees)
@@ -1587,6 +1583,11 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
     -------
     np.array
         The change in field line apex locations.
+
+
+    Note
+    ----
+        vector direction refers to the magnetic unit vector direction
 
     """
 
@@ -1767,11 +1768,6 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size
 
     Use scalars_for_mapping_ion_drifts instead.
 
-    Note
-    ----
-        Directions refer to the ion motion direction e.g. the zonal
-        scalar applies to zonal ion motions (meridional E field assuming ExB ion motion)
-
     Parameters
     ----------
     glats : list-like of floats (degrees)
@@ -1793,6 +1789,11 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size
         'north_zonal_drifts_scalar', 'north_mer_drifts_scalar', and similarly
         for southern locations. 'equator_mer_drifts_scalar' and
         'equator_zonal_drifts_scalar' cover the mappings to the equator.
+
+    Note
+    ----
+        Directions refer to the ion motion direction e.g. the zonal
+        scalar applies to zonal ion motions (meridional E field assuming ExB ion motion)
 
     """
 
