@@ -1580,6 +1580,38 @@ class TestUnitVectors():
         except:
             pass
 
+    def test_simple_geomagnetic_basis_interface(self):
+        """Ensure simple geomagnetic basis interface runs"""
+
+        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+        # data returned are the locations along each direction
+        # the full range of points obtained by iterating over all
+        # recasting alts into a more convenient form for later calculation
+        p_alts = [p_alts[0]] * len(p_longs)
+        date = datetime.datetime(2000, 1, 1)
+
+        if self.dc is not None:
+            targets = itertools.cycle(dc.ids)
+            pending = []
+            for i, p_lat in enumerate(p_lats):
+                # iterate through target cyclicly and run commands
+                print(i, p_lat)
+                dview.targets = next(targets)
+                pending.append(
+                    dview.apply_async(pymv.calculate_geomagnetic_basis,
+                                      [p_lat]*len(p_longs), p_longs,
+                                      p_alts, [date]*len(p_longs)))
+
+            for i, p_lat in enumerate(p_lats):
+                print ('collecting ', i, p_lat)
+                # collect output from first run
+                out_d = pending.pop(0).get()
+        else:
+            for i, p_lat in enumerate(p_lats):
+                print (i, p_lat)
+                out_d = pymv.calculate_geomagnetic_basis([p_lat]*len(p_longs), p_longs,
+                                                          p_alts, [date]*len(p_longs))
+
     def test_unit_vector_component_stepsize_sensitivity_plots(self):
         """Produce spatial plots of unit vector output sensitivity at the default step_size"""
         import matplotlib.pyplot as plt
@@ -2079,6 +2111,7 @@ class TestUnitVectors():
         yield (f,)
         f = functools.partial(self.step_along_mag_unit_vector_sensitivity_plots, direction='meridional')
         yield (f,)
+
 
     def test_geomag_efield_scalars_plots(self):
         """Produce summary plots of the electric field and drift mapping values """
