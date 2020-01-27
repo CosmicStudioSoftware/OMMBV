@@ -11,6 +11,7 @@ import datetime
 import pysat
 # import reference IGRF fortran code within the package
 from pysatMagVect import igrf as igrf
+import pysatMagVect.fortran_coords
 
 # parameters used to define Earth ellipsoid
 # WGS84 parameters below
@@ -20,6 +21,7 @@ earth_b = 6356.75231424518
 # standard geoncentric Earth radius
 # average radius of Earth
 earth_geo_radius = 6371.
+
 
 def geocentric_to_ecef(latitude, longitude, altitude):
     """Convert geocentric coordinates into ECEF
@@ -109,8 +111,9 @@ def geodetic_to_ecef(latitude, longitude, altitude):
 
     return x, y, z
 
-import pysatMagVect.fortran_coords
+
 ecef_to_geodetic = pysatMagVect.fortran_coords.ecef_to_geodetic
+
 
 def python_ecef_to_geodetic(x, y, z, method=None):
     """Convert ECEF into Geodetic WGS84 coordinates
@@ -177,6 +180,7 @@ def python_ecef_to_geodetic(x, y, z, method=None):
 
     return np.rad2deg(latitude), np.rad2deg(longitude), h
 
+
 def enu_to_ecef_vector(east, north, up, glat, glong):
     """Converts vector from East, North, Up components to ECEF
 
@@ -213,6 +217,7 @@ def enu_to_ecef_vector(east, north, up, glat, glong):
     z = north*np.cos(rlat) + up*np.sin(rlat)
 
     return x, y, z
+
 
 def ecef_to_enu_vector(x, y, z, glat, glong):
     """Converts vector from ECEF X,Y,Z components to East, North, Up
@@ -278,6 +283,7 @@ def project_ecef_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
 
     return out_x, out_y, out_z
 
+
 def normalize_vector(x, y, z):
     """
     Normalizes vector to produce a unit vector.
@@ -303,6 +309,7 @@ def normalize_vector(x, y, z):
     y = y/mag
     z = z/mag
     return x, y, z
+
 
 def cross_product(x1, y1, z1, x2, y2, z2):
     """
@@ -501,20 +508,9 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
 def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           steps=None, max_steps=1000, step_size=100.,
                                           ref_height=120., filter_zonal=True):
-    """Calculates unit vectors expressing the ion drift coordinate system
-    organized by the geomagnetic field. Unit vectors are expressed
-    in ECEF coordinates.
+    """Calculates field line integrated geomagnetic basis vectors.
 
-    Note
-    ----
-        The zonal vector is calculated by field-line tracing from
-        the input locations toward the footpoint locations at ref_height.
-        The cross product of these two vectors is taken to define the plane of
-        the magnetic field. This vector is not always orthogonal
-        with the local field-aligned vector (IGRF), thus any component of the
-        zonal vector with the field-aligned direction is removed (optional).
-        The meridional unit vector is defined via the cross product of the
-        zonal and field-aligned directions.
+     Unit vectors are expressed in ECEF coordinates.
 
     Parameters
     ----------
@@ -539,6 +535,17 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     Returns
     -------
     zon_x, zon_y, zon_z, fa_x, fa_y, fa_z, mer_x, mer_y, mer_z
+
+    Note
+    ----
+        The zonal vector is calculated by field-line tracing from
+        the input locations toward the footpoint locations at ref_height.
+        The cross product of these two vectors is taken to define the plane of
+        the magnetic field. This vector is not always orthogonal
+        with the local field-aligned vector (IGRF), thus any component of the
+        zonal vector with the field-aligned direction is removed (optional).
+        The meridional unit vector is defined via the cross product of the
+        zonal and field-aligned directions.
 
     """
 
@@ -652,6 +659,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     # add unit vectors for magnetic drifts in ecef coordinates
     return zvx, zvy, zvz, bx, by, bz, mx, my, mz
 
+
 def magnetic_vector(x, y, z, dates, normalize=False):
     """Uses IGRF to calculate geomagnetic field.
 
@@ -729,30 +737,14 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                           edge_steps=1, dstep_size=2.,
                                           max_steps=None, ref_height=None,
                                           steps=None,):
-    """Calculates local geomagnetic unit vectors expressing the ion drift
-    coordinate system organized by the geomagnetic field. Unit vectors are expressed
-    in ECEF coordinates.
+    """Calculates local geomagnetic basis vectors and mapping scalars.
 
     Zonal - Generally Eastward (+East); lies along a surface of constant apex height
     Field Aligned - Generally Northward (+North); points along geomagnetic field
     Meridional - Generally Vertical (+Up); points along the gradient in apex height
 
     The apex height is the geodetic height of the field line at its highest point.
-
-    Note
-    ----
-        The zonal and meridional vectors are calculated by using the observed
-        apex-height gradient to rotate a pair of vectors orthogonal
-        to eachother and the geomagnetic field such that one points along
-        no change in apex height (zonal), the other along the max (meridional).
-        The rotation angle theta is given by
-
-            Tan(theta) = apex_height_diff_zonal/apex_height_diff_meridional
-
-        The method terminates when successive updates to both the zonal and meridional
-        unit vectors differ (magnitude of difference) by less than tol, and the
-        change in apex_height from input location is less than tol_zonal_apex.
-
+    Unit vectors are expressed in ECEF coordinates.
 
     Parameters
     ----------
@@ -827,6 +819,20 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     diff_zonal_vec : magnitude of vector change for last loop
     loops : Number of loops
     vector_seed_type : Initial vector used for starting calculation (deprecated)
+
+    Note
+    ----
+        The zonal and meridional vectors are calculated by using the observed
+        apex-height gradient to rotate a pair of vectors orthogonal
+        to eachother and the geomagnetic field such that one points along
+        no change in apex height (zonal), the other along the max (meridional).
+        The rotation angle theta is given by
+
+            Tan(theta) = apex_height_diff_zonal/apex_height_diff_meridional
+
+        The method terminates when successive updates to both the zonal and meridional
+        unit vectors differ (magnitude of difference) by less than tol, and the
+        change in apex_height from input location is less than tol_zonal_apex.
 
     """
 
@@ -1099,7 +1105,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     return zx, zy, zz, bx, by, bz, mx, my, mz
 
 
-
 def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
                                step_size=25., scalar=1):
     """
@@ -1175,6 +1180,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
 
     return x, y, z
 
+
 def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
                             num_steps=1000, return_geodetic=False,
                             ecef_input=False):
@@ -1245,6 +1251,7 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
                                             south_ftpnt[:, 0], south_ftpnt[:, 1],
                                             south_ftpnt[:, 2])
     return north_ftpnt, south_ftpnt
+
 
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
                        fine_step_size=1.E-5, fine_max_steps=5,
@@ -1346,9 +1353,11 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     else:
         return _apex_out_x, _apex_out_y, _apex_out_z
 
+
 def apex_edge_lengths_via_footpoint(*args, **kwargs):
     raise DeprecationWarning('This method now called apex_distance_after_footpoint_step.')
     apex_distance_after_footpoint_step(*args, **kwargs)
+
 
 def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
                                     vector_direction, step_size=None,
@@ -1365,10 +1374,6 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
     The difference in position between these apex locations is the total centered
     distance between magnetic field lines at the magnetic apex when starting
     from the footpoints with a field line half distance of edge_length.
-
-    Note
-    ----
-        vector direction refers to the magnetic unit vector direction
 
     Parameters
     ----------
@@ -1408,7 +1413,9 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
         northern/southern hemisphere and back is taken. The return edge length
         through input location is provided.
 
-
+    Note
+    ----
+        vector direction refers to the magnetic unit vector direction
 
     """
 
@@ -1461,6 +1468,7 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
                                (plus_apex_z - minus_apex_z)**2)
 
     return apex_edge_length
+
 
 def apex_distance_after_local_step(glats, glons, alts, dates,
                                          vector_direction,
@@ -1680,11 +1688,9 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size
                                    edge_length=25., edge_steps=1,
                                    **kwargs):
     """
-    Calculates scalars for translating ion motions at position
-    glat, glon, and alt, for date, to the footpoints of the field line
-    as well as at the magnetic equator.
+    Heritage technique for mapping ion drifts and electric fields.
 
-    All inputs are assumed to be 1D arrays.
+    Use scalars_for_mapping_ion_drifts instead.
 
     Note
     ----
