@@ -733,6 +733,73 @@ def magnetic_vector(x, y, z, dates, normalize=False):
     return bx, by, bz, bm
 
 
+def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
+    """Calculates local geomagnetic basis vectors and mapping scalars.
+
+    Thin wrapper around calculate_mag_drift_unit_vectors_ecef set
+    to default parameters and with more organization of the outputs.
+
+    Parameters
+    ----------
+    latitude : array-like of floats (degrees) [-90., 90]
+        Latitude of location, degrees, WGS84
+    longitude : array-like of floats (degrees) [-180., 360.]
+        Longitude of location, degrees, WGS84
+    altitude : array-like of floats (km)
+        Altitude of location, height above surface, WGS84
+    datetimes : array-like of datetimes
+        Time to calculate vectors
+
+    Returns
+    -------
+    dict
+        zon_x (y,z): zonal unit vector along ECEF X, Y, and Z directions
+        fa_x (y,z): field-aligned unit vector along ECEF X, Y, and Z directions
+        mer_x (y,z): meridional unit vector along ECEF X, Y, and Z directions
+
+        d_zon_mag: D zonal vector magnitude
+        d_fa_mag: D field-aligned vector magnitude
+        d_mer_mag: D meridional vector magnitude
+
+        d_zon_x (y,z) : D zonal vector components along ECEF X, Y, and Z directions
+        d_mer_x (y,z) : D meridional vector components along ECEF X, Y, and Z directions
+        d_fa_x (y,z) : D field aligned vector components along ECEF X, Y, and Z directions
+
+        e_zon_mag: E zonal vector magnitude
+        e_fa_mag: E field-aligned vector magnitude
+        e_mer_mag: E meridional vector magnitude
+
+        e_zon_x (y,z) : E zonal vector components along ECEF X, Y, and Z directions
+        e_mer_x (y,z) : E meridional vector components along ECEF X, Y, and Z directions
+        e_fa_x (y,z) : E field aligned vector components along ECEF X, Y, and Z directions
+
+    """
+
+    zx, zy, zz, fx, fy, fz, mx, my, mz, info_d = calculate_mag_drift_unit_vectors_ecef(latitude, longitude,
+                                                                                       altitude, datetimes,
+                                                                                       full_output=True)
+    d_zon_mag = np.sqrt(info_d['d_zon_x']**2 + info_d['d_zon_y']**2 + info_d['d_zon_z']**2)
+    d_fa_mag = np.sqrt(info_d['d_fa_x']**2 + info_d['d_fa_y']**2 + info_d['d_fa_z']**2)
+    d_mer_mag = np.sqrt(info_d['d_mer_x']**2 + info_d['d_mer_y']**2 + info_d['d_mer_z']**2)
+    e_zon_mag = np.sqrt(info_d['e_zon_x']**2 + info_d['e_zon_y']**2 + info_d['e_zon_z']**2)
+    e_fa_mag = np.sqrt(info_d['e_fa_x']**2 + info_d['e_fa_y']**2 + info_d['e_fa_z']**2)
+    e_mer_mag = np.sqrt(info_d['e_mer_x']**2 + info_d['e_mer_y']**2 + info_d['e_mer_z']**2)
+    # assemble output dictionary
+    out_d = {'zon_x': zx, 'zon_y': zy, 'zon_z': zz,
+             'fa_x': fx, 'fa_y': fy, 'fa_z': fz,
+             'mer_x': mx, 'mer_y': my, 'mer_z': mz,
+             'd_zon_x': info_d['d_zon_x'], 'd_zon_y': info_d['d_zon_y'], 'd_zon_z': info_d['d_zon_z'],
+             'd_fa_x': info_d['d_fa_x'], 'd_fa_y': info_d['d_fa_y'], 'd_fa_z': info_d['d_fa_z'],
+             'd_mer_x': info_d['d_mer_x'], 'd_mer_y': info_d['d_mer_y'], 'd_mer_z': info_d['d_mer_z'],
+             'e_zon_x': info_d['e_zon_x'], 'e_zon_y': info_d['e_zon_y'], 'e_zon_z': info_d['e_zon_z'],
+             'e_fa_x': info_d['e_fa_x'], 'e_fa_y': info_d['e_fa_y'], 'e_fa_z': info_d['e_fa_z'],
+             'e_mer_x': info_d['e_mer_x'], 'e_mer_y': info_d['e_mer_y'], 'e_mer_z': info_d['e_mer_z'],
+             'd_zon_mag': d_zon_mag, 'd_fa_mag': d_fa_mag, 'd_mer_mag': d_mer_mag,
+             'e_zon_mag': e_zon_mag, 'e_fa_mag': e_fa_mag, 'e_mer_mag': e_mer_mag}
+
+    return out_d
+
+
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           step_size=2., tol=1.E-4,
                                           tol_zonal_apex=1.E-4, max_loops=100,
