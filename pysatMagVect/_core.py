@@ -1562,14 +1562,13 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
     else:
         return apex_edge_length
 
+
 def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
                                    max_steps=None, e_field_scaling_only=None,
                                    edge_length=None, edge_steps=None,
                                    **kwargs):
     """
-    Calculates scalars for translating ion motions at position
-    glat, glon, and alt, for date, to the footpoints of the field line
-    as well as at the magnetic equator.
+    Translates ion drifts and electric fields to equator and footpoints.
 
     All inputs are assumed to be 1D arrays.
 
