@@ -570,14 +570,14 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     idx, = np.where(geo_long < 0)
     geo_long[idx] = geo_long[idx] + 360.
     # prepare output lists
-    north_x = [];
-    north_y = [];
+    north_x = []
+    north_y = []
     north_z = []
-    south_x = [];
-    south_y = [];
+    south_x = []
+    south_y = []
     south_z = []
-    bn = [];
-    be = [];
+    bn = []
+    be = []
     bd = []
 
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z,
