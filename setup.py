@@ -5,9 +5,9 @@ import os
 from numpy.distutils.core import Extension
 
 # create extension for calling IGRF
-extensions = [Extension(name='pysatMagVect.igrf',
+extensions = [Extension(name='OMMBV.igrf',
                         sources=[os.path.join('pysatMagVect', 'igrf13.f')]),
-              Extension(name='pysatMagVect.fortran_coords',
+              Extension(name='OMMBV.fortran_coords',
                         sources=[os.path.join('pysatMagVect', '_coords.f')])]
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -17,16 +17,16 @@ with open(os.path.join(here, version_filename)) as version_file:
 
 # call setup
 numpy.distutils.core.setup(
-    name='pysatMagVect',
+    name='OMMBV',
     version=version,
-    packages=['pysatMagVect', 'pysatMagVect.tests'],
+    packages=['OMMBV', 'OMMBV.tests'],
     description='Orthogonal geomagnetic vector basis and field-line mapping for multipole magnetic fields.',
     url='http://github.com/pysat/pysatMagVect',
 
     # Author details
     author='Russell Stoneback',
     author_email='rstoneba@utdallas.edu',
-    data_files=[('pysatMagVect', ['pysatMagVect/version.txt'])],
+    data_files=[('OMMBV', ['OMMBV/version.txt'])],
     include_package_data=True,
 
     # required modules

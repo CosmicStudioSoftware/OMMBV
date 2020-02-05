@@ -30,7 +30,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
         return MagicMock()
 
-MOCK_MODULES = ['pysatMagVect.igrf', 'scipy', 'scipy.integrate', 'numpy', 'datetime', 'pysat']
+MOCK_MODULES = ['OMMBV.igrf', 'scipy', 'scipy.integrate', 'numpy', 'datetime', 'pysat']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 #print sys.path
@@ -78,7 +78,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pysatMagVect'
+project = u'OMMBV'
 copyright = u'2018, Russell Stoneback'
 author = u'Russell Stoneback'
 
@@ -255,7 +255,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'pysatMagVect.tex', u'Python Magnetic Vectors Documentation',
+  (master_doc, 'OMMBV.tex', u'Python Magnetic Vectors Documentation',
    u'Russell Stoneback', 'manual'),
 ]
 
@@ -285,7 +285,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pysatMagVect', u'pysatMagVect Documentation',
+    (master_doc, 'OMMBV', u'OMMBV Documentation',
      [author], 1)
 ]
 
@@ -299,8 +299,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'pysatMagVect', u'pysatMagVect Documentation',
-   author, 'pysatMagVect', 'One line description of project.',
+  (master_doc, 'OMMBV', u'OMMBV Documentation',
+   author, 'OMMBV', 'One line description of project.',
    'Miscellaneous'),
 ]
 

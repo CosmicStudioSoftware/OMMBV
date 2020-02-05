@@ -1,4 +1,4 @@
-include pysatMagVect/version.txt
+include OMMBV/version.txt
 include LICENSE
 include CONTRIBUTING.md
-prune pysatMagVect/tests
+prune OMMBV/tests

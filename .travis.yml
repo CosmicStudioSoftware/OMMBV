@@ -33,13 +33,13 @@ before_install:
   - python -c 'import pysat; pysat.utils.set_data_dir("/home/travis/build/pysatData")'
 
 install:
-  # install pysatMagVect
-  - cd ./pysatMagVect
+  # install OMMBV
+  - cd ./OMMBV
   - python setup.py develop
 
 # command to run tests
 script:
-  - nosetests  -vs --with-coverage --cover-package=pysatMagVect
+  - nosetests  -vs --with-coverage --cover-package=OMMBV
 
 after_success:
   - coveralls
