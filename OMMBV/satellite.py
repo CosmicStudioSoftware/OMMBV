@@ -1,4 +1,4 @@
-import pysatMagVect as pymv
+import OMMBV as OMMBV
 
 
 def add_mag_drift_unit_vectors_ecef(inst, **kwargs):
@@ -27,11 +27,11 @@ def add_mag_drift_unit_vectors_ecef(inst, **kwargs):
     """
 
     # add unit vectors for magnetic drifts in ecef coordinates
-    zvx, zvy, zvz, bx, by, bz, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef(inst['latitude'],
-                                                                                       inst['longitude'],
-                                                                                       inst['altitude'],
-                                                                                       inst.data.index,
-                                                                                       **kwargs)
+    zvx, zvy, zvz, bx, by, bz, mx, my, mz = OMMBV.calculate_mag_drift_unit_vectors_ecef(inst['latitude'],
+                                                                                        inst['longitude'],
+                                                                                        inst['altitude'],
+                                                                                        inst.data.index,
+                                                                                        **kwargs)
 
     inst['unit_zon_ecef_x'] = zvx
     inst['unit_zon_ecef_y'] = zvy
@@ -200,17 +200,17 @@ def add_mag_drift_unit_vectors(inst, **kwargs):
     # vectors are returned in geo/ecef coordinate system
     add_mag_drift_unit_vectors_ecef(inst, **kwargs)
     # convert them to S/C using transformation supplied by OA
-    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = pymv.project_ecef_vector_onto_basis(
+    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = OMMBV.project_ecef_vector_onto_basis(
         inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
         inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
         inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
         inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = pymv.project_ecef_vector_onto_basis(
+    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = OMMBV.project_ecef_vector_onto_basis(
         inst['unit_fa_ecef_x'], inst['unit_fa_ecef_y'], inst['unit_fa_ecef_z'],
         inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
         inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
         inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = pymv.project_ecef_vector_onto_basis(
+    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = OMMBV.project_ecef_vector_onto_basis(
         inst['unit_mer_ecef_x'], inst['unit_mer_ecef_y'], inst['unit_mer_ecef_z'],
         inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
         inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
