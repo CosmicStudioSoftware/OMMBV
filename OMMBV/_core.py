@@ -9,8 +9,8 @@ import numpy as np
 import datetime
 import pysat
 # import reference IGRF fortran code within the package
-from pysatMagVect import igrf as igrf
-import pysatMagVect.fortran_coords
+from OMMBV import igrf as igrf
+import OMMBV.fortran_coords
 
 # parameters used to define Earth ellipsoid
 # WGS84 parameters below
@@ -111,7 +111,7 @@ def geodetic_to_ecef(latitude, longitude, altitude):
     return x, y, z
 
 
-ecef_to_geodetic = pysatMagVect.fortran_coords.ecef_to_geodetic
+ecef_to_geodetic = OMMBV.fortran_coords.ecef_to_geodetic
 
 
 def python_ecef_to_geodetic(x, y, z, method=None):
