@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-import pysatMagVect
-import pysatMagVect as pymv
+import OMMBV
 
 import pysat
 import apexpy
@@ -19,7 +18,7 @@ class TestComparison():
 
         return
 
-    def test_apexpy_v_pymv(self):
+    def test_apexpy_v_OMMBV(self):
         """Comparison with apexpy along magnetic equator"""
         # generate test values
         glongs = np.arange(99)*3.6 - 180.
@@ -28,7 +27,7 @@ class TestComparison():
         # date of run
         date = self.inst.date
         # map to the magnetic equator
-        ecef_x, ecef_y, ecef_z, eq_lat, eq_long, eq_z = pymv.apex_location_info(
+        ecef_x, ecef_y, ecef_z, eq_lat, eq_long, eq_z = OMMBV.apex_location_info(
             glats, glongs, alts,
             [date]*len(alts),
             return_geodetic=True)
@@ -44,33 +43,33 @@ class TestComparison():
         apex_zon = apex_vecs[6]
 
         # normalize into unit vectors
-        apex_mer[0, :], apex_mer[1, :], apex_mer[2, :] = pysatMagVect.normalize_vector(-apex_mer[0, :],
+        apex_mer[0, :], apex_mer[1, :], apex_mer[2, :] = OMMBV.normalize_vector(-apex_mer[0, :],
                                                                                        -apex_mer[1, :],
                                                                                        -apex_mer[2, :])
 
-        apex_zon[0, :], apex_zon[1, :], apex_zon[2, :] = pysatMagVect.normalize_vector(apex_zon[0, :],
+        apex_zon[0, :], apex_zon[1, :], apex_zon[2, :] = OMMBV.normalize_vector(apex_zon[0, :],
                                                                                        apex_zon[1, :],
                                                                                        apex_zon[2, :])
-        apex_fa[0, :], apex_fa[1, :], apex_fa[2, :] = pysatMagVect.normalize_vector(apex_fa[0, :],
+        apex_fa[0, :], apex_fa[1, :], apex_fa[2, :] = OMMBV.normalize_vector(apex_fa[0, :],
                                                                                     apex_fa[1, :],
                                                                                     apex_fa[2, :])
 
         # calculate mag unit vectors in ECEF coordinates
-        out = pysatMagVect.calculate_mag_drift_unit_vectors_ecef(eq_lat, eq_long, eq_z,
+        out = OMMBV.calculate_mag_drift_unit_vectors_ecef(eq_lat, eq_long, eq_z,
                                                                  [self.inst.date]*len(eq_z))
         zx, zy, zz, fx, fy, fz, mx, my, mz = out
 
         # convert into north, east, and up system
-        ze, zn, zu = pysatMagVect.ecef_to_enu_vector(zx, zy, zz, eq_lat, eq_long)
-        fe, fn, fu = pysatMagVect.ecef_to_enu_vector(fx, fy, fz, eq_lat, eq_long)
-        me, mn, mu = pysatMagVect.ecef_to_enu_vector(mx, my, mz, eq_lat, eq_long)
+        ze, zn, zu = OMMBV.ecef_to_enu_vector(zx, zy, zz, eq_lat, eq_long)
+        fe, fn, fu = OMMBV.ecef_to_enu_vector(fx, fy, fz, eq_lat, eq_long)
+        me, mn, mu = OMMBV.ecef_to_enu_vector(mx, my, mz, eq_lat, eq_long)
 
         # create inputs straight from IGRF
         igrf_n = []
         igrf_e = []
         igrf_u = []
         for lat, lon, alt in zip(eq_lat, eq_long, eq_z):
-            out = pysatMagVect.igrf.igrf13syn(0, date.year, 1, alt,
+            out = OMMBV.igrf.igrf13syn(0, date.year, 1, alt,
                                               np.deg2rad(90 - lat), np.deg2rad(lon))
             out = np.array(out)
             # normalize

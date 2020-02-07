@@ -8,8 +8,8 @@ import datetime
 
 import functools
 
-import pysatMagVect as pymv
-from pysatMagVect import igrf
+import OMMBV as OMMBV
+from OMMBV import igrf
 
 import pysat
 
@@ -183,7 +183,7 @@ class TestUnitVectors():
                     lats = [lat]*len(p_longs)
                     # iterate through target cyclicly and run commands
                     dview.targets = next(targets)
-                    pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, lats,
+                    pending.append(dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef, lats,
                                                      p_longs, p_alts, [date]*len(p_longs), step_size=steps))
                 for lat in p_lats:
                     # collect output
@@ -212,7 +212,7 @@ class TestUnitVectors():
                 out = []
                 for lat in p_lats:
                     lats = [lat]*len(p_longs)
-                    zx, zy, zz, _, _, _, mx, my, mz = pymv.calculate_mag_drift_unit_vectors_ecef(lats,
+                    zx, zy, zz, _, _, _, mx, my, mz = OMMBV.calculate_mag_drift_unit_vectors_ecef(lats,
                                                                                                  p_longs, p_alts,
                                                                                                  [date]*len(p_longs),
                                                                                                  step_size=steps)
@@ -307,7 +307,7 @@ class TestUnitVectors():
                     lats = [lat]*len(p_longs)
                     # iterate through target cyclicly and run commands
                     dview.targets = next(targets)
-                    pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, lats,
+                    pending.append(dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef, lats,
                                                      p_longs, p_alts, [date]*len(p_longs), step_size=steps,
                                                      dstep_size=steps, full_output=True))
                 for lat in p_lats:
@@ -337,7 +337,7 @@ class TestUnitVectors():
                 out = []
                 for lat in p_lats:
                     lats = [lat]*len(p_longs)
-                    zx, zy, zz, _, _, _, mx, my, mz, d = pymv.calculate_mag_drift_unit_vectors_ecef(lats,
+                    zx, zy, zz, _, _, _, mx, my, mz, d = OMMBV.calculate_mag_drift_unit_vectors_ecef(lats,
                                                                                                     p_longs, p_alts,
                                                                                                     [date]*len(p_longs),
                                                                                                     step_size=steps,
@@ -434,7 +434,7 @@ class TestUnitVectors():
                     lats = [lat]*len(p_longs)
                     # iterate through target cyclicly and run commands
                     dview.targets = next(targets)
-                    pending.append(dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, lats,
+                    pending.append(dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef, lats,
                                                      p_longs, p_alts, [date]*len(p_longs), step_size=steps,
                                                      dstep_size=steps, full_output=True))
                 for lat in p_lats:
@@ -464,7 +464,7 @@ class TestUnitVectors():
                 out = []
                 for lat in p_lats:
                     lats = [lat]*len(p_longs)
-                    zx, zy, zz, _, _, _, mx, my, mz, d = pymv.calculate_mag_drift_unit_vectors_ecef(lats,
+                    zx, zy, zz, _, _, _, mx, my, mz, d = OMMBV.calculate_mag_drift_unit_vectors_ecef(lats,
                                                                                                     p_longs, p_alts,
                                                                                                     [date]*len(p_longs),
                                                                                                     step_size=steps,
@@ -594,18 +594,18 @@ class TestUnitVectors():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef, [p_lat]*len(p_longs), p_longs,
+                    dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef, [p_lat]*len(p_longs), p_longs,
                                       p_alts, [date]*len(p_longs), full_output=True,
                                       include_debug=True))
             for i, p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 # collect output
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pending.pop(0).get()
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz,
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
                                                                                 [p_lat]*len(p_longs), p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz,
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
                                                                              [p_lat]*len(p_longs), p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz,
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
                                                                              [p_lat]*len(p_longs), p_longs)
 
                 # pull out info about the vector generation
@@ -618,43 +618,43 @@ class TestUnitVectors():
                 dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
                                                                                       [p_lat]*len(p_longs), p_longs)
                 dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
                                                                                          [p_lat]*len(p_longs),
                                                                                          p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz,
+                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
                                                                                       [p_lat]*len(p_longs), p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
                                                                                    [p_lat]*len(p_longs), p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
                                                                                       [p_lat]*len(p_longs), p_longs)
 
                 ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
                 efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
                 emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
-                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = pymv.ecef_to_enu_vector(ezx, ezy, ezz,
+                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(ezx, ezy, ezz,
                                                                                       [p_lat]*len(p_longs), p_longs)
-                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = pymv.ecef_to_enu_vector(efx, efy, efz,
+                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.ecef_to_enu_vector(efx, efy, efz,
                                                                                       [p_lat]*len(p_longs), p_longs)
-                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = pymv.ecef_to_enu_vector(emx, emy, emz,
+                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.ecef_to_enu_vector(emx, emy, emz,
                                                                                    [p_lat]*len(p_longs), p_longs)
 
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pymv.calculate_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = OMMBV.calculate_mag_drift_unit_vectors_ecef(
                                                                                         [p_lat]*len(p_longs), p_longs,
                                                                                         p_alts, [date]*len(p_longs),
                                                                                         full_output=True,
                                                                                         include_debug=True)
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz,
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
                                                                                 [p_lat]*len(p_longs), p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz,
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
                                                                              [p_lat]*len(p_longs), p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz,
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
                                                                              [p_lat]*len(p_longs), p_longs)
                 # pull out info about the vector generation
                 grad_zon[i, :-1], grad_mer[i, :-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
@@ -666,34 +666,34 @@ class TestUnitVectors():
                 dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
                                                                                       [p_lat]*len(p_longs),
                                                                                       p_longs)
                 dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
                                                                                          [p_lat]*len(p_longs),
                                                                                          p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz,
+                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
                                                                                       [p_lat]*len(p_longs),
                                                                                       p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
                                                                                    [p_lat]*len(p_longs),
                                                                                    p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
                                                                                       [p_lat]*len(p_longs),
                                                                                       p_longs)
 
                 ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
                 efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
                 emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
-                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = pymv.ecef_to_enu_vector(ezx, ezy, ezz,
+                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(ezx, ezy, ezz,
                                                                                       [p_lat]*len(p_longs),
                                                                                       p_longs)
-                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = pymv.ecef_to_enu_vector(efx, efy, efz,
+                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.ecef_to_enu_vector(efx, efy, efz,
                                                                                       [p_lat]*len(p_longs),
                                                                                       p_longs)
-                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = pymv.ecef_to_enu_vector(emx, emy, emz,
+                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.ecef_to_enu_vector(emx, emy, emz,
                                                                                    [p_lat]*len(p_longs),
                                                                                    p_longs)
 
@@ -1468,7 +1468,7 @@ class TestUnitVectors():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,
+                    dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef,
                                       [p_lat]*len(p_longs), p_longs,
                                       p_alts, [date]*len(p_longs), full_output=True,
                                       include_debug=True, edge_steps=5))
@@ -1481,21 +1481,21 @@ class TestUnitVectors():
                 dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
                                                                                       [p_lat]*len(p_longs),
                                                                                       p_longs)
                 dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
                                                                                          [p_lat]*len(p_longs),
                                                                                          p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz,
+                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
                                                                                       [p_lat]*len(p_longs),
                                                                                       p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
                                                                                    [p_lat]*len(p_longs),
                                                                                    p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
                                                                                       [p_lat]*len(p_longs),
                                                                                       p_longs)
 
@@ -1503,7 +1503,7 @@ class TestUnitVectors():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pymv.calculate_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = OMMBV.calculate_mag_drift_unit_vectors_ecef(
                                                                                         [p_lat]*len(p_longs), p_longs,
                                                                                         p_alts, [date]*len(p_longs),
                                                                                         full_output=True,
@@ -1514,18 +1514,18 @@ class TestUnitVectors():
                 dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
                                                                                       [p_lat]*len(p_longs), p_longs)
                 dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = pymv.ecef_to_enu_vector(dzx, dzy, dzz,
+                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
                                                                                          [p_lat]*len(p_longs),
                                                                                          p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = pymv.ecef_to_enu_vector(dfx, dfy, dfz,
+                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
                                                                                       [p_lat]*len(p_longs), p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
                                                                                    [p_lat]*len(p_longs), p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = pymv.ecef_to_enu_vector(dmx, dmy, dmz,
+                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
                                                                                       [p_lat]*len(p_longs), p_longs)
 
         # account for periodicity
@@ -1598,7 +1598,7 @@ class TestUnitVectors():
                 print(i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(pymv.calculate_geomagnetic_basis,
+                    dview.apply_async(OMMBV.calculate_geomagnetic_basis,
                                       [p_lat]*len(p_longs), p_longs,
                                       p_alts, [date]*len(p_longs)))
 
@@ -1609,7 +1609,7 @@ class TestUnitVectors():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                out_d = pymv.calculate_geomagnetic_basis([p_lat]*len(p_longs), p_longs,
+                out_d = OMMBV.calculate_geomagnetic_basis([p_lat]*len(p_longs), p_longs,
                                                           p_alts, [date]*len(p_longs))
 
     def test_unit_vector_component_stepsize_sensitivity_plots(self):
@@ -1646,12 +1646,12 @@ class TestUnitVectors():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,
+                    dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef,
                                       [p_lat]*len(p_longs), p_longs,
                                       p_alts, [date]*len(p_longs),
                                       step_size=1.))
                 pending.append(
-                    dview.apply_async(pymv.calculate_mag_drift_unit_vectors_ecef,
+                    dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef,
                                       [p_lat]*len(p_longs), p_longs,
                                       p_alts, [date]*len(p_longs),
                                       step_size=2.))
@@ -1660,30 +1660,30 @@ class TestUnitVectors():
                 print ('collecting ', i, p_lat)
                 # collect output from first run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz,
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
                                                                                 [p_lat]*len(p_longs),
                                                                                 p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz,
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
                                                                              [p_lat]*len(p_longs),
                                                                              p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz,
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
                                                                              [p_lat]*len(p_longs),
                                                                              p_longs)
                 # collect output from second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a)  # /zvx[i,:-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b)  # /zvy[i,:-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c)  # /zvz[i,:-1]
 
-                _a, _b, _c = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a)  # /bx[i,:-1]
                 by[i, :-1] = (by[i, :-1] - _b)  # /by[i,:-1]
                 bz[i, :-1] = (bz[i, :-1] - _c)  # /bz[i,:-1]
 
-                _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a)  # /mx[i,:-1]
                 my[i, :-1] = (my[i, :-1] - _b)  # /my[i,:-1]
@@ -1692,38 +1692,38 @@ class TestUnitVectors():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_mag_drift_unit_vectors_ecef(
                                                                         [p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
                                                                         step_size=1.)
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = pymv.ecef_to_enu_vector(tzx, tzy, tzz,
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
                                                                                 [p_lat]*len(p_longs),
                                                                                 p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = pymv.ecef_to_enu_vector(tbx, tby, tbz,
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
                                                                              [p_lat]*len(p_longs),
                                                                              p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = pymv.ecef_to_enu_vector(tmx, tmy, tmz,
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
                                                                              [p_lat]*len(p_longs),
                                                                              p_longs)
 
                 # second run
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pymv.calculate_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs),
                     step_size=2.)
-                _a, _b, _c = pymv.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a)  # /zvx[i,:-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b)  # /zvy[i,:-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c)  # /zvz[i,:-1]
 
-                _a, _b, _c = pymv.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a)  # /bx[i,:-1]
                 by[i, :-1] = (by[i, :-1] - _b)  # /by[i,:-1]
                 bz[i, :-1] = (bz[i, :-1] - _c)  # /bz[i,:-1]
 
-                _a, _b, _c = pymv.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a)  # /mx[i,:-1]
                 my[i, :-1] = (my[i, :-1] - _b)  # /my[i,:-1]
@@ -1932,12 +1932,12 @@ class TestUnitVectors():
 
                 dview.targets = next(targets)
                 # inputs are ECEF locations
-                in_x, in_y, in_z = pymv.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
-                pending.append(dview.apply_async(pymv.step_along_mag_unit_vector,
+                in_x, in_y, in_z = OMMBV.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
+                pending.append(dview.apply_async(OMMBV.step_along_mag_unit_vector,
                                                  in_x, in_y, in_z, dates,
                                                  direction=direction,
                                                  num_steps=5, step_size=25. / 5.))
-                pending.append(dview.apply_async(pymv.step_along_mag_unit_vector,
+                pending.append(dview.apply_async(OMMBV.step_along_mag_unit_vector,
                                                  in_x, in_y, in_z, dates,
                                                  direction=direction,
                                                  num_steps=1, step_size=25. / 1.))
@@ -1953,13 +1953,13 @@ class TestUnitVectors():
             for i, p_lat in enumerate(p_lats):
                 dview.targets = next(targets)
                 # convert all locations to geodetic coordinates
-                tlat, tlon, talt = pymv.ecef_to_geodetic(x[i, :-1], y[i, :-1], z[i, :-1])
-                pending.append(dview.apply_async(pymv.apex_location_info,
+                tlat, tlon, talt = OMMBV.ecef_to_geodetic(x[i, :-1], y[i, :-1], z[i, :-1])
+                pending.append(dview.apply_async(OMMBV.apex_location_info,
                                                  tlat, tlon, talt, dates,
                                                  return_geodetic=True))
                 # convert all locations to geodetic coordinates
-                tlat, tlon, talt = pymv.ecef_to_geodetic(x2[i, :-1], y2[i, :-1], z2[i, :-1])
-                pending.append(dview.apply_async(pymv.apex_location_info,
+                tlat, tlon, talt = OMMBV.ecef_to_geodetic(x2[i, :-1], y2[i, :-1], z2[i, :-1])
+                pending.append(dview.apply_async(OMMBV.apex_location_info,
                                                  tlat, tlon, talt, dates,
                                                  return_geodetic=True))
             for i, p_lat in enumerate(p_lats):
@@ -1977,24 +1977,24 @@ class TestUnitVectors():
 
         else:
             for i, p_lat in enumerate(p_lats):
-                in_x, in_y, in_z = pymv.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
+                in_x, in_y, in_z = OMMBV.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
 
-                x[i, :-1], y[i, :-1], z[i, :-1] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, dates,
+                x[i, :-1], y[i, :-1], z[i, :-1] = OMMBV.step_along_mag_unit_vector(in_x, in_y, in_z, dates,
                                                                                   direction=direction,
                                                                                   num_steps=5, step_size=25. / 5.)
                 # second run
-                x2[i, :-1], y2[i, :-1], z2[i, :-1] = pymv.step_along_mag_unit_vector(in_x, in_y, in_z, dates,
+                x2[i, :-1], y2[i, :-1], z2[i, :-1] = OMMBV.step_along_mag_unit_vector(in_x, in_y, in_z, dates,
                                                                                      direction=direction,
                                                                                      num_steps=1, step_size=25. / 1.)
 
             for i, p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
-                tlat, tlon, talt = pymv.ecef_to_geodetic(x[i, :-1], y[i, :-1], z[i, :-1])
-                x[i, :-1], y[i, :-1], z[i, :-1], _, _, h[i, :-1] = pymv.apex_location_info(tlat, tlon, talt, dates,
+                tlat, tlon, talt = OMMBV.ecef_to_geodetic(x[i, :-1], y[i, :-1], z[i, :-1])
+                x[i, :-1], y[i, :-1], z[i, :-1], _, _, h[i, :-1] = OMMBV.apex_location_info(tlat, tlon, talt, dates,
                                                                                            return_geodetic=True)
                 # convert all locations to geodetic coordinates
-                tlat, tlon, talt = pymv.ecef_to_geodetic(x2[i, :-1], y2[i, :-1], z2[i, :-1])
-                x2[i, :-1], y2[i, :-1], z2[i, :-1], _, _, h2[i, :-1] = pymv.apex_location_info(tlat, tlon, talt, dates,
+                tlat, tlon, talt = OMMBV.ecef_to_geodetic(x2[i, :-1], y2[i, :-1], z2[i, :-1])
+                x2[i, :-1], y2[i, :-1], z2[i, :-1], _, _, h2[i, :-1] = OMMBV.apex_location_info(tlat, tlon, talt, dates,
                                                                                                return_geodetic=True)
             # take difference in locations
             normx = x.copy()
@@ -2146,7 +2146,7 @@ class TestUnitVectors():
                 # iterate through target cyclicly and run commands
                 print (i, p_lat)
                 dview.targets = next(targets)
-                pending.append(dview.apply_async(pymv.scalars_for_mapping_ion_drifts,
+                pending.append(dview.apply_async(OMMBV.scalars_for_mapping_ion_drifts,
                                                  [p_lat]*len(p_longs), p_longs,
                                                  p_alts, [date]*len(p_longs)))
             for i, p_lat in enumerate(p_lats):
@@ -2169,7 +2169,7 @@ class TestUnitVectors():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                scalars = pymv.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
+                scalars = OMMBV.scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
                                                               p_alts, [date]*len(p_longs))
                 north_zonal[i, :-1] = scalars['north_mer_fields_scalar']
                 north_mer[i, :-1] = scalars['north_zon_fields_scalar']
@@ -2384,7 +2384,7 @@ class TestUnitVectors():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(pymv.heritage_scalars_for_mapping_ion_drifts,
+                    dview.apply_async(OMMBV.heritage_scalars_for_mapping_ion_drifts,
                                       [p_lat]*len(p_longs), p_longs,
                                       p_alts, [date]*len(p_longs)))
             for i, p_lat in enumerate(p_lats):
@@ -2407,7 +2407,7 @@ class TestUnitVectors():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                scalars = pymv.heritage_scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
+                scalars = OMMBV.heritage_scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
                                                                        p_alts, [date]*len(p_longs))
                 north_zonal[i, :-1] = scalars['north_mer_fields_scalar']
                 north_mer[i, :-1] = scalars['north_zon_fields_scalar']
@@ -2614,13 +2614,13 @@ class TestUnitVectors():
 
             #
             date = datetime.datetime(2000, 1, 1)
-            ecef_x, ecef_y, ecef_z = pymv.geocentric_to_ecef(p_lat, p_long, p_alt)
+            ecef_x, ecef_y, ecef_z = OMMBV.geocentric_to_ecef(p_lat, p_long, p_alt)
 
             for j, (x, y, z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
                 # perform field line traces
-                trace_n = pymv.field_line_trace(np.array([x, y, z]), date, 1., 0.,
+                trace_n = OMMBV.field_line_trace(np.array([x, y, z]), date, 1., 0.,
                                                 step_size=.5, max_steps=1.E6)
-                trace_s = pymv.field_line_trace(np.array([x, y, z]), date, -1., 0.,
+                trace_s = OMMBV.field_line_trace(np.array([x, y, z]), date, -1., 0.,
                                                 step_size=.5, max_steps=1.E6)
                 # combine together, S/C position is first for both
                 # reverse first array and join so plotting makes sense
@@ -2639,7 +2639,7 @@ class TestUnitVectors():
 
                 # compute magnetic field vectors
                 # need to provide alt, latitude, and longitude in geodetic coords
-                latitude, longitude, altitude = pymv.ecef_to_geodetic(trace['x'], trace['y'], trace['z'])
+                latitude, longitude, altitude = OMMBV.ecef_to_geodetic(trace['x'], trace['y'], trace['z'])
                 self.inst[:, 'latitude'] = latitude
                 self.inst[:, 'longitude'] = longitude
                 self.inst[:, 'altitude'] = altitude
@@ -2659,7 +2659,7 @@ class TestUnitVectors():
                                                                           pds.DateOffset(
                                                                               seconds=len(self.inst.data) - 1),
                                                                           freq='S')
-                pymv.satellite.add_mag_drift_unit_vectors(self.inst)
+                OMMBV.satellite.add_mag_drift_unit_vectors(self.inst)
 
                 # if i % 2 == 0:
                 length = 500
@@ -2711,9 +2711,9 @@ class TestUnitVectors():
                 # ensure that zonal vector is generally eastward
                 ones = np.ones(len(self.inst.data.index))
                 zeros = np.zeros(len(self.inst.data.index))
-                ex, ey, ez = pymv.enu_to_ecef_vector(ones, zeros, zeros, self.inst['latitude'], self.inst['longitude'])
-                nx, ny, nz = pymv.enu_to_ecef_vector(zeros, ones, zeros, self.inst['latitude'], self.inst['longitude'])
-                ux, uy, uz = pymv.enu_to_ecef_vector(zeros, zeros, ones, self.inst['latitude'], self.inst['longitude'])
+                ex, ey, ez = OMMBV.enu_to_ecef_vector(ones, zeros, zeros, self.inst['latitude'], self.inst['longitude'])
+                nx, ny, nz = OMMBV.enu_to_ecef_vector(zeros, ones, zeros, self.inst['latitude'], self.inst['longitude'])
+                ux, uy, uz = OMMBV.enu_to_ecef_vector(zeros, zeros, ones, self.inst['latitude'], self.inst['longitude'])
 
                 dot1 = self.inst['unit_zon_x']*ex + self.inst['unit_zon_y']*ey + self.inst['unit_zon_z']*ez
                 assert np.all(dot1 > 0.)
