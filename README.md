@@ -4,10 +4,14 @@
 [![Documentation Status](https://readthedocs.org/projects/OMMBV/badge/?version=latest)](https://OMMBV.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/138220240.svg)](https://zenodo.org/badge/latestdoi/138220240)
 
-The motion of plasma in the ionosphere is the result of forcing from neutral winds, electric fields, neutral collisions, 
+The motion of plasma in the ionosphere is the result of forcing from neutral winds, electric fields,  
 as well as the orientation of the background magnetic field. Plasma moves easily along the magnetic field line and less 
- so across it. OMMBV calculates directions (unit vectors) based upon the geomagnetic field that are most relevant for 
- understanding the movement of plasma. In addition, OMMBV includes methods for scaling ion drifts at one location to 
+ so across it. OMMBV (Orthogonal Multipole Magnetic Basis Vectors) calculates directions (unit vectors) 
+ based upon the geomagnetic field that are optimized for understanding the movement of plasma and the coupling 
+ with the neutral atmosphere. This system is the first to remain orthogonal for multipole magnetic fields as well as
+ when including a geodetic reference surface (Earth).
+ 
+ OMMBV also includes methods for scaling ion drifts at one location to 
  either the magnetic footpoint or to the magnetic equator. Scaling to the footpoint is critical for understanding how 
  neutral atmosphere winds at low altitudes (footpoint heights) will be expressed either at the satellite location or at 
  the magnetic equator. Scaling to the magnetic equator can be particularly effective when creating a common basis for 
@@ -21,7 +25,7 @@ routines suitable for integrating physics-based models (TIEGCM) and measurements
 Outage Forecasting System (C/NOFS) satellite.
 
 The development of the multipole software has been supported, in part, by multiple agencies under the following grants:
-Funding provided by Naval Research Laboratory N00173-19-1-G016 and NASA 80NSSC18K1203.
+Naval Research Laboratory N00173-19-1-G016 and NASA 80NSSC18K1203.
 
 Previous versions of this software that provided an 'average' basis were funded by: 
 National Aeronautics and Space Agency (NASA NNG12FA45C), National Oceanic and Atmospheric 
