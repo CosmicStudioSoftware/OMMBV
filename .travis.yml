@@ -24,6 +24,8 @@ before_install:
   - cd ..
   - git clone https://github.com/pysat/pysat.git >/dev/null
   - cd ./pysat
+  - git checkout develop
+  - git pull origin develop
   - python setup.py install >/dev/null
   - cd ..
   # set up data directory
