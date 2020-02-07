@@ -17,17 +17,11 @@ before_install:
   - pip install coveralls
   - pip install future
   # Install version specific packages for 2.7 and 3.5
-  - pip install 'pandas<0.25'
-  - pip install xarray
   - pip install matplotlib
   - pip install apexpy
   - pip install numpy
   - pip install pysatCDF >/dev/null
-  - cd ..
-  - git clone https://github.com/pysat/pysat.git >/dev/null
-  - cd ./pysat
-  - python setup.py install >/dev/null
-  - cd ..
+  - pip install pysat
   # set up data directory
   - mkdir /home/travis/build/pysatData
   - python -c 'import pysat; pysat.utils.set_data_dir("/home/travis/build/pysatData")'
