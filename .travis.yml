@@ -28,7 +28,6 @@ before_install:
 
 install:
   # install OMMBV
-  - cd ./OMMBV
   - python setup.py develop
 
 # command to run tests
