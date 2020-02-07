@@ -81,8 +81,8 @@ class TestTracing():
 
         # convert position to ECEF
         ecf_x, ecf_y, ecf_z = OMMBV.geocentric_to_ecef(omni['p_lat'],
-                                                      omni['p_long'],
-                                                      omni['p_alt'])
+                                                       omni['p_long'],
+                                                       omni['p_alt'])
         trace_n = []
         trace_s = []
         date = datetime.datetime(2000, 1, 1)
@@ -96,12 +96,12 @@ class TestTracing():
                                       step_size=0.5, max_steps=1.E6)[-1, :])
         trace_n = pds.DataFrame(trace_n, columns=['x', 'y', 'z'])
         trace_n['lat'], trace_n['long'], trace_n['altitude'] = OMMBV.ecef_to_geocentric(trace_n['x'],
-                                                                                       trace_n['y'],
-                                                                                       trace_n['z'])
+                                                                                        trace_n['y'],
+                                                                                        trace_n['z'])
         trace_s = pds.DataFrame(trace_s, columns=['x', 'y', 'z'])
         trace_s['lat'], trace_s['long'], trace_s['altitude'] = OMMBV.ecef_to_geocentric(trace_s['x'],
-                                                                                       trace_s['y'],
-                                                                                       trace_s['z'])
+                                                                                        trace_s['y'],
+                                                                                        trace_s['z'])
 
         # ensure longitudes are all 0-360
         idx, = np.where(omni['n_long'] < 0)
@@ -390,12 +390,12 @@ class TestTransformations():
         """Multiple techniques for geodetic to ECEF to geodetic"""
         lats, longs, alts = gen_data_fixed_alt(550.)
         ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
-                                                    longs,
-                                                    alts)
+                                                     longs,
+                                                     alts)
         methods = ['closed', 'iterative']
         for method in methods:
             lat, elong, alt = OMMBV.python_ecef_to_geodetic(ecf_x, ecf_y, ecf_z,
-                                                           method=method)
+                                                            method=method)
 
             idx, = np.where(elong < 0)
             elong[idx] += 360.
