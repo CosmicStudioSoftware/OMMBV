@@ -22,13 +22,21 @@ before_install:
   - pip install numpy
   - pip install pysatCDF >/dev/null
   - pip install xarray==0.11.3
-  - pip install pysat
- # set up data directory
+  - cd ..
+  - git clone https://github.com/pysat/pysat.git >/dev/null
+  - cd ./pysat          # set up data directory
+  - git checkout develop-3
+  - git pull origin develop-3
+  - python setup.py install >/dev/null
+  - cd ..
+
+    # set up data directory
   - mkdir /home/travis/build/pysatData
   - python -c 'import pysat; pysat.utils.set_data_dir("/home/travis/build/pysatData")'
 
 install:
   # install OMMBV
+  - cd ./OMMBV
   - python setup.py develop
 
 # command to run tests
