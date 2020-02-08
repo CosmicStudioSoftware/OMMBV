@@ -21,7 +21,7 @@ before_install:
   - pip install apexpy
   - pip install numpy
   - pip install pysatCDF >/dev/null
-  - pip install xarray==0.14.1
+  - pip install xarray==0.11.3
   - pip install pysat
  # set up data directory
   - mkdir /home/travis/build/pysatData
