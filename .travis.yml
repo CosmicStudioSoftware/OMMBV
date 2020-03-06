@@ -16,17 +16,18 @@ before_install:
   - pip install pytest-cov
   - pip install coveralls
   - pip install future
+  - pip install 'pandas<0.25'
+  - pip install 'xarray<0.15'
   # Install version specific packages for 2.7 and 3.5
   - pip install matplotlib
   - pip install apexpy
   - pip install numpy
   - pip install pysatCDF >/dev/null
-  - pip install xarray==0.11.3
   - cd ..
   - git clone https://github.com/pysat/pysat.git >/dev/null
   - cd ./pysat          # set up data directory
-  - git checkout develop-3
-  - git pull origin develop-3
+  - git checkout develop
+  - git pull origin develop
   - python setup.py install >/dev/null
   - cd ..
 
