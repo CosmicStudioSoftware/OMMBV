@@ -16,30 +16,33 @@ before_install:
   - pip install pytest-cov
   - pip install coveralls
   - pip install future
-  # Install version specific packages for 2.7 and 3.5
   - pip install 'pandas<0.25'
-  - pip install xarray
+  - pip install 'xarray<0.15'
+  # Install version specific packages for 2.7 and 3.5
   - pip install matplotlib
   - pip install apexpy
   - pip install numpy
   - pip install pysatCDF >/dev/null
   - cd ..
   - git clone https://github.com/pysat/pysat.git >/dev/null
-  - cd ./pysat
+  - cd ./pysat          # set up data directory
+  - git checkout develop
+  - git pull origin develop
   - python setup.py install >/dev/null
   - cd ..
-  # set up data directory
+
+    # set up data directory
   - mkdir /home/travis/build/pysatData
   - python -c 'import pysat; pysat.utils.set_data_dir("/home/travis/build/pysatData")'
 
 install:
-  # install pysatMagVect
-  - cd ./pysatMagVect
+  # install OMMBV
+  - cd ./OMMBV
   - python setup.py develop
 
 # command to run tests
 script:
-  - nosetests  -vs --with-coverage --cover-package=pysatMagVect
+  - nosetests  -vs --with-coverage --cover-package=OMMBV
 
 after_success:
   - coveralls

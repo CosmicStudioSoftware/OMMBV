@@ -5,13 +5,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pds
 
-import pysatMagVect as pymv
-from pysatMagVect import igrf
+import OMMBV
+from OMMBV import igrf
 import pysat
 
-from pysatMagVect.tests.test_core import gen_data_fixed_alt, gen_trace_data_fixed_alt
-from pysatMagVect.tests.test_core import gen_plot_grid_fixed_alt
-from pysatMagVect.tests.test_core import dview, dc
+from OMMBV.tests.test_core import gen_data_fixed_alt, gen_trace_data_fixed_alt
+from OMMBV.tests.test_core import gen_plot_grid_fixed_alt
+from OMMBV.tests.test_core import dview, dc
 
 # results from omniweb calculator
 omni_list = [[550., 20.00, 0.00, 29.77, 359.31, -9.04, 3.09],
@@ -80,28 +80,28 @@ class TestTracing():
         """Compare model to http://omniweb.gsfc.nasa.gov/vitmo/cgm_vitmo.html"""
 
         # convert position to ECEF
-        ecf_x, ecf_y, ecf_z = pymv.geocentric_to_ecef(omni['p_lat'],
-                                                      omni['p_long'],
-                                                      omni['p_alt'])
+        ecf_x, ecf_y, ecf_z = OMMBV.geocentric_to_ecef(omni['p_lat'],
+                                                       omni['p_long'],
+                                                       omni['p_alt'])
         trace_n = []
         trace_s = []
         date = datetime.datetime(2000, 1, 1)
         for x, y, z in zip(ecf_x, ecf_y, ecf_z):
             # trace north and south, take last points
             trace_n.append(
-                pymv.field_line_trace(np.array([x, y, z]), date, 1., 0.,
+                OMMBV.field_line_trace(np.array([x, y, z]), date, 1., 0.,
                                       step_size=0.5, max_steps=1.E6)[-1, :])
             trace_s.append(
-                pymv.field_line_trace(np.array([x, y, z]), date, -1., 0.,
+                OMMBV.field_line_trace(np.array([x, y, z]), date, -1., 0.,
                                       step_size=0.5, max_steps=1.E6)[-1, :])
         trace_n = pds.DataFrame(trace_n, columns=['x', 'y', 'z'])
-        trace_n['lat'], trace_n['long'], trace_n['altitude'] = pymv.ecef_to_geocentric(trace_n['x'],
-                                                                                       trace_n['y'],
-                                                                                       trace_n['z'])
+        trace_n['lat'], trace_n['long'], trace_n['altitude'] = OMMBV.ecef_to_geocentric(trace_n['x'],
+                                                                                        trace_n['y'],
+                                                                                        trace_n['z'])
         trace_s = pds.DataFrame(trace_s, columns=['x', 'y', 'z'])
-        trace_s['lat'], trace_s['long'], trace_s['altitude'] = pymv.ecef_to_geocentric(trace_s['x'],
-                                                                                       trace_s['y'],
-                                                                                       trace_s['z'])
+        trace_s['lat'], trace_s['long'], trace_s['altitude'] = OMMBV.ecef_to_geocentric(trace_s['x'],
+                                                                                        trace_s['y'],
+                                                                                        trace_s['z'])
 
         # ensure longitudes are all 0-360
         idx, = np.where(omni['n_long'] < 0)
@@ -146,7 +146,7 @@ class TestTracing():
     def test_tracing_accuracy(self):
         """Establish performance of field-line tracing as function of step_size"""
         lats, longs, alts = gen_trace_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = pymv.geodetic_to_ecef(lats,
+        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
                                                     longs,
                                                     alts)
         # step size to be tried, move by inverse powers of 2 (half step size)
@@ -170,7 +170,7 @@ class TestTracing():
                 for steps, max_steps in zip(steps_goal, max_steps_goal):
                     # iterate through target cyclicly and run commands
                     dview.targets = next(targets)
-                    pending.append(dview.apply_async(pymv.field_line_trace,
+                    pending.append(dview.apply_async(OMMBV.field_line_trace,
                                                      np.array([x, y, z]), date, 1., 0.,
                                                      step_size=steps,
                                                      max_steps=max_steps))
@@ -190,7 +190,7 @@ class TestTracing():
             for x, y, z in zip(ecf_x, ecf_y, ecf_z):
                 out = []
                 for steps, max_steps in zip(steps_goal, max_steps_goal):
-                    trace_n = pymv.field_line_trace(np.array([x, y, z]), date, 1., 0.,
+                    trace_n = OMMBV.field_line_trace(np.array([x, y, z]), date, 1., 0.,
                                                     step_size=steps,
                                                     max_steps=max_steps)
                     pt = trace_n[-1, :]
@@ -229,7 +229,7 @@ class TestTracing():
     def test_tracing_accuracy_w_recursion(self):
         """Establish performance field-line vs max_steps"""
         lats, longs, alts = gen_trace_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = pymv.geodetic_to_ecef(lats,
+        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
                                                     longs,
                                                     alts)
         # step size to be tried
@@ -245,7 +245,7 @@ class TestTracing():
         for x, y, z in zip(ecf_x, ecf_y, ecf_z):
             out = []
             for steps, max_steps in zip(steps_goal, max_steps_goal):
-                trace_n = pymv.field_line_trace(np.array([x, y, z]), date, 1., 0.,
+                trace_n = OMMBV.field_line_trace(np.array([x, y, z]), date, 1., 0.,
                                                 step_size=steps,
                                                 max_steps=max_steps)
                 pt = trace_n[-1, :]
@@ -287,7 +287,7 @@ class TestTracing():
     def test_tracing_accuracy_w_recursion_step_size(self):
         """Establish field-line tracing performance fixed max_steps"""
         lats, longs, alts = gen_trace_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = pymv.geodetic_to_ecef(lats,
+        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
                                                     longs,
                                                     alts)
         # step size to be tried
@@ -303,7 +303,7 @@ class TestTracing():
         for x, y, z in zip(ecf_x, ecf_y, ecf_z):
             out = []
             for steps, max_steps in zip(steps_goal, max_steps_goal):
-                trace_n = pymv.field_line_trace(np.array([x, y, z]), date, 1., 0.,
+                trace_n = OMMBV.field_line_trace(np.array([x, y, z]), date, 1., 0.,
                                                 step_size=steps,
                                                 max_steps=max_steps)
                 pt = trace_n[-1, :]
@@ -358,11 +358,11 @@ class TestTransformations():
     def test_geodetic_to_ecef_to_geodetic(self):
         """Geodetic to ECEF and back"""
         lats, longs, alts = gen_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = pymv.geodetic_to_ecef(lats,
+        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
                                                     longs,
                                                     alts)
-        lat, elong, alt = pymv.ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
-        lat2, elong2, alt2 = pymv.python_ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
+        lat, elong, alt = OMMBV.ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
+        lat2, elong2, alt2 = OMMBV.python_ecef_to_geodetic(ecf_x, ecf_y, ecf_z)
 
         idx, = np.where(elong < 0)
         elong[idx] += 360.
@@ -389,13 +389,13 @@ class TestTransformations():
     def test_geodetic_to_ecef_to_geodetic_via_different_methods(self):
         """Multiple techniques for geodetic to ECEF to geodetic"""
         lats, longs, alts = gen_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = pymv.geodetic_to_ecef(lats,
-                                                    longs,
-                                                    alts)
+        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
+                                                     longs,
+                                                     alts)
         methods = ['closed', 'iterative']
         for method in methods:
-            lat, elong, alt = pymv.python_ecef_to_geodetic(ecf_x, ecf_y, ecf_z,
-                                                           method=method)
+            lat, elong, alt = OMMBV.python_ecef_to_geodetic(ecf_x, ecf_y, ecf_z,
+                                                            method=method)
 
             idx, = np.where(elong < 0)
             elong[idx] += 360.
@@ -411,14 +411,14 @@ class TestTransformations():
     def test_geodetic_to_ecef_to_geocentric_to_ecef_to_geodetic(self):
         """geodetic to ecef and geocentric transformations"""
         lats, longs, alts = gen_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = pymv.geodetic_to_ecef(lats,
+        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
                                                     longs,
                                                     alts)
-        geo_lat, geo_long, geo_alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
+        geo_lat, geo_long, geo_alt = OMMBV.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
 
-        ecfs_x, ecfs_y, ecfs_z = pymv.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
+        ecfs_x, ecfs_y, ecfs_z = OMMBV.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
 
-        lat, elong, alt = pymv.ecef_to_geodetic(ecfs_x, ecfs_y, ecfs_z)
+        lat, elong, alt = OMMBV.ecef_to_geodetic(ecfs_x, ecfs_y, ecfs_z)
 
         idx, = np.where(elong < 0)
         elong[idx] += 360.
@@ -437,10 +437,10 @@ class TestTransformations():
     def test_geocentric_to_ecef_to_geocentric(self):
         """Geocentric and ECEF transformations"""
         lats, longs, alts = gen_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = pymv.geocentric_to_ecef(lats,
+        ecf_x, ecf_y, ecf_z = OMMBV.geocentric_to_ecef(lats,
                                                       longs,
                                                       alts)
-        lat, elong, alt = pymv.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
+        lat, elong, alt = OMMBV.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
 
         idx, = np.where(elong < 0)
         elong[idx] += 360.
@@ -475,9 +475,9 @@ class TestTransformations():
         # single processor case
         for i, p_lat in enumerate(p_lats):
             print (i, p_lat)
-            x, y, z = pymv.geodetic_to_ecef([p_lat] * len(p_longs), p_longs, p_alts)
-            lat2, lon2, alt2 = pymv.ecef_to_geodetic(x, y, z)
-            x2, y2, z2 = pymv.geodetic_to_ecef(lat2, lon2, alt2)
+            x, y, z = OMMBV.geodetic_to_ecef([p_lat] * len(p_longs), p_longs, p_alts)
+            lat2, lon2, alt2 = OMMBV.ecef_to_geodetic(x, y, z)
+            x2, y2, z2 = OMMBV.geodetic_to_ecef(lat2, lon2, alt2)
             apex_x[i, :-1] = np.abs(x2 - x)
             apex_y[i, :-1] = np.abs(y2 - y)
             apex_z[i, :-1] = np.abs(z2 - z)
@@ -532,67 +532,67 @@ class TestTransformations():
         """Test ECEF to ENU Vector Rotations"""
         # test basic transformations first
         # vector pointing along ecef y at 0, 0 is east
-        ve, vn, vu = pymv.ecef_to_enu_vector(0., 1., 0., 0., 0.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(0., 1., 0., 0., 0.)
         # print ('{:9f}, {:9f}, {:9f}'.format(ve, vn, vu))
         asseq(ve, 1.0, 9)
         asseq(vn, 0, 9)
         asseq(vu, 0, 9)
         # vector pointing along ecef x at 0, 0 is up
-        ve, vn, vu = pymv.ecef_to_enu_vector(1., 0., 0., 0., 0.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(1., 0., 0., 0., 0.)
         asseq(ve, 0.0, 9)
         asseq(vn, 0.0, 9)
         asseq(vu, 1.0, 9)
         # vector pointing along ecef z at 0, 0 is north
-        ve, vn, vu = pymv.ecef_to_enu_vector(0., 0., 1., 0., 0.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(0., 0., 1., 0., 0.)
         asseq(ve, 0.0, 9)
         asseq(vn, 1.0, 9)
         asseq(vu, 0.0, 9)
 
         # vector pointing along ecef x at 0, 90 long is west
-        ve, vn, vu = pymv.ecef_to_enu_vector(1., 0., 0., 0., 90.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(1., 0., 0., 0., 90.)
         # print ('{:9f}, {:9f}, {:9f}'.format(ve, vn, vu))
         asseq(ve, -1.0, 9)
         asseq(vn, 0.0, 9)
         asseq(vu, 0.0, 9)
         # vector pointing along ecef y at 0, 90 long is up
-        ve, vn, vu = pymv.ecef_to_enu_vector(0., 1., 0., 0., 90.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(0., 1., 0., 0., 90.)
         asseq(ve, 0.0, 9)
         asseq(vn, 0.0, 9)
         asseq(vu, 1.0, 9)
         # vector pointing along ecef z at 0, 90 long is north
-        ve, vn, vu = pymv.ecef_to_enu_vector(0., 0., 1., 0., 90.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(0., 0., 1., 0., 90.)
         asseq(ve, 0.0, 9)
         asseq(vn, 1.0, 9)
         asseq(vu, 0.0, 9)
 
         # vector pointing along ecef y at 0, 180 is west
-        ve, vn, vu = pymv.ecef_to_enu_vector(0., 1., 0., 0., 180.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(0., 1., 0., 0., 180.)
         asseq(ve, -1.0, 9)
         asseq(vn, 0.0, 9)
         asseq(vu, 0.0, 9)
         # vector pointing along ecef x at 0, 180 is down
-        ve, vn, vu = pymv.ecef_to_enu_vector(1., 0., 0., 0., 180.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(1., 0., 0., 0., 180.)
         asseq(ve, 0.0, 9)
         asseq(vn, 0.0, 9)
         asseq(vu, -1.0, 9)
         # vector pointing along ecef z at 0, 0 is north
-        ve, vn, vu = pymv.ecef_to_enu_vector(0., 0., 1., 0., 180.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(0., 0., 1., 0., 180.)
         asseq(ve, 0.0, 9)
         asseq(vn, 1.0, 9)
         asseq(vu, 0.0, 9)
 
-        ve, vn, vu = pymv.ecef_to_enu_vector(0., 1., 0., 45., 0.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(0., 1., 0., 45., 0.)
         # print ('{:9f}, {:9f}, {:9f}'.format(ve, vn, vu))
         asseq(ve, 1.0, 9)
         asseq(vn, 0, 9)
         asseq(vu, 0, 9)
         # vector pointing along ecef x at 0, 0 is south/up
-        ve, vn, vu = pymv.ecef_to_enu_vector(1., 0., 0., 45., 0.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(1., 0., 0., 45., 0.)
         asseq(ve, 0.0, 9)
         asseq(vn, -np.cos(np.pi / 4), 9)
         asseq(vu, np.cos(np.pi / 4), 9)
         # vector pointing along ecef z at 45, 0 is north/up
-        ve, vn, vu = pymv.ecef_to_enu_vector(0., 0., 1., 45., 0.)
+        ve, vn, vu = OMMBV.ecef_to_enu_vector(0., 0., 1., 45., 0.)
         asseq(ve, 0.0, 9)
         asseq(vn, np.cos(np.pi / 4), 9)
         asseq(vu, np.cos(np.pi / 4), 9)
@@ -601,52 +601,52 @@ class TestTransformations():
         """Test ENU to ECEF rotations"""
         # test basic transformations first
         # vector pointing east at 0, 0 is along y
-        vx, vy, vz = pymv.enu_to_ecef_vector(1., 0., 0., 0., 0.)
+        vx, vy, vz = OMMBV.enu_to_ecef_vector(1., 0., 0., 0., 0.)
         # print ('{:9f}, {:9f}, {:9f}'.format(vx, vy, vz))
         asseq(vx, 0.0, 9)
         asseq(vy, 1.0, 9)
         asseq(vz, 0.0, 9)
         # vector pointing up at 0, 0 is along x
-        vx, vy, vz = pymv.enu_to_ecef_vector(0., 0., 1., 0., 0.)
+        vx, vy, vz = OMMBV.enu_to_ecef_vector(0., 0., 1., 0., 0.)
         asseq(vx, 1.0, 9)
         asseq(vy, 0.0, 9)
         asseq(vz, 0.0, 9)
         # vector pointing north at 0, 0 is along z
-        vx, vy, vz = pymv.enu_to_ecef_vector(0., 1., 0., 0., 0.)
+        vx, vy, vz = OMMBV.enu_to_ecef_vector(0., 1., 0., 0., 0.)
         asseq(vx, 0.0, 9)
         asseq(vy, 0.0, 9)
         asseq(vz, 1.0, 9)
 
         # east vector at 0, 90 long points along -x
-        vx, vy, vz = pymv.enu_to_ecef_vector(1., 0., 0., 0., 90.)
+        vx, vy, vz = OMMBV.enu_to_ecef_vector(1., 0., 0., 0., 90.)
         # print ('{:9f}, {:9f}, {:9f}'.format(vx, vy, vz))
         asseq(vx, -1.0, 9)
         asseq(vy, 0.0, 9)
         asseq(vz, 0.0, 9)
         # vector pointing up at 0, 90 is along y
-        vx, vy, vz = pymv.enu_to_ecef_vector(0., 0., 1., 0., 90.)
+        vx, vy, vz = OMMBV.enu_to_ecef_vector(0., 0., 1., 0., 90.)
         asseq(vx, 0.0, 9)
         asseq(vy, 1.0, 9)
         asseq(vz, 0.0, 9)
         # vector pointing north at 0, 90 is along z
-        vx, vy, vz = pymv.enu_to_ecef_vector(0., 1., 0., 0., 90.)
+        vx, vy, vz = OMMBV.enu_to_ecef_vector(0., 1., 0., 0., 90.)
         asseq(vx, 0.0, 9)
         asseq(vy, 0.0, 9)
         asseq(vz, 1.0, 9)
 
         # vector pointing east at 0, 0 is along y
-        vx, vy, vz = pymv.enu_to_ecef_vector(1., 0., 0., 0., 180.)
+        vx, vy, vz = OMMBV.enu_to_ecef_vector(1., 0., 0., 0., 180.)
         # print ('{:9f}, {:9f}, {:9f}'.format(vx, vy, vz))
         asseq(vx, 0.0, 9)
         asseq(vy, -1.0, 9)
         asseq(vz, 0.0, 9)
         # vector pointing up at 0, 180 is along -x
-        vx, vy, vz = pymv.enu_to_ecef_vector(0., 0., 1., 0., 180.)
+        vx, vy, vz = OMMBV.enu_to_ecef_vector(0., 0., 1., 0., 180.)
         asseq(vx, -1.0, 9)
         asseq(vy, 0.0, 9)
         asseq(vz, 0.0, 9)
         # vector pointing north at 0, 180 is along z
-        vx, vy, vz = pymv.enu_to_ecef_vector(0., 1., 0., 0., 180.)
+        vx, vy, vz = OMMBV.enu_to_ecef_vector(0., 1., 0., 0., 180.)
         asseq(vx, 0.0, 9)
         asseq(vy, 0.0, 9)
         asseq(vz, 1.0, 9)
@@ -658,8 +658,8 @@ class TestTransformations():
         vz = np.sqrt(1. - vx ** 2 + vy ** 2)
         lats, longs, alts = gen_data_fixed_alt(550.)
         for lat, lon, alt in zip(lats, longs, alts):
-            vxx, vyy, vzz = pymv.ecef_to_enu_vector(vx, vy, vz, lat, lon)
-            vxx, vyy, vzz = pymv.enu_to_ecef_vector(vxx, vyy, vzz, lat, lon)
+            vxx, vyy, vzz = OMMBV.ecef_to_enu_vector(vx, vy, vz, lat, lon)
+            vxx, vyy, vzz = OMMBV.enu_to_ecef_vector(vxx, vyy, vzz, lat, lon)
             asseq(vx, vxx, 9)
             asseq(vy, vyy, 9)
             asseq(vz, vzz, 9)
@@ -671,8 +671,8 @@ class TestTransformations():
         vz = np.sqrt(1. - vx ** 2 + vy ** 2)
         lats, longs, alts = gen_data_fixed_alt(550.)
         for lat, lon, alt in zip(lats, longs, alts):
-            vxx, vyy, vzz = pymv.enu_to_ecef_vector(vx, vy, vz, lat, lon)
-            vxx, vyy, vzz = pymv.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
+            vxx, vyy, vzz = OMMBV.enu_to_ecef_vector(vx, vy, vz, lat, lon)
+            vxx, vyy, vzz = OMMBV.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
             asseq(vx, vxx, 9)
             asseq(vy, vyy, 9)
             asseq(vz, vzz, 9)
@@ -691,13 +691,13 @@ class TestTransformations():
             # input here is co-latitude, not latitude
             # inputs to fortran are in radians
             vxx, vyy, vzz = igrf.end_vector_to_ecef(vx, vy, vz, np.deg2rad(90. - lat), np.deg2rad(lon))
-            vx2, vy2, vz2 = pymv.enu_to_ecef_vector(vx, vy, -vz, lat, lon)
+            vx2, vy2, vz2 = OMMBV.enu_to_ecef_vector(vx, vy, -vz, lat, lon)
             # print ('end check ', vxx, vyy, vzz, vx2, vy2, vz2)
             asseq(vxx, vx2, 9)
             asseq(vyy, vy2, 9)
             asseq(vzz, vz2, 9)
 
-            vxx, vyy, vzz = pymv.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
+            vxx, vyy, vzz = OMMBV.ecef_to_enu_vector(vxx, vyy, vzz, lat, lon)
             # convert upward component back to down
             vzz = -vzz
             # compare original inputs to outputs
@@ -708,7 +708,7 @@ class TestTransformations():
     def test_igrf_ecef_to_geodetic_back_to_ecef(self):
         """Test IGRF_ECEF - Geodetic - and Back"""
         lats, longs, alts = gen_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = pymv.geodetic_to_ecef(lats,
+        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
                                                     longs,
                                                     alts)
         for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x, ecf_y,
@@ -734,7 +734,7 @@ class TestTransformations():
     def test_igrf_ecef_to_geographic_with_colatitude(self):
         """Test IGRF_ECEF - Geographic"""
         lats, longs, alts = gen_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = pymv.geodetic_to_ecef(lats,
+        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
                                                     longs,
                                                     alts)
         for ecef_x, ecef_y, ecef_z, geo_lat, geo_lon, geo_alt in zip(ecf_x, ecf_y,
@@ -746,7 +746,7 @@ class TestTransformations():
             lat = 90. - np.rad2deg(colat)
             lon = np.rad2deg(lon)
 
-            lat2, lon2, h2 = pymv.ecef_to_geocentric(*pos, ref_height=0)
+            lat2, lon2, h2 = OMMBV.ecef_to_geocentric(*pos, ref_height=0)
 
             # print(lat, lon, r, lat2, lon2, h2)
             asseq(r, h2, 9)

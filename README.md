@@ -1,14 +1,35 @@
-# pysatMagVect
-[![Build Status](https://travis-ci.org/pysat/pysatMagVect.svg?branch=master)](https://travis-ci.org/pysat/pysatMagVect)
-[![Coverage Status](https://coveralls.io/repos/github/pysat/pysatMagVect/badge.svg?branch=master)](https://coveralls.io/github/pysat/pysatMagVect?branch=master)
-[![Documentation Status](https://readthedocs.org/projects/pysatmagvect/badge/?version=latest)](https://pysatmagvect.readthedocs.io/en/latest/?badge=latest)
+# Orthogonal Multi-pole Magnetic Basis Vectors (OMMBV)
+[![Build Status](https://travis-ci.org/rstoneback/OMMBV.svg?branch=master)](https://travis-ci.org/rstoneback/OMMBV)
+[![Coverage Status](https://coveralls.io/repos/github/rstonebak/OMMBV/badge.svg?branch=master)](https://coveralls.io/github/rstoneback/OMMBV?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/OMMBV/badge/?version=latest)](https://OMMBV.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/138220240.svg)](https://zenodo.org/badge/latestdoi/138220240)
 
-The motion of plasma in the ionosphere is the result of forcing from neutral winds, electric fields, neutral collisions, as well as the orientation of the background magnetic field. Plasma moves easily along the magnetic field line and less so across it. PysatMagVect calculates directions (unit vectors) based upon the geomagnetic field that are most relevant for understanding the movement of plasma. In addition, pysatMagVect includes methods for scaling ion drifts at one location to either the magnetic footpoint or to the magnetic equator. Scaling to the footpoint is critical for understanding how neutral atmosphere winds at low altitudes (footpoint heights) will be expressed either at the satellite location or at the magnetic equator. Scaling to the magnetic equator can be particularly effective when creating a common basis for integrating measurements from multiple platforms.
+The motion of plasma in the ionosphere is the result of forcing from neutral winds, electric fields,  
+as well as the orientation of the background magnetic field. Plasma moves easily along the magnetic field line and less 
+ so across it. OMMBV (Orthogonal Multipole Magnetic Basis Vectors) calculates directions (unit vectors) 
+ based upon the geomagnetic field that are optimized for understanding the movement of plasma and the coupling 
+ with the neutral atmosphere. This system is the first to remain orthogonal for multipole magnetic fields as well as
+ when including a geodetic reference surface (Earth).
+ 
+ OMMBV also includes methods for scaling ion drifts at one location to 
+ either the magnetic footpoint or to the magnetic equator. Scaling to the footpoint is critical for understanding how 
+ neutral atmosphere winds at low altitudes (footpoint heights) will be expressed either at the satellite location or at 
+ the magnetic equator. Scaling to the magnetic equator can be particularly effective when creating a common basis for 
+ integrating measurements from multiple platforms.
 
-PysatMagVect is used by the upcoming NASA Ionospheric Connections (ICON) Explorer Mission to understand how remote measurements of neutral motions at 120 km impacts the motion of plasma measured in situ (at the satellite location). This package is also being used by the upcoming NOAA/NSPO COSMIC-2 constellation to express plasma measurements made at the satellite locations in a more geophysically useful basis. PysatMagVect is currently being incorporated into analysis routines suitable for integrating physics-based models (TIEGCM) and measurements from the Communications/Navigation Outage Forecasting System (C/NOFS) satellite.
+OMMBV is used by the upcoming NASA Ionospheric Connections (ICON) Explorer Mission to understand how remote 
+measurements of neutral motions at 120 km impacts the motion of plasma measured in situ (at the satellite location). 
+This package is also being used by the upcoming NOAA/NSPO COSMIC-2 constellation to express plasma measurements made 
+at the satellite locations in a more geophysically useful basis. OMMBV is currently being incorporated into analysis 
+routines suitable for integrating physics-based models (TIEGCM) and measurements from the Communications/Navigation 
+Outage Forecasting System (C/NOFS) satellite.
 
-The development of this software has been supported, in part, by multiple agencies under the following grants: National Aeronautics and Space Agency (NASA NNG12FA45C), National Oceanic and Atmospheric Administration(NOAA NSF AGS-1033112), and the National Science Foundation (NSF 1651393).
+The development of the multipole software has been supported, in part, by multiple agencies under the following grants:
+Naval Research Laboratory N00173-19-1-G016 and NASA 80NSSC18K1203.
+
+Previous versions of this software that provided an 'average' basis were funded by: 
+National Aeronautics and Space Agency (NASA NNG12FA45C), National Oceanic and Atmospheric 
+Administration(NOAA NSF AGS-1033112), and the National Science Foundation (NSF 1651393).
 
 # Field-Line Tracing
 The International Geomagnetic Reference Field (IGRF) is coupled into SciPy's odeint to produce an accurate field

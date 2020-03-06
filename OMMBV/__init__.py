@@ -8,12 +8,12 @@ del here
 on_rtd = os.environ.get('ONREADTHEDOCS') == 'True'
 
 if not on_rtd:
-    from pysatMagVect import igrf
+    from OMMBV import igrf
 else:
     igrf = None
 
-from pysatMagVect import _core
-from pysatMagVect._core import *
-from pysatMagVect import satellite
+from OMMBV import _core
+from OMMBV._core import *
+from OMMBV import satellite
 
 __all__ = []
