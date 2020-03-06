@@ -2609,8 +2609,13 @@ class TestUnitVectors():
 
             trace_s = []
             if not on_travis:
-                fig = plt.figure()
-                ax = fig.add_subplot(111, projection='3d')
+                try:
+                    fig = plt.figure()
+                    ax = fig.add_subplot(111, projection='3d')
+                except:
+                    print('Disabling plotting for tests due to error.')
+                    on_travis = True
+
 
             #
             date = datetime.datetime(2000, 1, 1)
