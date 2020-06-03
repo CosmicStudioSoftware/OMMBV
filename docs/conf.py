@@ -34,7 +34,7 @@ MOCK_MODULES = ['OMMBV.igrf', 'scipy', 'scipy.integrate', 'numpy', 'datetime', '
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 #print sys.path
-import pysatMagVect
+import OMMBV
 #print pysat.__path__
 
 
