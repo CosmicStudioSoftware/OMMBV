@@ -30,7 +30,7 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
         return MagicMock()
 
-MOCK_MODULES = ['OMMBV.igrf', 'scipy', 'scipy.integrate', 'numpy', 'datetime', 'pysat']
+MOCK_MODULES = ['OMMBV.igrf', 'OMMBV.fortran_coords', 'scipy', 'scipy.integrate', 'numpy', 'datetime', 'pysat']
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 #print sys.path
