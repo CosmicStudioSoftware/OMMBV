@@ -46,7 +46,19 @@ before_install:
   # set up data directory
   - mkdir /home/travis/build/pysatData
   - pip install apexpy
-  - pip install pysat
+  
+  # Prepare modified pysat install
+  - cd ..
+  - echo 'cloning pysat'
+  - git clone https://github.com/pysat/pysat.git >/dev/null
+  - echo 'installing pysat'
+  - cd ./pysat
+  # set up data directory
+  - mkdir /home/travis/build/pysatData
+  # install pysat
+  - git checkout develop
+  - python setup.py install >/dev/null
+
 install:
   # install OMMBV
   - python setup.py develop
