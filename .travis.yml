@@ -45,10 +45,10 @@ before_install:
   - pip install coveralls
   # set up data directory
   - mkdir /home/travis/build/pysatData
+  - pip install apexpy
   - pip install pysat
 install:
   # install OMMBV
-  #- cd ./OMMBV
   - python setup.py develop
 
 # command to run tests
