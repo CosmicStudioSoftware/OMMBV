@@ -23,13 +23,14 @@ before_install:
   - pip install apexpy
   - pip install numpy
   - pip install pysatCDF >/dev/null
+  - pip install pysat
   - cd ..
-  - git clone https://github.com/pysat/pysat.git >/dev/null
-  - cd ./pysat          # set up data directory
-  - git checkout develop
-  - git pull origin develop
-  - python setup.py install >/dev/null
-  - cd ..
+  #- git clone https://github.com/pysat/pysat.git >/dev/null
+  #- cd ./pysat          # set up data directory
+  #- git checkout develop
+  #- git pull origin develop
+  #- python setup.py install >/dev/null
+  #- cd ..
 
     # set up data directory
   - mkdir /home/travis/build/pysatData
