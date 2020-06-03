@@ -56,6 +56,7 @@ before_install:
   # install pysat
   - git checkout develop
   - python setup.py install >/dev/null
+  - cd ../OMMBV
 
 install:
   # install OMMBV
