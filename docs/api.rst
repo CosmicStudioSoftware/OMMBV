@@ -2,8 +2,8 @@
 API
 ===
 
-.. automodule:: pysatMagVect._core
+.. automodule:: OMMBV._core
    :members:
 
-.. automodule:: pysatMagVect.satellite
+.. automodule:: OMMBV.satellite
    :members:
