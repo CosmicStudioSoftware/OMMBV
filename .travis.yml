@@ -48,7 +48,7 @@ before_install:
   - pip install pysat
 install:
   # install OMMBV
-  - cd ./OMMBV
+  #- cd ./OMMBV
   - python setup.py develop
 
 # command to run tests
