@@ -53,8 +53,6 @@ before_install:
   - git clone https://github.com/pysat/pysat.git >/dev/null
   - echo 'installing pysat'
   - cd ./pysat
-  # set up data directory
-  - mkdir /home/travis/build/pysatData
   # install pysat
   - git checkout develop
   - python setup.py install >/dev/null
