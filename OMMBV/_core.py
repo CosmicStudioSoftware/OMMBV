@@ -110,9 +110,10 @@ def geodetic_to_ecef(latitude, longitude, altitude):
 
     return x, y, z
 
-
-ecef_to_geodetic = OMMBV.fortran_coords.ecef_to_geodetic
-
+try:
+    ecef_to_geodetic = OMMBV.fortran_coords.ecef_to_geodetic
+except AttributeError:
+    print('Unable to use Fortran version of ecef_to_geodetic. Please check installation.')
 
 def python_ecef_to_geodetic(x, y, z, method=None):
     """Convert ECEF into Geodetic WGS84 coordinates
