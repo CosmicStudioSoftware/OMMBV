@@ -3,41 +3,63 @@ dist: xenial
 matrix:
   include:
     - python: 2.7
+      services: xvfb
     - python: 3.6
-    - python: 3.7
-    - python: 3.8
+      dist: xenial
+      services: xvfb
 
 addons:
   apt:
     packages:
     - gfortran
+    - libncurses5-dev
 
 before_install:
-  - pip install pytest-cov
-  - pip install coveralls
-  - pip install future
-  - pip install 'pandas<0.25'
-  - pip install 'xarray<0.15'
-  # Install version specific packages for 2.7 and 3.5
-  - pip install matplotlib
-  - pip install apexpy
-  - pip install numpy
+  - sudo apt-get update
+  # We do this conditionally because it saves us some downloading if the
+  # version is the same.
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - source "$HOME/miniconda/etc/profile.d/conda.sh"
+  - hash -r
+  - conda config --set always_yes True --set changeps1 False
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+  # Create conda test environment
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy requests beautifulsoup4 lxml netCDF4 h5py nose pytest-cov pytest-ordering coveralls future
+  - conda activate test-environment
+  # Install version limited packages
+  - conda install 'pandas>=0.23, <0.25'
+  - conda install 'xarray<0.15'
+  - conda install 'kiwisolver<1.2'
+  # Dependencies not available through conda, install through pip
+  - pip install madrigalWeb
+  - pip install PyForecastTools
   - pip install pysatCDF >/dev/null
-  - cd ..
-  - git clone https://github.com/pysat/pysat.git >/dev/null
-  - cd ./pysat          # set up data directory
-  - git checkout develop
-  - git pull origin develop
-  - python setup.py install >/dev/null
-  - cd ..
-
-    # set up data directory
+  # Get latest coveralls from pip, not conda
+  - pip install coveralls
+  # set up data directory
   - mkdir /home/travis/build/pysatData
-  - python -c 'import pysat; pysat.utils.set_data_dir("/home/travis/build/pysatData")'
+  - pip install apexpy
+  
+  # Prepare modified pysat install
+  - cd ..
+  - echo 'cloning pysat'
+  - git clone https://github.com/pysat/pysat.git >/dev/null
+  - echo 'installing pysat'
+  - cd ./pysat
+  # install pysat
+  - git checkout develop
+  - python setup.py install >/dev/null
+  - cd ../OMMBV
 
 install:
   # install OMMBV
-  - cd ./OMMBV
   - python setup.py develop
 
 # command to run tests

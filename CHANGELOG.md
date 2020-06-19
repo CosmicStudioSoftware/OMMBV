@@ -5,6 +5,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.5.3] - 2020-06-19
 - Metadata clarity improvements
 
+## [0.5.2] - 2020-06-04
+- Fixed bugs coupling the code repo to community services related to the name change from pysatMagvect to OMMBV
+
 ## [0.5.0] - 2020-02-01
 - Added community documents
 - Implemented new algorithm for basis vectors. First system valid for multipole fields.
