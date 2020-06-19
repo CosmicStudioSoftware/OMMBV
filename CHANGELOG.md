@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.3] - 2020-06-19
+- Metadata clarity improvements
+
 ## [0.5.0] - 2020-02-01
 - Added community documents
 - Implemented new algorithm for basis vectors. First system valid for multipole fields.
