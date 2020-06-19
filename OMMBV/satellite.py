@@ -47,12 +47,12 @@ def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='long
     inst.meta['unit_zon_ecef_x'] = {'long_name': 'Zonal unit vector along ECEF-x',
                                     'desc': 'Zonal unit vector along ECEF-x',
                                     'label': 'Zonal unit vector along ECEF-x',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
+                                    'notes': ('Magnetic zonal unit vector expressed using '
+                                              'Earth Centered Earth Fixed (ECEF) basis. '
+                                              'Vector system is calculated by determining the '
+                                              'vector direction that, '
+                                              'when mapped to the apex, is purely horizontal. '
+                                              'This component is along the ECEF-x direction.'),
                                     'axis': 'Zonal unit vector along ECEF-x',
                                     'value_min': -1.,
                                     'value_max': 1.,
@@ -60,12 +60,12 @@ def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='long
     inst.meta['unit_zon_ecef_y'] = {'long_name': 'Zonal unit vector along ECEF-y',
                                     'desc': 'Zonal unit vector along ECEF-y',
                                     'label': 'Zonal unit vector along ECEF-y',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
+                                    'notes': ('Magnetic zonal unit vector expressed using '
+                                              'Earth Centered Earth Fixed (ECEF) basis. '
+                                              'Vector system is calculated by determining the '
+                                              'vector direction that, '
+                                              'when mapped to the apex, is purely horizontal. '
+                                              'This component is along the ECEF-y direction.'),
                                     'axis': 'Zonal unit vector along ECEF-y',
                                     'value_min': -1.,
                                     'value_max': 1.,
@@ -73,12 +73,12 @@ def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='long
     inst.meta['unit_zon_ecef_z'] = {'long_name': 'Zonal unit vector along ECEF-z',
                                     'desc': 'Zonal unit vector along ECEF-z',
                                     'label': 'Zonal unit vector along ECEF-z',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
+                                    'notes': ('Magnetic zonal unit vector expressed using '
+                                              'Earth Centered Earth Fixed (ECEF) basis. '
+                                              'Vector system is calculated by determining the '
+                                              'vector direction that, '
+                                              'when mapped to the apex, is purely horizontal. '
+                                              'This component is along the ECEF-z direction.'),
                                     'axis': 'Zonal unit vector along ECEF-z',
                                     'value_min': -1.,
                                     'value_max': 1.,
@@ -87,12 +87,10 @@ def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='long
     inst.meta['unit_fa_ecef_x'] = {'long_name': 'Field-aligned unit vector along ECEF-x',
                                    'desc': 'Field-aligned unit vector along ECEF-x',
                                    'label': 'Field-aligned unit vector along ECEF-x',
-                                   'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                             'Vector system is calcluated by field-line tracing along IGRF values '
-                                             'down to reference altitudes of 120 km in both the Northern and Southern '
-                                             'hemispheres. These two points, along with the satellite position, are '
-                                             'used to define the magnetic meridian. Vector math from here generates '
-                                             'the orthogonal system.'),
+                                   'notes': ('Field-aligned unit vector expressed using '
+                                             'Earth Centered Earth Fixed (ECEF) basis. '
+                                             'This component is along the ECEF-x direction.'
+                                             ),
                                    'axis': 'Field-aligned unit vector along ECEF-x',
                                    'value_min': -1.,
                                    'value_max': 1.,
@@ -100,12 +98,10 @@ def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='long
     inst.meta['unit_fa_ecef_y'] = {'long_name': 'Field-aligned unit vector along ECEF-y',
                                    'desc': 'Field-aligned unit vector along ECEF-y',
                                    'label': 'Field-aligned unit vector along ECEF-y',
-                                   'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                             'Vector system is calcluated by field-line tracing along IGRF values '
-                                             'down to reference altitudes of 120 km in both the Northern and Southern '
-                                             'hemispheres. These two points, along with the satellite position, are '
-                                             'used to define the magnetic meridian. Vector math from here generates '
-                                             'the orthogonal system.'),
+                                   'notes': ('Field-aligned unit vector expressed using '
+                                             'Earth Centered Earth Fixed (ECEF) basis. '
+                                             'This component is along the ECEF-y direction.'
+                                             ),
                                    'axis': 'Field-aligned unit vector along ECEF-y',
                                    'value_min': -1.,
                                    'value_max': 1.,
@@ -113,13 +109,10 @@ def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='long
     inst.meta['unit_fa_ecef_z'] = {'long_name': 'Field-aligned unit vector along ECEF-z',
                                    'desc': 'Field-aligned unit vector along ECEF-z',
                                    'label': 'Field-aligned unit vector along ECEF-z',
-                                   'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                             'Vector system is calcluated by field-line tracing along IGRF values '
-                                             'down to reference altitudes of 120 km in both the Northern and Southern '
-                                             'hemispheres. These two points, along with the satellite position, are '
-                                             'used to define the magnetic meridian. Vector math from here generates '
-                                             'the orthogonal system.'),
-                                   'axis': 'Field-aligned unit vector along ECEF-z',
+                                   'notes': ('Field-aligned unit vector expressed using '
+                                             'Earth Centered Earth Fixed (ECEF) basis. '
+                                             'This component is along the ECEF-z direction.'
+                                             ),
                                    'value_min': -1.,
                                    'value_max': 1.,
                                    }
@@ -127,12 +120,14 @@ def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='long
     inst.meta['unit_mer_ecef_x'] = {'long_name': 'Meridional unit vector along ECEF-x',
                                     'desc': 'Meridional unit vector along ECEF-x',
                                     'label': 'Meridional unit vector along ECEF-x',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
+                                    'notes': ('Magnetic meridional unit vector expressed using '
+                                              'Earth Centered Earth Fixed (ECEF) basis. '
+                                              'Vector system is calculated by determining the '
+                                              'magnetic zonal vector direction that, '
+                                              'when mapped to the apex, is purely horizontal. '
+                                              'The meridional vector is perpendicular to the zonal '
+                                              'and field-aligned directions. '
+                                              'This component is along the ECEF-x direction.'),
                                     'axis': 'Meridional unit vector along ECEF-x',
                                     'value_min': -1.,
                                     'value_max': 1.,
@@ -140,12 +135,14 @@ def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='long
     inst.meta['unit_mer_ecef_y'] = {'long_name': 'Meridional unit vector along ECEF-y',
                                     'desc': 'Meridional unit vector along ECEF-y',
                                     'label': 'Meridional unit vector along ECEF-y',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
+                                    'notes': ('Magnetic meridional unit vector expressed using '
+                                              'Earth Centered Earth Fixed (ECEF) basis. '
+                                              'Vector system is calculated by determining the '
+                                              'magnetic zonal vector direction that, '
+                                              'when mapped to the apex, is purely horizontal. '
+                                              'The meridional vector is perpendicular to the zonal '
+                                              'and field-aligned directions. '
+                                              'This component is along the ECEF-y direction.'),
                                     'axis': 'Meridional unit vector along ECEF-y',
                                     'value_min': -1.,
                                     'value_max': 1.,
@@ -153,12 +150,14 @@ def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='long
     inst.meta['unit_mer_ecef_z'] = {'long_name': 'Meridional unit vector along ECEF-z',
                                     'desc': 'Meridional unit vector along ECEF-z',
                                     'label': 'Meridional unit vector along ECEF-z',
-                                    'notes': ('Unit vector expressed using Earth Centered Earth Fixed (ECEF) frame. '
-                                              'Vector system is calcluated by field-line tracing along IGRF values '
-                                              'down to reference altitudes of 120 km in both the Northern and Southern '
-                                              'hemispheres. These two points, along with the satellite position, are '
-                                              'used to define the magnetic meridian. Vector math from here generates '
-                                              'the orthogonal system.'),
+                                    'notes': ('Magnetic meridional unit vector expressed using '
+                                              'Earth Centered Earth Fixed (ECEF) basis. '
+                                              'Vector system is calculated by determining the '
+                                              'magnetic zonal vector direction that, '
+                                              'when mapped to the apex, is purely horizontal. '
+                                              'The meridional vector is perpendicular to the zonal '
+                                              'and field-aligned directions. '
+                                              'This component is along the ECEF-z direction.'),
                                     'axis': 'Meridional unit vector along ECEF-z',
                                     'value_min': -1.,
                                     'value_max': 1.,
@@ -199,7 +198,7 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
 
     # vectors are returned in geo/ecef coordinate system
     add_mag_drift_unit_vectors_ecef(inst, lat_label=lat_label, long_label=long_label,
-                                    alt_label=alt_label,**kwargs)
+                                    alt_label=alt_label, **kwargs)
     # convert them to S/C using transformation supplied by OA
     inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = OMMBV.project_ecef_vector_onto_basis(
         inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
@@ -221,12 +220,18 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
                                'desc': 'Unit vector for the zonal geomagnetic direction.',
                                'label': 'Zonal Unit Vector: IVM-X component',
                                'axis': 'Zonal Unit Vector: IVM-X component',
-                               'notes': (
-                                   'Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
-                                   'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                   'z - towards nadir, y - completes the system, generally southward. '
-                                   'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                   'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                               'notes': ('The zonal vector is perpendicular to the '
+                                         'local magnetic field and the magnetic meridional plane. '
+                                         'The zonal vector maps to purely horizontal '
+                                         'at the magnetic equator, with positive values '
+                                         'pointed generally eastward. This vector '
+                                         'is expressed here in the IVM instrument frame.'
+                                         'The IVM-x direction points along the instrument '
+                                         'boresight, which is pointed into ram for '
+                                         'standard operations.'
+                                         'Calculated using the corresponding unit vector '
+                                         'in ECEF and the orientation '
+                                         'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                'scale': 'linear',
                                'units': '',
                                'value_min': -1.,
@@ -235,12 +240,17 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
                                'desc': 'Unit vector for the zonal geomagnetic direction.',
                                'label': 'Zonal Unit Vector: IVM-Y component',
                                'axis': 'Zonal Unit Vector: IVM-Y component',
-                               'notes': (
-                                   'Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
-                                   'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                   'z - towards nadir, y - completes the system, generally southward. '
-                                   'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                   'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                               'notes': ('The zonal vector is perpendicular to the '
+                                         'local magnetic field and the magnetic meridional plane. '
+                                         'The zonal vector maps to purely horizontal '
+                                         'at the magnetic equator, with positive values '
+                                         'pointed generally eastward. '
+                                         'The unit vector is expressed here in the IVM coordinate system, '
+                                         'where Y = Z x X, nominally southward when '
+                                         'in standard pointing, X along ram. '
+                                         'Calculated using the corresponding unit vector '
+                                         'in ECEF and the orientation '
+                                         'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                'scale': 'linear',
                                'units': '',
                                'value_min': -1.,
@@ -249,12 +259,18 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
                                'desc': 'Unit vector for the zonal geomagnetic direction.',
                                'label': 'Zonal Unit Vector: IVM-Z component',
                                'axis': 'Zonal Unit Vector: IVM-Z component',
-                               'notes': (
-                                   'Positive towards the east. Zonal vector is normal to magnetic meridian plane. '
-                                   'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                   'z - towards nadir, y - completes the system, generally southward. '
-                                   'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                   'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                               'notes': ('The zonal vector is perpendicular to the '
+                                         'local magnetic field and the magnetic meridional plane. '
+                                         'The zonal vector maps to purely horizontal '
+                                         'at the magnetic equator, with positive values '
+                                         'pointed generally eastward. This vector '
+                                         'is expressed here in the IVM instrument frame.'
+                                         'The IVM-Z direction points towards nadir '
+                                         'when IVM-X is pointed into ram for '
+                                         'standard operations.'
+                                         'Calculated using the corresponding unit vector '
+                                         'in ECEF and the orientation '
+                                         'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                'scale': 'linear',
                                'units': '',
                                'value_min': -1.,
@@ -264,12 +280,16 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
                               'desc': 'Unit vector for the geomagnetic field line direction.',
                               'label': 'Field Aligned Unit Vector: IVM-X component',
                               'axis': 'Field Aligned Unit Vector: IVM-X component',
-                              'notes': (
-                                  'Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
-                                  'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                  'z - towards nadir, y - completes the system, generally southward. '
-                                  'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                  'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                              'notes': ('The field-aligned vector points along the '
+                                        'geomagnetic field, with positive values '
+                                        'along the field direction, and is '
+                                        'expressed here in the IVM instrument frame. '
+                                        'The IVM-x direction points along the instrument '
+                                        'boresight, which is pointed into ram for '
+                                        'standard operations.'
+                                        'Calculated using the corresponding unit vector '
+                                        'in ECEF and the orientation '
+                                        'of the IVM also expressed in ECEF (sc_*hat_*).'),
                               'scale': 'linear',
                               'units': '',
                               'value_min': -1.,
@@ -278,12 +298,15 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
                               'desc': 'Unit vector for the geomagnetic field line direction.',
                               'label': 'Field Aligned Unit Vector: IVM-Y component',
                               'axis': 'Field Aligned Unit Vector: IVM-Y component',
-                              'notes': (
-                                  'Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
-                                  'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                  'z - towards nadir, y - completes the system, generally southward. '
-                                  'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                  'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                              'notes': ('The field-aligned vector points along the '
+                                        'geomagnetic field, with positive values '
+                                        'along the field direction. '
+                                        'The unit vector is expressed here in the IVM coordinate system, '
+                                        'where Y = Z x X, nominally southward when '
+                                        'in standard pointing, X along ram. '
+                                        'Calculated using the corresponding unit vector '
+                                        'in ECEF and the orientation '
+                                        'of the IVM also expressed in ECEF (sc_*hat_*).'),
                               'scale': 'linear',
                               'units': '',
                               'value_min': -1.,
@@ -292,12 +315,16 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
                               'desc': 'Unit vector for the geomagnetic field line direction.',
                               'label': 'Field Aligned Unit Vector: IVM-Z component',
                               'axis': 'Field Aligned Unit Vector: IVM-Z component',
-                              'notes': (
-                                  'Positive along the field, generally northward. Unit vector is along the geomagnetic field. '
-                                  'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                  'z - towards nadir, y - completes the system, generally southward. '
-                                  'Calculated using the corresponding unit vector in ECEF and the orientation '
-                                  'of the IVM also expressed in ECEF (sc_*hat_*).'),
+                              'notes': ('The field-aligned vector points along the '
+                                        'geomagnetic field, with positive values '
+                                        'along the field direction, and is '
+                                        'expressed here in the IVM instrument frame. '
+                                        'The IVM-Z direction points towards nadir '
+                                        'when IVM-X is pointed into ram for '
+                                        'standard operations.'
+                                        'Calculated using the corresponding unit vector '
+                                        'in ECEF and the orientation '
+                                        'of the IVM also expressed in ECEF (sc_*hat_*).'),
                               'scale': 'linear',
                               'units': '',
                               'value_min': -1.,
@@ -307,11 +334,12 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
                                'desc': 'Unit vector for the geomagnetic meridional direction.',
                                'label': 'Meridional Unit Vector: IVM-X component',
                                'axis': 'Meridional Unit Vector: IVM-X component',
-                               'notes': ('Positive is aligned with vertical at '
-                                         'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
-                                         'and in the plane of the meridian.'
-                                         'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                         'z - towards nadir, y - completes the system, generally southward. '
+                               'notes': ('The meridional unit vector is perpendicular to the geomagnetic field '
+                                         'and maps along magnetic field lines to vertical '
+                                         'at the magnetic equator, where positive is up. '
+                                         'The unit vector is expressed here in the IVM coordinate system, '
+                                         'where x is along the IVM boresight, nominally along ram when '
+                                         'in standard pointing. '
                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                'scale': 'linear',
@@ -322,11 +350,12 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
                                'desc': 'Unit vector for the geomagnetic meridional direction.',
                                'label': 'Meridional Unit Vector: IVM-Y component',
                                'axis': 'Meridional Unit Vector: IVM-Y component',
-                               'notes': ('Positive is aligned with vertical at '
-                                         'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
-                                         'and in the plane of the meridian.'
-                                         'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                         'z - towards nadir, y - completes the system, generally southward. '
+                               'notes': ('The meridional unit vector is perpendicular to the geomagnetic field '
+                                         'and maps along magnetic field lines to vertical '
+                                         'at the magnetic equator, where positive is up. '
+                                         'The unit vector is expressed here in the IVM coordinate system, '
+                                         'where Y = Z x X, nominally southward when '
+                                         'in standard pointing, X along ram. '
                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                'scale': 'linear',
@@ -337,11 +366,12 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
                                'desc': 'Unit vector for the geomagnetic meridional direction.',
                                'label': 'Meridional Unit Vector: IVM-Z component',
                                'axis': 'Meridional Unit Vector: IVM-Z component',
-                               'notes': ('Positive is aligned with vertical at '
-                                         'geomagnetic equator. Unit vector is perpendicular to the geomagnetic field '
-                                         'and in the plane of the meridian.'
-                                         'The unit vector is expressed in the IVM coordinate system, x - along RAM, '
-                                         'z - towards nadir, y - completes the system, generally southward. '
+                               'notes': ('The meridional unit vector is perpendicular to the geomagnetic field '
+                                         'and maps along magnetic field lines to vertical '
+                                         'at the magnetic equator, where positive is up. '
+                                         'The unit vector is expressed here in the IVM coordinate system, '
+                                         'where Z is nadir pointing (towards Earth), '
+                                         'when in standard pointing, X along ram. '
                                          'Calculated using the corresponding unit vector in ECEF and the orientation '
                                          'of the IVM also expressed in ECEF (sc_*hat_*).'),
                                'scale': 'linear',
@@ -379,12 +409,15 @@ def add_mag_drifts(inst):
         'data': inst['unit_zon_x']*inst['iv_x'] + inst['unit_zon_y']*inst['iv_y'] + inst['unit_zon_z']*inst['iv_z'],
         'units': 'm/s',
         'long_name': 'Zonal ion velocity',
-        'notes': ('Ion velocity relative to co-rotation along zonal '
-                  'direction, normal to meridional plane. Positive east. '
+        'notes': ('Ion velocity relative to co-rotation along the magnetic zonal '
+                  'direction, normal to local magnetic meridional plane '
+                  'and the geomagnetic field (positive east). '
+                  'The local zonal vector maps to purely horizontal at the magnetic equator. '
                   'Velocity obtained using ion velocities relative '
                   'to co-rotation in the instrument frame along '
                   'with the corresponding unit vectors expressed in '
-                  'the instrument frame. '),
+                  'the instrument frame to express the observed vector along a '
+                  'geomagnetic basis. '),
         'label': 'Zonal Ion Velocity',
         'axis': 'Zonal Ion Velocity',
         'desc': 'Zonal ion velocity',
@@ -396,11 +429,13 @@ def add_mag_drifts(inst):
         'data': inst['unit_fa_x']*inst['iv_x'] + inst['unit_fa_y']*inst['iv_y'] + inst['unit_fa_z']*inst['iv_z'],
         'units': 'm/s',
         'long_name': 'Field-Aligned ion velocity',
-        'notes': ('Ion velocity relative to co-rotation along magnetic field line. Positive along the field. ',
+        'notes': ('Ion velocity relative to co-rotation along geomagnetic field lines. '
+                  'Positive along the main field vector. ',
                   'Velocity obtained using ion velocities relative '
                   'to co-rotation in the instrument frame along '
                   'with the corresponding unit vectors expressed in '
-                  'the instrument frame. '),
+                  'the instrument frame to express the observed vector along a '
+                  'geomagnetic basis. '),
         'label': 'Field-Aligned Ion Velocity',
         'axis': 'Field-Aligned Ion Velocity',
         'desc': 'Field-Aligned Ion Velocity',
@@ -412,12 +447,15 @@ def add_mag_drifts(inst):
         'data': inst['unit_mer_x']*inst['iv_x'] + inst['unit_mer_y']*inst['iv_y'] + inst['unit_mer_z']*inst['iv_z'],
         'units': 'm/s',
         'long_name': 'Meridional ion velocity',
-        'notes': ('Velocity along meridional direction, perpendicular '
-                  'to field and within meridional plane. Positive is up at magnetic equator. ',
+        'notes': ('Ion velocity along local magnetic meridional direction, perpendicular '
+                  'to geomagnetic field and within local magnetic meridional plane. '
+                  'The local meridional vector maps to vertical at the magnetic equator, '
+                  'positive is up. ',
                   'Velocity obtained using ion velocities relative '
                   'to co-rotation in the instrument frame along '
                   'with the corresponding unit vectors expressed in '
-                  'the instrument frame. '),
+                  'the instrument frame to express the observed vector along a '
+                  'geomagnetic basis. '),
         'label': 'Meridional Ion Velocity',
         'axis': 'Meridional Ion Velocity',
         'desc': 'Meridional Ion Velocity',
@@ -481,9 +519,12 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
     inst['equ_mer_drift'] = {'data': inst[equ_mer_scalar]*inst[mer_drift],
                              'units': 'm/s',
                              'long_name': 'Equatorial meridional ion velocity',
-                             'notes': ('Velocity along meridional direction, perpendicular '
-                                       'to field and within meridional plane, scaled to '
-                                       'magnetic equator. Positive is up at magnetic equator. '
+                             'notes': ('Velocity along local magnetic meridional direction, perpendicular '
+                                       'to geomagnetic field and within local magnetic meridional plane, '
+                                       'field-line mapped to '
+                                       'apex/magnetic equator. '
+                                       'The meridional vector is purely vertical at '
+                                       'the magnetic equator, positive up. '
                                        'Velocity obtained using ion velocities relative '
                                        'to co-rotation in the instrument frame along '
                                        'with the corresponding unit vectors expressed in '
@@ -505,9 +546,13 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
     inst['equ_zon_drift'] = {'data': inst[equ_zonal_scalar]*inst[zon_drift],
                              'units': 'm/s',
                              'long_name': 'Equatorial zonal ion velocity',
-                             'notes': ('Velocity along zonal direction, perpendicular '
-                                       'to field and the meridional plane, scaled to '
-                                       'magnetic equator. Positive is generally eastward. '
+                             'notes': ('Velocity along local magnetic zonal direction, perpendicular '
+                                       'to geomagnetic field and the local magnetic meridional plane, '
+                                       'field-line mapped to '
+                                       'apex/magnetic equator. '
+                                       'The zonal vector is purely horizontal when '
+                                       'mapped to the magnetic equator, '
+                                       'positive is generally eastward. '
                                        'Velocity obtained using ion velocities relative '
                                        'to co-rotation in the instrument frame along '
                                        'with the corresponding unit vectors expressed in '
@@ -529,9 +574,12 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
     inst['south_footpoint_mer_drift'] = {'data': inst[south_mer_scalar]*inst[mer_drift],
                                          'units': 'm/s',
                                          'long_name': 'Southern meridional ion velocity',
-                                         'notes': ('Velocity along meridional direction, perpendicular '
-                                                   'to field and within meridional plane, scaled to '
-                                                   'southern footpoint. Positive is up at magnetic equator. '
+                                         'notes': ('Velocity along local magnetic meridional direction, perpendicular '
+                                                   'to geomagnetic field and within local magnetic meridional plane, '
+                                                   'field-line mapped to '
+                                                   'southern footpoint. '
+                                                   'The meridional vector is purely vertical at '
+                                                   'the magnetic equator, positive up. '
                                                    'Velocity obtained using ion velocities relative '
                                                    'to co-rotation in the instrument frame along '
                                                    'with the corresponding unit vectors expressed in '
@@ -553,9 +601,13 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
     inst['south_footpoint_zon_drift'] = {'data': inst[south_zon_scalar]*inst[zon_drift],
                                          'units': 'm/s',
                                          'long_name': 'Southern zonal ion velocity',
-                                         'notes': ('Velocity along zonal direction, perpendicular '
-                                                   'to field and the meridional plane, scaled to '
-                                                   'southern footpoint. Positive is generally eastward. '
+                                         'notes': ('Velocity along local magnetic zonal direction, perpendicular '
+                                                   'to geomagnetic field and the local magnetic meridional plane, '
+                                                   'field-line mapped to '
+                                                   'southern footpoint. '
+                                                   'The zonal vector is purely horizontal when '
+                                                   'mapped to the magnetic equator, '
+                                                   'positive is generally eastward. '
                                                    'Velocity obtained using ion velocities relative '
                                                    'to co-rotation in the instrument frame along '
                                                    'with the corresponding unit vectors expressed in '
@@ -577,9 +629,12 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
     inst['north_footpoint_mer_drift'] = {'data': inst[north_mer_scalar]*inst[mer_drift],
                                          'units': 'm/s',
                                          'long_name': 'Northern meridional ion velocity',
-                                         'notes': ('Velocity along meridional direction, perpendicular '
-                                                   'to field and within meridional plane, scaled to '
-                                                   'northern footpoint. Positive is up at magnetic equator. '
+                                         'notes': ('Velocity along local magnetic meridional direction, perpendicular '
+                                                   'to geomagnetic field and within local magnetic meridional plane, '
+                                                   'field-line mapped to '
+                                                   'northern footpoint. '
+                                                   'The meridional vector is purely vertical at '
+                                                   'the magnetic equator, positive up. '
                                                    'Velocity obtained using ion velocities relative '
                                                    'to co-rotation in the instrument frame along '
                                                    'with the corresponding unit vectors expressed in '
@@ -601,9 +656,13 @@ def add_footpoint_and_equatorial_drifts(inst, equ_mer_scalar='equ_mer_drifts_sca
     inst['north_footpoint_zon_drift'] = {'data': inst[north_zon_scalar]*inst[zon_drift],
                                          'units': 'm/s',
                                          'long_name': 'Northern zonal ion velocity',
-                                         'notes': ('Velocity along zonal direction, perpendicular '
-                                                   'to field and the meridional plane, scaled to '
-                                                   'northern footpoint. Positive is generally eastward. '
+                                         'notes': ('Velocity along local magnetic zonal direction, perpendicular '
+                                                   'to geomagnetic field and the local magnetic meridional plane, '
+                                                   'field-line mapped to '
+                                                   'northern footpoint. '
+                                                   'The zonal vector is purely horizontal when '
+                                                   'mapped to the magnetic equator, '
+                                                   'positive is generally eastward. '
                                                    'Velocity obtained using ion velocities relative '
                                                    'to co-rotation in the instrument frame along '
                                                    'with the corresponding unit vectors expressed in '
