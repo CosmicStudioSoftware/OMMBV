@@ -2659,8 +2659,8 @@ class TestUnitVectors():
                 self.inst[:, 'sc_xhat_x'], self.inst[:, 'sc_xhat_y'], self.inst[:, 'sc_xhat_z'] = 1., 0., 0.
                 self.inst[:, 'sc_yhat_x'], self.inst[:, 'sc_yhat_y'], self.inst[:, 'sc_yhat_z'] = 0., 1., 0.
                 self.inst[:, 'sc_zhat_x'], self.inst[:, 'sc_zhat_y'], self.inst[:, 'sc_zhat_z'] = 0., 0., 1.
-                self.inst.data.index = pysat.utils.time.create_date_range(pysat.datetime(2000, 1, 1),
-                                                                          pysat.datetime(2000, 1, 1) +
+                self.inst.data.index = pysat.utils.time.create_date_range(datetime.datetime(2000, 1, 1),
+                                                                          datetime.datetime(2000, 1, 1) +
                                                                           pds.DateOffset(
                                                                               seconds=len(self.inst.data) - 1),
                                                                           freq='S')
