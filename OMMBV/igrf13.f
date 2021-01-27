@@ -1,4 +1,4 @@
-      subroutine igrf_step(out,pos,t,date,scalar,dir,height)
+      subroutine igrf_step(out,t,pos,date,scalar,dir,height)
 
       real*8, dimension(3) :: pos
       real*8 t, date
@@ -38,8 +38,8 @@ Cf2py intent(out) out
       ! when to terminate
       call ecef_to_geodetic(pos, latitude, elong, h)
       ! stop moving position if we go below height
-      if (h.le.(height)) then
-        scalar = 0
+      !if (h.le.(height)) then
+      !  scalar = 0
       else if (h.le.(height+10.)) then
         !scalar=scalar*exp(r-(6371.+height))
         scalar = scalar*(1. - ((height+10. - h)/10.)**2)
