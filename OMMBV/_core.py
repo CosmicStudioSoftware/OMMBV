@@ -397,28 +397,38 @@ def field_line_trace(init, date, direction, height, steps=None,
         date = float(date.year) + \
                (float(doy) + float(date.hour + date.minute/60. + date.second/3600.)/24.)/float(num_doy_year + 1)
 
-    # set altitude to terminate trace
-    if height == 0:
-        check_height = 1.
-    else:
-        check_height = height
+# Termination event function for solve_ivp, integration will stop when we cross
+# termination height from above or below.
 
-    # perform trace
-    trace_north, messg = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
-                                                steps,
-                                                args=(date, step_size, direction, height),
-                                                full_output=True,
-                                                printmessg=False,
-                                                ixpr=False,
-                                                rtol=1.E-11,
-                                                atol=1.E-11)
-    if messg['message'] != 'Integration successful.':
+    def height_termination(t, y, date, step_size, direction, height):
+
+        return ecef_to_geodetic(y[0],y[1],y[2])[2] - height
+
+
+    height_termination.terminal = True
+    init = np.transpose(init)
+
+    bunch = scipy.integrate.solve_ivp(fun=igrf.igrf_step,
+                                      y0=init.copy(),
+                                      t_eval=steps,
+                                      t_span=(steps[0], steps[-1]),
+                                      args=(date, step_size, direction, height),
+                                      rtol=1.E-11,
+                                      atol=1.E-11,
+                                      events = height_termination)
+
+
+    trace_north = np.transpose(bunch.y)
+    messg = bunch.message
+
+    m1 = 'The solver successfully reached the end of the integration interval.'
+    m2 = 'A termination event occurred.'
+
+    if messg != m1 and messg != m2:
         raise RuntimeError("Field-Line trace not successful.")
-
-    # calculate data to check that we reached final altitude
-    check = trace_north[-1, :]
-    x, y, z = ecef_to_geodetic(*check)
-
+    
+    return trace_north
+    '''
     # fortran integration gets close to target height
     if recurse & (z > check_height*1.000001):
         if (recursive_loop_count < 1000):
@@ -450,7 +460,8 @@ def field_line_trace(init, date, direction, height, steps=None,
             idx = np.argmin(np.abs(check_height - z))
             if (z[idx] < check_height*1.001) and (idx > 0):
                 trace_north = trace_north[:idx + 1, :]
-        return trace_north
+    '''
+    
 
 
 def full_field_line(init, date, height, step_size=100., max_steps=1000,
