@@ -349,7 +349,7 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
 def field_line_trace(init, date, direction, height, steps=None,
                      max_steps=1E4, step_size=10., recursive_loop_count=None,
-                     recurse=True, min_check_flag=False):
+                     recurse=True, min_check_flag=False, stop_direction = 0):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
 
     Parameters
@@ -372,6 +372,9 @@ def field_line_trace(init, date, direction, height, steps=None,
     step_size : float
         Distance in km for each large integration step. Multiple substeps
         are taken as determined by scipy.integrate.odeint
+    stop_direction : int
+        Direction to check when termination height is reached;
+        1 means high to low, -1 means low to high, 0 means check both directions.
 
     Returns
     -------
@@ -404,7 +407,7 @@ def field_line_trace(init, date, direction, height, steps=None,
 
         return ecef_to_geodetic(y[0],y[1],y[2])[2] - height
 
-
+    height_termination.direction = stop_direction
     height_termination.terminal = True
     init = np.transpose(init)
 
