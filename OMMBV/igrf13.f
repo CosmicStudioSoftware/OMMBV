@@ -40,10 +40,10 @@ Cf2py intent(out) out
       ! stop moving position if we go below height
       !if (h.le.(height)) then
       !  scalar = 0
-      if (h.le.(height+10.)) then
+      !if (h.le.(height+10.)) then
         !scalar=scalar*exp(r-(6371.+height))
-        scalar = scalar*(1. - ((height+10. - h)/10.)**2)
-      end if
+      !  scalar = scalar*(1. - ((height+10. - h)/10.)**2)
+      !end if
 
       !if (scalar.lt.0) then
       !  scalar = 0.
