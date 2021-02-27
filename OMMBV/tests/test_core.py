@@ -47,7 +47,7 @@ def gen_data_fixed_alt(alt):
 
     """
     # generate test data set
-    on_travis = os.environ.get('ONTRAVIS') == 'True'
+    on_travis = os.environ.get('TRAVIS') == 'true'
     if on_travis:
         # reduced resolution on the test server
         long_dim = np.arange(0., 361., 180.)
