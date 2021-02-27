@@ -18,9 +18,10 @@ multiproc = False
 if multiproc:
     # get remote instances
     import ipyparallel
-
+    print('parallel in')
     dc = ipyparallel.Client()
     dview = dc[:]
+    print('parallel out')
 else:
     # nothing to set
     dc = None
@@ -2652,7 +2653,8 @@ class TestUnitVectors():
                 self.inst[:, 'x'] = trace['x'].values
                 self.inst[:, 'y'] = trace['y'].values
                 self.inst[:, 'z'] = trace['z'].values
-                self.inst.data = self.inst[self.inst['altitude'] > 250.]
+                idx, = np.where(self.inst['altitude'] > 250.)
+                self.inst.data = self.inst[idx, :]
 
                 # also need to provide transformation from ECEF to S/C
                 # going to leave that a null transformation so we can plot in ECF
