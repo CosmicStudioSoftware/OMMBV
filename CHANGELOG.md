@@ -2,6 +2,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.4] - 2020-03-03
+- Updated to latest IGRF reference code
+
 ## [0.5.3] - 2020-06-19
 - Metadata clarity improvements
 
