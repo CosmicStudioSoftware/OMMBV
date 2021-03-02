@@ -1,7 +1,7 @@
 # Orthogonal Multi-pole Magnetic Basis Vectors (OMMBV)
 [![Build Status](https://travis-ci.org/rstoneback/OMMBV.svg?branch=master)](https://travis-ci.org/rstoneback/OMMBV)
-[![Coverage Status](https://coveralls.io/repos/github/rstonebak/OMMBV/badge.svg?branch=master)](https://coveralls.io/github/rstoneback/OMMBV?branch=master)
-[![Documentation Status](https://readthedocs.org/projects/OMMBV/badge/?version=latest)](https://OMMBV.readthedocs.io/en/latest/?badge=latest)
+[![Coverage Status](https://coveralls.io/repos/github/rstoneback/OMMBV/badge.svg?branch=master)](https://coveralls.io/github/rstoneback/OMMBV?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/ommbv/badge/?version=latest)](https://ommbv.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/138220240.svg)](https://zenodo.org/badge/latestdoi/138220240)
 
 The motion of plasma in the ionosphere is the result of forcing from neutral winds, electric fields,  
