@@ -1,35 +1,40 @@
-import setuptools
-import numpy.distutils.core
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+from __future__ import absolute_import
+
 import os
-
-from numpy.distutils.core import Extension
-
-# create extension for calling IGRF
-extensions = [Extension(name='OMMBV.igrf',
-                        sources=[os.path.join('OMMBV', 'igrf13.f')]),
-              Extension(name='OMMBV.fortran_coords',
-                        sources=[os.path.join('OMMBV', '_coords.f')])]
+from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 version_filename = os.path.join('OMMBV', 'version.txt')
 with open(os.path.join(here, version_filename)) as version_file:
     version = version_file.read().strip()
 
-# call setup
-numpy.distutils.core.setup(
-    name='OMMBV',
-    version=version,
-    packages=['OMMBV', 'OMMBV.tests'],
-    description='Orthogonal geomagnetic vector basis and field-line mapping for multipole magnetic fields.',
-    url='http://github.com/rstoneback/OMMBV',
+# Include extensions only when not on readthedocs.org
+if environ.get('READTHEDOCS', None) == 'True':
+    extensions = []
+else:
+    from numpy.distutils.core import setup, Extension
 
-    # Author details
-    author='Russell Stoneback',
-    author_email='rstoneba@utdallas.edu',
-    data_files=[('OMMBV', ['OMMBV/version.txt'])],
-    include_package_data=True,
+    extensions = [Extension(name='OMMBV.igrf',
+                            sources=[os.path.join('OMMBV', 'igrf13.f')]),
+                  Extension(name='OMMBV.fortran_coords',
+                            sources=[os.path.join('OMMBV', '_coords.f')])]
 
-    # required modules
-    install_requires=['numpy', 'scipy'],
-    ext_modules=extensions,
-)
+setup(name='OMMBV',
+      version=version,
+      packages=['OMMBV', 'OMMBV.tests'],
+      description=' '.join(('Orthogonal geomagnetic vector basis and',
+                            'field-line mapping for multipole magnetic',
+                            'fields.')),
+      url='http://github.com/rstoneback/OMMBV',
+
+      # Author details
+      author='Russell Stoneback',
+      author_email='rstoneba@utdallas.edu',
+      data_files=[('OMMBV', ['OMMBV/version.txt'])],
+      include_package_data=True,
+
+      # Required modules
+      install_requires=['numpy', 'scipy'],
+      ext_modules=extensions)
