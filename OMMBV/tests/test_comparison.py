@@ -1,3 +1,4 @@
+import datetime as dt
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -14,7 +15,7 @@ class TestComparison():
         self.inst = pysat.Instrument('pysat', 'testing')
         self.inst.yr = 2019
         self.inst.doy = 365
-        self.inst.date = pysat.datetime(2019, 12, 31)
+        self.inst.date = dt.datetime(2019, 12, 31)
 
         return
 

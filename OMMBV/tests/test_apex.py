@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pds
@@ -16,7 +16,7 @@ class TestMaxApexHeight():
 
     def test_plot_apex_heights(self):
         """Check meridional vector along max in apex height gradient"""
-        date = pysat.datetime(2010, 1, 1)
+        date = dt.datetime(2010, 1, 1)
 
         delta = 1.
 
