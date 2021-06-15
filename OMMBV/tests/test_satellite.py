@@ -6,7 +6,7 @@ class TestSatellite():
 
     def setup(self):
 
-        self.inst = pysat.Instrument('pysat', 'testing', sat_id='32')
+        self.inst = pysat.Instrument('pysat', 'testing', num_samples=32)
         return
 
     def test_application_add_unit_vectors(self):
