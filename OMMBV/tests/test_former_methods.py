@@ -1,4 +1,4 @@
-import datetime
+import datetime as dt
 import numpy as np
 
 import OMMBV
@@ -38,7 +38,7 @@ class TestIntegratedMethods():
         bx = zvx.copy()
         by = zvx.copy()
         bz = zvx.copy()
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             import itertools
@@ -220,7 +220,7 @@ class TestIntegratedMethods():
         mx = zvx.copy();
         my = zvx.copy();
         mz = zvx.copy()
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             import itertools
@@ -373,7 +373,7 @@ class TestIntegratedMethods():
         mx = zvx.copy()
         my = zvx.copy()
         mz = zvx.copy()
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             import itertools
@@ -504,7 +504,7 @@ class TestIntegratedMethods():
         bx = zvx.copy()
         by = zvx.copy()
         bz = zvx.copy()
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             import itertools
@@ -800,7 +800,7 @@ class TestIntegratedMethods():
         bx = zvx.copy();
         by = zvx.copy();
         bz = zvx.copy()
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             import itertools
@@ -1094,7 +1094,7 @@ class TestIntegratedMethods():
         bx = zvx.copy();
         by = zvx.copy();
         bz = zvx.copy()
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             import itertools

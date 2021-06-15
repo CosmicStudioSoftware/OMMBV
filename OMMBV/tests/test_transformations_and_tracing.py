@@ -104,15 +104,15 @@ class TestTracing():
                                                                                         trace_s['z'])
 
         # ensure longitudes are all 0-360
-        idx, = np.where(omni['n_long'] < 0)
-        omni.ix[idx, 'n_long'] += 360.
-        idx, = np.where(omni['s_long'] < 0)
-        omni.ix[idx, 's_long'] += 360.
+        # idx, = np.where(omni['n_long'] < 0)
+        omni.loc[omni['n_long'] < 0, 'n_long'] += 360.
+        # idx, = np.where(omni['s_long'] < 0)
+        omni.loc[omni['s_long'] < 0, 's_long'] += 360.
 
-        idx, = np.where(trace_n['long'] < 0)
-        trace_n.ix[idx, 'long'] += 360.
-        idx, = np.where(trace_s['long'] < 0)
-        trace_s.ix[idx, 'long'] += 360.
+        # idx, = np.where(trace_n['long'] < 0)
+        trace_n.loc[trace_n['long'] < 0, 'long'] += 360.
+        # idx, = np.where(trace_s['long'] < 0)
+        trace_s.loc[trace_s['long'] < 0, 'long'] += 360.
 
         # compute difference between OMNI and local calculation
         # there is a difference near 0 longitude, ignore this area
@@ -183,9 +183,9 @@ class TestTracing():
                     out.append(pt)
 
                 final_pt = pds.DataFrame(out, columns=['x', 'y', 'z'])
-                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:, 'x'].values[:-1]))
-                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:, 'y'].values[:-1]))
-                dz.append(np.abs(final_pt.ix[1:, 'z'].values - final_pt.ix[:, 'z'].values[:-1]))
+                dx.append(np.abs(final_pt.loc[1:, 'x'].values - final_pt.loc[:, 'x'].values[:-1]))
+                dy.append(np.abs(final_pt.loc[1:, 'y'].values - final_pt.loc[:, 'y'].values[:-1]))
+                dz.append(np.abs(final_pt.loc[1:, 'z'].values - final_pt.loc[:, 'z'].values[:-1]))
         else:
             for x, y, z in zip(ecf_x, ecf_y, ecf_z):
                 out = []
@@ -197,9 +197,9 @@ class TestTracing():
                     out.append(pt)
 
                 final_pt = pds.DataFrame(out, columns=['x', 'y', 'z'])
-                dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:, 'x'].values[:-1]))
-                dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:, 'y'].values[:-1]))
-                dz.append(np.abs(final_pt.ix[1:, 'z'].values - final_pt.ix[:, 'z'].values[:-1]))
+                dx.append(np.abs(final_pt.loc[1:, 'x'].values - final_pt.loc[:, 'x'].values[:-1]))
+                dy.append(np.abs(final_pt.loc[1:, 'y'].values - final_pt.loc[:, 'y'].values[:-1]))
+                dz.append(np.abs(final_pt.loc[1:, 'z'].values - final_pt.loc[:, 'z'].values[:-1]))
 
         dx = pds.DataFrame(dx)
         dy = pds.DataFrame(dy)
@@ -252,9 +252,9 @@ class TestTracing():
                 out.append(pt)
 
             final_pt = pds.DataFrame(out, columns=['x', 'y', 'z'])
-            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:, 'x'].values[:-1]))
-            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:, 'y'].values[:-1]))
-            dz.append(np.abs(final_pt.ix[1:, 'z'].values - final_pt.ix[:, 'z'].values[:-1]))
+            dx.append(np.abs(final_pt.loc[1:, 'x'].values - final_pt.loc[:, 'x'].values[:-1]))
+            dy.append(np.abs(final_pt.loc[1:, 'y'].values - final_pt.loc[:, 'y'].values[:-1]))
+            dz.append(np.abs(final_pt.loc[1:, 'z'].values - final_pt.loc[:, 'z'].values[:-1]))
         dx = pds.DataFrame(dx)
         dy = pds.DataFrame(dy)
         dz = pds.DataFrame(dz)
@@ -310,9 +310,9 @@ class TestTracing():
                 out.append(pt)
 
             final_pt = pds.DataFrame(out, columns=['x', 'y', 'z'])
-            dx.append(np.abs(final_pt.ix[1:, 'x'].values - final_pt.ix[:, 'x'].values[:-1]))
-            dy.append(np.abs(final_pt.ix[1:, 'y'].values - final_pt.ix[:, 'y'].values[:-1]))
-            dz.append(np.abs(final_pt.ix[1:, 'z'].values - final_pt.ix[:, 'z'].values[:-1]))
+            dx.append(np.abs(final_pt.loc[1:, 'x'].values - final_pt.loc[:, 'x'].values[:-1]))
+            dy.append(np.abs(final_pt.loc[1:, 'y'].values - final_pt.loc[:, 'y'].values[:-1]))
+            dz.append(np.abs(final_pt.loc[1:, 'z'].values - final_pt.loc[:, 'z'].values[:-1]))
         dx = pds.DataFrame(dx)
         dy = pds.DataFrame(dy)
         dz = pds.DataFrame(dz)
