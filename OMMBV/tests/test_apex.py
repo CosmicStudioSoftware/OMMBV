@@ -94,7 +94,7 @@ class TestApex():
                                     .0001953125 / 128., .0001953125 / 256., .0001953125 / 512.,
                                     .0001953125 / 1024., .0001953125 / 2048., .0001953125 / 4096.])
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         dx = []
         dy = []
         dz = []
@@ -186,7 +186,7 @@ class TestApex():
         # recasting alts into a more convenient form for later calculation
         p_alts = [p_alts[0]] * len(p_longs)
         # set the date
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # memory for results
         apex_lat = np.zeros((len(p_lats), len(p_longs) + 1))
         apex_lon = np.zeros((len(p_lats), len(p_longs) + 1))
@@ -292,7 +292,7 @@ class TestApex():
         # recasting alts into a more convenient form for later calculation
         p_alts = [p_alts[0]] * len(p_longs)
         # set the date
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # memory for results
         apex_lat = np.zeros((len(p_lats), len(p_longs) + 1))
         apex_lon = np.zeros((len(p_lats), len(p_longs) + 1))
@@ -428,7 +428,7 @@ class TestApex():
         # recasting alts into a more convenient form for later calculation
         p_alts = [p_alts[0]] * len(p_longs)
         # set the date
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # memory for results
         apex_lat = np.zeros((len(p_lats), len(p_longs) + 1))
         apex_lon = np.zeros((len(p_lats), len(p_longs) + 1))
@@ -564,7 +564,7 @@ class TestApex():
         # recasting alts into a more convenient form for later calculation
         p_alts = [p_alts[0]] * len(p_longs)
         # set the date
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # memory for results
         apex_x = np.zeros((len(p_lats), len(p_longs) + 1))
         apex_y = np.zeros((len(p_lats), len(p_longs) + 1))
