@@ -17,7 +17,13 @@ else:
     from numpy.distutils.core import setup, Extension
 
     extensions = [Extension(name='OMMBV.igrf',
-                            sources=[os.path.join('OMMBV', 'igrf13.f')]),
+                            sources=[os.path.join('OMMBV', 'igrf13.f')],
+                            extra_f77_compile_args=['--std=legacy',
+                                                    '-Wno-line-truncation',
+                                                    '-Wno-conversion',
+                                                    '-Wno-unused-variable',
+                                                    '-Wno-maybe-uninitialized',
+                                                    '-Wno-unused-dummy-argument']),
                   Extension(name='OMMBV.fortran_coords',
                             sources=[os.path.join('OMMBV', '_coords.f')])]
 
