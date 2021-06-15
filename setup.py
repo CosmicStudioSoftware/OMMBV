@@ -11,7 +11,7 @@ with open(os.path.join(here, version_filename)) as version_file:
     version = version_file.read().strip()
 
 # Include extensions only when not on readthedocs.org
-if environ.get('READTHEDOCS', None) == 'True':
+if os.environ.get('READTHEDOCS', None) == 'True':
     extensions = []
 else:
     from numpy.distutils.core import setup, Extension
