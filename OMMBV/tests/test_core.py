@@ -1,3 +1,4 @@
+import datetime as dt
 import itertools
 import os
 
@@ -165,7 +166,7 @@ class TestUnitVectors():
         steps_goal = np.arange(7)
         steps_goal = 20. / 2 ** steps_goal
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         dzx = []
         dzy = []
         dzz = []
@@ -289,7 +290,7 @@ class TestUnitVectors():
         steps_goal = np.arange(7)
         steps_goal = 20. / 2 ** steps_goal
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         dzx = []
         dzy = []
         dzz = []
@@ -416,7 +417,7 @@ class TestUnitVectors():
         steps_goal = np.arange(7)
         steps_goal = 20. / 2 ** steps_goal
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         dzx = []
         dzy = []
         dzz = []
@@ -585,7 +586,7 @@ class TestUnitVectors():
         e_fay = d_zvx.copy()
         e_faz = d_zvx.copy()
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             targets = itertools.cycle(dc.ids)
@@ -1459,7 +1460,7 @@ class TestUnitVectors():
         d2_my = d_zvx.copy();
         d2_mz = d_zvx.copy()
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             targets = itertools.cycle(dc.ids)
@@ -1589,7 +1590,7 @@ class TestUnitVectors():
         # the full range of points obtained by iterating over all
         # recasting alts into a more convenient form for later calculation
         p_alts = [p_alts[0]] * len(p_longs)
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
 
         if self.dc is not None:
             targets = itertools.cycle(dc.ids)
@@ -1637,7 +1638,7 @@ class TestUnitVectors():
         bx = zvx.copy();
         by = zvx.copy();
         bz = zvx.copy()
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             targets = itertools.cycle(dc.ids)
@@ -1921,7 +1922,7 @@ class TestUnitVectors():
         z2 = x2.copy();
         h2 = x.copy()
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         dates = [date]*len(p_longs)
         # set up multi
         if self.dc is not None:
@@ -2138,7 +2139,7 @@ class TestUnitVectors():
         eq_zonald = north_zonal.copy()
         eq_merd = north_zonal.copy()
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             targets = itertools.cycle(dc.ids)
@@ -2375,7 +2376,7 @@ class TestUnitVectors():
         eq_zonald = north_zonal.copy()
         eq_merd = north_zonal.copy()
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # set up multi
         if self.dc is not None:
             targets = itertools.cycle(dc.ids)
@@ -2619,7 +2620,7 @@ class TestUnitVectors():
 
 
             #
-            date = datetime.datetime(2000, 1, 1)
+            date = dt.datetime(2000, 1, 1)
             ecef_x, ecef_y, ecef_z = OMMBV.geocentric_to_ecef(p_lat, p_long, p_alt)
 
             for j, (x, y, z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
@@ -2661,8 +2662,8 @@ class TestUnitVectors():
                 self.inst[:, 'sc_xhat_x'], self.inst[:, 'sc_xhat_y'], self.inst[:, 'sc_xhat_z'] = 1., 0., 0.
                 self.inst[:, 'sc_yhat_x'], self.inst[:, 'sc_yhat_y'], self.inst[:, 'sc_yhat_z'] = 0., 1., 0.
                 self.inst[:, 'sc_zhat_x'], self.inst[:, 'sc_zhat_y'], self.inst[:, 'sc_zhat_z'] = 0., 0., 1.
-                self.inst.data.index = pysat.utils.time.create_date_range(pysat.datetime(2000, 1, 1),
-                                                                          pysat.datetime(2000, 1, 1) +
+                self.inst.data.index = pysat.utils.time.create_date_range(dt.datetime(2000, 1, 1),
+                                                                          dt.datetime(2000, 1, 1) +
                                                                           pds.DateOffset(
                                                                               seconds=len(self.inst.data) - 1),
                                                                           freq='S')

@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.5] - 2021-06-16
+- Updated setup.py
+- Added compatibility with pysat v3.x
+
 ## [0.5.4] - 2020-03-03
 - Updated to latest IGRF reference code
 
