@@ -41,7 +41,7 @@ def geocentric_to_ecef(latitude, longitude, altitude):
 
     """
 
-    r = earth_geo_radius + altitude
+    r = earth_geo_radius + np.asarray(altitude)
     x = r*np.cos(np.deg2rad(latitude))*np.cos(np.deg2rad(longitude))
     y = r*np.cos(np.deg2rad(latitude))*np.sin(np.deg2rad(longitude))
     z = r*np.sin(np.deg2rad(latitude))
@@ -73,6 +73,10 @@ def ecef_to_geocentric(x, y, z, ref_height=None):
     if ref_height is None:
         ref_height = earth_geo_radius
 
+    x = np.asarray(x)
+    y = np.asarray(y)
+    z = np.asarray(z)
+
     r = np.sqrt(x**2 + y**2 + z**2)
     colatitude = np.rad2deg(np.arccos(z/r))
     longitude = np.rad2deg(np.arctan2(y, x))
@@ -100,8 +104,8 @@ def geodetic_to_ecef(latitude, longitude, altitude):
 
     """
 
-    ellip = np.sqrt(1. - earth_b**2/earth_a**2)
-    r_n = earth_a/np.sqrt(1. - ellip**2*np.sin(np.deg2rad(latitude))**2)
+    ellip = np.sqrt(1. - earth_b**2 / earth_a**2)
+    r_n = earth_a / np.sqrt(1. - ellip**2 * np.sin(np.deg2rad(latitude))**2)
 
     # colatitude = 90. - latitude
     x = (r_n + altitude)*np.cos(np.deg2rad(latitude))*np.cos(np.deg2rad(longitude))
@@ -112,8 +116,14 @@ def geodetic_to_ecef(latitude, longitude, altitude):
 
 try:
     ecef_to_geodetic = OMMBV.fortran_coords.ecef_to_geodetic
+
+    # # Temporary check on geocentric
+    # ecef_to_geodetic = ecef_to_geocentric
+    # geodetic_to_ecef = geocentric_to_ecef
+
 except AttributeError:
     print('Unable to use Fortran version of ecef_to_geodetic. Please check installation.')
+
 
 def python_ecef_to_geodetic(x, y, z, method=None):
     """Convert ECEF into Geodetic WGS84 coordinates
@@ -152,16 +162,18 @@ def python_ecef_to_geodetic(x, y, z, method=None):
     # cylindrical radius
     p = np.sqrt(x**2 + y**2)
 
-    # closed form solution
-    # a source, http://www.epsg.org/Portals/0/373-07-2.pdf , page 96 section 2.2.1
+    # Closed form solution
+    # A source, http://www.epsg.org/Portals/0/373-07-2.pdf,
+    # page 96 section 2.2.1
     if method == 'closed':
-        e_prime = np.sqrt((earth_a**2 - earth_b**2)/earth_b**2)
-        theta = np.arctan2(z*earth_a, p*earth_b)
-        latitude = np.arctan2(z + e_prime**2*earth_b*np.sin(theta)**3, p - e2*earth_a*np.cos(theta)**3)
-        r_n = earth_a/np.sqrt(1. - e2*np.sin(latitude)**2)
-        h = p/np.cos(latitude) - r_n
+        e_prime = np.sqrt((earth_a**2 - earth_b**2) / earth_b**2)
+        theta = np.arctan2(z * earth_a, p * earth_b)
+        latitude = np.arctan2(z + e_prime**2 * earth_b * np.sin(theta)**3,
+                              p - e2 * earth_a * np.cos(theta)**3)
+        r_n = earth_a / np.sqrt(1. - e2 * np.sin(latitude)**2)
+        h = p / np.cos(latitude) - r_n
 
-    # another possibility
+    # Another possibility
     # http://ir.lib.ncku.edu.tw/bitstream/987654321/39750/1/3011200501001.pdf
 
     ## iterative method
@@ -179,6 +191,10 @@ def python_ecef_to_geodetic(x, y, z, method=None):
         h = p/np.cos(latitude) - r_n
 
     return np.rad2deg(latitude), np.rad2deg(longitude), h
+
+
+# Temporary check on geocentric
+# python_ecef_to_geodetic = ecef_to_geocentric
 
 
 def enu_to_ecef_vector(east, north, up, glat, glong):
@@ -385,25 +401,29 @@ def field_line_trace(init, date, direction, height, steps=None,
 
     if recursive_loop_count is None:
         recursive_loop_count = 0
-    # number of times integration routine must output step location
+
+    # Number of times integration routine must output step location
     if steps is None:
         steps = np.arange(max_steps)
-    # ensure date is a float for IGRF call
-    if not isinstance(date, float):
-        # recast from datetime to float, as required by IGRF12 code
-        doy = (date - datetime.datetime(date.year, 1, 1)).days
-        # number of days in year, works for leap years
-        num_doy_year = (datetime.datetime(date.year + 1, 1, 1) - datetime.datetime(date.year, 1, 1)).days
-        date = float(date.year) + \
-               (float(doy) + float(date.hour + date.minute/60. + date.second/3600.)/24.)/float(num_doy_year + 1)
 
-    # set altitude to terminate trace
+    # Ensure date is a float for IGRF call
+    if not isinstance(date, float):
+        # Recast from datetime to float, as required by IGRF12 code
+        doy = (date - datetime.datetime(date.year, 1, 1)).days
+
+        # Number of days in year, works for leap years
+        num_doy_year = (datetime.datetime(date.year + 1, 1, 1)
+                        - datetime.datetime(date.year, 1, 1)).days
+
+        date = float(date.year) + (float(doy) + float(date.hour + date.minute/60. + date.second/3600.)/24.)/float(num_doy_year + 1.)
+
+    # Set altitude to terminate trace
     if height == 0:
         check_height = 1.
     else:
         check_height = height
 
-    # perform trace
+    # Perform trace
     trace_north, messg = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                                 steps,
                                                 args=(date, step_size, direction, height),
@@ -415,13 +435,13 @@ def field_line_trace(init, date, direction, height, steps=None,
     if messg['message'] != 'Integration successful.':
         raise RuntimeError("Field-Line trace not successful.")
 
-    # calculate data to check that we reached final altitude
+    # Calculate data to check that we reached final altitude
     check = trace_north[-1, :]
     x, y, z = ecef_to_geodetic(*check)
 
-    # fortran integration gets close to target height
+    # Fortran integration gets close to target height
     if recurse & (z > check_height*1.000001):
-        if (recursive_loop_count < 1000):
+        if recursive_loop_count < 1000:
             # When we have not reached the reference height, call field_line_trace
             # again by taking check value as init - recursive call
             recursive_loop_count = recursive_loop_count + 1
@@ -432,9 +452,10 @@ def field_line_trace(init, date, direction, height, steps=None,
                                             steps=steps)
         else:
             raise RuntimeError("After 1000 iterations couldn't reach target altitude")
-        # append new trace data to existing trace data
+        # Append new trace data to existing trace data
         # this return is taken as part of recursive loop
         return np.vstack((trace_north, trace_north1))
+
     else:
         # return results if we make it to the target altitude
 
@@ -446,10 +467,12 @@ def field_line_trace(init, date, direction, height, steps=None,
         # Steps below provide an extra layer of security that output has some
         # semblance to expectations
         if min_check_flag:
-            x, y, z = ecef_to_geodetic(trace_north[:, 0], trace_north[:, 1], trace_north[:, 2])
+            x, y, z = ecef_to_geodetic(trace_north[:, 0], trace_north[:, 1],
+                                       trace_north[:, 2])
             idx = np.argmin(np.abs(check_height - z))
-            if (z[idx] < check_height*1.001) and (idx > 0):
+            if (z[idx] < check_height * 1.001) and (idx > 0):
                 trace_north = trace_north[:idx + 1, :]
+
         return trace_north
 
 
@@ -584,7 +607,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z,
                                                 altitude, np.deg2rad(90. - latitude),
                                                 np.deg2rad(longitude), datetimes):
-        init = np.array([x, y, z])
+        init = np.array([x, y, z], dtype=np.float64)
         trace = full_field_line(init, time, ref_height, step_size=step_size,
                                 max_steps=max_steps,
                                 steps=steps)
@@ -693,11 +716,14 @@ def magnetic_vector(x, y, z, dates, normalize=False):
     bm = []
 
     # need a double variable for time
-    doy = np.array([(time - datetime.datetime(time.year, 1, 1)).days for time in dates])
-    years = np.array([time.year for time in dates])
+    doy = np.array([(time - datetime.datetime(time.year, 1, 1)).days for time in dates],
+                   dtype=np.float64)
+    years = np.array([time.year for time in dates], dtype=np.float64)
     num_doy_year = np.array(
-        [(datetime.datetime(time.year + 1, 1, 1) - datetime.datetime(time.year, 1, 1)).days for time in dates])
-    time = np.array([(time.hour + time.minute/60. + time.second/3600.)/24. for time in dates])
+        [(datetime.datetime(time.year + 1, 1, 1) - datetime.datetime(time.year, 1, 1)).days for time in dates],
+    dtype=np.float64)
+    time = np.array([(time.hour + time.minute/60. + time.second/3600.)/24. for time in dates],
+                    dtype=np.float64)
     ddates = years + (doy + time)/(num_doy_year + 1)
 
     # use geocentric coordinates for calculating magnetic field
@@ -718,10 +744,10 @@ def magnetic_vector(x, y, z, dates, normalize=False):
         bd.append(tbd)
         bm.append(tbmag)
     # repackage
-    bn = np.array(bn)
-    be = np.array(be)
-    bd = np.array(bd)
-    bm = np.array(bm)
+    bn = np.array(bn, dtype=np.float64)
+    be = np.array(be, dtype=np.float64)
+    bd = np.array(bd, dtype=np.float64)
+    bm = np.array(bm, dtype=np.float64)
 
     if normalize:
         bn /= bm
@@ -803,7 +829,7 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           step_size=2., tol=1.E-4,
-                                          tol_zonal_apex=1.E-4, max_loops=100,
+                                          tol_zonal_apex=1.E-4, max_loops=1000,
                                           ecef_input=False, centered_diff=True,
                                           full_output=False, include_debug=False,
                                           scalar=1.,
@@ -833,8 +859,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Step size (km) to use when calculating changes in apex height
     tol : float
         Tolerance goal for the magnitude of the change in unit vectors per loop
-    tol_zonal_apex : Maximum allowed change in apex height along
-        zonal direction
+    tol_zonal_apex : float
+        Maximum allowed change in apex height along zonal direction
     max_loops : int
         Maximum number of iterations
     ecef_input : bool (False)
@@ -843,7 +869,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     full_output : bool (False)
         If True, return an additional dictionary with the E and D mapping
         vectors
-    include_deubg : bool (False)
+    include_debug : bool (False)
         If True, include stats about iterative process in optional dictionary.
         Requires full_output=True
     centered_diff : bool (True)
@@ -853,11 +879,11 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
     scalar : int
         Used to modify unit magnetic field within algorithm. Generally
         speaking, this should not be modified
-    edge_steps : int (1)
+    edge_steps : int
         Number of steps taken when moving across field lines and calculating
         the change in apex location. This parameter impacts both runtime
-        and accuracy of the D, E vectors.
-    dstep_size : float (.016 km)
+        and accuracy of the D, E vectors. (default=1)
+    dstep_size : float
         Step size (km) used when calculting the expansion of field line surfaces.
         Generally, this should be the same as step_size.
     max_steps : int
@@ -927,9 +953,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         latitude, longitude, altitude = ecef_to_geocentric(ecef_x, ecef_y, ecef_z)
 
     else:
-        latitude = np.array(latitude)
-        longitude = np.array(longitude)
-        altitude = np.array(altitude)
+        latitude = np.array(latitude, dtype=np.float64)
+        longitude = np.array(longitude, dtype=np.float64)
+        altitude = np.array(altitude, dtype=np.float64)
         # ensure latitude reasonable
         idx, = np.where(np.abs(latitude) > 90.)
         if len(idx) > 0:
@@ -948,7 +974,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                         datetimes,
                                                         return_geodetic=True,
                                                         ecef_input=True)
-    bx, by, bz, bm = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes, normalize=True)
+    bx, by, bz, bm = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes,
+                                     normalize=True)
 
     bx, by, bz = ss*bx, ss*by, ss*bz
     # need a vector perpendicular to mag field
@@ -987,7 +1014,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
                                                         return_geodetic=True,
                                                         ecef_input=True)
             diff_apex_z = apex_z - apex_z2
-            diff_apex_z /= 2*step_size
+            diff_apex_z /= 2. * step_size
         else:
             diff_apex_z = apex_z - apex_root
             diff_apex_z /= step_size
@@ -1036,15 +1063,23 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
         loop_num += 1
         if loop_num > max_loops:
+            idx, = np.where(diff_m >= tol)
+            estr = 'Bad tolerances for '
+            estr += str(latitude[idx]) + str(longitude[idx]) + str(altitude[idx])
+
+            idx, = np.where(diff_apex_z >= tol_zonal_apex)
+            estr += ' Bad tolerances for '
+            estr += str(latitude[idx]) + str(longitude[idx]) + str(altitude[idx])
+
             tzx, tzy, tzz = np.nan*tzx, np.nan*tzy, np.nan*tzz
             tmx, tmy, tmz = np.nan*tzx, np.nan*tzy, np.nan*tzz
-            estr = ' step_size ' + str(step_size) + ' diff_z ' + str(np.max(np.abs(diff_apex_z)))
+            estr += ' step_size ' + str(step_size) + ' diff_z ' + str(np.max(np.abs(diff_apex_z)))
             estr += ' diff ' + str(diff) + ' centered ' + str(centered_diff)
             raise RuntimeWarning("Didn't converge after reaching max_loops " + estr)
 
     # store temp arrays into output
     zx, zy, zz = tzx, tzy, tzz
-    mx, my, mz = ss*tmx, ss*tmy, ss*tmz
+    mx, my, mz = ss * tmx, ss * tmy, ss * tmz
 
     if full_output:
         # calculate expansion of zonal vector
@@ -1123,16 +1158,18 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
             # calculate meridional gradient using latest vectors
             ecef_xm, ecef_ym, ecef_zm = ecef_x + dstep_size*mx, ecef_y + dstep_size*my, ecef_z + dstep_size*mz
-            _, _, _, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
+            ax, ay, az, _, _, apex_m = apex_location_info(ecef_xm, ecef_ym, ecef_zm,
                                                        datetimes,
                                                        return_geodetic=True,
                                                        ecef_input=True)
             ecef_xm2, ecef_ym2, ecef_zm2 = ecef_x - dstep_size*mx, ecef_y - dstep_size*my, ecef_z - dstep_size*mz
-            _, _, _, _, _, apex_m2 = apex_location_info(ecef_xm2, ecef_ym2, ecef_zm2,
+            ax2, ay2, az2, _, _, apex_m2 = apex_location_info(ecef_xm2, ecef_ym2, ecef_zm2,
                                                         datetimes,
                                                         return_geodetic=True,
                                                         ecef_input=True)
             diff_apex_m = apex_m - apex_m2
+            # print(diff_apex_m, np.sqrt((ax2-ax)**2 + (ay2-ay)**2 + (az2-az)**2), 2.*dstep_size)
+            # print("b's ", bm, bam, bam/bm, bm/bam)
             grad_apex = diff_apex_m/(2.*dstep_size)
 
             # # potentially higher accuracy method of getting height gradient magnitude
@@ -1203,8 +1240,8 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
         Supported inputs, 'meridional', 'zonal', 'aligned'
     num_steps : int
         Number of steps to take along unit vector direction
-    step_size = float
-        Distance taken for each step (km)
+    step_size : float
+        Distance taken for each step (km) (default=25.)
     scalar : int
         Scalar modifier for step size distance. Input a -1 to move along
         negative unit vector direction.
@@ -1247,9 +1284,9 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
             ux, uy, uz = bx, by, bz
 
         # take steps along direction
-        x = x + step_size*ux
-        y = y + step_size*uy
-        z = z + step_size*uz
+        x = x + step_size * ux
+        y = y + step_size * uy
+        z = z + step_size * uz
 
     return x, y, z
 
@@ -1291,10 +1328,10 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     else:
         ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
-    north_ftpnt = np.empty((len(ecef_xs), 3))
-    south_ftpnt = np.empty((len(ecef_xs), 3))
+    north_ftpnt = np.empty((len(ecef_xs), 3), dtype=np.float64)
+    south_ftpnt = np.empty((len(ecef_xs), 3), dtype=np.float64)
 
-    root = np.array([0, 0, 0])
+    root = np.array([0., 0., 0.], dtype=np.float64)
     i = 0
     steps = np.arange(num_steps + 1)
     for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
@@ -1348,13 +1385,13 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         Geodetic (WGS84) altitude, height above surface
     dates : list-like of datetimes
         Date and time for determination of scalars
-    step_size : float (100. km)
-        Step size (km) used for tracing coarse field line
-    fine_step_size : float (1.E-5 km)
-        Fine step size for refining apex location height
-    fine_max_steps : int (1.E-5 km)
+    step_size : float
+        Step size (km) used for tracing coarse field line. (default=100)
+    fine_step_size : float
+        Fine step size (km) for refining apex location height. (default=1.E-5)
+    fine_max_steps : int
         Fine number of steps passed along to full_field_trace. Do not
-        change unless youknow exactly what you are doing.
+        change, generally. (default=5)
     return_geodetic: bool
         If True, also return location in geodetic coordinates
     ecef_input : bool
@@ -1376,21 +1413,26 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
     else:
         ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
-    # prepare parameters for field line trace
+
+    # Prepare parameters for field line trace
     max_steps = 100
     _apex_coarse_steps = np.arange(max_steps + 1)
-    # high resolution trace parameters
+
+    # High resolution trace parameters
     _apex_fine_steps = np.arange(fine_max_steps + 1)
-    # prepare output
-    _apex_out_x = np.empty(len(ecef_xs))
-    _apex_out_y = np.empty(len(ecef_xs))
-    _apex_out_z = np.empty(len(ecef_xs))
+
+    # Prepare output
+    _apex_out_x = np.empty(len(ecef_xs), dtype=np.float64)
+    _apex_out_y = np.empty(len(ecef_xs), dtype=np.float64)
+    _apex_out_z = np.empty(len(ecef_xs), dtype=np.float64)
 
     i = 0
     for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
         # to get the apex location we need to do a field line trace
         # then find the highest point
-        trace = full_field_line(np.array([ecef_x, ecef_y, ecef_z]), date, 0.,
+        trace = full_field_line(np.array([ecef_x, ecef_y, ecef_z],
+                                         dtype=np.float64),
+                                date, 0.,
                                 steps=_apex_coarse_steps,
                                 step_size=step_size,
                                 max_steps=max_steps)
