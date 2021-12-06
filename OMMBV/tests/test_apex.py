@@ -248,7 +248,7 @@ class TestApex():
         try:
             fig = plt.figure()
             plt.imshow(apex_lat, origin='lower')
-            plt.colorbar()
+            plt.colorbar(label='Degrees')
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
             plt.title('Apex Latitude (Degrees) at 120 km')
@@ -259,7 +259,7 @@ class TestApex():
 
             fig = plt.figure()
             plt.imshow(apex_lon, origin='lower')
-            plt.colorbar()
+            plt.colorbar(label='Degrees')
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
             plt.title('Apex Longitude Difference (Degrees) at 120 km')
@@ -270,7 +270,7 @@ class TestApex():
 
             fig = plt.figure()
             plt.imshow(np.log10(apex_alt), origin='lower')
-            plt.colorbar()
+            plt.colorbar(label='km')
             plt.yticks(ytickarr, ytickvals)
             plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
             plt.title('Log Apex Altitude (km) at 120 km')

@@ -150,7 +150,7 @@ class TestTracing():
                                                     longs,
                                                     alts)
         # step size to be tried, move by inverse powers of 2 (half step size)
-        steps_goal = np.arange(13)
+        steps_goal = np.arange(11)
         steps_goal = 1000. / 2 ** steps_goal
         # max number of steps (fixed)
         max_steps_goal = steps_goal * 0 + 1E6
