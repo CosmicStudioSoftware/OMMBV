@@ -1,3 +1,136 @@
+      subroutine dipole_field(pos, offs, m, b)
+      ! returns magnetic field from dipole
+      ! pos, location where field is returned, is (x, y, z) ECEF in km
+      ! offs, offset location of dipole from origin, (x, y, z) ECEF in km
+      ! m is (mx, my, mz)
+      ! b, calculated magnetic field, (bx, by, bz)
+
+      real*8, dimension(3) :: pos, offs, m, b, r, rhat
+      real*8 mu_r3, r3, rmag
+
+      ! eqn is mu/4(pi)*( 3n(n dot m) - m)/r**3
+
+      ! construct vector to dipole
+      ! put in terms in meters
+      do i=1,3
+        r(i) = (pos(i) - offs(i)) * 1000.D0
+      end do
+
+      ! position unit vector (n)
+      rmag = dsqrt(r(1)**2 + r(2)**2 + r(3)**2)
+      do i=1,3
+        rhat(i) = r(i) / rmag
+      end do
+
+      ! n dot m term
+      rm = rhat(1) * m(1) + rhat(2) * m(2) + rhat(3) * m(3)
+      ! r**3 term
+      r3 = rmag**3
+      ! mu / 4 pi / |r**3|
+      mu_r3 = 1.D-7 / r3
+
+      ! calculate magnetic field
+      do i=1,3
+        b(i) = mu_r3 * (3.D0 * rm * rhat(i) - m(i))
+      end do
+
+      return
+      end
+
+      subroutine quadrupole_field(pos, offs, sep, m, b)
+      ! returns magnetic field from quadrupole
+      ! pos, location where field is returned, is (x, y, z) ECEF in km
+      ! offs, offset location of quadrupole from origin, (x, y, z) ECEF in km
+      ! sep, distance from quadrupole origin of underlying dipoles (km)
+      ! m is magnetic moment of underlying dipoles (scalar)
+      ! b, calculated magnetic field, (bx, by, bz)
+      real*8, dimension(3) :: pos, offs, b, temp_b, temp_m, temp_o
+      real*8 sep, m
+
+      ! Underlying dipoles arranged along y-z plane. + y +z
+      temp_m = (/ 0.D0, m * (-1.D0), m * (-1.D0) /)
+      temp_o = (/ offs(1), offs(2) + sep, offs(3) + sep/)
+      call dipole_field(pos, temp_o, temp_m, temp_b)
+      b(1) = temp_b(1)
+      b(2) = temp_b(2)
+      b(3) = temp_b(3)
+
+      ! Underlying dipoles arranged along y-z plane. + y -z
+      ! Reversed moment.
+      temp_m = (/ 0.D0, m * 1.D0, m * (-1.D0) /)
+      temp_o = (/ offs(1), offs(2) + sep, offs(3) - sep /)
+      call dipole_field(pos, temp_o, temp_m, temp_b)
+      b(1) = b(1) + temp_b(1)
+      b(2) = b(2) + temp_b(2)
+      b(3) = b(3) + temp_b(3)
+
+      ! Underlying dipoles arranged along y-z plane. - y +z
+      ! Reversed moment.
+      temp_m = (/ 0.D0, m * (-1.D0), m * 1.D0 /)
+      temp_o = (/ offs(1), offs(2) - sep, offs(3) + sep /)
+      call dipole_field(pos, temp_o, temp_m, temp_b)
+      b(1) = b(1) + temp_b(1)
+      b(2) = b(2) + temp_b(2)
+      b(3) = b(3) + temp_b(3)
+
+      ! Underlying dipoles arranged along y-z plane. - y -z
+      temp_m = (/ 0.D0, m * 1.D0, m * 1.D0 /)
+      temp_o = (/ offs(1), offs(2) - sep, offs(3) - sep /)
+      call dipole_field(pos, temp_o, temp_m, temp_b)
+      b(1) = b(1) + temp_b(1)
+      b(2) = b(2) + temp_b(2)
+      b(3) = b(3) + temp_b(3)
+
+      return
+      end
+
+
+      subroutine linear_quadrupole(pos, offs, m, step, b)
+      ! returns magnetic field from linear quadrupole
+      ! pos, location where field is returned, (x, y, z) ECEF in km
+      ! offs, offset location of quadrupole from origin, (x, y, z) ECEF in km
+      ! sep, distance from quadrupole origin for underlying dipoles (km)
+      ! m is magnetic moment of primary underlying dipoles (vector)
+      ! b, calculated magnetic field, (bx, by, bz)
+      real*8, dimension(3) :: pos, offs, b, temp_b, temp_m, temp_o, m
+      real*8, dimension(3) :: um
+      real*8 :: step, mag, scalar
+
+      ! Calculate step vector. Get unit mag vector then step along.
+      mag = dsqrt(m(1) * m(1) + m(2) * m(2) + m(3) * m(3))
+      scalar = step / mag
+      do i=1,3
+        um(i) = m(i) * scalar
+      enddo
+
+
+      ! Take step, from offs, along magnetic moment direction
+      do i=1,3
+        temp_o(i) = offs(i) + um(i)
+      enddo
+
+      call dipole_field(pos, temp_o, m, temp_b)
+      b(1) = temp_b(1)
+      b(2) = temp_b(2)
+      b(3) = temp_b(3)
+
+      ! Underlying dipoles arranged along moment direction
+      ! Take opposite step, from offs, as first dipole.
+      do i=1,3
+        temp_o(i) = offs(i) - um(i)
+      enddo
+      ! Reversed moment.
+      temp_m = (/ -1.D0 * m(1), -1.D0 * m(2), -1.D0 * m(3) /)
+
+      call dipole_field(pos, temp_o, temp_m, temp_b)
+      b(1) = b(1) + temp_b(1)
+      b(2) = b(2) + temp_b(2)
+      b(3) = b(3) + temp_b(3)
+
+      return
+      end
+
+
       subroutine igrf_step(out,pos,t,date,scalar,dir,height)
 
       real*8, dimension(3) :: pos
@@ -34,9 +167,15 @@ Cf2py intent(out) out
 
       ! convert the mag field in spherical unit vectors to ECEF vectors
       call end_vector_to_ecef(be,bn,bd,colat,elong,bx,by,bz)
+
       ! get updated geodetic position, we need to know
       ! when to terminate
       call ecef_to_geodetic(pos, latitude, elong, h)
+
+      ! Use geographic Earth instead of geodetic
+!     call ecef_to_colat_long_r(pos, latitude, elong, h)
+!     h = h - 6371.D0
+
       ! stop moving position if we go below height
       if (h.le.(height)) then
         scalar = 0
@@ -57,6 +196,7 @@ Cf2py intent(out) out
 
       return
       end
+
 
       subroutine ecef_to_geodetic(pos, latitude, lon, h)
       ! converts from ECEF coordinates to Geodetic
@@ -138,6 +278,23 @@ Cf2py intent(out)  bx, by, bz
       end
 
 
+      subroutine ecef_to_end_vector(x,y,z,colat,elong,vn,ve,vd)
+      ! inputs are x, y, and z ECEF components
+      ! colatitude (radians, 0 at northern pole)
+      ! longitude (radians)
+
+      real*8 x,y,z,colat,elong,ve,vn,vd,pi,lat
+      pi = 4.D0*DATAN(1.D0)
+      lat = pi/2.D0 - colat
+
+      ve = -x*dsin(elong) + y*dcos(elong)
+      vn = -x*dcos(elong)*dsin(lat)-y*dsin(elong)*dsin(lat)+z*dcos(lat)
+      vd = -x*dcos(elong)*dcos(lat)-y*dsin(elong)*dcos(lat)-z*dsin(lat)
+
+      return
+      end
+
+
       subroutine ecef_to_colat_long_r(pos, colat, elong, r)
       ! pos is (x,y,z) in ECEF coordinates
       real*8, dimension(3) :: pos
@@ -171,7 +328,95 @@ Cf2py intent(out) colat, elong, r
       end
 
 
+      subroutine colat_long_r_to_ecef(pos, colat, elong, r)
+      ! pos is (x,y,z) in ECEF coordinates
+      real*8, dimension(3) :: pos
+      ! position values of point
+      real*8 r, colat, elong, x, y, z
+
+cf2py intent(out) pos
+Cf2py intent(in) colat, elong, r
+
+      x = r * dsin(colat) * dcos(elong)
+      y = r * dsin(colat) * dsin(elong)
+      z = r * dcos(colat)
+      pos = (/x, y, z/)
+
+      return
+      end
+
+
       subroutine igrf13syn (isv,date,itype,alt,colat,elong,x,y,z,f)
+      ! Generate magnetic field for testing purposes
+      ! isv, date, itype not supported
+      real*8, dimension(3) :: bdip, bq, m, offs, pos, tbq
+      real*8 x, y, z, f ! field along east, north, down, magnitude
+      real*8 vx, vy, vz ! field along ECEF x, y, z
+      real*8 alt, colat, elong, date
+      integer isv, itype
+
+C following added by RStoneback
+Cf2py intent(in) isv,date,itype,alt,colat,elong
+Cf2py intent(out) x,y,z,f
+
+      ! Convert inputs to ECEF
+      if (itype.eq.2) then
+        call colat_long_r_to_ecef(pos, colat, elong, alt)
+      end if
+
+
+      ! Calculate magnetic field
+      ! This needs to be moved to the IGRF generation area
+      offs = (/0.0D0, 0.0D0, 0.0D0/)
+      m = (/0.D0, 0.D0, -8.D22/)
+      call dipole_field(pos, offs, m, bdip)
+!     call quadrupole_field(pos, offs, 10.D0, 8.D20, bq)
+
+!     ! assymetrical northern hemisphere
+!     m = (/0.D0, 0.D0, -2.37D22/)
+!     call linear_quadrupole(pos, offs, m, 1000.D0, bq)
+
+      ! linear quad, equatorial plane
+
+      m = (/2.37D21, 0.D0, 0.D0/)
+      bq = (/ 0.D0, 0.D0, 0.D0 /)
+      call linear_quadrupole(pos, offs, m, 1000.D0, tbq)
+      do i=1,3
+       bq(i) = bq(i) + tbq(i)
+      enddo
+
+
+!     ! normal quad, equatorial plane
+!!     m = (/2.37D21, 0.D0, 0.D0/)
+!     bq = (/ 0.D0, 0.D0, 0.D0 /)
+!     call linear_quadrupole(pos, offs, m, 1000.D0, tbq)
+!     do i=1,3
+!      bq(i) = bq(i) + tbq(i)
+!     enddo
+!!     m = (/0.D0, 2.37D21, 0.D0/)
+!     call linear_quadrupole(pos, offs, m, -1000.D0, tbq)
+!     do i=1,3
+!      bq(i) = bq(i) + tbq(i)
+!     enddo
+
+      vx = bdip(1) + bq(1)
+      vy = bdip(2) + bq(2)
+      vz = bdip(3) + bq(3)
+      f = dsqrt(vx**2 + vy**2 + vz**2)
+
+!      write(*,*) 'Vector in ECEF x, y, z and magnitude'
+!      write(*,*) vx, vy, vz, f
+!      write(*,*) 'Colatitude, longitude'
+!      write(*,*) colat, elong
+
+      ! Rotate field into north, east, vertical (down) components
+      call ecef_to_end_vector(vx,vy,vz,colat,elong,x,y,z)
+!      write(*,*) 'Vector along north, east, down'
+!      write(*,*) x, y, z
+      return
+      end
+
+      subroutine igrf13syntrue (isv,date,itype,alt,colat,elong,x,y,z,f)
 c
 c     This is a synthesis routine for the 13th generation IGRF as agreed
 c     in December 2019 by IAGA Working Group V-MOD. It is valid 1900.0 to
@@ -706,6 +951,8 @@ c
 C following added by RStoneback
 Cf2py intent(in) isv,date,itype,alt,colat,elong
 Cf2py intent(out) x,y,z,f
+
+
 
 c
 c     set initial values
