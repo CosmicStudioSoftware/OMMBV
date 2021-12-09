@@ -1126,12 +1126,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     Full Output Parameters
 
     d_zon_x (y,z) : D zonal vector components along ECEF X, Y, and Z directions
-    d_mer_x (y,z) : D meridional vector components along ECEF X, Y, and Z directions
-    d_fa_x (y,z) : D field aligned vector components along ECEF X, Y, and Z directions
+    d_mer_x (y,z) : D meridional vector components along ECEF X, Y, and Z
+    d_fa_x (y,z) : D field aligned vector components along ECEF X, Y, and Z
 
     e_zon_x (y,z) : E zonal vector components along ECEF X, Y, and Z directions
-    e_mer_x (y,z) : E meridional vector components along ECEF X, Y, and Z directions
-    e_fa_x (y,z) : E field aligned vector components along ECEF X, Y, and Z directions
+    e_mer_x (y,z) : E meridional vector components along ECEF X, Y, and Z
+    e_fa_x (y,z) : E field aligned vector components along ECEF X, Y, and Z
 
 
     Debug Parameters
@@ -1182,52 +1182,57 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         longitude = np.array(longitude, dtype=np.float64)
         altitude = np.array(altitude, dtype=np.float64)
 
-        # ensure latitude reasonable
+        # Ensure latitude reasonable
         idx, = np.where(np.abs(latitude) > 90.)
         if len(idx) > 0:
             raise RuntimeError('Latitude out of bounds [-90., 90.].')
-        # ensure longitude reasonable
+
+        # Ensure longitude reasonable
         idx, = np.where((longitude < -180.) | (longitude > 360.))
         if len(idx) > 0:
             print('Out of spec :', longitude[idx])
             raise RuntimeError('Longitude out of bounds [-180., 360.].')
 
-        # calculate satellite position in ECEF coordinates
+        # Calculate satellite position in ECEF coordinates
         ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
 
-    # get apex location for root point
+    # Get apex location for root point
     a_x, a_y, a_z, _, _, apex_root = location_info(ecef_x, ecef_y, ecef_z,
                                                    datetimes,
                                                    return_geodetic=True,
                                                    ecef_input=True)
+
+    # Magnetic field at root location
     bx, by, bz, bm = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes,
                                      normalize=True)
-
+    # Scale via user input
     bx, by, bz = ss*bx, ss*by, ss*bz
-    # need a vector perpendicular to mag field
-    # infinitely many
-    # let's use the east vector as a great place to start
+
+    # To start, need a vector perpendicular to mag field. There are infinitely
+    # many, thus, let's use the east vector as a start.
     tzx, tzy, tzz = enu_to_ecef_vector(ss*np.ones(len(bx)), np.zeros(len(bx)),
                                        np.zeros(len(bx)), latitude, longitude)
     init_type = np.zeros(len(bx)) - 1
 
-    # get meridional from this
+    # Get meridional direction via cross with field-aligned and normalize
     tmx, tmy, tmz = cross_product(tzx, tzy, tzz, bx, by, bz)
-    # normalize
     tmx, tmy, tmz = normalize_vector(tmx, tmy, tmz)
-    # get orthogonal zonal now
+
+    # Get orthogonal zonal now, and normalize.
     tzx, tzy, tzz = cross_product(bx, by, bz, tmx, tmy, tmz)
-    # normalize
     tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
 
-    # loop variables
+    # Initialize loop variables
     loop_num = 0
     repeat_flag = True
-    while repeat_flag:
-        # get apex field height location info for both places
-        # after taking step along these directions
 
-        # zonal-ish direction
+    # Iteratively determine the vector basis directions.
+    while repeat_flag:
+        # Take a step along current zonal vector and calculate apex height
+        # of new location. Depending upon user settings, this is either
+        # a single step or steps along both positive and negative directions.
+
+        # Positive zonal step.
         ecef_xz, ecef_yz, ecef_zz = (ecef_x + step_size*tzx,
                                      ecef_y + step_size*tzy,
                                      ecef_z + step_size*tzz)
@@ -1236,6 +1241,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                               return_geodetic=True,
                                               ecef_input=True)
         if centered_diff:
+            # Negative step
             ecef_xz2, ecef_yz2, ecef_zz2 = (ecef_x - step_size*tzx,
                                             ecef_y - step_size*tzy,
                                             ecef_z - step_size*tzz)
@@ -1243,13 +1249,15 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                                    datetimes,
                                                    return_geodetic=True,
                                                    ecef_input=True)
+            # Gradient in apex height
             diff_apex_z = apex_z - apex_z2
             diff_apex_z /= 2. * step_size
         else:
+            # Gradient in apex height
             diff_apex_z = apex_z - apex_root
             diff_apex_z /= step_size
 
-        # meridional-ish direction
+        # Meridional-ish direction, positive step.
         ecef_xm, ecef_ym, ecef_zm = (ecef_x + step_size*tmx,
                                      ecef_y + step_size*tmy,
                                      ecef_z + step_size*tmz)
@@ -1258,38 +1266,39 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                               return_geodetic=True,
                                               ecef_input=True)
 
+        # Meridional gradient in apex height
         diff_apex_m = apex_m - apex_root
         diff_apex_m /= step_size
 
-        # rotation angle
+        # Use observed gradients to calculate a rotation angle that aligns
+        # the zonal and meridional directions along desired directions.
+        # zonal along no gradient, meridional along max.
         theta = np.arctan2(diff_apex_z, diff_apex_m)
-        # theta2 = np.pi/2. - np.arctan2(diff_apex_m, diff_apex_z)
 
-        # rotate vectors around unit vector to align along desired gradients
-        # zonal along no gradient, meridional along max
-        # see wikipedia quaternion spatial rotation page for equation below
+        # See wikipedia quaternion spatial rotation page for equation below
         # https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
-        # precalculate some info
+        # Precalculate some info.
         ct = np.cos(theta)
         st = np.sin(theta)
-        # zonal vector
+        # Zonal vector
         tzx2, tzy2, tzz2 = tzx*ct - tmx*st, tzy*ct - tmy*st, tzz*ct - tmz*st
-        # meridional vector
+        # Meridional vector
         tmx2, tmy2, tmz2 = tmx*ct + tzx*st, tmy*ct + tzy*st, tmz*ct + tzz*st
 
-        # track difference
+        # Track difference in vectors
         dx, dy, dz = (tzx2 - tzx)**2, (tzy2 - tzy)**2, (tzz2 - tzz)**2
         diff_z = np.sqrt(dx + dy + dz)
         dx, dy, dz = (tmx2 - tmx)**2, (tmy2 - tmy)**2, (tmz2 - tmz)**2
         diff_m = np.sqrt(dx + dy + dz)
-        # take biggest difference
+
+        # Take biggest difference
         diff = np.max([diff_z, diff_m])
 
-        # store info into calculation vectors to refine next loop
+        # Store info into calculation vectors to refine next loop
         tzx, tzy, tzz = tzx2, tzy2, tzz2
         tmx, tmy, tmz = tmx2, tmy2, tmz2
 
-        # check if we are done
+        # Check if we are done
         if (diff < tol) & (np.max(np.abs(diff_apex_z))
                            < tol_zonal_apex) & (loop_num > 1):
             repeat_flag = False
@@ -1309,7 +1318,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                             ' Setting to NaN.'))
             warnings.warn(estr)
 
-    # store temp arrays into output
+    # Store temp arrays into output
     zx, zy, zz = tzx, tzy, tzz
     mx, my, mz = ss * tmx, ss * tmy, ss * tmz
 
