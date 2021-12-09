@@ -836,12 +836,12 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
                        return_geodetic=False, ecef_input=False):
     """Determine apex location for the field line passing through input point.
 
-    Employs a two stage method. A broad step (step_size) field line trace spanning
-    Northern/Southern footpoints is used to find the location with the largest
-    geodetic (WGS84) height. A binary search higher resolution trace (goal fine_step_size)
-    is then used to get a better fix on this location. Each loop, step_size halved.
-    Greatest geodetic height is once again selected once the step_size is below
-    fine_step_size.
+    Employs a two stage method. A broad step (`step_size`) field line trace
+    spanning Northern/Southern footpoints is used to find the location with
+    the largest geodetic (WGS84) height. A binary search higher resolution
+    trace is then used to get a better fix on this location. Each loop,
+    the step_size halved. Greatest geodetic height is once
+    again selected once the step_size is below `fine_step_size`.
 
     Parameters
     ----------
@@ -864,6 +864,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         If True, also return location in geodetic coordinates
     ecef_input : bool
         If True, glats, glons, and alts are treated as x, y, z (ECEF).
+        (default=False)
 
     Returns
     -------
@@ -896,44 +897,60 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 
     i = 0
     for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
-        # to get the apex location we need to do a field line trace
-        # then find the highest point
+
+        # Ensure starting location is valid
+        if np.any(np.isnan([ecef_x, ecef_y, ecef_z])):
+            _apex_out_x[i] = np.nan
+            _apex_out_y[i] = np.nan
+            _apex_out_z[i] = np.nan
+            i += 1
+            continue
+
+        # To get the apex location we need to do a field line trace
+        # then find the highest point.
         trace = full_field_line(np.array([ecef_x, ecef_y, ecef_z],
                                          dtype=np.float64),
                                 date, 0.,
                                 steps=_apex_coarse_steps,
                                 step_size=step_size,
                                 max_steps=max_steps)
-        # convert all locations to geodetic coordinates
-        tlat, tlon, talt = ecef_to_geodetic(trace[:, 0], trace[:, 1], trace[:, 2])
-        # determine location that is highest with respect to the geodetic Earth
+
+        # Convert all locations to geodetic coordinates
+        tlat, tlon, talt = ecef_to_geodetic(trace[:, 0], trace[:, 1],
+                                            trace[:, 2])
+
+        # Determine location that is highest with respect to the geodetic Earth
         max_idx = np.argmax(talt)
-        # repeat using a high resolution trace one big step size each
-        # direction around identified max
-        # recurse False ensures only max_steps are taken
+
+        # Repeat using a high resolution trace one big step size each
+        # direction around identified max.
         new_step = step_size
-        # print('start range', talt[max_idx-1:max_idx+2])
         while new_step > fine_step_size:
             new_step /= 2.
+
+            # Setting recurse False ensures only max_steps are taken.
             trace = full_field_line(trace[max_idx, :], date, 0.,
                                     steps=_apex_fine_steps,
                                     step_size=new_step,
                                     max_steps=fine_max_steps,
                                     recurse=False)
-            # convert all locations to geodetic coordinates
-            tlat, tlon, talt = ecef_to_geodetic(trace[:, 0], trace[:, 1], trace[:, 2])
-            # determine location that is highest with respect to the geodetic Earth
-            # print(talt)
+
+            # Convert all locations to geodetic coordinates
+            tlat, tlon, talt = ecef_to_geodetic(trace[:, 0], trace[:, 1],
+                                                trace[:, 2])
+            # Determine location that is highest with respect to the
+            # geodetic Earth.
             max_idx = np.argmax(talt)
 
-        # collect outputs
+        # Collect outputs
         _apex_out_x[i] = trace[max_idx, 0]
         _apex_out_y[i] = trace[max_idx, 1]
         _apex_out_z[i] = trace[max_idx, 2]
         i += 1
 
     if return_geodetic:
-        glat, glon, alt = ecef_to_geodetic(_apex_out_x, _apex_out_y, _apex_out_z)
+        glat, glon, alt = ecef_to_geodetic(_apex_out_x, _apex_out_y,
+                                           _apex_out_z)
         return _apex_out_x, _apex_out_y, _apex_out_z, glat, glon, alt
     else:
         return _apex_out_x, _apex_out_y, _apex_out_z
