@@ -2,13 +2,14 @@
 Supporting routines for coordinate conversions as well as vector operations and
 transformations used in Space Science.
 """
-import copy
 
 import scipy
 import scipy.integrate
 import numpy as np
 import datetime
+import warnings
 import pysat
+
 # import reference IGRF fortran code within the package
 from OMMBV import igrf as igrf
 import OMMBV.fortran_coords
@@ -427,12 +428,14 @@ def field_line_trace(init, date, direction, height, steps=None,
     # Perform trace
     trace_north, messg = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
                                                 steps,
-                                                args=(date, step_size, direction, height),
+                                                args=(date, step_size,
+                                                      direction, height),
                                                 full_output=True,
                                                 printmessg=False,
                                                 ixpr=False,
                                                 rtol=1.E-11,
                                                 atol=1.E-11)
+
     if messg['message'] != 'Integration successful.':
         raise RuntimeError("Field-Line trace not successful.")
 
@@ -443,8 +446,9 @@ def field_line_trace(init, date, direction, height, steps=None,
     # Fortran integration gets close to target height
     if recurse & (z > check_height*1.000001):
         if recursive_loop_count < 1000:
-            # When we have not reached the reference height, call field_line_trace
-            # again by taking check value as init - recursive call
+            # When we have not reached the reference height, call
+            # field_line_trace again by taking check value as init.
+            # Recursive call.
             recursive_loop_count = recursive_loop_count + 1
             trace_north1 = field_line_trace(check, date, direction, height,
                                             step_size=step_size,
@@ -1002,24 +1006,25 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
     return out_d
 
 
-def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                          step_size=0.5, tol=1.E-4,
+def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
+                                          datetimes, step_size=0.5, tol=1.E-4,
                                           tol_zonal_apex=1.E-4, max_loops=100,
                                           ecef_input=False, centered_diff=True,
-                                          full_output=False, include_debug=False,
-                                          scalar=1.,
-                                          edge_steps=1, dstep_size=0.5,
-                                          max_steps=None, ref_height=None,
-                                          steps=None,
+                                          full_output=False,
+                                          include_debug=False,
+                                          scalar=1., edge_steps=1,
+                                          dstep_size=0.5, max_steps=None,
+                                          ref_height=None, steps=None,
                                           location_info=apex_location_info):
     """Calculates local geomagnetic basis vectors and mapping scalars.
 
-    Zonal - Generally Eastward (+East); lies along a surface of constant apex height
+    Zonal - Generally Eastward (+East); surface of constant apex height
     Field Aligned - Generally Northward (+North); points along geomagnetic field
-    Meridional - Generally Vertical (+Up); points along the gradient in apex height
+    Meridional - Generally Vertical (+Up); gradient in apex height
 
-    The apex height is the geodetic height of the field line at its highest point.
-    Unit vectors are expressed in ECEF coordinates.
+    The apex height is the geodetic height of the field line at its highest
+    point. Unit vectors are expressed in Earth Centered Earth Fixed (ECEF)
+    coordinates.
 
     Parameters
     ----------
@@ -1064,14 +1069,18 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         the change in apex location. This parameter impacts both runtime
         and accuracy of the D, E vectors. (default=1)
     dstep_size : float
-        Step size (km) used when calculating the expansion of field line surfaces.
-        Generally, this should be the same as step_size. (default=0.5)
+        Step size (km) used when calculating the expansion of field line
+        surfaces. Generally, this should be the same as step_size. (default=0.5)
     max_steps : int
         Deprecated
     ref_height : float
         Deprecated
     steps : list-like
         Deprecated
+    location_info : function
+        Function used to determine a consistent relative position along a
+        field line. Should not generally be modified.
+        (default=apex_location_info)
 
     Returns
     -------
@@ -1109,9 +1118,10 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
             Tan(theta) = apex_height_diff_zonal/apex_height_diff_meridional
 
-        The method terminates when successive updates to both the zonal and meridional
-        unit vectors differ (magnitude of difference) by less than tol, and the
-        change in apex_height from input location is less than tol_zonal_apex.
+        The method terminates when successive updates to both the zonal and
+        meridional unit vectors differ (magnitude of difference) by less than
+        `tol`, and the change in apex_height from input location is less than
+        `tol_zonal_apex`.
 
     """
 
@@ -1251,19 +1261,18 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
 
         loop_num += 1
         if loop_num > max_loops:
-            idx, = np.where(diff_m >= tol)
-            estr = 'Bad tolerances for '
-            estr += str(latitude[idx]) + str(longitude[idx]) + str(altitude[idx])
+            # Identify all locations with tolerance failure
+            idx1, = np.where(diff_m >= tol)
+            idx2, = np.where(diff_apex_z >= tol_zonal_apex)
+            idx = np.hstack((idx1, idx2))
 
-            idx, = np.where(diff_apex_z >= tol_zonal_apex)
-            estr += ' Bad tolerances for '
-            estr += str(latitude[idx]) + str(longitude[idx]) + str(altitude[idx])
+            # Assign nan to vectors
+            tzx[idx], tzy[idx], tzz[idx] = np.nan, np.nan, np.nan
+            tmx[idx], tmy[idx], tmz[idx] = np.nan, np.nan, np.nan
 
-            tzx, tzy, tzz = np.nan*tzx, np.nan*tzy, np.nan*tzz
-            tmx, tmy, tmz = np.nan*tzx, np.nan*tzy, np.nan*tzz
-            estr += ' step_size ' + str(step_size) + ' diff_z ' + str(np.max(np.abs(diff_apex_z)))
-            estr += ' diff ' + str(diff) + ' centered ' + str(centered_diff)
-            raise RuntimeWarning("Didn't converge after reaching max_loops " + estr)
+            estr = ''.join((str(len(idx)), ' locations did not converge.',
+                            ' Setting to NaN.'))
+            warnings.warn(estr)
 
     # store temp arrays into output
     zx, zy, zz = tzx, tzy, tzz
