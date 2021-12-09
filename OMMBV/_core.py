@@ -967,39 +967,57 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
         d_fa_mag: D field-aligned vector magnitude
         d_mer_mag: D meridional vector magnitude
 
-        d_zon_x (y,z) : D zonal vector components along ECEF X, Y, and Z directions
-        d_mer_x (y,z) : D meridional vector components along ECEF X, Y, and Z directions
-        d_fa_x (y,z) : D field aligned vector components along ECEF X, Y, and Z directions
+        d_zon_x (y,z) : D zonal vector components. ECEF X, Y, and Z directions
+        d_mer_x (y,z) : D meridional vector components. ECEF X, Y, and Z.
+        d_fa_x (y,z) : D field aligned vector components.  ECEF X, Y, and Z.
 
         e_zon_mag: E zonal vector magnitude
         e_fa_mag: E field-aligned vector magnitude
         e_mer_mag: E meridional vector magnitude
 
-        e_zon_x (y,z) : E zonal vector components along ECEF X, Y, and Z directions
-        e_mer_x (y,z) : E meridional vector components along ECEF X, Y, and Z directions
-        e_fa_x (y,z) : E field aligned vector components along ECEF X, Y, and Z directions
+        e_zon_x (y,z) : E zonal vector components. ECEF X, Y, and Z directions.
+        e_mer_x (y,z) : E meridional vector components. ECEF X, Y, and Z.
+        e_fa_x (y,z) : E field aligned vector components. ECEF X, Y, and Z.
 
     """
 
-    zx, zy, zz, fx, fy, fz, mx, my, mz, info_d = calculate_mag_drift_unit_vectors_ecef(latitude, longitude,
-                                                                                       altitude, datetimes,
-                                                                                       full_output=True)
-    d_zon_mag = np.sqrt(info_d['d_zon_x']**2 + info_d['d_zon_y']**2 + info_d['d_zon_z']**2)
-    d_fa_mag = np.sqrt(info_d['d_fa_x']**2 + info_d['d_fa_y']**2 + info_d['d_fa_z']**2)
-    d_mer_mag = np.sqrt(info_d['d_mer_x']**2 + info_d['d_mer_y']**2 + info_d['d_mer_z']**2)
-    e_zon_mag = np.sqrt(info_d['e_zon_x']**2 + info_d['e_zon_y']**2 + info_d['e_zon_z']**2)
-    e_fa_mag = np.sqrt(info_d['e_fa_x']**2 + info_d['e_fa_y']**2 + info_d['e_fa_z']**2)
-    e_mer_mag = np.sqrt(info_d['e_mer_x']**2 + info_d['e_mer_y']**2 + info_d['e_mer_z']**2)
-    # assemble output dictionary
+    (zx, zy, zz,
+     fx, fy, fz,
+     mx, my, mz,
+     info) = calculate_mag_drift_unit_vectors_ecef(latitude, longitude,
+                                                     altitude, datetimes,
+                                                     full_output=True)
+
+    d_zon_mag = np.sqrt(info['d_zon_x']**2 + info['d_zon_y']**2
+                        + info['d_zon_z']**2)
+    d_fa_mag = np.sqrt(info['d_fa_x']**2 + info['d_fa_y']**2
+                       + info['d_fa_z']**2)
+    d_mer_mag = np.sqrt(info['d_mer_x']**2 + info['d_mer_y']**2
+                        + info['d_mer_z']**2)
+
+    e_zon_mag = np.sqrt(info['e_zon_x']**2 + info['e_zon_y']**2
+                        + info['e_zon_z']**2)
+    e_fa_mag = np.sqrt(info['e_fa_x']**2 + info['e_fa_y']**2
+                       + info['e_fa_z']**2)
+    e_mer_mag = np.sqrt(info['e_mer_x']**2 + info['e_mer_y']**2
+                        + info['e_mer_z']**2)
+
+    # Assemble output dictionary
     out_d = {'zon_x': zx, 'zon_y': zy, 'zon_z': zz,
              'fa_x': fx, 'fa_y': fy, 'fa_z': fz,
              'mer_x': mx, 'mer_y': my, 'mer_z': mz,
-             'd_zon_x': info_d['d_zon_x'], 'd_zon_y': info_d['d_zon_y'], 'd_zon_z': info_d['d_zon_z'],
-             'd_fa_x': info_d['d_fa_x'], 'd_fa_y': info_d['d_fa_y'], 'd_fa_z': info_d['d_fa_z'],
-             'd_mer_x': info_d['d_mer_x'], 'd_mer_y': info_d['d_mer_y'], 'd_mer_z': info_d['d_mer_z'],
-             'e_zon_x': info_d['e_zon_x'], 'e_zon_y': info_d['e_zon_y'], 'e_zon_z': info_d['e_zon_z'],
-             'e_fa_x': info_d['e_fa_x'], 'e_fa_y': info_d['e_fa_y'], 'e_fa_z': info_d['e_fa_z'],
-             'e_mer_x': info_d['e_mer_x'], 'e_mer_y': info_d['e_mer_y'], 'e_mer_z': info_d['e_mer_z'],
+             'd_zon_x': info['d_zon_x'], 'd_zon_y': info['d_zon_y'],
+             'd_zon_z': info['d_zon_z'],
+             'd_fa_x': info['d_fa_x'], 'd_fa_y': info['d_fa_y'],
+             'd_fa_z': info['d_fa_z'],
+             'd_mer_x': info['d_mer_x'], 'd_mer_y': info['d_mer_y'],
+             'd_mer_z': info['d_mer_z'],
+             'e_zon_x': info['e_zon_x'], 'e_zon_y': info['e_zon_y'],
+             'e_zon_z': info['e_zon_z'],
+             'e_fa_x': info['e_fa_x'], 'e_fa_y': info['e_fa_y'],
+             'e_fa_z': info['e_fa_z'],
+             'e_mer_x': info['e_mer_x'], 'e_mer_y': info['e_mer_y'],
+             'e_mer_z': info['e_mer_z'],
              'd_zon_mag': d_zon_mag, 'd_fa_mag': d_fa_mag, 'd_mer_mag': d_mer_mag,
              'e_zon_mag': e_zon_mag, 'e_fa_mag': e_fa_mag, 'e_mer_mag': e_mer_mag}
 
