@@ -173,8 +173,7 @@ Cf2py intent(out) out
       call ecef_to_geodetic(pos, latitude, elong, h)
 
       ! Use geographic Earth instead of geodetic
-!     call ecef_to_colat_long_r(pos, latitude, elong, h)
-!     h = h - 6371.D0
+!     h = r - 6371.D0
 
       ! stop moving position if we go below height
       if (h.le.(height)) then
@@ -346,13 +345,13 @@ Cf2py intent(in) colat, elong, r
       end
 
 
-      subroutine igrf13syn (isv,date,itype,alt,colat,elong,x,y,z,f)
+      subroutine igrf13syntest (isv,date,itype,alt,colat,elong,x,y,z,f)
       ! Generate magnetic field for testing purposes
       ! isv, date, itype not supported
       real*8, dimension(3) :: bdip, bq, m, offs, pos, tbq
       real*8 x, y, z, f ! field along east, north, down, magnitude
       real*8 vx, vy, vz ! field along ECEF x, y, z
-      real*8 alt, colat, elong, date
+      real*8 alt, colat, elong, date, mag
       integer isv, itype
 
 C following added by RStoneback
@@ -369,26 +368,28 @@ Cf2py intent(out) x,y,z,f
       ! This needs to be moved to the IGRF generation area
       offs = (/0.0D0, 0.0D0, 0.0D0/)
       m = (/0.D0, 0.D0, -8.D22/)
+      bq = (/ 0.D0, 0.D0, 0.D0 /)
       call dipole_field(pos, offs, m, bdip)
-!     call quadrupole_field(pos, offs, 10.D0, 8.D20, bq)
+
 
 !     ! assymetrical northern hemisphere
 !     m = (/0.D0, 0.D0, -2.37D22/)
-!     call linear_quadrupole(pos, offs, m, 1000.D0, bq)
+!     call linear_quadrupole(pos, offs, m, 1000.D0, tbq)
+!     do i=1,3
+!      bq(i) = bq(i) + tbq(i)
+!     enddo
 
-      ! linear quad, equatorial plane
 
-      m = (/2.37D21, 0.D0, 0.D0/)
-      bq = (/ 0.D0, 0.D0, 0.D0 /)
-      call linear_quadrupole(pos, offs, m, 1000.D0, tbq)
-      do i=1,3
-       bq(i) = bq(i) + tbq(i)
-      enddo
+!     ! linear quad, equatorial plane
+!!     m = (/2.37D21, 0.D0, 0.D0/)
+!     call linear_quadrupole(pos, offs, m, 1000.D0, tbq)
+!     do i=1,3
+!      bq(i) = bq(i) + tbq(i)
+!     enddo
 
 
 !     ! normal quad, equatorial plane
-!!     m = (/2.37D21, 0.D0, 0.D0/)
-!     bq = (/ 0.D0, 0.D0, 0.D0 /)
+!     m = (/2.37D21, 0.D0, 0.D0/)
 !     call linear_quadrupole(pos, offs, m, 1000.D0, tbq)
 !     do i=1,3
 !      bq(i) = bq(i) + tbq(i)
@@ -398,6 +399,35 @@ Cf2py intent(out) x,y,z,f
 !     do i=1,3
 !      bq(i) = bq(i) + tbq(i)
 !     enddo
+
+
+      ! normal octupole, equatorial plane
+      mag = 1.D20
+      m = (/mag, mag, 0.D0/)
+      offs = (/0.0D0, 0.0D0, 1000.0D0/)
+      call linear_quadrupole(pos, offs, m, -1000.D0, tbq)
+      do i=1,3
+       bq(i) = bq(i) + tbq(i)
+      enddo
+
+      m = (/-mag, mag, 0.D0/)
+      call linear_quadrupole(pos, offs, m, 1000.D0, tbq)
+      do i=1,3
+       bq(i) = bq(i) + tbq(i)
+      enddo
+
+      m = (/mag, mag, 0.D0/)
+      offs = (/0.0D0, 0.0D0, -1000.0D0/)
+      call linear_quadrupole(pos, offs, m, -1000.D0, tbq)
+      do i=1,3
+       bq(i) = bq(i) + tbq(i)
+      enddo
+
+      m = (/-mag, mag, 0.D0/)
+      call linear_quadrupole(pos, offs, m, 1000.D0, tbq)
+      do i=1,3
+       bq(i) = bq(i) + tbq(i)
+      enddo
 
       vx = bdip(1) + bq(1)
       vy = bdip(2) + bq(2)
@@ -416,7 +446,7 @@ Cf2py intent(out) x,y,z,f
       return
       end
 
-      subroutine igrf13syntrue (isv,date,itype,alt,colat,elong,x,y,z,f)
+      subroutine igrf13syn (isv,date,itype,alt,colat,elong,x,y,z,f)
 c
 c     This is a synthesis routine for the 13th generation IGRF as agreed
 c     in December 2019 by IAGA Working Group V-MOD. It is valid 1900.0 to
