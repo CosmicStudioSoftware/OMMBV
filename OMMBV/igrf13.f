@@ -37,53 +37,6 @@
       return
       end
 
-      subroutine quadrupole_field(pos, offs, sep, m, b)
-      ! returns magnetic field from quadrupole
-      ! pos, location where field is returned, is (x, y, z) ECEF in km
-      ! offs, offset location of quadrupole from origin, (x, y, z) ECEF in km
-      ! sep, distance from quadrupole origin of underlying dipoles (km)
-      ! m is magnetic moment of underlying dipoles (scalar)
-      ! b, calculated magnetic field, (bx, by, bz)
-      real*8, dimension(3) :: pos, offs, b, temp_b, temp_m, temp_o
-      real*8 sep, m
-
-      ! Underlying dipoles arranged along y-z plane. + y +z
-      temp_m = (/ 0.D0, m * (-1.D0), m * (-1.D0) /)
-      temp_o = (/ offs(1), offs(2) + sep, offs(3) + sep/)
-      call dipole_field(pos, temp_o, temp_m, temp_b)
-      b(1) = temp_b(1)
-      b(2) = temp_b(2)
-      b(3) = temp_b(3)
-
-      ! Underlying dipoles arranged along y-z plane. + y -z
-      ! Reversed moment.
-      temp_m = (/ 0.D0, m * 1.D0, m * (-1.D0) /)
-      temp_o = (/ offs(1), offs(2) + sep, offs(3) - sep /)
-      call dipole_field(pos, temp_o, temp_m, temp_b)
-      b(1) = b(1) + temp_b(1)
-      b(2) = b(2) + temp_b(2)
-      b(3) = b(3) + temp_b(3)
-
-      ! Underlying dipoles arranged along y-z plane. - y +z
-      ! Reversed moment.
-      temp_m = (/ 0.D0, m * (-1.D0), m * 1.D0 /)
-      temp_o = (/ offs(1), offs(2) - sep, offs(3) + sep /)
-      call dipole_field(pos, temp_o, temp_m, temp_b)
-      b(1) = b(1) + temp_b(1)
-      b(2) = b(2) + temp_b(2)
-      b(3) = b(3) + temp_b(3)
-
-      ! Underlying dipoles arranged along y-z plane. - y -z
-      temp_m = (/ 0.D0, m * 1.D0, m * 1.D0 /)
-      temp_o = (/ offs(1), offs(2) - sep, offs(3) - sep /)
-      call dipole_field(pos, temp_o, temp_m, temp_b)
-      b(1) = b(1) + temp_b(1)
-      b(2) = b(2) + temp_b(2)
-      b(3) = b(3) + temp_b(3)
-
-      return
-      end
-
 
       subroutine linear_quadrupole(pos, offs, m, step, b)
       ! returns magnetic field from linear quadrupole
@@ -102,7 +55,6 @@
       do i=1,3
         um(i) = m(i) * scalar
       enddo
-
 
       ! Take step, from offs, along magnetic moment direction
       do i=1,3
@@ -363,7 +315,6 @@ Cf2py intent(out) x,y,z,f
         call colat_long_r_to_ecef(pos, colat, elong, alt)
       end if
 
-
       ! Calculate magnetic field
       ! This needs to be moved to the IGRF generation area
       offs = (/0.0D0, 0.0D0, 0.0D0/)
@@ -429,6 +380,7 @@ Cf2py intent(out) x,y,z,f
        bq(i) = bq(i) + tbq(i)
       enddo
 
+      ! Combine dipole and quadrupole contributions
       vx = bdip(1) + bq(1)
       vy = bdip(2) + bq(2)
       vz = bdip(3) + bq(3)
