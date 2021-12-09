@@ -1004,7 +1004,7 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
                                           step_size=0.5, tol=1.E-4,
-                                          tol_zonal_apex=1.E-4, max_loops=1000,
+                                          tol_zonal_apex=1.E-4, max_loops=100,
                                           ecef_input=False, centered_diff=True,
                                           full_output=False, include_debug=False,
                                           scalar=1.,
@@ -1033,35 +1033,39 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetim
         Time to calculate vectors
     step_size : float
         Step size (km) to use when calculating changes in apex height
+        (default=0.5)
     tol : float
         Tolerance goal for the magnitude of the change in unit vectors per loop
+        (default=1.E-4)
     tol_zonal_apex : float
         Maximum allowed change in apex height along zonal direction
+        (default=1.E-4)
     max_loops : int
-        Maximum number of iterations
-    ecef_input : bool (False)
+        Maximum number of iterations (default=100)
+    ecef_input : bool
         If True, inputs latitude, longitude, altitude are interpreted as
-        x, y, and z in ECEF coordinates (km).
-    full_output : bool (False)
+        x, y, and z in ECEF coordinates (km). (default=False)
+    full_output : bool
         If True, return an additional dictionary with the E and D mapping
-        vectors
-    include_debug : bool (False)
+        vectors. (default=False)
+    include_debug : bool
         If True, include stats about iterative process in optional dictionary.
-        Requires full_output=True
-    centered_diff : bool (True)
+        Requires full_output=True. (default=False)
+    centered_diff : bool
         If True, a symmetric centered difference is used when calculating
         the change in apex height along the zonal direction, used within
-        the zonal unit vector calculation
+        the zonal unit vector calculation. (default=True)
     scalar : int
         Used to modify unit magnetic field within algorithm. Generally
-        speaking, this should not be modified
+        speaking, this should not be modified. (default=1.)
     edge_steps : int
+        Deprecated.
         Number of steps taken when moving across field lines and calculating
         the change in apex location. This parameter impacts both runtime
         and accuracy of the D, E vectors. (default=1)
     dstep_size : float
         Step size (km) used when calculating the expansion of field line surfaces.
-        Generally, this should be the same as step_size.
+        Generally, this should be the same as step_size. (default=0.5)
     max_steps : int
         Deprecated
     ref_height : float
