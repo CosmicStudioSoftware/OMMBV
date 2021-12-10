@@ -341,6 +341,156 @@ class TestTracing():
         except:
             pass
 
+    def test_unit_vector_and_field_line_plots(self):
+        """Test basic vector properties along field lines.
+
+        Produce visualization of field lines around globe
+        as well as unit vectors along those field lines
+
+        """
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        on_travis = os.environ.get('ONTRAVIS') == 'True'
+
+        # convert OMNI position to ECEF
+        p_long = np.arange(0., 360., 12.)
+        p_alt = 0*p_long + 550.
+        p_lats = [5., 10., 15., 20., 25., 30.]
+
+        truthiness = []
+        for i, p_lat in enumerate(p_lats):
+
+            trace_s = []
+            if not on_travis:
+                try:
+                    fig = plt.figure()
+                    ax = fig.add_subplot(111, projection='3d')
+                except:
+                    print('Disabling plotting for tests due to error.')
+                    on_travis = True
+
+
+            #
+            date = dt.datetime(2000, 1, 1)
+            ecef_x, ecef_y, ecef_z = OMMBV.geocentric_to_ecef(p_lat, p_long, p_alt)
+
+            for j, (x, y, z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
+                # perform field line traces
+                trace_n = OMMBV.field_line_trace(np.array([x, y, z]), date, 1., 0.,
+                                                step_size=.5, max_steps=1.E6)
+                trace_s = OMMBV.field_line_trace(np.array([x, y, z]), date, -1., 0.,
+                                                step_size=.5, max_steps=1.E6)
+                # combine together, S/C position is first for both
+                # reverse first array and join so plotting makes sense
+                trace = np.vstack((trace_n[::-1], trace_s))
+                trace = pds.DataFrame(trace, columns=['x', 'y', 'z'])
+                # plot field-line
+                if not on_travis:
+                    ax.plot(trace['x'], trace['y'], trace['z'], 'b')
+                    plt.xlabel('X')
+                    plt.ylabel('Y')
+                    ax.set_zlabel('Z')
+                # clear stored data
+                self.inst.data = pds.DataFrame()
+                # downselect, reduce number of points
+                trace = trace.loc[::1000, :]
+
+                # compute magnetic field vectors
+                # need to provide alt, latitude, and longitude in geodetic coords
+                latitude, longitude, altitude = OMMBV.ecef_to_geodetic(trace['x'], trace['y'], trace['z'])
+                self.inst[:, 'latitude'] = latitude
+                self.inst[:, 'longitude'] = longitude
+                self.inst[:, 'altitude'] = altitude
+                # store values for plotting locations for vectors
+                self.inst[:, 'x'] = trace['x'].values
+                self.inst[:, 'y'] = trace['y'].values
+                self.inst[:, 'z'] = trace['z'].values
+                idx, = np.where(self.inst['altitude'] > 250.)
+                self.inst.data = self.inst[idx, :]
+
+                # also need to provide transformation from ECEF to S/C
+                # going to leave that a null transformation so we can plot in ECF
+                self.inst[:, 'sc_xhat_x'], self.inst[:, 'sc_xhat_y'], self.inst[:, 'sc_xhat_z'] = 1., 0., 0.
+                self.inst[:, 'sc_yhat_x'], self.inst[:, 'sc_yhat_y'], self.inst[:, 'sc_yhat_z'] = 0., 1., 0.
+                self.inst[:, 'sc_zhat_x'], self.inst[:, 'sc_zhat_y'], self.inst[:, 'sc_zhat_z'] = 0., 0., 1.
+                self.inst.data.index = pysat.utils.time.create_date_range(dt.datetime(2000, 1, 1),
+                                                                          dt.datetime(2000, 1, 1) +
+                                                                          pds.DateOffset(
+                                                                              seconds=len(self.inst.data) - 1),
+                                                                          freq='S')
+                OMMBV.satellite.add_mag_drift_unit_vectors(self.inst)
+
+                # if i % 2 == 0:
+                length = 500
+                vx = self.inst['unit_zon_x']
+                vy = self.inst['unit_zon_y']
+                vz = self.inst['unit_zon_z']
+                if not on_travis:
+                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy,
+                                self.inst['z'] + length*vz, vx, vy, vz, length=500.,
+                                color='green')  # , pivot='tail')
+                length = 500
+                vx = self.inst['unit_fa_x']
+                vy = self.inst['unit_fa_y']
+                vz = self.inst['unit_fa_z']
+                if not on_travis:
+                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy,
+                                self.inst['z'] + length*vz, vx, vy, vz, length=500.,
+                                color='purple')  # , pivot='tail')
+                length = 500
+                vx = self.inst['unit_mer_x']
+                vy = self.inst['unit_mer_y']
+                vz = self.inst['unit_mer_z']
+                if not on_travis:
+                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy,
+                                self.inst['z'] + length*vz, vx, vy, vz, length=500.,
+                                color='red')  # , pivot='tail')
+
+                # check that vectors norm to 1
+                assert np.all(np.sqrt(self.inst['unit_zon_x'] ** 2 +
+                                      self.inst['unit_zon_y'] ** 2 +
+                                      self.inst['unit_zon_z'] ** 2) > 0.999999)
+                assert np.all(np.sqrt(self.inst['unit_fa_x'] ** 2 +
+                                      self.inst['unit_fa_y'] ** 2 +
+                                      self.inst['unit_fa_z'] ** 2) > 0.999999)
+                assert np.all(np.sqrt(self.inst['unit_mer_x'] ** 2 +
+                                      self.inst['unit_mer_y'] ** 2 +
+                                      self.inst['unit_mer_z'] ** 2) > 0.999999)
+                # confirm vectors are mutually orthogonal
+                dot1 = self.inst['unit_zon_x']*self.inst['unit_fa_x'] + self.inst['unit_zon_y']*self.inst[
+                    'unit_fa_y'] + self.inst['unit_zon_z']*self.inst['unit_fa_z']
+                dot2 = self.inst['unit_zon_x']*self.inst['unit_mer_x'] + self.inst['unit_zon_y']*self.inst[
+                    'unit_mer_y'] + self.inst['unit_zon_z']*self.inst['unit_mer_z']
+                dot3 = self.inst['unit_fa_x']*self.inst['unit_mer_x'] + self.inst['unit_fa_y']*self.inst[
+                    'unit_mer_y'] + self.inst['unit_fa_z']*self.inst['unit_mer_z']
+                assert np.all(np.abs(dot1) < 1.E-6)
+                assert np.all(np.abs(dot2) < 1.E-6)
+                assert np.all(np.abs(dot3) < 1.E-6)
+
+                # ensure that zonal vector is generally eastward
+                ones = np.ones(len(self.inst.data.index))
+                zeros = np.zeros(len(self.inst.data.index))
+                ex, ey, ez = OMMBV.enu_to_ecef_vector(ones, zeros, zeros, self.inst['latitude'], self.inst['longitude'])
+                nx, ny, nz = OMMBV.enu_to_ecef_vector(zeros, ones, zeros, self.inst['latitude'], self.inst['longitude'])
+                ux, uy, uz = OMMBV.enu_to_ecef_vector(zeros, zeros, ones, self.inst['latitude'], self.inst['longitude'])
+
+                dot1 = self.inst['unit_zon_x']*ex + self.inst['unit_zon_y']*ey + self.inst['unit_zon_z']*ez
+                assert np.all(dot1 > 0.)
+
+                dot1 = self.inst['unit_fa_x']*nx + self.inst['unit_fa_y']*ny + self.inst['unit_fa_z']*nz
+                assert np.all(dot1 > 0.)
+
+                dot1 = self.inst['unit_mer_x']*ux + self.inst['unit_mer_y']*uy + self.inst['unit_mer_z']*uz
+                assert np.all(dot1 > 0.)
+
+            if not on_travis:
+                plt.tight_layout()
+                plt.savefig(''.join(('magnetic_unit_vectors_', str(int(p_lat)), '.pdf')))
+                plt.close()
+
+        assert np.all(truthiness)
+
+
 
 ############### TRANSFORMATIONS  ##################################
 

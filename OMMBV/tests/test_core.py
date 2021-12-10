@@ -328,12 +328,18 @@ class TestUnitVectors():
                 steps_out.append(out)
 
             for i in np.arange(len(steps_out) - 1):
-                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i + 1]['zx'].values))
-                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i + 1]['zy'].values))
-                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i + 1]['zz'].values))
-                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i + 1]['mx'].values))
-                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i + 1]['my'].values))
-                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i + 1]['mz'].values))
+                dzx.append(np.abs(steps_out[i]['zx'].values
+                                  - steps_out[i + 1]['zx'].values))
+                dzy.append(np.abs(steps_out[i]['zy'].values
+                                  - steps_out[i + 1]['zy'].values))
+                dzz.append(np.abs(steps_out[i]['zz'].values
+                                  - steps_out[i + 1]['zz'].values))
+                dmx.append(np.abs(steps_out[i]['mx'].values
+                                  - steps_out[i + 1]['mx'].values))
+                dmy.append(np.abs(steps_out[i]['my'].values
+                                  - steps_out[i + 1]['my'].values))
+                dmz.append(np.abs(steps_out[i]['mz'].values
+                                  - steps_out[i + 1]['mz'].values))
         else:
             steps_out = []
             for steps in steps_goal:
@@ -597,8 +603,10 @@ class TestUnitVectors():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef, [p_lat]*len(p_longs), p_longs,
-                                      p_alts, [date]*len(p_longs), full_output=True,
+                    dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef,
+                                      [p_lat]*len(p_longs), p_longs,
+                                      p_alts, [date]*len(p_longs),
+                                      full_output=True,
                                       include_debug=True))
             for i, p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
@@ -1435,153 +1443,154 @@ class TestUnitVectors():
         assert np.all(np.abs(tol_mer) <= 1.E-4)
         assert np.all(np.abs(grad_zon) <= 1.E-4)
 
-    def test_unit_vector_component_plots_edge_steps(self):
-        """Check precision D of vectors as edge_steps increased"""
-        import matplotlib.pyplot as plt
-
-        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
-        # data returned are the locations along each direction
-        # the full range of points obtained by iterating over all
-        # recasting alts into a more convenient form for later calculation
-        p_alts = [p_alts[0]]*len(p_longs)
-
-        d_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
-        d_zvy = d_zvx.copy()
-        d_zvz = d_zvx.copy()
-        d2_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
-        d2_zvy = d_zvx.copy()
-        d2_zvz = d_zvx.copy()
-        d_mx = d_zvx.copy()
-        d_my = d_zvx.copy()
-        d_mz = d_zvx.copy()
-        d_fax = d_zvx.copy()
-        d_fay = d_zvx.copy()
-        d_faz = d_zvx.copy()
-        d2_mx = d_zvx.copy()
-        d2_my = d_zvx.copy()
-        d2_mz = d_zvx.copy()
-
-        date = dt.datetime(2000, 1, 1)
-        # set up multi
-        if self.dc is not None:
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            for i, p_lat in enumerate(p_lats):
-                # iterate through target cyclicly and run commands
-                print(i, p_lat)
-                dview.targets = next(targets)
-                pending.append(
-                    dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef,
-                                      [p_lat]*len(p_longs), p_longs,
-                                      p_alts, [date]*len(p_longs), full_output=True,
-                                      include_debug=True, edge_steps=2))
-            for i, p_lat in enumerate(p_lats):
-                print('collecting ', i, p_lat)
-                # collect output
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pending.pop(0).get()
-
-                # collect outputs on E and D vectors
-                dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
-                dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
-                dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
-                                                                                       [p_lat]*len(p_longs),
-                                                                                       p_longs)
-                dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
-                                                                                          [p_lat]*len(p_longs),
-                                                                                          p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
-                                                                                       [p_lat]*len(p_longs),
-                                                                                       p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
-                                                                                    [p_lat]*len(p_longs),
-                                                                                    p_longs)
-                dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
-                                                                                       [p_lat]*len(p_longs),
-                                                                                       p_longs)
-
-
-        else:
-            for i, p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = OMMBV.calculate_mag_drift_unit_vectors_ecef(
-                                                                                        [p_lat]*len(p_longs), p_longs,
-                                                                                        p_alts, [date]*len(p_longs),
-                                                                                        full_output=True,
-                                                                                        include_debug=True,
-                                                                                        edge_steps=2)
-
-                # collect outputs on E and D vectors
-                dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
-                dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
-                dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
-                                                                                       [p_lat]*len(p_longs), p_longs)
-                dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
-                                                                                          [p_lat]*len(p_longs),
-                                                                                          p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
-                                                                                       [p_lat]*len(p_longs), p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
-                                                                                    [p_lat]*len(p_longs), p_longs)
-                dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
-                                                                                       [p_lat]*len(p_longs), p_longs)
-
-        # account for periodicity
-
-        d_zvx[:, -1] = d_zvx[:, 0]
-        d_zvy[:, -1] = d_zvy[:, 0]
-        d_zvz[:, -1] = d_zvz[:, 0]
-        d2_zvx[:, -1] = d2_zvx[:, 0]
-        d2_zvy[:, -1] = d2_zvy[:, 0]
-        d2_zvz[:, -1] = d2_zvz[:, 0]
-        d_fax[:, -1] = d_fax[:, 0]
-        d_fay[:, -1] = d_fay[:, 0]
-        d_faz[:, -1] = d_faz[:, 0]
-        d_mx[:, -1] = d_mx[:, 0]
-        d_my[:, -1] = d_my[:, 0]
-        d_mz[:, -1] = d_mz[:, 0]
-        d2_mx[:, -1] = d2_mx[:, 0]
-        d2_my[:, -1] = d2_my[:, 0]
-        d2_mz[:, -1] = d2_mz[:, 0]
-
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats) - 1)
-        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
-
-        try:
-            fig = plt.figure()
-            dmag = np.sqrt(d_mx ** 2 + d_my ** 2 + d_mz ** 2)
-            dmag2 = np.sqrt(d2_mx ** 2 + d2_my ** 2 + d2_mz ** 2)
-            plt.imshow(np.log10(np.abs(dmag - dmag2) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Meridional Vector Normalized Difference')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_mer_norm_edgesteps.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            dmag = np.sqrt(d_zvx ** 2 + d_zvy ** 2 + d_zvz ** 2)
-            dmag2 = np.sqrt(d2_zvx ** 2 + d2_zvy ** 2 + d2_zvz ** 2)
-            plt.imshow(np.log10(np.abs(dmag2 - dmag) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Zonal Vector Normalized Difference')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_zon_norm_edegesteps.pdf')
-            plt.close()
-        except:
-            pass
+    # # Edge steps currently not code effective. Skipping.
+    # def test_unit_vector_component_plots_edge_steps(self):
+    #     """Check precision D of vectors as edge_steps increased"""
+    #     import matplotlib.pyplot as plt
+    #
+    #     p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+    #     # data returned are the locations along each direction
+    #     # the full range of points obtained by iterating over all
+    #     # recasting alts into a more convenient form for later calculation
+    #     p_alts = [p_alts[0]]*len(p_longs)
+    #
+    #     d_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
+    #     d_zvy = d_zvx.copy()
+    #     d_zvz = d_zvx.copy()
+    #     d2_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
+    #     d2_zvy = d_zvx.copy()
+    #     d2_zvz = d_zvx.copy()
+    #     d_mx = d_zvx.copy()
+    #     d_my = d_zvx.copy()
+    #     d_mz = d_zvx.copy()
+    #     d_fax = d_zvx.copy()
+    #     d_fay = d_zvx.copy()
+    #     d_faz = d_zvx.copy()
+    #     d2_mx = d_zvx.copy()
+    #     d2_my = d_zvx.copy()
+    #     d2_mz = d_zvx.copy()
+    #
+    #     date = dt.datetime(2000, 1, 1)
+    #     # set up multi
+    #     if self.dc is not None:
+    #         targets = itertools.cycle(dc.ids)
+    #         pending = []
+    #         for i, p_lat in enumerate(p_lats):
+    #             # iterate through target cyclicly and run commands
+    #             print(i, p_lat)
+    #             dview.targets = next(targets)
+    #             pending.append(
+    #                 dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef,
+    #                                   [p_lat]*len(p_longs), p_longs,
+    #                                   p_alts, [date]*len(p_longs), full_output=True,
+    #                                   include_debug=True, edge_steps=2))
+    #         for i, p_lat in enumerate(p_lats):
+    #             print('collecting ', i, p_lat)
+    #             # collect output
+    #             tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pending.pop(0).get()
+    #
+    #             # collect outputs on E and D vectors
+    #             dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
+    #             dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
+    #             dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
+    #             d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
+    #                                                                                    [p_lat]*len(p_longs),
+    #                                                                                    p_longs)
+    #             dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
+    #             d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
+    #                                                                                       [p_lat]*len(p_longs),
+    #                                                                                       p_longs)
+    #             d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
+    #                                                                                    [p_lat]*len(p_longs),
+    #                                                                                    p_longs)
+    #             d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
+    #                                                                                 [p_lat]*len(p_longs),
+    #                                                                                 p_longs)
+    #             dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
+    #             d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
+    #                                                                                    [p_lat]*len(p_longs),
+    #                                                                                    p_longs)
+    #
+    #
+    #     else:
+    #         for i, p_lat in enumerate(p_lats):
+    #             print (i, p_lat)
+    #             tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = OMMBV.calculate_mag_drift_unit_vectors_ecef(
+    #                                                                                     [p_lat]*len(p_longs), p_longs,
+    #                                                                                     p_alts, [date]*len(p_longs),
+    #                                                                                     full_output=True,
+    #                                                                                     include_debug=True,
+    #                                                                                     edge_steps=2)
+    #
+    #             # collect outputs on E and D vectors
+    #             dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
+    #             dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
+    #             dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
+    #             d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
+    #                                                                                    [p_lat]*len(p_longs), p_longs)
+    #             dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
+    #             d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
+    #                                                                                       [p_lat]*len(p_longs),
+    #                                                                                       p_longs)
+    #             d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
+    #                                                                                    [p_lat]*len(p_longs), p_longs)
+    #             d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
+    #                                                                                 [p_lat]*len(p_longs), p_longs)
+    #             dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
+    #             d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
+    #                                                                                    [p_lat]*len(p_longs), p_longs)
+    #
+    #     # account for periodicity
+    #
+    #     d_zvx[:, -1] = d_zvx[:, 0]
+    #     d_zvy[:, -1] = d_zvy[:, 0]
+    #     d_zvz[:, -1] = d_zvz[:, 0]
+    #     d2_zvx[:, -1] = d2_zvx[:, 0]
+    #     d2_zvy[:, -1] = d2_zvy[:, 0]
+    #     d2_zvz[:, -1] = d2_zvz[:, 0]
+    #     d_fax[:, -1] = d_fax[:, 0]
+    #     d_fay[:, -1] = d_fay[:, 0]
+    #     d_faz[:, -1] = d_faz[:, 0]
+    #     d_mx[:, -1] = d_mx[:, 0]
+    #     d_my[:, -1] = d_my[:, 0]
+    #     d_mz[:, -1] = d_mz[:, 0]
+    #     d2_mx[:, -1] = d2_mx[:, 0]
+    #     d2_my[:, -1] = d2_my[:, 0]
+    #     d2_mz[:, -1] = d2_mz[:, 0]
+    #
+    #     ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats) - 1)
+    #     xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
+    #
+    #     try:
+    #         fig = plt.figure()
+    #         dmag = np.sqrt(d_mx ** 2 + d_my ** 2 + d_mz ** 2)
+    #         dmag2 = np.sqrt(d2_mx ** 2 + d2_my ** 2 + d2_mz ** 2)
+    #         plt.imshow(np.log10(np.abs(dmag - dmag2) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Meridional Vector Normalized Difference')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_mer_norm_edgesteps.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         dmag = np.sqrt(d_zvx ** 2 + d_zvy ** 2 + d_zvz ** 2)
+    #         dmag2 = np.sqrt(d2_zvx ** 2 + d2_zvy ** 2 + d2_zvz ** 2)
+    #         plt.imshow(np.log10(np.abs(dmag2 - dmag) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Zonal Vector Normalized Difference')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_zon_norm_edegesteps.pdf')
+    #         plt.close()
+    #     except:
+    #         pass
 
     def test_simple_geomagnetic_basis_interface(self):
         """Ensure simple geomagnetic basis interface runs"""
@@ -2370,152 +2379,4 @@ class TestUnitVectors():
         except:
             pass
 
-
-    def test_unit_vector_and_field_line_plots(self):
-        """Test basic vector properties along field lines.
-
-        Produce visualization of field lines around globe
-        as well as unit vectors along those field lines
-
-        """
-        import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
-        on_travis = os.environ.get('ONTRAVIS') == 'True'
-
-        # convert OMNI position to ECEF
-        p_long = np.arange(0., 360., 12.)
-        p_alt = 0*p_long + 550.
-        p_lats = [5., 10., 15., 20., 25., 30.]
-
-        truthiness = []
-        for i, p_lat in enumerate(p_lats):
-
-            trace_s = []
-            if not on_travis:
-                try:
-                    fig = plt.figure()
-                    ax = fig.add_subplot(111, projection='3d')
-                except:
-                    print('Disabling plotting for tests due to error.')
-                    on_travis = True
-
-
-            #
-            date = dt.datetime(2000, 1, 1)
-            ecef_x, ecef_y, ecef_z = OMMBV.geocentric_to_ecef(p_lat, p_long, p_alt)
-
-            for j, (x, y, z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
-                # perform field line traces
-                trace_n = OMMBV.field_line_trace(np.array([x, y, z]), date, 1., 0.,
-                                                step_size=.5, max_steps=1.E6)
-                trace_s = OMMBV.field_line_trace(np.array([x, y, z]), date, -1., 0.,
-                                                step_size=.5, max_steps=1.E6)
-                # combine together, S/C position is first for both
-                # reverse first array and join so plotting makes sense
-                trace = np.vstack((trace_n[::-1], trace_s))
-                trace = pds.DataFrame(trace, columns=['x', 'y', 'z'])
-                # plot field-line
-                if not on_travis:
-                    ax.plot(trace['x'], trace['y'], trace['z'], 'b')
-                    plt.xlabel('X')
-                    plt.ylabel('Y')
-                    ax.set_zlabel('Z')
-                # clear stored data
-                self.inst.data = pds.DataFrame()
-                # downselect, reduce number of points
-                trace = trace.loc[::1000, :]
-
-                # compute magnetic field vectors
-                # need to provide alt, latitude, and longitude in geodetic coords
-                latitude, longitude, altitude = OMMBV.ecef_to_geodetic(trace['x'], trace['y'], trace['z'])
-                self.inst[:, 'latitude'] = latitude
-                self.inst[:, 'longitude'] = longitude
-                self.inst[:, 'altitude'] = altitude
-                # store values for plotting locations for vectors
-                self.inst[:, 'x'] = trace['x'].values
-                self.inst[:, 'y'] = trace['y'].values
-                self.inst[:, 'z'] = trace['z'].values
-                idx, = np.where(self.inst['altitude'] > 250.)
-                self.inst.data = self.inst[idx, :]
-
-                # also need to provide transformation from ECEF to S/C
-                # going to leave that a null transformation so we can plot in ECF
-                self.inst[:, 'sc_xhat_x'], self.inst[:, 'sc_xhat_y'], self.inst[:, 'sc_xhat_z'] = 1., 0., 0.
-                self.inst[:, 'sc_yhat_x'], self.inst[:, 'sc_yhat_y'], self.inst[:, 'sc_yhat_z'] = 0., 1., 0.
-                self.inst[:, 'sc_zhat_x'], self.inst[:, 'sc_zhat_y'], self.inst[:, 'sc_zhat_z'] = 0., 0., 1.
-                self.inst.data.index = pysat.utils.time.create_date_range(dt.datetime(2000, 1, 1),
-                                                                          dt.datetime(2000, 1, 1) +
-                                                                          pds.DateOffset(
-                                                                              seconds=len(self.inst.data) - 1),
-                                                                          freq='S')
-                OMMBV.satellite.add_mag_drift_unit_vectors(self.inst)
-
-                # if i % 2 == 0:
-                length = 500
-                vx = self.inst['unit_zon_x']
-                vy = self.inst['unit_zon_y']
-                vz = self.inst['unit_zon_z']
-                if not on_travis:
-                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy,
-                                self.inst['z'] + length*vz, vx, vy, vz, length=500.,
-                                color='green')  # , pivot='tail')
-                length = 500
-                vx = self.inst['unit_fa_x']
-                vy = self.inst['unit_fa_y']
-                vz = self.inst['unit_fa_z']
-                if not on_travis:
-                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy,
-                                self.inst['z'] + length*vz, vx, vy, vz, length=500.,
-                                color='purple')  # , pivot='tail')
-                length = 500
-                vx = self.inst['unit_mer_x']
-                vy = self.inst['unit_mer_y']
-                vz = self.inst['unit_mer_z']
-                if not on_travis:
-                    ax.quiver3D(self.inst['x'] + length*vx, self.inst['y'] + length*vy,
-                                self.inst['z'] + length*vz, vx, vy, vz, length=500.,
-                                color='red')  # , pivot='tail')
-
-                # check that vectors norm to 1
-                assert np.all(np.sqrt(self.inst['unit_zon_x'] ** 2 +
-                                      self.inst['unit_zon_y'] ** 2 +
-                                      self.inst['unit_zon_z'] ** 2) > 0.999999)
-                assert np.all(np.sqrt(self.inst['unit_fa_x'] ** 2 +
-                                      self.inst['unit_fa_y'] ** 2 +
-                                      self.inst['unit_fa_z'] ** 2) > 0.999999)
-                assert np.all(np.sqrt(self.inst['unit_mer_x'] ** 2 +
-                                      self.inst['unit_mer_y'] ** 2 +
-                                      self.inst['unit_mer_z'] ** 2) > 0.999999)
-                # confirm vectors are mutually orthogonal
-                dot1 = self.inst['unit_zon_x']*self.inst['unit_fa_x'] + self.inst['unit_zon_y']*self.inst[
-                    'unit_fa_y'] + self.inst['unit_zon_z']*self.inst['unit_fa_z']
-                dot2 = self.inst['unit_zon_x']*self.inst['unit_mer_x'] + self.inst['unit_zon_y']*self.inst[
-                    'unit_mer_y'] + self.inst['unit_zon_z']*self.inst['unit_mer_z']
-                dot3 = self.inst['unit_fa_x']*self.inst['unit_mer_x'] + self.inst['unit_fa_y']*self.inst[
-                    'unit_mer_y'] + self.inst['unit_fa_z']*self.inst['unit_mer_z']
-                assert np.all(np.abs(dot1) < 1.E-6)
-                assert np.all(np.abs(dot2) < 1.E-6)
-                assert np.all(np.abs(dot3) < 1.E-6)
-
-                # ensure that zonal vector is generally eastward
-                ones = np.ones(len(self.inst.data.index))
-                zeros = np.zeros(len(self.inst.data.index))
-                ex, ey, ez = OMMBV.enu_to_ecef_vector(ones, zeros, zeros, self.inst['latitude'], self.inst['longitude'])
-                nx, ny, nz = OMMBV.enu_to_ecef_vector(zeros, ones, zeros, self.inst['latitude'], self.inst['longitude'])
-                ux, uy, uz = OMMBV.enu_to_ecef_vector(zeros, zeros, ones, self.inst['latitude'], self.inst['longitude'])
-
-                dot1 = self.inst['unit_zon_x']*ex + self.inst['unit_zon_y']*ey + self.inst['unit_zon_z']*ez
-                assert np.all(dot1 > 0.)
-
-                dot1 = self.inst['unit_fa_x']*nx + self.inst['unit_fa_y']*ny + self.inst['unit_fa_z']*nz
-                assert np.all(dot1 > 0.)
-
-                dot1 = self.inst['unit_mer_x']*ux + self.inst['unit_mer_y']*uy + self.inst['unit_mer_z']*uz
-                assert np.all(dot1 > 0.)
-
-            if not on_travis:
-                plt.tight_layout()
-                plt.savefig(''.join(('magnetic_unit_vectors_', str(int(p_lat)), '.pdf')))
-                plt.close()
-
-        assert np.all(truthiness)
+        return
