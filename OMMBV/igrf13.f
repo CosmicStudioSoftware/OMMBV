@@ -88,13 +88,16 @@
       real*8, dimension(3) :: pos
       real*8 t, date
 
+      ! pos is (x,y,z) in ECEF coordinates
+      ! t is time supplied by integration routine
+
       ! mag field values
       real*8 bx,by,bz,bn,be,bd,bm
       ! position values of point
       real*8 r, colat, elong
       ! output position info
       real*8, dimension(3) :: out
-      ! scalar for how big of a step size, fractions of Re
+      ! scalar for how big of a step size (km)
       real*8 scalar
       ! scalar for integration direction (+/- 1)
       real*8 dir
@@ -107,9 +110,6 @@
 
 cf2py intent(in) pos,t,date,scalar,dir,height
 Cf2py intent(out) out
-
-      ! pos is (x,y,z) in ECEF coordinates
-      ! t is time supplied by integration routine
 
       ! calculate longitude, colatitude, and altitude from ECEF position
       ! altitude should be radial distance from center of earth
@@ -130,9 +130,9 @@ Cf2py intent(out) out
       ! stop moving position if we go below height
       if (h.le.(height)) then
         scalar = 0
-      else if (h.le.(height+10.)) then
+      else if (h.le.(height+scalar)) then
         !scalar=scalar*exp(r-(6371.+height))
-        scalar = scalar*(1. - ((height+10. - h)/10.)**2)
+        scalar = scalar*(1. - ((height+scalar - h)/10.)**2)
       end if
 
       !if (scalar.lt.0) then
