@@ -472,7 +472,6 @@ def field_line_trace(init, date, direction, height, steps=None,
             estr = "After 1000 iterations couldn't reach target altitude"
             warnings.warn(estr)
             return np.full((1,3), np.nan)
-            # raise RuntimeError("After 1000 iterations couldn't reach target altitude")
 
         # Append new trace data to existing trace data
         # this return is taken as part of recursive loop

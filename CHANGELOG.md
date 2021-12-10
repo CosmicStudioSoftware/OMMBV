@@ -3,13 +3,15 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [0.5.6] - 2021-12-??
-- Reduced uncertainty in scaling parameters for multipole fields
-- Improved robustness of calculation at higher latitudes
-- Deprecated `scalar` input for basis vectors
-- Corrected normalization error in `magnetic_vector`
-- zonal and meridional vectors only calculated if magnetic field not
-  purely aligned along up. Must be at least `tol` away from up.
+- Reduced uncertainty in scaling parameters for multipole fields.
+- Improved robustness of calculation at higher latitudes.
+- Deprecated `scalar` input for basis vectors.
+- Corrected normalization error in `magnetic_vector`.
 - Updated docstrings
+- Updated IGRF step method to slow integration when reaching target altitude
+  to use user provided step size.
+- Added `pole_tol` keyword which specifies how close to vertical local
+  magnetic field must be to be considered a pole.
 
 ## [0.5.5] - 2021-06-16
 - Updated setup.py
