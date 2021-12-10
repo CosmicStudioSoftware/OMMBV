@@ -57,13 +57,16 @@ def gen_data_fixed_alt(alt):
     else:
         long_dim = np.arange(0., 361., 20.)
         lat_dim = np.arange(-90., 91., 5.)
+
     idx, = np.where(lat_dim == 90.)
     lat_dim[idx] = 89.999
     idx, = np.where(lat_dim == -90.)
     lat_dim[idx] = -89.999
+
     alt_dim = alt
     locs = np.array(list(itertools.product(long_dim, lat_dim)))
-    # pull out lats and longs
+
+    # Pull out lats and longs
     lats = locs[:, 1]
     longs = locs[:, 0]
     alts = longs*0 + alt_dim
@@ -154,6 +157,27 @@ class TestUnitVectors():
 
         return
 
+    def test_vectors_at_pole(self):
+        """Ensure np.nan returned at magnetic pole for scalars and vectors."""
+        out = OMMBV.calculate_mag_drift_unit_vectors_ecef(80.97, 250.,
+                                                          550.,
+                                                          dt.datetime(2000, 1, 1),
+                                                          full_output=True,
+                                                          pole_tol=1.E-4)
+        # Confirm vectors are np.nan
+        assert np.all(np.isnan(out[0:3]))
+        assert np.all(np.isnan(out[6:9]))
+
+        items = ['d_zon_x', 'd_zon_y', 'd_zon_z', 'd_mer_x', 'd_mer_y',
+                 'd_mer_z', 'e_zon_x', 'e_zon_y', 'e_zon_z', 'e_mer_x',
+                 'e_mer_y', 'e_mer_z', 'd_fa_x', 'd_fa_y', 'd_fa_z', 'e_fa_x',
+                 'e_fa_y', 'e_fa_z']
+        for item in items:
+            assert np.isnan(out[-1][item])
+
+        return
+
+
     def test_unit_vector_step_size_sensitivity(self):
         """Test sensitivity of unit vectors as step_size decreased"""
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
@@ -164,7 +188,7 @@ class TestUnitVectors():
 
         # step size to be tried
         steps_goal = np.arange(7)
-        steps_goal = 64. / 2.**steps_goal
+        steps_goal = 16. / 2.**steps_goal
 
         date = dt.datetime(2000, 1, 1)
         dzx = []
@@ -288,7 +312,7 @@ class TestUnitVectors():
 
         # step size to be tried
         steps_goal = np.arange(7)
-        steps_goal = 64. / 2.**steps_goal
+        steps_goal =16. / 2.**steps_goal
 
         date = dt.datetime(2000, 1, 1)
         dzx = []
@@ -422,7 +446,7 @@ class TestUnitVectors():
 
         # step size to be tried
         steps_goal = np.arange(7)
-        steps_goal = 64. / 2.**steps_goal
+        steps_goal = 16. / 2.**steps_goal
 
         date = dt.datetime(2000, 1, 1)
         dzx = []
@@ -1961,7 +1985,7 @@ class TestUnitVectors():
                 pending.append(dview.apply_async(OMMBV.step_along_mag_unit_vector,
                                                  in_x, in_y, in_z, dates,
                                                  direction=direction,
-                                                 num_steps=5, step_size=25. / 5.))
+                                                 num_steps=2, step_size=25. / 2.))
                 pending.append(dview.apply_async(OMMBV.step_along_mag_unit_vector,
                                                  in_x, in_y, in_z, dates,
                                                  direction=direction,
@@ -2006,7 +2030,7 @@ class TestUnitVectors():
 
                 x[i, :-1], y[i, :-1], z[i, :-1] = OMMBV.step_along_mag_unit_vector(in_x, in_y, in_z, dates,
                                                                                   direction=direction,
-                                                                                  num_steps=5, step_size=25. / 5.)
+                                                                                  num_steps=2, step_size=25. / 2.)
                 # second run
                 x2[i, :-1], y2[i, :-1], z2[i, :-1] = OMMBV.step_along_mag_unit_vector(in_x, in_y, in_z, dates,
                                                                                      direction=direction,
