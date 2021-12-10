@@ -1185,6 +1185,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         raise DeprecationWarning('steps is no longer supported.')
     if step_size <= 0:
         raise ValueError('Step Size must be greater than 0.')
+    if scalar is not None:
+        raise DeprecationWarning('scalar is no longer supported.')
 
     ss = scalar
 
@@ -1222,6 +1224,11 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     # Magnetic field at root location
     bx, by, bz, bm = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes,
                                      normalize=True)
+
+    # If magnetic field is pointed purely upward, then full basis can't
+    # be calculated. Check for this condition and exit as needed.
+    be, bn, bu = ecef_to_enu_vector(bx, by, bz, latitude, longitude)
+
     # Scale via user input
     bx, by, bz = ss*bx, ss*by, ss*bz
 
