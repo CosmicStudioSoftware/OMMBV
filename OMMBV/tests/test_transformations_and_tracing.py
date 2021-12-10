@@ -1,6 +1,6 @@
 from nose.tools import assert_almost_equals as asseq
 
-import datetime
+import datetime as dt
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -86,7 +86,7 @@ class TestTracing():
                                                        omni['p_alt'])
         trace_n = []
         trace_s = []
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         for x, y, z in zip(ecf_x, ecf_y, ecf_z):
             # trace north and south, take last points
             trace_n.append(
@@ -156,7 +156,7 @@ class TestTracing():
         # max number of steps (fixed)
         max_steps_goal = steps_goal * 0 + 1E6
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         dx = []
         dy = []
         dz = []
@@ -239,7 +239,7 @@ class TestTracing():
         max_steps_goal = np.arange(13)
         max_steps_goal = 100000. / 2 ** max_steps_goal
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         dx = []
         dy = []
         dz = []
@@ -297,7 +297,7 @@ class TestTracing():
         # max number of steps (fixed)
         max_steps_goal = np.array([10000.] * 13)
 
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         dx = []
         dy = []
         dz = []
@@ -616,7 +616,7 @@ class TestTransformations():
         # recasting alts into a more convenient form for later calculation
         p_alts = [p_alts[0]] * len(p_longs)
         # set the date
-        date = datetime.datetime(2000, 1, 1)
+        date = dt.datetime(2000, 1, 1)
         # memory for results
         apex_x = np.zeros((len(p_lats), len(p_longs) + 1))
         apex_y = np.zeros((len(p_lats), len(p_longs) + 1))
