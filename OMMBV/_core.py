@@ -439,29 +439,41 @@ def field_line_trace(init, date, direction, height, steps=None,
                                                 atol=1.E-11)
 
     if messg['message'] != 'Integration successful.':
-        raise RuntimeError("Field-Line trace not successful.")
+        estr = "Field-Line trace not successful."
+        warnings.warn(estr)
+        return np.full((1,3), np.nan)
 
     # Calculate data to check that we reached final altitude
     check = trace_north[-1, :]
     x, y, z = ecef_to_geodetic(*check)
 
     # Fortran integration gets close to target height
+    loop_step = step_size
     if recurse & (z > check_height*1.000001):
+        if recursive_loop_count > 500:
+            loop_step *= 1.03
         if recursive_loop_count < 1000:
             # When we have not reached the reference height, call
             # field_line_trace again by taking check value as init.
             # Recursive call.
             recursive_loop_count = recursive_loop_count + 1
             trace_north1 = field_line_trace(check, date, direction, height,
-                                            step_size=step_size,
+                                            step_size=loop_step,
                                             max_steps=max_steps,
                                             recursive_loop_count=recursive_loop_count,
                                             steps=steps)
         else:
-            raise RuntimeError("After 1000 iterations couldn't reach target altitude")
+            estr = "After 1000 iterations couldn't reach target altitude"
+            warnings.warn(estr)
+            return np.full((1,3), np.nan)
+            # raise RuntimeError("After 1000 iterations couldn't reach target altitude")
+
         # Append new trace data to existing trace data
         # this return is taken as part of recursive loop
-        return np.vstack((trace_north, trace_north1))
+        if np.isnan(trace_north1[-1, 0]):
+            return trace_north1
+        else:
+            return np.vstack((trace_north, trace_north1))
 
     else:
         # return results if we make it to the target altitude
@@ -469,7 +481,7 @@ def field_line_trace(init, date, direction, height, steps=None,
         # filter points to terminate at point closest to target height
         # code also introduces a variable length return, though I suppose
         # that already exists with the recursive functionality
-        # while this check is done innternally within Fortran integrand, if
+        # while this check is done internally within Fortran integrand, if
         # that steps out early, the output we receive would be problematic.
         # Steps below provide an extra layer of security that output has some
         # semblance to expectations
@@ -536,7 +548,10 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
                                    **kwargs)
     # order of field points is generally along the field line, south to north
     # don't want to include the initial point twice
-    trace = np.vstack((trace_south[::-1][:-1, :], trace_north))
+    if not np.isnan(trace_north[-1, 0]) and (not np.isnan(trace_south[-1, 0])):
+        trace = np.vstack((trace_south[::-1][:-1, :], trace_north))
+    else:
+        trace = np.full((1, 3), np.nan)
     return trace
 
 
@@ -1045,7 +1060,7 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                           datetimes, step_size=0.5, tol=1.E-4,
-                                          tol_zonal_apex=1.E-4, max_loops=100,
+                                          tol_zonal_apex=1.E-4, max_loops=10,
                                           ecef_input=False, centered_diff=True,
                                           full_output=False,
                                           include_debug=False,
