@@ -1188,8 +1188,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     if scalar is not None:
         raise DeprecationWarning('scalar is no longer supported.')
 
-    ss = scalar
-
     if ecef_input:
         ecef_x, ecef_y, ecef_z = latitude, longitude, altitude
         # lat and long needed for initial zonal and meridional vector
@@ -1229,12 +1227,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     # be calculated. Check for this condition and exit as needed.
     be, bn, bu = ecef_to_enu_vector(bx, by, bz, latitude, longitude)
 
-    # Scale via user input
-    bx, by, bz = ss*bx, ss*by, ss*bz
-
     # To start, need a vector perpendicular to mag field. There are infinitely
     # many, thus, let's use the east vector as a start.
-    tzx, tzy, tzz = enu_to_ecef_vector(ss*np.ones(len(bx)), np.zeros(len(bx)),
+    tzx, tzy, tzz = enu_to_ecef_vector(np.ones(len(bx)), np.zeros(len(bx)),
                                        np.zeros(len(bx)), latitude, longitude)
     init_type = np.zeros(len(bx)) - 1
 
@@ -1344,7 +1339,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
     # Store temp arrays into output
     zx, zy, zz = tzx, tzy, tzz
-    mx, my, mz = ss * tmx, ss * tmy, ss * tmz
+    mx, my, mz = tmx, tmy, tmz
 
     if full_output:
 
