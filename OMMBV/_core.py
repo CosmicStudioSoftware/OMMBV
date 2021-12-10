@@ -1064,7 +1064,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                           ecef_input=False, centered_diff=True,
                                           full_output=False,
                                           include_debug=False,
-                                          scalar=1., edge_steps=1,
+                                          scalar=None, edge_steps=None,
                                           dstep_size=0.5, max_steps=None,
                                           ref_height=None, steps=None,
                                           location_info=apex_location_info):
@@ -1112,9 +1112,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         If True, a symmetric centered difference is used when calculating
         the change in apex height along the zonal direction, used within
         the zonal unit vector calculation. (default=True)
-    scalar : int
-        Used to modify unit magnetic field within algorithm. Generally
-        speaking, this should not be modified. (default=1.)
+    scalar : Nonetype
+        Deprecated.
     edge_steps : int
         Deprecated.
         Number of steps taken when moving across field lines and calculating
@@ -1177,16 +1176,21 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
     """
 
+    # Check for deprecated inputs
     if max_steps is not None:
-        raise DeprecationWarning('max_steps is no longer supported.')
+        warnings.warn('max_steps is no longer supported.', DeprecationWarning)
     if ref_height is not None:
-        raise DeprecationWarning('ref_height is no longer supported.')
+        warnings.warn('ref_height is no longer supported.', DeprecationWarning)
     if steps is not None:
-        raise DeprecationWarning('steps is no longer supported.')
+        warnings.warn('steps is no longer supported.', DeprecationWarning)
+    if scalar is not None:
+        warnings.warn('scalar is no longer supported.', DeprecationWarning)
+    if edge_steps is not None:
+        warnings.warn('edge_steps is no longer supported.', DeprecationWarning)
+
+    # Check for reasonable user inputs
     if step_size <= 0:
         raise ValueError('Step Size must be greater than 0.')
-    if scalar is not None:
-        raise DeprecationWarning('scalar is no longer supported.')
 
     if ecef_input:
         ecef_x, ecef_y, ecef_z = latitude, longitude, altitude
@@ -1213,7 +1217,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         # Calculate satellite position in ECEF coordinates
         ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
 
-    # Get apex location for root point
+    # Begin method calculation.
+
+    # Get apex location for root point.
     a_x, a_y, a_z, _, _, apex_root = location_info(ecef_x, ecef_y, ecef_z,
                                                    datetimes,
                                                    return_geodetic=True,
