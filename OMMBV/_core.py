@@ -737,41 +737,50 @@ def magnetic_vector(x, y, z, dates, normalize=False):
 
     """
 
-    # prepare output lists
+    # Prepare output lists
     bn = []
     be = []
     bd = []
     bm = []
 
-    # need a double variable for time
-    doy = np.array([(time - datetime.datetime(time.year, 1, 1)).days for time in dates],
-                   dtype=np.float64)
+    # Need a double variable for time.
+    # First, get day of year as well as the year
+    doy = np.array([(time - datetime.datetime(time.year, 1, 1)).days
+                    for time in dates], dtype=np.float64)
     years = np.array([time.year for time in dates], dtype=np.float64)
-    num_doy_year = np.array(
-        [(datetime.datetime(time.year + 1, 1, 1) - datetime.datetime(time.year, 1, 1)).days for time in dates],
-    dtype=np.float64)
-    time = np.array([(time.hour + time.minute/60. + time.second/3600.)/24. for time in dates],
-                    dtype=np.float64)
+
+    # Number of days in year
+    num_doy_year = np.array([(datetime.datetime(time.year + 1, 1, 1)
+                              - datetime.datetime(time.year, 1, 1)).days
+                             for time in dates], dtype=np.float64)
+
+    # Time in hours, relative to midnight
+    time = np.array([(time.hour + time.minute/60. + time.second/3600.)/24.
+                     for time in dates], dtype=np.float64)
+
+    # Create double variable for time
     ddates = years + (doy + time)/(num_doy_year + 1)
 
-    # use geocentric coordinates for calculating magnetic field
-    # transformation between it and ECEF is robust
-    # geodetic translations introduce error
-    latitudes, longitudes, altitudes = ecef_to_geocentric(x, y, z, ref_height=0.)
+    # Use geocentric coordinates for calculating magnetic field since
+    # transformation between it and ECEF is robust. The geodetic translations
+    # introduce error.
+    latitudes, longitudes, altitudes = ecef_to_geocentric(x, y, z,
+                                                          ref_height=0.)
 
-    for colat, elong, alt, date in zip(np.deg2rad(90. - latitudes),
-                                       np.deg2rad(longitudes),
-                                       altitudes,
-                                       ddates):
+    # Calculate magnetic field value for all user provided locations
+    colats = np.deg2rad(90. - latitudes)
+    longs = np.deg2rad(longitudes)
+    for colat, elong, alt, date in zip(colats, longs, altitudes, ddates):
         # tbn, tbe, tbd, tbmag are in nT
         tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, date, 2, alt, colat, elong)
 
-        # collect outputs
+        # Collect outputs
         bn.append(tbn)
         be.append(tbe)
         bd.append(tbd)
         bm.append(tbmag)
-    # repackage
+
+    # Repackage
     bn = np.array(bn, dtype=np.float64)
     be = np.array(be, dtype=np.float64)
     bd = np.array(bd, dtype=np.float64)
@@ -1065,14 +1074,15 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
 
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
-                                          datetimes, step_size=0.5, tol=1.E-5,
-                                          tol_zonal_apex=1.E-5, max_loops=10,
+                                          datetimes, step_size=0.5, tol=1.E-4,
+                                          tol_zonal_apex=1.E-4, max_loops=10,
                                           ecef_input=False, centered_diff=True,
                                           full_output=False,
                                           include_debug=False,
                                           scalar=None, edge_steps=None,
                                           dstep_size=0.5, max_steps=None,
                                           ref_height=None, steps=None,
+                                          pole_tol=1.E-5,
                                           location_info=apex_location_info):
     """Calculates local geomagnetic basis vectors and mapping scalars.
 
@@ -1135,6 +1145,10 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         Function used to determine a consistent relative position along a
         field line. Should not generally be modified.
         (default=apex_location_info)
+    pole_tol : float
+        When upward component of magnetic is within `pole_tol` of 1, the
+        system will treat location as a pole and will not attempt to
+        calculate unit vectors and scalars. (default=1.E-5)
 
     Returns
     -------
@@ -1204,8 +1218,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         ecef_x, ecef_y, ecef_z = latitude, longitude, altitude
         # lat and long needed for initial zonal and meridional vector
         # generation later on
-        latitude, longitude, altitude = ecef_to_geocentric(ecef_x, ecef_y,
-                                                           ecef_z)
+        latitude, longitude, altitude = ecef_to_geodetic(ecef_x, ecef_y,
+                                                         ecef_z)
     else:
         latitude = np.array(latitude, dtype=np.float64)
         longitude = np.array(longitude, dtype=np.float64)
@@ -1227,20 +1241,14 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
     # Begin method calculation.
 
-    # Get apex location for root point.
-    a_x, a_y, a_z, _, _, apex_root = location_info(ecef_x, ecef_y, ecef_z,
-                                                   datetimes,
-                                                   return_geodetic=True,
-                                                   ecef_input=True)
-
     # Magnetic field at root location
     bx, by, bz, bm = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes,
                                      normalize=True)
 
     # If magnetic field is pointed purely upward, then full basis can't
-    # be calculated. Check for this condition and exit as needed.
+    # be calculated. Check for this condition and store locations.
     be, bn, bu = ecef_to_enu_vector(bx, by, bz, latitude, longitude)
-    null_idx, = np.where(np.abs(bu) > 1. - tol)
+    null_idx, = np.where(np.abs(bu) > 1. - pole_tol)
 
     # To start, need a vector perpendicular to mag field. There are infinitely
     # many, thus, let's use the east vector as a start.
@@ -1256,10 +1264,18 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     tzx, tzy, tzz = cross_product(bx, by, bz, tmx, tmy, tmz)
     tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
 
-    # Set null meridional/zonal vectors to nan.
+    # Set null meridional/zonal vectors, as well as starting locations, to nan.
     if len(null_idx) > 0:
         tzx[null_idx], tzy[null_idx], tzz[null_idx] = np.nan, np.nan, np.nan
         tmx[null_idx], tmy[null_idx], tmz[null_idx] = np.nan, np.nan, np.nan
+        ecef_x[null_idx], ecef_y[null_idx], ecef_z[null_idx] = (np.nan, np.nan,
+                                                                np.nan)
+
+    # Get apex location for root point.
+    a_x, a_y, a_z, _, _, apex_root = location_info(ecef_x, ecef_y, ecef_z,
+                                                   datetimes,
+                                                   return_geodetic=True,
+                                                   ecef_input=True)
 
     # Initialize loop variables
     loop_num = 0
@@ -1400,7 +1416,10 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         (azx, azy, azz, _, _, _,
          amx, amy, amz) = calculate_mag_drift_unit_vectors_ecef(a_x, a_y, a_z,
                                                                 datetimes,
-                                                                ecef_input=True)
+                                                                ecef_input=True,
+                                                                step_size=step_size,
+                                                                tol=tol,
+                                                                tol_zonal_apex=tol_zonal_apex)
 
         # Get distance between apex points along apex zonal direction
         dist = (t_x1 - t_x2) * azx + (t_y1 - t_y2) * azy + (t_z1 - t_z2) * azz
@@ -1410,7 +1429,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
         # Calculate gradient in apex height
         diff_apex_z = apex_z - apex_z2
-        grad_zonal = diff_apex_z/(2.*dstep_size)
+        grad_zonal = diff_apex_z / (2. * dstep_size)
 
         # get magnitude of magnetic field at root apex location
         bax, bay, baz, bam = magnetic_vector(a_x, a_y, a_z, datetimes,
@@ -1419,6 +1438,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         # d vectors
         # Field-Aligned
         d_fa_x, d_fa_y, d_fa_z = bam / bm * bx, bam / bm * by, bam / bm * bz
+
+        # Set null field-aligned vectors to nan.
+        if len(null_idx) > 0:
+            d_fa_x[null_idx], d_fa_y[null_idx], d_fa_z[null_idx] = (np.nan,
+                                                                    np.nan,
+                                                                    np.nan)
 
         # Zonal
         d_zon_x, d_zon_y, d_zon_z = grad_brb * zx, grad_brb * zy, grad_brb * zz
@@ -1520,7 +1545,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
 
 def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
-                               step_size=25., scalar=1):
+                               step_size=25., scalar=None):
     """
     Move along 'lines' formed by following the magnetic unit vector directions.
 
@@ -1565,6 +1590,10 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
 
     """
 
+    if scalar is not None:
+        estr = 'Scalar has been deprecated'
+        warnings.warn(estr, DeprecationWarning)
+
     if direction == 'meridional':
         centered_diff = True
     else:
@@ -1578,8 +1607,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
          mx, my, mz) = calculate_mag_drift_unit_vectors_ecef(x, y, z, date,
                                                              step_size=step_size,
                                                              ecef_input=True,
-                                                             centered_diff=centered_diff,
-                                                             scalar=scalar)
+                                                             centered_diff=centered_diff)
         # Pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
