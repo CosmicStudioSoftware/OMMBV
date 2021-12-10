@@ -1,4 +1,5 @@
 import datetime as dt
+import itertools
 import numpy as np
 
 import OMMBV

@@ -3,6 +3,7 @@ from nose.tools import assert_almost_equals as asseq
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 import pandas as pds
 
 import OMMBV
@@ -561,12 +562,12 @@ class TestTransformations():
     def test_geodetic_to_ecef_to_geocentric_to_ecef_to_geodetic(self):
         """geodetic to ecef and geocentric transformations"""
         lats, longs, alts = gen_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
-                                                    longs,
-                                                    alts)
-        geo_lat, geo_long, geo_alt = OMMBV.ecef_to_geocentric(ecf_x, ecf_y, ecf_z)
+        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats, longs, alts)
+        geo_lat, geo_long, geo_alt = OMMBV.ecef_to_geocentric(ecf_x, ecf_y,
+                                                              ecf_z)
 
-        ecfs_x, ecfs_y, ecfs_z = OMMBV.geocentric_to_ecef(geo_lat, geo_long, geo_alt)
+        ecfs_x, ecfs_y, ecfs_z = OMMBV.geocentric_to_ecef(geo_lat, geo_long,
+                                                          geo_alt)
 
         lat, elong, alt = OMMBV.ecef_to_geodetic(ecfs_x, ecfs_y, ecfs_z)
 
