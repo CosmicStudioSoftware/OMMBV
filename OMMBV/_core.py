@@ -124,7 +124,9 @@ try:
     # geodetic_to_ecef = geocentric_to_ecef
 
 except AttributeError:
-    print('Unable to use Fortran version of ecef_to_geodetic. Please check installation.')
+    estr = ''.join(['Unable to use Fortran version of ecef_to_geodetic.',
+                    ' Please check installation.'])
+    print(estr)
 
 
 def python_ecef_to_geodetic(x, y, z, method=None):
@@ -1521,13 +1523,14 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
     for i in np.arange(num_steps):
         # x, y, z in ECEF
         # get unit vector directions
-        zvx, zvy, zvz, bx, by, bz, mx, my, mz = calculate_mag_drift_unit_vectors_ecef(
-                                                            x, y, z, date,
-                                                            step_size=step_size,
-                                                            ecef_input=True,
-                                                            centered_diff=centered_diff,
-                                                            scalar=scalar)
-        # pull out the direction we need
+        (zvx, zvy, zvz,
+         bx, by, bz,
+         mx, my, mz) = calculate_mag_drift_unit_vectors_ecef(x, y, z, date,
+                                                             step_size=step_size,
+                                                             ecef_input=True,
+                                                             centered_diff=centered_diff,
+                                                             scalar=scalar)
+        # Pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
         elif direction == 'zonal':
@@ -1535,7 +1538,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
         elif direction == 'aligned':
             ux, uy, uz = bx, by, bz
 
-        # take steps along direction
+        # Take steps along direction
         x = x + step_size * ux
         y = y + step_size * uy
         z = z + step_size * uz
@@ -1787,14 +1790,16 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
 
     # take step from s/c along + vector direction
     # then get the apex location
-    plus_x, plus_y, plus_z = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
+    plus_x, plus_y, plus_z = step_along_mag_unit_vector(ecef_xs, ecef_ys,
+                                                        ecef_zs, dates,
                                                         direction=vector_direction,
                                                         num_steps=edge_steps,
                                                         step_size=edge_length/edge_steps)
 
     # take half step from s/c along - vector direction
     # then get the apex location
-    minus_x, minus_y, minus_z = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
+    minus_x, minus_y, minus_z = step_along_mag_unit_vector(ecef_xs, ecef_ys,
+                                                           ecef_zs, dates,
                                                            direction=vector_direction,
                                                            scalar=-1,
                                                            num_steps=edge_steps,
@@ -1945,8 +1950,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     return out
 
 
-def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates, step_size=None,
-                                            max_steps=None, e_field_scaling_only=False,
+def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
+                                            step_size=None, max_steps=None,
+                                            e_field_scaling_only=False,
                                             edge_length=25., edge_steps=1,
                                             **kwargs):
     """
