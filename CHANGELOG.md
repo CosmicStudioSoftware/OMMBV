@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.5.6] - 2021-12-??
+- Reduced uncertainty in scaling parameters for multipole fields
+- Improved robustness of calculation at higher latitudes
+- Deprecated `scalar` input for basis vectors
+- Corrected normalization error in `magnetic_vector`
+- zonal and meridional vectors only calculated if magnetic field not
+  purely aligned along up. Must be at least `tol` away from up.
+- Updated docstrings
+
 ## [0.5.5] - 2021-06-16
 - Updated setup.py
 - Added compatibility with pysat v3.x
@@ -13,7 +22,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Metadata clarity improvements
 
 ## [0.5.2] - 2020-06-04
-- Fixed bugs coupling the code repo to community services related to the name change from pysatMagvect to OMMBV
+- Fixed bugs coupling the code repo to community services related to the name 
+  change from pysatMagvect to OMMBV
 
 ## [0.5.0] - 2020-02-01
 - Added community documents
