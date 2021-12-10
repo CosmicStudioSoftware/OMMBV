@@ -373,6 +373,9 @@ def field_line_trace(init, date, direction, height, steps=None,
                      recurse=True, min_check_flag=False):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
 
+    After 500 recursive iterations this method will increase the step size by
+    3% every subsequent iteration.
+
     Parameters
     ----------
     init : array-like of floats
@@ -385,14 +388,16 @@ def field_line_trace(init, date, direction, height, steps=None,
         -1 : anti-field aligned, generally north to south.
     height : float
         Altitude to terminate trace, geodetic WGS84 (km)
-    steps : array-like of ints or floats
+    steps : array-like of ints, floats, or NoneType
         Number of steps along field line when field line trace positions should
-        be reported. By default, each step is reported; steps=np.arange(max_steps).
+        be reported. By default, each step is reported;
+        steps=np.arange(max_steps). (default=None)
     max_steps : float
         Maximum number of steps along field line that should be taken
+        (default=1E4)
     step_size : float
         Distance in km for each large integration step. Multiple substeps
-        are taken as determined by scipy.integrate.odeint
+        are taken as determined by scipy.integrate.odeint. (default=10.)
 
     Returns
     -------
@@ -1237,7 +1242,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     be, bn, bu = ecef_to_enu_vector(bx, by, bz, latitude, longitude)
     null_idx, = np.where(np.abs(bu) > 1. - tol)
 
-
     # To start, need a vector perpendicular to mag field. There are infinitely
     # many, thus, let's use the east vector as a start.
     tzx, tzy, tzz = enu_to_ecef_vector(np.ones(len(bx)), np.zeros(len(bx)),
@@ -1415,6 +1419,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         # d vectors
         # Field-Aligned
         d_fa_x, d_fa_y, d_fa_z = bam / bm * bx, bam / bm * by, bam / bm * bz
+
         # Zonal
         d_zon_x, d_zon_y, d_zon_z = grad_brb * zx, grad_brb * zy, grad_brb * zz
 
