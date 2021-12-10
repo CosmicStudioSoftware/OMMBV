@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
-here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'version.txt')) as version_file:
-    __version__ = version_file.read().strip()
-del here
+
+__version__ = '0.5.5'
 
 on_rtd = os.environ.get('ONREADTHEDOCS') == 'True'
 

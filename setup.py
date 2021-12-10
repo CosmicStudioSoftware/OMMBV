@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-from __future__ import absolute_import
 
 import os
 from setuptools import setup, find_packages
 
-here = os.path.abspath(os.path.dirname(__file__))
-version_filename = os.path.join('OMMBV', 'version.txt')
-with open(os.path.join(here, version_filename)) as version_file:
-    version = version_file.read().strip()
+version = '0.5.5'
 
 # Include extensions only when not on readthedocs.org
 if os.environ.get('READTHEDOCS', None) == 'True':
