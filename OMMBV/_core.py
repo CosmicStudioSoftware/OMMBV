@@ -144,7 +144,8 @@ def python_ecef_to_geodetic(x, y, z, method=None):
         ECEF-Z in km
     method : 'iterative' or 'closed' ('closed' is deafult)
         String selects method of conversion. Closed for mathematical
-        solution (http://www.epsg.org/Portals/0/373-07-2.pdf , page 96 section 2.2.1)
+        solution (http://www.epsg.org/Portals/0/373-07-2.pdf ,
+                  page 96 section 2.2.1)
         or iterative (http://www.oc.nps.edu/oc2902w/coord/coordcvt.pdf).
 
     Returns
@@ -304,9 +305,9 @@ def project_ecef_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
 
     """
 
-    out_x = x*xx + y*xy + z*xz
-    out_y = x*yx + y*yy + z*yz
-    out_z = x*zx + y*zy + z*zz
+    out_x = x * xx + y * xy + z * xz
+    out_y = x * yx + y * yy + z * yz
+    out_z = x * zx + y * zy + z * zz
 
     return out_x, out_y, out_z
 
@@ -364,9 +365,10 @@ def cross_product(x1, y1, z1, x2, y2, z2):
         Unit vector x,y,z components
 
     """
-    x = y1*z2 - y2*z1
-    y = z1*x2 - x1*z2
-    z = x1*y2 - y1*x2
+    x = y1 * z2 - y2 * z1
+    y = z1 * x2 - x1 * z2
+    z = x1 * y2 - y1 * x2
+
     return x, y, z
 
 
