@@ -315,15 +315,16 @@ Cf2py intent(out) x,y,z,f
         call colat_long_r_to_ecef(pos, colat, elong, alt)
       end if
 
-      ! Calculate magnetic field
-      ! This needs to be moved to the IGRF generation area
+      ! Calculate dipole magnetic field
       offs = (/0.0D0, 0.0D0, 0.0D0/)
       m = (/0.D0, 0.D0, -8.D22/)
-      bq = (/ 0.D0, 0.D0, 0.D0 /)
       call dipole_field(pos, offs, m, bdip)
 
+      ! Initialize memory for quadrupole
+      bq = (/ 0.D0, 0.D0, 0.D0 /)
 
-!     ! assymetrical northern hemisphere
+
+!     ! assymetrical northern hemisphere via linear quadrupole
 !     m = (/0.D0, 0.D0, -2.37D22/)
 !     call linear_quadrupole(pos, offs, m, 1000.D0, tbq)
 !     do i=1,3
@@ -397,6 +398,7 @@ Cf2py intent(out) x,y,z,f
 !      write(*,*) x, y, z
       return
       end
+
 
       subroutine igrf13syn (isv,date,itype,alt,colat,elong,x,y,z,f)
 c
