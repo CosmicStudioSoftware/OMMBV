@@ -11,8 +11,11 @@ import warnings
 import pysat
 
 # import reference IGRF fortran code within the package
-from OMMBV import igrf as igrf
-import OMMBV.fortran_coords
+try:
+    from OMMBV import igrf as igrf
+    import OMMBV.fortran_coords
+except:
+    pass
 
 # parameters used to define Earth ellipsoid
 # WGS84 parameters below
