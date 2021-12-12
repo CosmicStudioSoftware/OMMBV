@@ -159,9 +159,9 @@ class TestUnitVectors():
 
     def test_vectors_at_pole(self):
         """Ensure np.nan returned at magnetic pole for scalars and vectors."""
-        out = OMMBV.calculate_mag_drift_unit_vectors_ecef(80.97, 250.,
-                                                          550.,
-                                                          dt.datetime(2000, 1, 1),
+        out = OMMBV.calculate_mag_drift_unit_vectors_ecef([80.97], [250.],
+                                                          [550.],
+                                                          [dt.datetime(2000, 1, 1)],
                                                           full_output=True,
                                                           pole_tol=1.E-4)
         # Confirm vectors are np.nan
