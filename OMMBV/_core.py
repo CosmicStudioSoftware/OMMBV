@@ -6,9 +6,8 @@ transformations used in Space Science.
 import scipy
 import scipy.integrate
 import numpy as np
-import datetime
+import datetime as dt
 import warnings
-import pysat
 
 # import reference IGRF fortran code within the package
 try:
@@ -401,6 +400,15 @@ def field_line_trace(init, date, direction, height, steps=None,
     step_size : float
         Distance in km for each large integration step. Multiple substeps
         are taken as determined by scipy.integrate.odeint. (default=10.)
+    recursive_loop_count : int
+        Used internally by the method. Not intended for the user.
+    recurse : bool
+        If True, method will recursively call itself to complete field line
+        trace as necessary. (default=True)
+    min_check_flag : bool
+        If True, performs an additional check that the field line
+        tracing reached the target altitude. Removes any redundant
+        steps below the target altitude. (default=False)
 
     Returns
     -------
@@ -420,15 +428,18 @@ def field_line_trace(init, date, direction, height, steps=None,
         steps = np.arange(max_steps)
 
     # Ensure date is a float for IGRF call
-    if not isinstance(date, float):
+    if isinstance(date, dt.datetime):
         # Recast from datetime to float, as required by IGRF12 code
-        doy = (date - datetime.datetime(date.year, 1, 1)).days
+        doy = (date - dt.datetime(date.year, 1, 1)).days
 
         # Number of days in year, works for leap years
-        num_doy_year = (datetime.datetime(date.year + 1, 1, 1)
-                        - datetime.datetime(date.year, 1, 1)).days
+        num_doy_year = (dt.datetime(date.year + 1, 1, 1)
+                        - dt.datetime(date.year, 1, 1)).days
 
-        date = float(date.year) + (float(doy) + float(date.hour + date.minute/60. + date.second/3600.)/24.)/float(num_doy_year + 1.)
+        date = float(date.year) + (float(doy) + float(date.hour
+                                                      + date.minute / 60.
+                                                      + date.second / 3600.)
+                                   / 24.) / float(num_doy_year + 1.)
 
     # Set altitude to terminate trace
     if height == 0:
@@ -450,7 +461,7 @@ def field_line_trace(init, date, direction, height, steps=None,
     if messg['message'] != 'Integration successful.':
         estr = "Field-Line trace not successful."
         warnings.warn(estr)
-        return np.full((1,3), np.nan)
+        return np.full((1, 3), np.nan)
 
     # Calculate data to check that we reached final altitude
     check = trace_north[-1, :]
@@ -474,7 +485,7 @@ def field_line_trace(init, date, direction, height, steps=None,
         else:
             estr = "After 1000 iterations couldn't reach target altitude"
             warnings.warn(estr)
-            return np.full((1,3), np.nan)
+            return np.full((1, 3), np.nan)
 
         # Append new trace data to existing trace data
         # this return is taken as part of recursive loop
@@ -645,9 +656,9 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
         trace_north = trace[-1, :]
         trace_south = trace[0, :]
         # recast from datetime to float, as required by IGRF12 code
-        doy = (time - datetime.datetime(time.year, 1, 1)).days
+        doy = (time - dt.datetime(time.year, 1, 1)).days
         # number of days in year, works for leap years
-        num_doy_year = (datetime.datetime(time.year + 1, 1, 1) - datetime.datetime(time.year, 1, 1)).days
+        num_doy_year = (dt.datetime(time.year + 1, 1, 1) - dt.datetime(time.year, 1, 1)).days
         date = time.year + float(doy)/float(num_doy_year + 1)
         date += (time.hour + time.minute/60. + time.second/3600.)/24./float(num_doy_year + 1)
         # get IGRF field components
@@ -747,13 +758,13 @@ def magnetic_vector(x, y, z, dates, normalize=False):
 
     # Need a double variable for time.
     # First, get day of year as well as the year
-    doy = np.array([(time - datetime.datetime(time.year, 1, 1)).days
+    doy = np.array([(time - dt.datetime(time.year, 1, 1)).days
                     for time in dates], dtype=np.float64)
     years = np.array([time.year for time in dates], dtype=np.float64)
 
     # Number of days in year
-    num_doy_year = np.array([(datetime.datetime(time.year + 1, 1, 1)
-                              - datetime.datetime(time.year, 1, 1)).days
+    num_doy_year = np.array([(dt.datetime(time.year + 1, 1, 1)
+                              - dt.datetime(time.year, 1, 1)).days
                              for time in dates], dtype=np.float64)
 
     # Time in hours, relative to midnight
@@ -1605,31 +1616,44 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     i = 0
     steps = np.arange(num_steps + 1)
     for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
-        yr, doy = pysat.utils.time.getyrdoy(date)
-        double_date = float(yr) + float(doy)/366.
+
+        # Get year and day of year
+        doy = date.toordinal() - dt.datetime(date.year, 1, 1).toordinal() + 1
+        yr = date.year
+
+        # Number of days in year
+        num_doy_year = (dt.datetime(date.year + 1, 1, 1)
+                        - dt.datetime(date.year, 1, 1)).days
+
+        double_date = float(yr) + float(doy) / num_doy_year
 
         root[:] = (ecef_x, ecef_y, ecef_z)
         trace_north = field_line_trace(root, double_date, 1., 120.,
                                        steps=steps,
                                        step_size=step_size,
                                        max_steps=num_steps)
-        # southern tracing
+        # Southern tracing
         trace_south = field_line_trace(root, double_date, -1., 120.,
                                        steps=steps,
                                        step_size=step_size,
                                        max_steps=num_steps)
-        # footpoint location
+        # Footpoint location
         north_ftpnt[i, :] = trace_north[-1, :]
         south_ftpnt[i, :] = trace_south[-1, :]
         i += 1
 
     if return_geodetic:
-        north_ftpnt[:, 0], north_ftpnt[:, 1], north_ftpnt[:, 2] = ecef_to_geodetic(
-            north_ftpnt[:, 0], north_ftpnt[:, 1],
-            north_ftpnt[:, 2])
-        south_ftpnt[:, 0], south_ftpnt[:, 1], south_ftpnt[:, 2] = ecef_to_geodetic(
-            south_ftpnt[:, 0], south_ftpnt[:, 1],
-            south_ftpnt[:, 2])
+        (north_ftpnt[:, 0],
+         north_ftpnt[:, 1],
+         north_ftpnt[:, 2]) = ecef_to_geodetic(north_ftpnt[:, 0],
+                                               north_ftpnt[:, 1],
+                                               north_ftpnt[:, 2])
+        (south_ftpnt[:, 0],
+         south_ftpnt[:, 1],
+         south_ftpnt[:, 2]) = ecef_to_geodetic(south_ftpnt[:, 0],
+                                               south_ftpnt[:, 1],
+                                               south_ftpnt[:, 2])
+
     return north_ftpnt, south_ftpnt
 
 
