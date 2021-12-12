@@ -758,7 +758,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
                      for time in dates], dtype=np.float64)
 
     # Create double variable for time
-    ddates = years + (doy + time)/(num_doy_year + 1)
+    ddates = years + (doy + time) / (num_doy_year + 1)
 
     # Use geocentric coordinates for calculating magnetic field since
     # transformation between it and ECEF is robust. The geodetic translations
@@ -785,7 +785,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
     bd = np.array(bd, dtype=np.float64)
     bm = np.array(bm, dtype=np.float64)
 
-    # calculate magnetic unit vector
+    # Convert to ECEF basis
     bx, by, bz = enu_to_ecef_vector(be, bn, -bd, latitudes, longitudes)
 
     if normalize:
@@ -1208,11 +1208,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     if step_size <= 0:
         raise ValueError('Step Size must be greater than 0.')
 
-    if len(latitude) != len(longitude) != len(altitude) != len(datetimes):
-        estr = ''.join(['All inputs (latitude, longitude, altitude, datetimes)',
-                        ' must have the same length.'])
-        raise ValueError(estr)
-
     if ecef_input:
         ecef_x, ecef_y, ecef_z = latitude, longitude, altitude
         # lat and long needed for initial zonal and meridional vector
@@ -1237,6 +1232,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
         # Calculate satellite position in ECEF coordinates
         ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
+
+    # Check for reasonable user inputs
+    if len(latitude) != len(longitude) != len(altitude) != len(datetimes):
+        estr = ''.join(['All inputs (latitude, longitude, altitude, datetimes)',
+                        ' must have the same length.'])
+        raise ValueError(estr)
 
     # Begin method calculation.
 
