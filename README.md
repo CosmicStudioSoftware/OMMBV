@@ -1,3 +1,8 @@
+<div align="center">
+        <img height="0" width="0px">
+        <img width="20%" src="/docs/images/logo_high_res.pdf" alt="OMMBV" title="OMMBV"</img>
+</div>
+
 # Orthogonal Multi-pole Magnetic Basis Vectors (OMMBV)
 [![Build Status](https://travis-ci.com/rstoneback/OMMBV.svg?branch=master)](https://travis-ci.com/rstoneback/OMMBV)
 [![Coverage Status](https://coveralls.io/repos/github/rstoneback/OMMBV/badge.svg?branch=master)](https://coveralls.io/github/rstoneback/OMMBV?branch=master)
