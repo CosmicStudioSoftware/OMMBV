@@ -132,7 +132,7 @@ Cf2py intent(out) out
         scalar = 0
       else if (h.le.(height+scalar)) then
         !scalar=scalar*exp(r-(6371.+height))
-        scalar = scalar*(1. - ((height+scalar - h)/10.)**2)
+        scalar = scalar*(1. - ((height+scalar - h)/scalar)**2)
       end if
 
       !if (scalar.lt.0) then
