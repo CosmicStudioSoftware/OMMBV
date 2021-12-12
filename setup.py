@@ -25,7 +25,7 @@ else:
 
 setup(name='OMMBV',
       version=version,
-      packages=['OMMBV', 'OMMBV.tests'],
+      packages=['OMMBV'],
       description=' '.join(('Orthogonal geomagnetic vector basis and',
                             'field-line mapping for multipole magnetic',
                             'fields.')),
