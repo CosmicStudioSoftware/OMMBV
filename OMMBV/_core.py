@@ -126,7 +126,7 @@ try:
     # ecef_to_geodetic = ecef_to_geocentric
     # geodetic_to_ecef = geocentric_to_ecef
 
-except AttributeError:
+except (AttributeError, NameError):
     estr = ''.join(['Unable to use Fortran version of ecef_to_geodetic.',
                     ' Please check installation.'])
     print(estr)
