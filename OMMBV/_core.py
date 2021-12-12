@@ -21,7 +21,7 @@ except:
 earth_a = 6378.1370
 earth_b = 6356.75231424518
 
-# standard geoncentric Earth radius
+# standard geocentric Earth radius
 # average radius of Earth
 earth_geo_radius = 6371.
 
