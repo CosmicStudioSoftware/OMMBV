@@ -7,11 +7,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Improved robustness of calculation at higher latitudes.
 - Deprecated `scalar` input for basis vectors.
 - Corrected normalization error in `magnetic_vector`.
-- Updated docstrings
+- Updated docstrings.
 - Updated IGRF step method to slow integration when reaching target altitude
   to use user provided step size.
 - Added `pole_tol` keyword which specifies how close to vertical local
   magnetic field must be to be considered a pole.
+- Removed unit tests from release code.
 
 ## [0.5.5] - 2021-06-16
 - Updated setup.py
