@@ -5,6 +5,7 @@ import numpy as np
 import OMMBV
 import pysat
 
+import OMMBV.vector
 from OMMBV.tests.test_core import gen_plot_grid_fixed_alt
 from OMMBV.tests.test_core import dview, dc
 
@@ -59,15 +60,15 @@ class TestIntegratedMethods():
                 print ('collecting ', i, p_lat)
                 # collect output
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                [p_lat]*len(p_longs),
-                                                                                p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                        [p_lat] * len(p_longs),
+                                                                                        p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
@@ -76,15 +77,15 @@ class TestIntegratedMethods():
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=10000, step_size=10.,
                     ref_height=120.)
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                [p_lat]*len(p_longs),
-                                                                                p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                        [p_lat] * len(p_longs),
+                                                                                        p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
 
         # account for periodicity
         zvx[:, -1] = zvx[:, 0]
@@ -532,30 +533,30 @@ class TestIntegratedMethods():
                 print ('collecting ', i, p_lat)
                 # collect output from first run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                [p_lat]*len(p_longs),
-                                                                                p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                        [p_lat] * len(p_longs),
+                                                                                        p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
                 # collect output from second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a) / zvx[i, :-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b) / zvy[i, :-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c) / zvz[i, :-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a) / bx[i, :-1]
                 by[i, :-1] = (by[i, :-1] - _b) / by[i, :-1]
                 bz[i, :-1] = (bz[i, :-1] - _c) / bz[i, :-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a) / mx[i, :-1]
                 my[i, :-1] = (my[i, :-1] - _b) / my[i, :-1]
@@ -569,15 +570,15 @@ class TestIntegratedMethods():
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=10000, step_size=10.,
                     ref_height=120.)
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                [p_lat]*len(p_longs),
-                                                                                p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                        [p_lat] * len(p_longs),
+                                                                                        p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
 
                 # second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef(
@@ -585,19 +586,19 @@ class TestIntegratedMethods():
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=1000, step_size=100.,
                     ref_height=120.)
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a) / zvx[i, :-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b) / zvy[i, :-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c) / zvz[i, :-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a) / bx[i, :-1]
                 by[i, :-1] = (by[i, :-1] - _b) / by[i, :-1]
                 bz[i, :-1] = (bz[i, :-1] - _c) / bz[i, :-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a) / mx[i, :-1]
                 my[i, :-1] = (my[i, :-1] - _b) / my[i, :-1]
@@ -830,30 +831,30 @@ class TestIntegratedMethods():
                 print ('collecting ', i, p_lat)
                 # collect output from first run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                [p_lat]*len(p_longs),
-                                                                                p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                        [p_lat] * len(p_longs),
+                                                                                        p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
                 # collect output from second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a) / zvx[i, :-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b) / zvy[i, :-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c) / zvz[i, :-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a) / bx[i, :-1]
                 by[i, :-1] = (by[i, :-1] - _b) / by[i, :-1]
                 bz[i, :-1] = (bz[i, :-1] - _c) / bz[i, :-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a) / mx[i, :-1]
                 my[i, :-1] = (my[i, :-1] - _b) / my[i, :-1]
@@ -867,15 +868,15 @@ class TestIntegratedMethods():
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=10000, step_size=10.,
                     ref_height=240.)
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                [p_lat]*len(p_longs),
-                                                                                p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                        [p_lat] * len(p_longs),
+                                                                                        p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
 
                 # second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef(
@@ -883,19 +884,19 @@ class TestIntegratedMethods():
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=10000, step_size=10.,
                     ref_height=0.)
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a) / zvx[i, :-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b) / zvy[i, :-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c) / zvz[i, :-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a) / bx[i, :-1]
                 by[i, :-1] = (by[i, :-1] - _b) / by[i, :-1]
                 bz[i, :-1] = (bz[i, :-1] - _c) / bz[i, :-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a) / mx[i, :-1]
                 my[i, :-1] = (my[i, :-1] - _b) / my[i, :-1]
@@ -1119,30 +1120,30 @@ class TestIntegratedMethods():
                 print ('collecting ', i, p_lat)
                 # collect output from first run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                [p_lat]*len(p_longs),
-                                                                                p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                        [p_lat] * len(p_longs),
+                                                                                        p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
                 # collect output from second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a)  # /zvx[i,:-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b)  # /zvy[i,:-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c)  # /zvz[i,:-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a)  # /bx[i,:-1]
                 by[i, :-1] = (by[i, :-1] - _b)  # /by[i,:-1]
                 bz[i, :-1] = (bz[i, :-1] - _c)  # /bz[i,:-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a)  # /mx[i,:-1]
                 my[i, :-1] = (my[i, :-1] - _b)  # /my[i,:-1]
@@ -1154,33 +1155,33 @@ class TestIntegratedMethods():
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs))
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                [p_lat]*len(p_longs),
-                                                                                p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                             [p_lat]*len(p_longs),
-                                                                             p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
+                                                                                        [p_lat] * len(p_longs),
+                                                                                        p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
+                                                                                     [p_lat] * len(p_longs),
+                                                                                     p_longs)
 
                 # second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs))
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a)  # /zvx[i,:-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b)  # /zvy[i,:-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c)  # /zvz[i,:-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tbx, tby, tbz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a)  # /bx[i,:-1]
                 by[i, :-1] = (by[i, :-1] - _b)  # /by[i,:-1]
                 bz[i, :-1] = (bz[i, :-1] - _c)  # /bz[i,:-1]
 
-                _a, _b, _c = OMMBV.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat]*len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a)  # /mx[i,:-1]
                 my[i, :-1] = (my[i, :-1] - _b)  # /my[i,:-1]

@@ -1,4 +1,5 @@
 import OMMBV as OMMBV
+import OMMBV.vector
 
 
 def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude', long_label='longitude',
@@ -200,17 +201,17 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude', long_label='longitude
     add_mag_drift_unit_vectors_ecef(inst, lat_label=lat_label, long_label=long_label,
                                     alt_label=alt_label, **kwargs)
     # convert them to S/C using transformation supplied by OA
-    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = OMMBV.project_ecef_vector_onto_basis(
+    inst['unit_zon_x'], inst['unit_zon_y'], inst['unit_zon_z'] = OMMBV.vector.project_ecef_vector_onto_basis(
         inst['unit_zon_ecef_x'], inst['unit_zon_ecef_y'], inst['unit_zon_ecef_z'],
         inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
         inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
         inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = OMMBV.project_ecef_vector_onto_basis(
+    inst['unit_fa_x'], inst['unit_fa_y'], inst['unit_fa_z'] = OMMBV.vector.project_ecef_vector_onto_basis(
         inst['unit_fa_ecef_x'], inst['unit_fa_ecef_y'], inst['unit_fa_ecef_z'],
         inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
         inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],
         inst['sc_zhat_x'], inst['sc_zhat_y'], inst['sc_zhat_z'])
-    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = OMMBV.project_ecef_vector_onto_basis(
+    inst['unit_mer_x'], inst['unit_mer_y'], inst['unit_mer_z'] = OMMBV.vector.project_ecef_vector_onto_basis(
         inst['unit_mer_ecef_x'], inst['unit_mer_ecef_y'], inst['unit_mer_ecef_z'],
         inst['sc_xhat_x'], inst['sc_xhat_y'], inst['sc_xhat_z'],
         inst['sc_yhat_x'], inst['sc_yhat_y'], inst['sc_yhat_z'],

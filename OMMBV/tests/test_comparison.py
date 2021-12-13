@@ -7,6 +7,8 @@ import OMMBV
 import pysat
 import apexpy
 
+import OMMBV.vector
+
 
 class TestComparison():
 
@@ -44,14 +46,14 @@ class TestComparison():
         apex_zon = apex_vecs[6]
 
         # normalize into unit vectors
-        apex_mer[0, :], apex_mer[1, :], apex_mer[2, :] = OMMBV.normalize_vector(-apex_mer[0, :],
+        apex_mer[0, :], apex_mer[1, :], apex_mer[2, :] = OMMBV.vector.normalize_vector(-apex_mer[0, :],
                                                                                        -apex_mer[1, :],
                                                                                        -apex_mer[2, :])
 
-        apex_zon[0, :], apex_zon[1, :], apex_zon[2, :] = OMMBV.normalize_vector(apex_zon[0, :],
+        apex_zon[0, :], apex_zon[1, :], apex_zon[2, :] = OMMBV.vector.normalize_vector(apex_zon[0, :],
                                                                                        apex_zon[1, :],
                                                                                        apex_zon[2, :])
-        apex_fa[0, :], apex_fa[1, :], apex_fa[2, :] = OMMBV.normalize_vector(apex_fa[0, :],
+        apex_fa[0, :], apex_fa[1, :], apex_fa[2, :] = OMMBV.vector.normalize_vector(apex_fa[0, :],
                                                                                     apex_fa[1, :],
                                                                                     apex_fa[2, :])
 
@@ -61,9 +63,9 @@ class TestComparison():
         zx, zy, zz, fx, fy, fz, mx, my, mz = out
 
         # convert into north, east, and up system
-        ze, zn, zu = OMMBV.ecef_to_enu_vector(zx, zy, zz, eq_lat, eq_long)
-        fe, fn, fu = OMMBV.ecef_to_enu_vector(fx, fy, fz, eq_lat, eq_long)
-        me, mn, mu = OMMBV.ecef_to_enu_vector(mx, my, mz, eq_lat, eq_long)
+        ze, zn, zu = OMMBV.vector.ecef_to_enu_vector(zx, zy, zz, eq_lat, eq_long)
+        fe, fn, fu = OMMBV.vector.ecef_to_enu_vector(fx, fy, fz, eq_lat, eq_long)
+        me, mn, mu = OMMBV.vector.ecef_to_enu_vector(mx, my, mz, eq_lat, eq_long)
 
         # create inputs straight from IGRF
         igrf_n = []

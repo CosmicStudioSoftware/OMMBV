@@ -13,6 +13,7 @@ else:
 from OMMBV import satellite
 from OMMBV import trans
 from OMMBV import utils
+from OMMBV import vector
 
 from OMMBV import _core
 from OMMBV._core import *
