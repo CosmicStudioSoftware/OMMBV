@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.5.6] - 2021-12-??
+## [0.5.6] - 2021-12-13
 - Reduced uncertainty in scaling parameters for multipole fields.
 - Improved robustness of calculation at higher latitudes.
 - Deprecated `scalar` input for basis vectors.

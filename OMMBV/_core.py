@@ -1625,8 +1625,10 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
 
 
 def apex_edge_lengths_via_footpoint(*args, **kwargs):
-    raise DeprecationWarning('This method now called apex_distance_after_footpoint_step.')
+    estr = 'This method now called `apex_distance_after_footpoint_step`.'
+    warnings.warn(estr, DeprecationWarning)
     apex_distance_after_footpoint_step(*args, **kwargs)
+    return
 
 
 def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
