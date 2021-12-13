@@ -14,7 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   magnetic field must be to be considered a pole.
 - Removed unit tests from release code.
 - Added `utils.datetimes_to_doubles` a method to calculate year and 
-  fractioal day of year for IGRF calls.
+  fractional day of year for IGRF calls.
 
 ## [0.5.5] - 2021-06-16
 - Updated setup.py
