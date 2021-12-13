@@ -9,20 +9,18 @@ import numpy as np
 import datetime as dt
 import warnings
 
-# import reference IGRF fortran code within the package
+# Import reference IGRF fortran code within the package if not on RTD
 try:
     from OMMBV import igrf as igrf
     import OMMBV.fortran_coords
 except:
     pass
 
-# parameters used to define Earth ellipsoid
-# WGS84 parameters below
+# Parameters used to define Earth ellipsoid, WGS84 parameters
 earth_a = 6378.1370
 earth_b = 6356.75231424518
 
-# standard geocentric Earth radius
-# average radius of Earth
+# Standard geocentric Earth radius, average radius of Earth in km.
 earth_geo_radius = 6371.
 
 
