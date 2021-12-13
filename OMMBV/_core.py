@@ -12,9 +12,11 @@ import warnings
 # Import reference IGRF fortran code within the package if not on RTD
 try:
     from OMMBV import igrf as igrf
-    import OMMBV.fortran_coords
 except:
     pass
+
+import OMMBV.trans as trans
+import OMMBV.utils
 
 # Parameters used to define Earth ellipsoid, WGS84 parameters
 earth_a = 6378.1370
@@ -22,184 +24,6 @@ earth_b = 6356.75231424518
 
 # Standard geocentric Earth radius, average radius of Earth in km.
 earth_geo_radius = 6371.
-
-
-def geocentric_to_ecef(latitude, longitude, altitude):
-    """Convert geocentric coordinates into ECEF
-
-    Parameters
-    ----------
-    latitude : float or array_like
-        Geocentric latitude (degrees)
-    longitude : float or array_like
-        Geocentric longitude (degrees)
-    altitude : float or array_like
-        Height (km) above presumed spherical Earth with radius 6371 km.
-
-    Returns
-    -------
-    x, y, z
-        numpy arrays of x, y, z locations in km
-
-    """
-
-    r = earth_geo_radius + np.asarray(altitude)
-    x = r*np.cos(np.deg2rad(latitude))*np.cos(np.deg2rad(longitude))
-    y = r*np.cos(np.deg2rad(latitude))*np.sin(np.deg2rad(longitude))
-    z = r*np.sin(np.deg2rad(latitude))
-
-    return x, y, z
-
-
-def ecef_to_geocentric(x, y, z, ref_height=None):
-    """Convert ECEF into geocentric coordinates
-
-    Parameters
-    ----------
-    x : float or array_like
-        ECEF-X in km
-    y : float or array_like
-        ECEF-Y in km
-    z : float or array_like
-        ECEF-Z in km
-    ref_height : float or array_like
-        Reference radius used for calculating height.
-        Defaults to average radius of 6371 km
-
-    Returns
-    -------
-    latitude, longitude, altitude
-        numpy arrays of locations in degrees, degrees, and km
-
-    """
-    if ref_height is None:
-        ref_height = earth_geo_radius
-
-    x = np.asarray(x)
-    y = np.asarray(y)
-    z = np.asarray(z)
-
-    r = np.sqrt(x**2 + y**2 + z**2)
-    colatitude = np.rad2deg(np.arccos(z/r))
-    longitude = np.rad2deg(np.arctan2(y, x))
-    latitude = 90. - colatitude
-
-    return latitude, longitude, r - ref_height
-
-
-def geodetic_to_ecef(latitude, longitude, altitude):
-    """Convert WGS84 geodetic coordinates into ECEF
-
-    Parameters
-    ----------
-    latitude : float or array_like
-        Geodetic latitude (degrees)
-    longitude : float or array_like
-        Geodetic longitude (degrees)
-    altitude : float or array_like
-        Geodetic Height (km) above WGS84 reference ellipsoid.
-
-    Returns
-    -------
-    x, y, z
-        numpy arrays of x, y, z locations in km
-
-    """
-
-    ellip = np.sqrt(1. - earth_b**2 / earth_a**2)
-    r_n = earth_a / np.sqrt(1. - ellip**2 * np.sin(np.deg2rad(latitude))**2)
-
-    # colatitude = 90. - latitude
-    x = (r_n + altitude)*np.cos(np.deg2rad(latitude))*np.cos(np.deg2rad(longitude))
-    y = (r_n + altitude)*np.cos(np.deg2rad(latitude))*np.sin(np.deg2rad(longitude))
-    z = (r_n*(1. - ellip**2) + altitude)*np.sin(np.deg2rad(latitude))
-
-    return x, y, z
-
-try:
-    ecef_to_geodetic = OMMBV.fortran_coords.ecef_to_geodetic
-
-    # # Temporary check on geocentric
-    # ecef_to_geodetic = ecef_to_geocentric
-    # geodetic_to_ecef = geocentric_to_ecef
-
-except (AttributeError, NameError):
-    estr = ''.join(['Unable to use Fortran version of ecef_to_geodetic.',
-                    ' Please check installation.'])
-    print(estr)
-
-
-def python_ecef_to_geodetic(x, y, z, method=None):
-    """Convert ECEF into Geodetic WGS84 coordinates
-
-    Parameters
-    ----------
-    x : float or array_like
-        ECEF-X in km
-    y : float or array_like
-        ECEF-Y in km
-    z : float or array_like
-        ECEF-Z in km
-    method : 'iterative' or 'closed' ('closed' is deafult)
-        String selects method of conversion. Closed for mathematical
-        solution (http://www.epsg.org/Portals/0/373-07-2.pdf ,
-                  page 96 section 2.2.1)
-        or iterative (http://www.oc.nps.edu/oc2902w/coord/coordcvt.pdf).
-
-    Returns
-    -------
-    latitude, longitude, altitude
-        numpy arrays of locations in degrees, degrees, and km
-
-    """
-
-    # quick notes on ECEF to Geodetic transformations
-    # http://danceswithcode.net/engineeringnotes/geodetic_to_ecef/geodetic_to_ecef.html
-
-    method = method or 'closed'
-
-    # ellipticity of Earth
-    ellip = np.sqrt(1. - earth_b**2/earth_a**2)
-    # first eccentricity squared
-    e2 = ellip**2  # 6.6943799901377997E-3
-
-    longitude = np.arctan2(y, x)
-    # cylindrical radius
-    p = np.sqrt(x**2 + y**2)
-
-    # Closed form solution
-    # A source, http://www.epsg.org/Portals/0/373-07-2.pdf,
-    # page 96 section 2.2.1
-    if method == 'closed':
-        e_prime = np.sqrt((earth_a**2 - earth_b**2) / earth_b**2)
-        theta = np.arctan2(z * earth_a, p * earth_b)
-        latitude = np.arctan2(z + e_prime**2 * earth_b * np.sin(theta)**3,
-                              p - e2 * earth_a * np.cos(theta)**3)
-        r_n = earth_a / np.sqrt(1. - e2 * np.sin(latitude)**2)
-        h = p / np.cos(latitude) - r_n
-
-    # Another possibility
-    # http://ir.lib.ncku.edu.tw/bitstream/987654321/39750/1/3011200501001.pdf
-
-    ## iterative method
-    # http://www.oc.nps.edu/oc2902w/coord/coordcvt.pdf
-    if method == 'iterative':
-        latitude = np.arctan2(p, z)
-        r_n = earth_a/np.sqrt(1. - e2*np.sin(latitude)**2)
-        for i in np.arange(6):
-            # print latitude
-            r_n = earth_a/np.sqrt(1. - e2*np.sin(latitude)**2)
-            h = p/np.cos(latitude) - r_n
-            latitude = np.arctan(z/p/(1. - e2*(r_n/(r_n + h))))
-            # print h
-        # final ellipsoidal height update
-        h = p/np.cos(latitude) - r_n
-
-    return np.rad2deg(latitude), np.rad2deg(longitude), h
-
-
-# Temporary check on geocentric
-# python_ecef_to_geodetic = ecef_to_geocentric
 
 
 def enu_to_ecef_vector(east, north, up, glat, glong):
@@ -455,7 +279,7 @@ def field_line_trace(init, date, direction, height, steps=None,
 
     # Calculate data to check that we reached final altitude
     check = trace_north[-1, :]
-    x, y, z = ecef_to_geodetic(*check)
+    x, y, z = trans.ecef_to_geodetic(*check)
 
     # Fortran integration gets close to target height
     loop_step = step_size
@@ -495,8 +319,9 @@ def field_line_trace(init, date, direction, height, steps=None,
         # Steps below provide an extra layer of security that output has some
         # semblance to expectations
         if min_check_flag:
-            x, y, z = ecef_to_geodetic(trace_north[:, 0], trace_north[:, 1],
-                                       trace_north[:, 2])
+            x, y, z = trans.ecef_to_geodetic(trace_north[:, 0],
+                                             trace_north[:, 1],
+                                             trace_north[:, 2])
             idx = np.argmin(np.abs(check_height - z))
             if (z[idx] < check_height * 1.001) and (idx > 0):
                 trace_north = trace_north[:idx + 1, :]
@@ -615,11 +440,14 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     altitude = np.array(altitude)
 
     # calculate satellite position in ECEF coordinates
-    ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
+    ecef_x, ecef_y, ecef_z = trans.geodetic_to_ecef(latitude, longitude,
+                                                    altitude)
     # also get position in geocentric coordinates
-    geo_lat, geo_long, geo_alt = ecef_to_geocentric(ecef_x, ecef_y, ecef_z,
-                                                    ref_height=0.)
-    # geo_lat, geo_long, geo_alt = ecef_to_geodetic(ecef_x, ecef_y, ecef_z)
+    geo_lat, geo_long, geo_alt = trans.ecef_to_geocentric(ecef_x, ecef_y,
+                                                          ecef_z,
+                                                          ref_height=0.)
+    # geo_lat, geo_long, geo_alt = trans.ecef_to_geodetic(ecef_x, ecef_y,
+    # ecef_z)
 
     # filter longitudes (could use pysat's function here)
     idx, = np.where(geo_long < 0)
@@ -749,8 +577,8 @@ def magnetic_vector(x, y, z, dates, normalize=False):
     # Use geocentric coordinates for calculating magnetic field since
     # transformation between it and ECEF is robust. The geodetic translations
     # introduce error.
-    latitudes, longitudes, altitudes = ecef_to_geocentric(x, y, z,
-                                                          ref_height=0.)
+    latitudes, longitudes, altitudes = trans.ecef_to_geocentric(x, y, z,
+                                                                ref_height=0.)
 
     # Calculate magnetic field value for all user provided locations
     colats = np.deg2rad(90. - latitudes)
@@ -832,7 +660,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     if ecef_input:
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
     else:
-        ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+        ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     # Prepare parameters for field line trace
     max_steps = 100
@@ -867,8 +695,8 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
                                 max_steps=max_steps)
 
         # Convert all locations to geodetic coordinates
-        tlat, tlon, talt = ecef_to_geodetic(trace[:, 0], trace[:, 1],
-                                            trace[:, 2])
+        tlat, tlon, talt = trans.ecef_to_geodetic(trace[:, 0], trace[:, 1],
+                                                  trace[:, 2])
 
         # Determine location that is highest with respect to the geodetic Earth
         max_idx = np.argmax(talt)
@@ -887,8 +715,8 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
                                     recurse=False)
 
             # Convert all locations to geodetic coordinates
-            tlat, tlon, talt = ecef_to_geodetic(trace[:, 0], trace[:, 1],
-                                                trace[:, 2])
+            tlat, tlon, talt = trans.ecef_to_geodetic(trace[:, 0], trace[:, 1],
+                                                      trace[:, 2])
             # Determine location that is highest with respect to the
             # geodetic Earth.
             max_idx = np.argmax(talt)
@@ -900,8 +728,8 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         i += 1
 
     if return_geodetic:
-        glat, glon, alt = ecef_to_geodetic(_apex_out_x, _apex_out_y,
-                                           _apex_out_z)
+        glat, glon, alt = trans.ecef_to_geodetic(_apex_out_x, _apex_out_y,
+                                                 _apex_out_z)
         return _apex_out_x, _apex_out_y, _apex_out_z, glat, glon, alt
     else:
         return _apex_out_x, _apex_out_y, _apex_out_z
@@ -1132,8 +960,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         ecef_x, ecef_y, ecef_z = latitude, longitude, altitude
         # lat and long needed for initial zonal and meridional vector
         # generation later on
-        latitude, longitude, altitude = ecef_to_geodetic(ecef_x, ecef_y,
-                                                         ecef_z)
+        latitude, longitude, altitude = trans.ecef_to_geodetic(ecef_x, ecef_y,
+                                                               ecef_z)
     else:
         latitude = np.array(latitude, dtype=np.float64)
         longitude = np.array(longitude, dtype=np.float64)
@@ -1151,7 +979,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
             raise RuntimeError('Longitude out of bounds [-180., 360.].')
 
         # Calculate satellite position in ECEF coordinates
-        ecef_x, ecef_y, ecef_z = geodetic_to_ecef(latitude, longitude, altitude)
+        ecef_x, ecef_y, ecef_z = trans.geodetic_to_ecef(latitude, longitude,
+                                                  altitude)
 
     # Check for reasonable user inputs
     if len(latitude) != len(longitude) != len(altitude) != len(datetimes):
@@ -1579,7 +1408,7 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     if ecef_input:
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
     else:
-        ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+        ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     north_ftpnt = np.empty((len(ecef_xs), 3), dtype=np.float64)
     south_ftpnt = np.empty((len(ecef_xs), 3), dtype=np.float64)
@@ -1610,14 +1439,14 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     if return_geodetic:
         (north_ftpnt[:, 0],
          north_ftpnt[:, 1],
-         north_ftpnt[:, 2]) = ecef_to_geodetic(north_ftpnt[:, 0],
-                                               north_ftpnt[:, 1],
-                                               north_ftpnt[:, 2])
+         north_ftpnt[:, 2]) = trans.ecef_to_geodetic(north_ftpnt[:, 0],
+                                                     north_ftpnt[:, 1],
+                                                     north_ftpnt[:, 2])
         (south_ftpnt[:, 0],
          south_ftpnt[:, 1],
-         south_ftpnt[:, 2]) = ecef_to_geodetic(south_ftpnt[:, 0],
-                                               south_ftpnt[:, 1],
-                                               south_ftpnt[:, 2])
+         south_ftpnt[:, 2]) = trans.ecef_to_geodetic(south_ftpnt[:, 0],
+                                                     south_ftpnt[:, 1],
+                                                     south_ftpnt[:, 2])
 
     return north_ftpnt, south_ftpnt
 
@@ -1694,7 +1523,7 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
     if ecef_input:
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
     else:
-        ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+        ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     if direction == 'north':
         ftpnts, _ = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs, dates,
@@ -1795,7 +1624,7 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
     if ecef_input:
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
     else:
-        ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+        ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     # take step from s/c along + vector direction
     # then get the apex location
@@ -1890,7 +1719,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
         raise DeprecationWarning('edge_steps no longer supported.')
 
     # use spacecraft location to get ECEF
-    ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+    ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     # get footpoint location information
     north_ftpnt, south_ftpnt = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs,
@@ -2005,7 +1834,7 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     steps = np.arange(max_steps + 1)
 
     # use spacecraft location to get ECEF
-    ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
+    ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     # double edge length, used later
     double_edge = 2.*edge_length
@@ -2150,3 +1979,138 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
         out['equator_mer_drifts_scalar'] = eq_mer_drifts_scalar
 
     return out
+
+
+def geocentric_to_ecef(latitude, longitude, altitude):
+    """Convert geocentric coordinates into ECEF
+
+    .. deprecated:: 0.5.6
+       Function moved to `OMMBV.trans.geocentric_to_ecef`, this wrapper will
+       be removed in 0.6
+
+    Parameters
+    ----------
+    latitude : float or array_like
+        Geocentric latitude (degrees)
+    longitude : float or array_like
+        Geocentric longitude (degrees)
+    altitude : float or array_like
+        Height (km) above presumed spherical Earth with radius 6371 km.
+
+    Returns
+    -------
+    x, y, z : np.array
+        x, y, z ECEF locations in km
+
+    """
+
+    warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.6+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    return trans.geocentric_to_ecef(latitude, longitude, altitude)
+
+
+def ecef_to_geocentric(x, y, z, ref_height=earth_geo_radius):
+    """Convert ECEF into geocentric coordinates
+
+    .. deprecated:: 0.5.6
+       Function moved to `OMMBV.trans.ecef_to_geocentric`, this wrapper will
+       be removed in 0.6
+
+    Parameters
+    ----------
+    x : float or array_like
+        ECEF-X in km
+    y : float or array_like
+        ECEF-Y in km
+    z : float or array_like
+        ECEF-Z in km
+    ref_height : float or array_like
+        Reference radius used for calculating height in km.
+        (default=earth_geo_radius)
+
+    Returns
+    -------
+    latitude, longitude, altitude : np.array
+        Locations in latitude (degrees), longitude (degrees), and
+        altitude above `reference_height` in km.
+
+    """
+    warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.6+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    return trans.ecef_to_geocentric(x, y, z, ref_height=ref_height)
+
+
+def geodetic_to_ecef(latitude, longitude, altitude):
+    """Convert WGS84 geodetic coordinates into ECEF
+
+    .. deprecated:: 0.5.6
+       Function moved to `OMMBV.trans.geodetic_to_ecef`, this wrapper will
+       be removed in 0.6
+
+    Parameters
+    ----------
+    latitude : float or array_like
+        Geodetic latitude (degrees)
+    longitude : float or array_like
+        Geodetic longitude (degrees)
+    altitude : float or array_like
+        Geodetic Height (km) above WGS84 reference ellipsoid.
+
+    Returns
+    -------
+    x, y, z : np.array
+        x, y, z ECEF locations in km
+
+    """
+
+    warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.6+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    return trans.geodetic_to_ecef(latitude, longitude, altitude)
+
+
+def python_ecef_to_geodetic(x, y, z, method='closed'):
+    """Convert ECEF into Geodetic WGS84 coordinates using Python code.
+
+    .. deprecated:: 0.5.6
+       Function moved to `OMMBV.trans.geodetic_to_ecef`, this wrapper will
+       be removed in 0.6
+
+    Parameters
+    ----------
+    x : float or array_like
+        ECEF-X in km
+    y : float or array_like
+        ECEF-Y in km
+    z : float or array_like
+        ECEF-Z in km
+    method : str
+        Supports 'iterative' or 'closed' to select method of conversion.
+        'closed' for mathematical solution (page 96 section 2.2.1,
+        http://www.epsg.org/Portals/0/373-07-2.pdf) or 'iterative'
+        (http://www.oc.nps.edu/oc2902w/coord/coordcvt.pdf). (default = 'closed')
+
+    Returns
+    -------
+    latitude, longitude, altitude : np.array
+        Locations in latitude (degrees), longitude (degrees), and
+        altitude above WGS84 (km)
+
+    """
+
+    warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.6+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    if method is None:
+        warnings.warn("".join(["`method` must be a string value in ",
+                               "0.6.0+. Setting to function default."]),
+                      DeprecationWarning, stacklevel=2)
+        method = 'closed'
+
+    return trans.python_ecef_to_geodetic(x, y, z, method=method)

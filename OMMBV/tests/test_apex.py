@@ -6,6 +6,7 @@ import pandas as pds
 import OMMBV
 import pysat
 
+import OMMBV.trans
 from OMMBV.tests.test_core import gen_data_fixed_alt, gen_trace_data_fixed_alt
 from OMMBV.tests.test_core import gen_plot_grid_fixed_alt
 
@@ -20,7 +21,7 @@ class TestMaxApexHeight():
 
         delta = 1.
 
-        ecef_x, ecef_y, ecef_z = OMMBV.geodetic_to_ecef([0.], [320.], [550.])
+        ecef_x, ecef_y, ecef_z = OMMBV.trans.geodetic_to_ecef([0.], [320.], [550.])
 
         # get basis vectors
         zx, zy, zz, _, _, _, mx, my, mz = OMMBV.calculate_mag_drift_unit_vectors_ecef(ecef_x, ecef_y, ecef_z,
@@ -82,9 +83,9 @@ class TestApex():
     def test_apex_info_accuracy(self):
         """Characterize performance of apex_location_info as fine_step_size varied"""
         lats, longs, alts = gen_trace_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = OMMBV.geodetic_to_ecef(lats,
-                                                     longs,
-                                                     alts)
+        ecf_x, ecf_y, ecf_z = OMMBV.trans.geodetic_to_ecef(lats,
+                                                           longs,
+                                                           alts)
         # step size to be tried
         fine_steps_goal = np.array([25.6, 12.8, 6.4, 3.2, 1.6, 0.8, 0.4, 0.2,
                                     0.1, 0.05, .025, .0125, .00625, .003125,
@@ -581,7 +582,7 @@ class TestApex():
                 print (i, p_lat)
                 # iterate through target cyclicly and run commands
                 dview.targets = next(targets)
-                pending.append(dview.apply_async(OMMBV.geodetic_to_ecef, np.array([p_lat] * len(p_longs)), p_longs,
+                pending.append(dview.apply_async(OMMBV.trans.geodetic_to_ecef, np.array([p_lat] * len(p_longs)), p_longs,
                                                  p_alts))
             for i, p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
@@ -590,7 +591,7 @@ class TestApex():
 
                 # iterate through target cyclicly and run commands
                 dview.targets = next(targets)
-                pending.append(dview.apply_async(OMMBV.python_ecef_to_geodetic, x, y, z))
+                pending.append(dview.apply_async(OMMBV.trans.python_ecef_to_geodetic, x, y, z))
 
             for i, p_lat in enumerate(p_lats):
                 print ('collecting 2', i, p_lat)
@@ -622,9 +623,9 @@ class TestApex():
             # single processor case
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                x, y, z = OMMBV.geodetic_to_ecef([p_lat] * len(p_longs), p_longs, p_alts)
+                x, y, z = OMMBV.trans.geodetic_to_ecef([p_lat] * len(p_longs), p_longs, p_alts)
                 lat2, lon2, alt2 = OMMBV.ecef_to_geodetic(x, y, z)
-                x2, y2, z2 = OMMBV.geodetic_to_ecef(lat2, lon2, alt2)
+                x2, y2, z2 = OMMBV.trans.geodetic_to_ecef(lat2, lon2, alt2)
                 apex_x[i, :-1] = np.abs(x2 - x)
                 apex_y[i, :-1] = np.abs(y2 - y)
                 apex_z[i, :-1] = np.abs(z2 - z)

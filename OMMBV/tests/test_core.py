@@ -10,6 +10,7 @@ import datetime
 import functools
 
 import OMMBV as OMMBV
+import OMMBV.trans
 from OMMBV import igrf
 
 import pysat
@@ -1981,7 +1982,7 @@ class TestUnitVectors():
 
                 dview.targets = next(targets)
                 # inputs are ECEF locations
-                in_x, in_y, in_z = OMMBV.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
+                in_x, in_y, in_z = OMMBV.trans.geodetic_to_ecef([p_lat] * len(p_longs), p_longs, p_alts)
                 pending.append(dview.apply_async(OMMBV.step_along_mag_unit_vector,
                                                  in_x, in_y, in_z, dates,
                                                  direction=direction,
@@ -2026,7 +2027,7 @@ class TestUnitVectors():
 
         else:
             for i, p_lat in enumerate(p_lats):
-                in_x, in_y, in_z = OMMBV.geodetic_to_ecef([p_lat]*len(p_longs), p_longs, p_alts)
+                in_x, in_y, in_z = OMMBV.trans.geodetic_to_ecef([p_lat] * len(p_longs), p_longs, p_alts)
 
                 x[i, :-1], y[i, :-1], z[i, :-1] = OMMBV.step_along_mag_unit_vector(in_x, in_y, in_z, dates,
                                                                                   direction=direction,

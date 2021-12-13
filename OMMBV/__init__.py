@@ -10,9 +10,12 @@ if not on_rtd:
 else:
     igrf = None
 
+from OMMBV import satellite
+from OMMBV import trans
+from OMMBV import utils
+
 from OMMBV import _core
 from OMMBV._core import *
-from OMMBV import satellite
-from OMMBV import utils
+
 
 __all__ = []
