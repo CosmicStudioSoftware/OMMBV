@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 
 from OMMBV import earth_geo_radius, earth_b, earth_a
 
@@ -6,18 +7,14 @@ try:
     import OMMBV.fortran_coords
     ecef_to_geodetic = OMMBV.fortran_coords.ecef_to_geodetic
 
-    # # Temporary check on geocentric
+    # Temporarily replace geodetic calls with geocentric to test performance of
+    # geocentric Earth.
     # ecef_to_geodetic = trans.ecef_to_geocentric
-    # geodetic_to_ecef = trans.geocentric_to_ecef
 
 except (AttributeError, NameError):
     estr = ''.join(['Unable to use Fortran version of ecef_to_geodetic.',
                     ' Please check installation.'])
-    print(estr)
-
-
-# Temporary check on geocentric
-# python_ecef_to_geodetic = trans.ecef_to_geocentric
+    warnings.warn(estr)
 
 
 def geocentric_to_ecef(latitude, longitude, altitude):
@@ -177,14 +174,19 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
     # http://www.oc.nps.edu/oc2902w/coord/coordcvt.pdf
     elif method == 'iterative':
         latitude = np.arctan2(p, z)
-        r_n = earth_a/np.sqrt(1. - e2 * np.sin(latitude)**2)
+        r_n = earth_a / np.sqrt(1. - e2 * np.sin(latitude)**2)
 
         for i in np.arange(6):
-            r_n = earth_a/np.sqrt(1. - e2 * np.sin(latitude)**2)
+            r_n = earth_a / np.sqrt(1. - e2 * np.sin(latitude)**2)
             h = p / np.cos(latitude) - r_n
-            latitude = np.arctan(z / p / (1. - e2 * (r_n / (r_n + h))))
+            latitude = np.arctan(z / (p * (1. - e2 * (r_n / (r_n + h)))))
 
         # Final ellipsoidal height update
-        h = p/np.cos(latitude) - r_n
+        h = p / np.cos(latitude) - r_n
 
     return np.rad2deg(latitude), np.rad2deg(longitude), h
+
+# Temporarily replace geodetic calls with geocentric to test performance of
+# geocentric Earth.
+# python_ecef_to_geodetic = trans.ecef_to_geocentric
+# geodetic_to_ecef = trans.geocentric_to_ecef
