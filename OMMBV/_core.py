@@ -1632,51 +1632,53 @@ def apex_edge_lengths_via_footpoint(*args, **kwargs):
 
 
 def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
-                                       vector_direction, step_size=None,
-                                       max_steps=None, steps=None,
+                                       vector_direction, step_size=100.,
+                                       max_steps=1000, steps=None,
                                        edge_length=25., edge_steps=5,
                                        ecef_input=False):
     """
-    Calculates the distance between apex locations after stepping along
-    vector_direction.
+    Calculate distance between apex locations after `vector_direction` step.
 
     Using the input location, the footpoint location is calculated.
     From here, a step along both the positive and negative
-    vector_directions is taken, and the apex locations for those points are calculated.
-    The difference in position between these apex locations is the total centered
-    distance between magnetic field lines at the magnetic apex when starting
-    from the footpoints with a field line half distance of edge_length.
+    `vector_direction` is taken, and the apex locations for those points are
+    calculated. The difference in position between these apex locations is the
+    total centered distance between magnetic field lines at the magnetic apex
+    when starting from the footpoints with a field line half distance of
+    `edge_length`.
 
     Parameters
     ----------
-    glats : list-like of floats (degrees)
-        Geodetic (WGS84) latitude
-    glons : list-like of floats (degrees)
-        Geodetic (WGS84) longitude
-    alts : list-like of floats (km)
-        Geodetic (WGS84) altitude, height above surface
+    glats : list-like of floats
+        Geodetic (WGS84) latitude in degrees.
+    glons : list-like of floats
+        Geodetic (WGS84) longitude in degrees.
+    alts : list-like of floats
+        Geodetic (WGS84) altitude, height above surface in km.
     dates : list-like of datetimes
-        Date and time for determination of scalars
-    direction : string
-        'north' or 'south' for tracing through northern or
-        southern footpoint locations
-    vector_direction : string
-        'meridional' or 'zonal' unit vector directions
-    step_size : float (km)
-        Step size (km) used for field line integration
+        Date and time for determination of scalars.
+    direction : str
+        'north' or 'south' for tracing towards northern (field-aligned) or
+        southern (anti field-aligned) footpoint locations.
+    vector_direction : str
+        'meridional' or 'zonal' magnetic unit vector directions.
+    step_size : float
+        Step size (km) used for field line integration. (default=100.)
     max_steps : int
-        Number of steps taken for field line integration
-    steps : np.array
-        Integration steps array passed to full_field_line, np.arange(max_steps+1)
+        Number of steps taken for field line integration. (default=1000)
+    steps : np.array or NoneType
+        Integration steps array passed to full_field_line.
+        (default=np.arange(max_steps+1) if steps is None)
     edge_length : float (km)
         Half of total edge length (step) taken at footpoint location.
         edge_length step in both positive and negative directions.
     edge_steps : int
         Number of steps taken from footpoint towards new field line
-        in a given direction (positive/negative) along unit vector
-    ecef_input : bool (False)
+        in a given direction (positive/negative) along unit vector.
+        (default=5)
+    ecef_input : bool
         If True, latitude, longitude, and altitude are treated as
-        ECEF positions (km).
+        ECEF positions (km). (default=False)
 
     Returns
     -------
@@ -1685,56 +1687,57 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
         northern/southern hemisphere and back is taken. The return edge length
         through input location is provided.
 
-    Note
-    ----
-        vector direction refers to the magnetic unit vector direction
-
     """
 
-    if step_size is None:
-        step_size = 100.
-    if max_steps is None:
-        max_steps = 1000
     if steps is None:
         steps = np.arange(max_steps + 1)
 
-    # use spacecraft location to get ECEF
+    # Use spacecraft location to get ECEF
     if ecef_input:
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
     else:
         ecef_xs, ecef_ys, ecef_zs = geodetic_to_ecef(glats, glons, alts)
 
-    # prepare output
-    apex_edge_length = []
-
     if direction == 'north':
         ftpnts, _ = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs, dates,
-                                            ecef_input=True)
+                                            ecef_input=True,
+                                            step_size=step_size,
+                                            max_steps=max_steps,
+                                            steps=steps)
     elif direction == 'south':
         _, ftpnts = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs, dates,
-                                            ecef_input=True)
+                                            ecef_input=True,
+                                            step_size=step_size,
+                                            max_steps=max_steps,
+                                            steps=steps)
 
-    # take step from footpoint along + vector direction
+    # Take step from footpoint along + vector direction
     plus_x, plus_y, plus_z = step_along_mag_unit_vector(ftpnts[:, 0], ftpnts[:, 1], ftpnts[:, 2],
                                                         dates,
                                                         direction=vector_direction,
                                                         num_steps=edge_steps,
                                                         step_size=edge_length/edge_steps)
-    plus_apex_x, plus_apex_y, plus_apex_z = \
-        apex_location_info(plus_x, plus_y, plus_z,
-                           dates, ecef_input=True)
 
-    # take half step from first footpoint along - vector direction
+    plus_apex_x, plus_apex_y, plus_apex_z = apex_location_info(plus_x, plus_y,
+                                                               plus_z, dates,
+                                                               ecef_input=True,
+                                                               step_size=step_size,
+                                                               steps=steps)
+
+    # Take half step from first footpoint along - vector direction
     minus_x, minus_y, minus_z = step_along_mag_unit_vector(ftpnts[:, 0], ftpnts[:, 1], ftpnts[:, 2],
                                                            dates,
                                                            direction=vector_direction,
                                                            scalar=-1,
                                                            num_steps=edge_steps,
                                                            step_size=edge_length/edge_steps)
-    minus_apex_x, minus_apex_y, minus_apex_z = \
-        apex_location_info(minus_x, minus_y, minus_z,
-                           dates, ecef_input=True)
-    # take difference in apex locations
+    (minus_apex_x,
+     minus_apex_y,
+     minus_apex_z) = apex_location_info(minus_x, minus_y, minus_z, dates,
+                                        ecef_input=True, step_size=step_size,
+                                        steps=steps)
+
+    # Take difference in apex locations
     apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2 +
                                (plus_apex_y - minus_apex_y)**2 +
                                (plus_apex_z - minus_apex_z)**2)
