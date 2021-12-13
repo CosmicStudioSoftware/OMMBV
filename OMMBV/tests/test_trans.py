@@ -5,7 +5,6 @@ import numpy as np
 import OMMBV
 import OMMBV.trans
 from OMMBV import igrf
-import pysat
 
 from OMMBV.tests.test_core import gen_data_fixed_alt
 
@@ -15,10 +14,6 @@ from OMMBV.tests.test_core import gen_data_fixed_alt
 class TestTransformations():
 
     def __init__(self):
-        # placeholder for data management features
-        self.inst = pysat.Instrument('pysat', 'testing')
-        self.inst.yr = 2010.
-        self.inst.doy = 1.
 
         # Locations to perform tests at
         self.lats, self.longs, self.alts = gen_data_fixed_alt(550.)
