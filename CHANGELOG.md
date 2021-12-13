@@ -13,6 +13,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Added `pole_tol` keyword which specifies how close to vertical local
   magnetic field must be to be considered a pole.
 - Removed unit tests from release code.
+- Added `utils.datetimes_to_doubles` a method to calculate year and 
+  fractioal day of year for IGRF calls.
 
 ## [0.5.5] - 2021-06-16
 - Updated setup.py
