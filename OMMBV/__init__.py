@@ -13,5 +13,6 @@ else:
 from OMMBV import _core
 from OMMBV._core import *
 from OMMBV import satellite
+from OMMBV import utils
 
 __all__ = []

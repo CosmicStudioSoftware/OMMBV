@@ -431,17 +431,7 @@ def field_line_trace(init, date, direction, height, steps=None,
 
     # Ensure date is a float for IGRF call
     if isinstance(date, dt.datetime):
-        # Recast from datetime to float, as required by IGRF12 code
-        doy = (date - dt.datetime(date.year, 1, 1)).days
-
-        # Number of days in year, works for leap years
-        num_doy_year = (dt.datetime(date.year + 1, 1, 1)
-                        - dt.datetime(date.year, 1, 1)).days
-
-        date = float(date.year) + (float(doy) + float(date.hour
-                                                      + date.minute / 60.
-                                                      + date.second / 3600.)
-                                   / 24.) / float(num_doy_year + 1.)
+        date = OMMBV.utils.datetimes_to_doubles([date])[0]
 
     # Set altitude to terminate trace
     if height == 0:
@@ -647,9 +637,11 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     be = []
     bd = []
 
+    ddates = OMMBV.utils.datetimes_to_doubles(datetimes)
+
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z,
                                                 altitude, np.deg2rad(90. - latitude),
-                                                np.deg2rad(longitude), datetimes):
+                                                np.deg2rad(longitude), ddates):
         init = np.array([x, y, z], dtype=np.float64)
         trace = full_field_line(init, time, ref_height, step_size=step_size,
                                 max_steps=max_steps,
@@ -657,16 +649,11 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
         # store final location, full trace goes south to north
         trace_north = trace[-1, :]
         trace_south = trace[0, :]
-        # recast from datetime to float, as required by IGRF12 code
-        doy = (time - dt.datetime(time.year, 1, 1)).days
-        # number of days in year, works for leap years
-        num_doy_year = (dt.datetime(time.year + 1, 1, 1) - dt.datetime(time.year, 1, 1)).days
-        date = time.year + float(doy)/float(num_doy_year + 1)
-        date += (time.hour + time.minute/60. + time.second/3600.)/24./float(num_doy_year + 1)
+
         # get IGRF field components
         # tbn, tbe, tbd, tbmag are in nT
         # geodetic input
-        tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, date, 1, alt, colat, elong)
+        tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, time, 1, alt, colat, elong)
 
         # collect outputs
         south_x.append(trace_south[0])
@@ -759,22 +746,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
     bm = []
 
     # Need a double variable for time.
-    # First, get day of year as well as the year
-    doy = np.array([(time - dt.datetime(time.year, 1, 1)).days
-                    for time in dates], dtype=np.float64)
-    years = np.array([time.year for time in dates], dtype=np.float64)
-
-    # Number of days in year
-    num_doy_year = np.array([(dt.datetime(time.year + 1, 1, 1)
-                              - dt.datetime(time.year, 1, 1)).days
-                             for time in dates], dtype=np.float64)
-
-    # Time in hours, relative to midnight
-    time = np.array([(time.hour + time.minute/60. + time.second/3600.)/24.
-                     for time in dates], dtype=np.float64)
-
-    # Create double variable for time
-    ddates = years + (doy + time) / (num_doy_year + 1)
+    ddates = OMMBV.utils.datetimes_to_doubles(dates)
 
     # Use geocentric coordinates for calculating magnetic field since
     # transformation between it and ECEF is robust. The geodetic translations
@@ -1614,28 +1586,21 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     north_ftpnt = np.empty((len(ecef_xs), 3), dtype=np.float64)
     south_ftpnt = np.empty((len(ecef_xs), 3), dtype=np.float64)
 
+    # Get dates in relevant format
+    ddates = OMMBV.utils.datetimes_to_doubles(dates)
+
     root = np.array([0., 0., 0.], dtype=np.float64)
     i = 0
     steps = np.arange(num_steps + 1)
-    for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
-
-        # Get year and day of year
-        doy = date.toordinal() - dt.datetime(date.year, 1, 1).toordinal() + 1
-        yr = date.year
-
-        # Number of days in year
-        num_doy_year = (dt.datetime(date.year + 1, 1, 1)
-                        - dt.datetime(date.year, 1, 1)).days
-
-        double_date = float(yr) + float(doy) / num_doy_year
+    for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, ddates):
 
         root[:] = (ecef_x, ecef_y, ecef_z)
-        trace_north = field_line_trace(root, double_date, 1., 120.,
+        trace_north = field_line_trace(root, date, 1., 120.,
                                        steps=steps,
                                        step_size=step_size,
                                        max_steps=num_steps)
         # Southern tracing
-        trace_south = field_line_trace(root, double_date, -1., 120.,
+        trace_south = field_line_trace(root, date, -1., 120.,
                                        steps=steps,
                                        step_size=step_size,
                                        max_steps=num_steps)
