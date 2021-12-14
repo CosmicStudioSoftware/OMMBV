@@ -343,8 +343,9 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     bx, by, bz = vector.normalize(bx, by, bz)
 
     # take cross product of southward and northward vectors to get the zonal vector
-    zvx_foot, zvy_foot, zvz_foot = cross_product(south_x, south_y, south_z,
-                                                 north_x, north_y, north_z)
+    zvx_foot, zvy_foot, zvz_foot = OMMBV.vector.cross_product(south_x, south_y,
+                                                              south_z, north_x,
+                                                              north_y, north_z)
     # normalize the vectors
     norm_foot = np.sqrt(zvx_foot**2 + zvy_foot**2 + zvz_foot**2)
 
@@ -362,11 +363,11 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
         zvz -= dot_fa*bz
         zvx, zvy, zvz = vector.normalize(zvx, zvy, zvz)
 
-    # compute meridional vector
-    # cross product of zonal and magnetic unit vector
-    mx, my, mz = cross_product(zvx, zvy, zvz,
-                               bx, by, bz)
-    # add unit vectors for magnetic drifts in ecef coordinates
+    # Compute meridional vector
+    # Cross product of zonal and magnetic unit vector
+    mx, my, mz = vector.cross_product(zvx, zvy, zvz, bx, by, bz)
+
+    # Add unit vectors for magnetic drifts in ecef coordinates
     return zvx, zvy, zvz, bx, by, bz, mx, my, mz
 
 
@@ -482,7 +483,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 
     """
 
-    # use input location and convert to ECEF
+    # Use input location and convert to ECEF
     if ecef_input:
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
     else:
@@ -554,6 +555,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
             # Convert all locations to geodetic coordinates
             tlat, tlon, talt = trans.ecef_to_geodetic(trace[:, 0], trace[:, 1],
                                                       trace[:, 2])
+
             # Determine location that is highest with respect to the
             # geodetic Earth.
             max_idx = np.argmax(talt)
@@ -568,6 +570,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         glat, glon, alt = trans.ecef_to_geodetic(apex_out_x, apex_out_y,
                                                  apex_out_z)
         return apex_out_x, apex_out_y, apex_out_z, glat, glon, alt
+
     else:
         return apex_out_x, apex_out_y, apex_out_z
 
@@ -843,11 +846,11 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     init_type = np.zeros(len(bx)) - 1
 
     # Get meridional direction via cross with field-aligned and normalize
-    tmx, tmy, tmz = cross_product(tzx, tzy, tzz, bx, by, bz)
+    tmx, tmy, tmz = vector.cross_product(tzx, tzy, tzz, bx, by, bz)
     tmx, tmy, tmz = vector.normalize(tmx, tmy, tmz)
 
     # Get orthogonal zonal now, and normalize.
-    tzx, tzy, tzz = cross_product(bx, by, bz, tmx, tmy, tmz)
+    tzx, tzy, tzz = vector.cross_product(bx, by, bz, tmx, tmy, tmz)
     tzx, tzy, tzz = vector.normalize(tzx, tzy, tzz)
 
     # Set null meridional/zonal vectors, as well as starting locations, to nan.
@@ -1017,7 +1020,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         diff_apex_z = apex_z - apex_z2
         grad_zonal = diff_apex_z / (2. * dstep_size)
 
-        # get magnitude of magnetic field at root apex location
+        # Get magnitude of magnetic field at root apex location
         bax, bay, baz, bam = magnetic_vector(a_x, a_y, a_z, datetimes,
                                              normalize=True)
 
@@ -1035,21 +1038,24 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         d_zon_x, d_zon_y, d_zon_z = grad_brb * zx, grad_brb * zy, grad_brb * zz
 
         # Calculate meridional that completes set
-        d_mer_x, d_mer_y, d_mer_z = cross_product(d_zon_x, d_zon_y, d_zon_z,
-                                                  d_fa_x, d_fa_y, d_fa_z)
+        d_mer_x, d_mer_y, d_mer_z = vector.cross_product(d_zon_x, d_zon_y,
+                                                         d_zon_z, d_fa_x,
+                                                         d_fa_y, d_fa_z)
         mag = d_mer_x**2 + d_mer_y**2 + d_mer_z**2
         d_mer_x, d_mer_y, d_mer_z = d_mer_x / mag, d_mer_y / mag, d_mer_z / mag
 
         # e vectors (Richmond nomenclature)
         # Zonal
-        e_zon_x, e_zon_y, e_zon_z = cross_product(d_fa_x, d_fa_y, d_fa_z,
-                                                  d_mer_x, d_mer_y, d_mer_z)
+        e_zon_x, e_zon_y, e_zon_z = vector.cross_product(d_fa_x, d_fa_y, d_fa_z,
+                                                         d_mer_x, d_mer_y,
+                                                         d_mer_z)
         # Field-Aligned
-        e_fa_x, e_fa_y, e_fa_z = cross_product(d_mer_x, d_mer_y, d_mer_z,
-                                               d_zon_x, d_zon_y, d_zon_z)
+        e_fa_x, e_fa_y, e_fa_z = vector.cross_product(d_mer_x, d_mer_y, d_mer_z,
+                                                      d_zon_x, d_zon_y, d_zon_z)
         # Meridional
-        e_mer_x, e_mer_y, e_mer_z = cross_product(d_zon_x, d_zon_y, d_zon_z,
-                                                  d_fa_x, d_fa_y, d_fa_z)
+        e_mer_x, e_mer_y, e_mer_z = vector.cross_product(d_zon_x, d_zon_y,
+                                                         d_zon_z, d_fa_x,
+                                                         d_fa_y, d_fa_z)
 
         outd = {
             'd_zon_x': d_zon_x,
@@ -1101,9 +1107,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                             grad_apex * mz)
 
             # Zonal to complete set
-            d_zon2_x, d_zon2_y, d_zon2_z = cross_product(d_fa_x, d_fa_y, d_fa_z,
-                                                         d_mer2_x, d_mer2_y,
-                                                         d_mer2_z)
+            d_zon2_x, d_zon2_y, d_zon2_z = vector.cross_product(d_fa_x, d_fa_y,
+                                                                d_fa_z, d_mer2_x,
+                                                                d_mer2_y, d_mer2_z)
             mag = d_zon2_x**2 + d_zon2_y**2 + d_zon2_z**2
             d_zon2_x, d_zon2_y, d_zon2_z = (d_zon2_x / mag, d_zon2_y / mag,
                                             d_zon2_z / mag)
@@ -2131,4 +2137,4 @@ def cross_product(x1, y1, z1, x2, y2, z2):
                            "wrapper will be removed in OMMBV 0.6+"]),
                   DeprecationWarning, stacklevel=2)
 
-    return cross_product(x1, y1, z1, x2, y2, z2)
+    return vector.cross_product(x1, y1, z1, x2, y2, z2)
