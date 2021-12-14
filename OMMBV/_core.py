@@ -1,6 +1,5 @@
 """
-Supporting routines for coordinate conversions as well as vector operations and
-transformations used in Space Science.
+Primary functions for calculating magnetic basis vectors.
 """
 
 import scipy
@@ -19,7 +18,6 @@ except:
 import OMMBV.trans as trans
 import OMMBV.utils
 from OMMBV import vector
-
 
 
 def field_line_trace(init, date, direction, height, steps=None,

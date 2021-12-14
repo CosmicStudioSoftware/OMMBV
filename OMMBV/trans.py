@@ -1,3 +1,7 @@
+"""
+Supporting routines for coordinate transformations used by OMMBV.
+"""
+
 import numpy as np
 import warnings
 

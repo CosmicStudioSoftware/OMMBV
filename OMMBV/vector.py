@@ -1,3 +1,7 @@
+"""
+Supporting routines for vector operations usd within OMMBV.
+"""
+
 import numpy as np
 
 
