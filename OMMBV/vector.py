@@ -2,7 +2,7 @@ import numpy as np
 
 
 def enu_to_ecef_vector(east, north, up, glat, glong):
-    """Converts vector from East, North, Up components to ECEF
+    """Convert vector from East, North, Up components to ECEF
 
     Position of vector in geospace may be specified in either
     geocentric or geodetic coordinates, with corresponding expression
@@ -16,31 +16,33 @@ def enu_to_ecef_vector(east, north, up, glat, glong):
         Northward component of vector
     up : float or array-like
         Upward component of vector
-    latitude : float or array_like
+    glat : float or array_like
         Geodetic or geocentric latitude (degrees)
-    longitude : float or array_like
+    glong : float or array_like
         Geodetic or geocentric longitude (degrees)
 
     Returns
     -------
-    x, y, z
+    x, y, z : np.array
         Vector components along ECEF x, y, and z directions
 
     """
 
-    # convert lat and lon in degrees to radians
+    # Convert lat and lon in degrees to radians
     rlat = np.radians(glat)
     rlon = np.radians(glong)
 
-    x = -east*np.sin(rlon) - north*np.cos(rlon)*np.sin(rlat) + up*np.cos(rlon)*np.cos(rlat)
-    y = east*np.cos(rlon) - north*np.sin(rlon)*np.sin(rlat) + up*np.sin(rlon)*np.cos(rlat)
-    z = north*np.cos(rlat) + up*np.sin(rlat)
+    x = -east * np.sin(rlon) - north * np.cos(rlon) * np.sin(rlat)\
+        + up * np.cos(rlon) * np.cos(rlat)
+    y = east * np.cos(rlon) - north * np.sin(rlon) * np.sin(rlat)\
+        + up * np.sin(rlon) * np.cos(rlat)
+    z = north * np.cos(rlat) + up * np.sin(rlat)
 
     return x, y, z
 
 
 def ecef_to_enu_vector(x, y, z, glat, glong):
-    """Converts vector from ECEF X,Y,Z components to East, North, Up
+    """Convert vector from ECEF X,Y,Z components to East, North, Up
 
     Position of vector in geospace may be specified in either
     geocentric or geodetic coordinates, with corresponding expression
@@ -54,14 +56,14 @@ def ecef_to_enu_vector(x, y, z, glat, glong):
         ECEF-Y component of vector
     z : float or array-like
         ECEF-Z component of vector
-    latitude : float or array_like
+    glat : float or array_like
         Geodetic or geocentric latitude (degrees)
-    longitude : float or array_like
+    glong : float or array_like
         Geodetic or geocentric longitude (degrees)
 
     Returns
     -------
-    east, north, up
+    east, north, up : np.array
         Vector components along east, north, and up directions
 
     """
@@ -70,30 +72,32 @@ def ecef_to_enu_vector(x, y, z, glat, glong):
     rlat = np.radians(glat)
     rlon = np.radians(glong)
 
-    east = -x*np.sin(rlon) + y*np.cos(rlon)
-    north = -x*np.cos(rlon)*np.sin(rlat) - y*np.sin(rlon)*np.sin(rlat) + z*np.cos(rlat)
-    up = x*np.cos(rlon)*np.cos(rlat) + y*np.sin(rlon)*np.cos(rlat) + z*np.sin(rlat)
+    east = -x * np.sin(rlon) + y * np.cos(rlon)
+    north = -x * np.cos(rlon)*np.sin(rlat) - y * np.sin(rlon) * np.sin(rlat)\
+            + z * np.cos(rlat)
+    up = x * np.cos(rlon) * np.cos(rlat) + y * np.sin(rlon) * np.cos(rlat)\
+         + z * np.sin(rlat)
 
     return east, north, up
 
 
-def project_ecef_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
-    """Projects vector in ecef onto different basis, with components also expressed in ECEF
+def project_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
+    """Project vector onto different basis
 
     Parameters
     ----------
     x : float or array-like
-        ECEF-X component of vector
+        X component of vector
     y : float or array-like
-        ECEF-Y component of vector
+        Y component of vector
     z : float or array-like
-        ECEF-Z component of vector
-    xx : float or array-like
-        ECEF-X component of the x unit vector of new basis
-    xy : float or array-like
-        ECEF-Y component of the x unit vector of new basis
-    xz : float or array-like
-        ECEF-Z component of the x unit vector of new basis
+        Z component of vector
+    xx, yx, zx : float or array-like
+        X component of the x, y, z unit vector of new basis in original basis
+    xy, yy, zy : float or array-like
+        Y component of the x, y, z unit vector of new basis in original basis
+    xz, yz, zz : float or array-like
+        Z component of the x, y, z unit vector of new basis in original basis
 
     Returns
     -------
@@ -111,7 +115,7 @@ def project_ecef_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
 
 def normalize(x, y, z):
     """
-    Normalizes vector to produce a unit vector.
+    Normalize vector to produce a unit vector.
 
     Parameters
     ----------
