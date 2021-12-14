@@ -109,7 +109,7 @@ def project_ecef_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
     return out_x, out_y, out_z
 
 
-def normalize_vector(x, y, z):
+def normalize(x, y, z):
     """
     Normalizes vector to produce a unit vector.
 

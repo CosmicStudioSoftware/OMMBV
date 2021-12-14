@@ -46,14 +46,14 @@ class TestComparison():
         apex_zon = apex_vecs[6]
 
         # normalize into unit vectors
-        apex_mer[0, :], apex_mer[1, :], apex_mer[2, :] = OMMBV.vector.normalize_vector(-apex_mer[0, :],
-                                                                                       -apex_mer[1, :],
-                                                                                       -apex_mer[2, :])
+        apex_mer[0, :], apex_mer[1, :], apex_mer[2, :] = OMMBV.vector.normalize(-apex_mer[0, :],
+                                                                                -apex_mer[1, :],
+                                                                                -apex_mer[2, :])
 
-        apex_zon[0, :], apex_zon[1, :], apex_zon[2, :] = OMMBV.vector.normalize_vector(apex_zon[0, :],
+        apex_zon[0, :], apex_zon[1, :], apex_zon[2, :] = OMMBV.vector.normalize(apex_zon[0, :],
                                                                                        apex_zon[1, :],
                                                                                        apex_zon[2, :])
-        apex_fa[0, :], apex_fa[1, :], apex_fa[2, :] = OMMBV.vector.normalize_vector(apex_fa[0, :],
+        apex_fa[0, :], apex_fa[1, :], apex_fa[2, :] = OMMBV.vector.normalize(apex_fa[0, :],
                                                                                     apex_fa[1, :],
                                                                                     apex_fa[2, :])
 

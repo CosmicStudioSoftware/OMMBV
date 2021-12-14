@@ -9,9 +9,8 @@ import numpy as np
 import datetime as dt
 import warnings
 
-# Import reference IGRF fortran code within the package if not on RTD
-from OMMBV.vector import ecef_to_enu_vector
 
+# Import reference IGRF fortran code within the package if not on RTD
 try:
     from OMMBV import igrf as igrf, enu_to_ecef_vector, normalize_vector, cross_product
 except:
@@ -19,6 +18,7 @@ except:
 
 import OMMBV.trans as trans
 import OMMBV.utils
+from OMMBV import vector
 
 # Parameters used to define Earth ellipsoid, WGS84 parameters
 earth_a = 6378.1370
@@ -341,14 +341,14 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     north_x = north_x - ecef_x
     north_y = north_y - ecef_y
     north_z = north_z - ecef_z
-    north_x, north_y, north_z = normalize_vector(north_x, north_y, north_z)
+    north_x, north_y, north_z = vector.normalize(north_x, north_y, north_z)
     south_x = south_x - ecef_x
     south_y = south_y - ecef_y
     south_z = south_z - ecef_z
-    south_x, south_y, south_z = normalize_vector(south_x, south_y, south_z)
+    south_x, south_y, south_z = vector.normalize(south_x, south_y, south_z)
     # calculate magnetic unit vector
     bx, by, bz = enu_to_ecef_vector(be, bn, -bd, geo_lat, geo_long)
-    bx, by, bz = normalize_vector(bx, by, bz)
+    bx, by, bz = vector.normalize(bx, by, bz)
 
     # take cross product of southward and northward vectors to get the zonal vector
     zvx_foot, zvy_foot, zvz_foot = cross_product(south_x, south_y, south_z,
@@ -368,7 +368,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
         zvx -= dot_fa*bx
         zvy -= dot_fa*by
         zvz -= dot_fa*bz
-        zvx, zvy, zvz = normalize_vector(zvx, zvy, zvz)
+        zvx, zvy, zvz = vector.normalize(zvx, zvy, zvz)
 
     # compute meridional vector
     # cross product of zonal and magnetic unit vector
@@ -830,7 +830,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
     # If magnetic field is pointed purely upward, then full basis can't
     # be calculated. Check for this condition and store locations.
-    be, bn, bu = ecef_to_enu_vector(bx, by, bz, latitude, longitude)
+    be, bn, bu = vector.ecef_to_enu_vector(bx, by, bz, latitude, longitude)
     null_idx, = np.where(np.abs(bu) > 1. - pole_tol)
 
     # To start, need a vector perpendicular to mag field. There are infinitely
@@ -841,11 +841,11 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
     # Get meridional direction via cross with field-aligned and normalize
     tmx, tmy, tmz = cross_product(tzx, tzy, tzz, bx, by, bz)
-    tmx, tmy, tmz = normalize_vector(tmx, tmy, tmz)
+    tmx, tmy, tmz = vector.normalize(tmx, tmy, tmz)
 
     # Get orthogonal zonal now, and normalize.
     tzx, tzy, tzz = cross_product(bx, by, bz, tmx, tmy, tmz)
-    tzx, tzy, tzz = normalize_vector(tzx, tzy, tzz)
+    tzx, tzy, tzz = vector.normalize(tzx, tzy, tzz)
 
     # Set null meridional/zonal vectors, as well as starting locations, to nan.
     if len(null_idx) > 0:
