@@ -12,7 +12,7 @@ import warnings
 
 # Import reference IGRF fortran code within the package if not on RTD
 try:
-    from OMMBV import igrf as igrf, enu_to_ecef_vector, normalize_vector, cross_product
+    from OMMBV import igrf as igrf
 except:
     pass
 
@@ -1823,9 +1823,9 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
 def geocentric_to_ecef(latitude, longitude, altitude):
     """Convert geocentric coordinates into ECEF
 
-    .. deprecated:: 0.5.6
+    .. deprecated:: 0.6.0
        Function moved to `OMMBV.trans.geocentric_to_ecef`, this wrapper will
-       be removed in 0.6
+       be removed in 0.7.0
 
     Parameters
     ----------
@@ -1844,7 +1844,7 @@ def geocentric_to_ecef(latitude, longitude, altitude):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
-                           "wrapper will be removed in OMMBV 0.6+"]),
+                           "wrapper will be removed in OMMBV 0.7+"]),
                   DeprecationWarning, stacklevel=2)
 
     return trans.geocentric_to_ecef(latitude, longitude, altitude)
@@ -1853,9 +1853,9 @@ def geocentric_to_ecef(latitude, longitude, altitude):
 def ecef_to_geocentric(x, y, z, ref_height=trans.earth_geo_radius):
     """Convert ECEF into geocentric coordinates
 
-    .. deprecated:: 0.5.6
+    .. deprecated:: 0.6.0
        Function moved to `OMMBV.trans.ecef_to_geocentric`, this wrapper will
-       be removed in 0.6
+       be removed in 0.7.0
 
     Parameters
     ----------
@@ -1877,7 +1877,7 @@ def ecef_to_geocentric(x, y, z, ref_height=trans.earth_geo_radius):
 
     """
     warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
-                           "wrapper will be removed in OMMBV 0.6+"]),
+                           "wrapper will be removed in OMMBV 0.7+"]),
                   DeprecationWarning, stacklevel=2)
 
     return trans.ecef_to_geocentric(x, y, z, ref_height=ref_height)
@@ -1886,9 +1886,9 @@ def ecef_to_geocentric(x, y, z, ref_height=trans.earth_geo_radius):
 def geodetic_to_ecef(latitude, longitude, altitude):
     """Convert WGS84 geodetic coordinates into ECEF
 
-    .. deprecated:: 0.5.6
+    .. deprecated:: 0.6.0
        Function moved to `OMMBV.trans.geodetic_to_ecef`, this wrapper will
-       be removed in 0.6
+       be removed in 0.7.0
 
     Parameters
     ----------
@@ -1907,7 +1907,7 @@ def geodetic_to_ecef(latitude, longitude, altitude):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
-                           "wrapper will be removed in OMMBV 0.6+"]),
+                           "wrapper will be removed in OMMBV 0.7+"]),
                   DeprecationWarning, stacklevel=2)
 
     return trans.geodetic_to_ecef(latitude, longitude, altitude)
@@ -1916,9 +1916,9 @@ def geodetic_to_ecef(latitude, longitude, altitude):
 def python_ecef_to_geodetic(x, y, z, method='closed'):
     """Convert ECEF into Geodetic WGS84 coordinates using Python code.
 
-    .. deprecated:: 0.5.6
+    .. deprecated:: 0.6.0
        Function moved to `OMMBV.trans.geodetic_to_ecef`, this wrapper will
-       be removed in 0.6
+       be removed in 0.7.0
 
     Parameters
     ----------
@@ -1943,7 +1943,7 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
-                           "wrapper will be removed in OMMBV 0.6+"]),
+                           "wrapper will be removed in OMMBV 0.7+"]),
                   DeprecationWarning, stacklevel=2)
 
     if method is None:
@@ -1953,3 +1953,184 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
         method = 'closed'
 
     return trans.python_ecef_to_geodetic(x, y, z, method=method)
+
+
+def enu_to_ecef_vector(east, north, up, glat, glong):
+    """Convert vector from East, North, Up components to ECEF
+
+    .. deprecated:: 0.6.0
+       Function moved to `OMMBV.vector.enu_to_ecef`, this wrapper will
+       be removed in 0.7.0
+
+    Position of vector in geospace may be specified in either
+    geocentric or geodetic coordinates, with corresponding expression
+    of the vector using radial or ellipsoidal unit vectors.
+
+    Parameters
+    ----------
+    east : float or array-like
+        Eastward component of vector
+    north : float or array-like
+        Northward component of vector
+    up : float or array-like
+        Upward component of vector
+    glat : float or array_like
+        Geodetic or geocentric latitude (degrees)
+    glong : float or array_like
+        Geodetic or geocentric longitude (degrees)
+
+    Returns
+    -------
+    x, y, z : np.array
+        Vector components along ECEF x, y, and z directions
+
+    """
+
+    warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.6+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    return OMMBV.vector.enu_to_ecef_vector(east, north, up, glat, glong)
+
+
+def ecef_to_enu_vector(x, y, z, glat, glong):
+    """Convert vector from ECEF X,Y,Z components to East, North, Up
+
+    .. deprecated:: 0.6.0
+       Function moved to `OMMBV.vector.ecef_to_enu`, this wrapper will
+       be removed in 0.7.0
+
+    Position of vector in geospace may be specified in either
+    geocentric or geodetic coordinates, with corresponding expression
+    of the vector using radial or ellipsoidal unit vectors.
+
+    Parameters
+    ----------
+    x : float or array-like
+        ECEF-X component of vector
+    y : float or array-like
+        ECEF-Y component of vector
+    z : float or array-like
+        ECEF-Z component of vector
+    glat : float or array_like
+        Geodetic or geocentric latitude (degrees)
+    glong : float or array_like
+        Geodetic or geocentric longitude (degrees)
+
+    Returns
+    -------
+    east, north, up : np.array
+        Vector components along east, north, and up directions
+
+    """
+
+    warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.6+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    return OMMBV.vector.ecef_to_enu_vector(x, y, z, glat, glong)
+
+
+def project_ECEF_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
+    """Project vector onto different basis
+
+    .. deprecated:: 0.6.0
+       Function moved to `OMMBV.vector.project_onto_basis`, this wrapper will
+       be removed in 0.7.0
+
+    Parameters
+    ----------
+    x : float or array-like
+        X component of vector
+    y : float or array-like
+        Y component of vector
+    z : float or array-like
+        Z component of vector
+    xx, yx, zx : float or array-like
+        X component of the x, y, z unit vector of new basis in original basis
+    xy, yy, zy : float or array-like
+        Y component of the x, y, z unit vector of new basis in original basis
+    xz, yz, zz : float or array-like
+        Z component of the x, y, z unit vector of new basis in original basis
+
+    Returns
+    -------
+    x, y, z
+        Vector projected onto new basis
+
+    """
+
+    warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.6+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    return OMMBV.vector.project_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz,
+                                           zx, zy, zz)
+
+
+def normalize_vector(x, y, z):
+    """
+    Normalize vector to produce a unit vector.
+
+    .. deprecated:: 0.6.0
+       Function moved to `OMMBV.vector.normalize`, this wrapper will
+       be removed in 0.7.0
+
+    Parameters
+    ----------
+    x : float or array-like
+        X component of vector
+    y : float or array-like
+        Y component of vector
+    z : float or array-like
+        Z component of vector
+
+    Returns
+    -------
+    x, y, z
+        Unit vector x,y,z components
+
+    """
+
+    warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.6+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    return OMMBV.vector.normalize(x, y, z)
+
+
+def cross_product(x1, y1, z1, x2, y2, z2):
+    """
+    Cross product of two vectors, v1 x v2
+
+    .. deprecated:: 0.6.0
+       Function moved to `OMMBV.vector.cross_product`, this wrapper will
+       be removed in 0.7.0
+
+    Parameters
+    ----------
+    x1 : float or array-like
+        X component of vector 1
+    y1 : float or array-like
+        Y component of vector 1
+    z1 : float or array-like
+        Z component of vector 1
+    x2 : float or array-like
+        X component of vector 2
+    y2 : float or array-like
+        Y component of vector 2
+    z2 : float or array-like
+        Z component of vector 2
+
+    Returns
+    -------
+    x, y, z
+        Unit vector x,y,z components
+
+    """
+
+    warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.6+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    return cross_product(x1, y1, z1, x2, y2, z2)
