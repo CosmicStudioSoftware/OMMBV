@@ -11,6 +11,25 @@ from OMMBV.tests.test_core import gen_data_fixed_alt
 
 # ############## TRANSFORMATIONS ############## #
 
+
+def assert_difference_tol(data, data2, tol=1.E-5):
+    """Assert absolute difference is less than `tol`
+
+    Parameters
+    ----------
+    data, data2 : np.array
+      Data to be differenced.
+    tol : float
+        Tolerance allowed between data
+
+    """
+
+    diff = np.abs(data2 - data)
+    assert np.all(diff < tol)
+
+    return
+
+
 class TestTransformations():
 
     def __init__(self):
@@ -32,13 +51,9 @@ class TestTransformations():
         idx, = np.where(elong < 0)
         elong[idx] += 360.
 
-        d_lat = lat - self.lats
-        d_long = elong - self.longs
-        d_alt = alt - self.alts
-
-        assert np.all(np.abs(d_lat) < 1.E-5)
-        assert np.all(np.abs(d_long) < 1.E-5)
-        assert np.all(np.abs(d_alt) < 1.E-5)
+        assert_difference_tol(lat, self.lats)
+        assert_difference_tol(elong, self.longs)
+        assert_difference_tol(alt, self.alts)
 
         return
 
@@ -52,13 +67,9 @@ class TestTransformations():
         ecf_x2, ecf_y2, ecf_z2 = OMMBV.trans.geocentric_to_ecef(self.lats[0],
                                                                 self.longs[0],
                                                                 self.alts[0])
-        d_x = ecf_x2 - ecf_x
-        d_y = ecf_x2 - ecf_x
-        d_z = ecf_x2 - ecf_x
-
-        assert np.all(np.abs(d_x) < 1.E-5)
-        assert np.all(np.abs(d_y) < 1.E-5)
-        assert np.all(np.abs(d_z) < 1.E-5)
+        assert_difference_tol(ecf_x, ecf_x2)
+        assert_difference_tol(ecf_y, ecf_y2)
+        assert_difference_tol(ecf_z, ecf_z2)
 
         return
 
@@ -78,13 +89,9 @@ class TestTransformations():
         ecf_x2, ecf_y2, ecf_z2 = OMMBV.trans.geocentric_to_ecef(secf_x[0],
                                                                 secf_y[0],
                                                                 secf_z[0])
-        d_x = ecf_x2 - ecf_x
-        d_y = ecf_x2 - ecf_x
-        d_z = ecf_x2 - ecf_x
-
-        assert np.all(np.abs(d_x) < 1.E-5)
-        assert np.all(np.abs(d_y) < 1.E-5)
-        assert np.all(np.abs(d_z) < 1.E-5)
+        assert_difference_tol(ecf_x, ecf_x2)
+        assert_difference_tol(ecf_y, ecf_y2)
+        assert_difference_tol(ecf_z, ecf_z2)
 
         return
 
@@ -99,13 +106,9 @@ class TestTransformations():
                                                               self.longs[0],
                                                               self.alts[0])
 
-        d_x = ecf_x2 - ecf_x
-        d_y = ecf_x2 - ecf_x
-        d_z = ecf_x2 - ecf_x
-
-        assert np.all(np.abs(d_x) < 1.E-5)
-        assert np.all(np.abs(d_y) < 1.E-5)
-        assert np.all(np.abs(d_z) < 1.E-5)
+        assert_difference_tol(ecf_x, ecf_x2)
+        assert_difference_tol(ecf_y, ecf_y2)
+        assert_difference_tol(ecf_z, ecf_z2)
 
         return
 
@@ -125,13 +128,9 @@ class TestTransformations():
         ecf_x2, ecf_y2, ecf_z2 = OMMBV.trans.geodetic_to_ecef(secf_x[0],
                                                               secf_y[0],
                                                               secf_z[0])
-        d_x = ecf_x2 - ecf_x
-        d_y = ecf_x2 - ecf_x
-        d_z = ecf_x2 - ecf_x
-
-        assert np.all(np.abs(d_x) < 1.E-5)
-        assert np.all(np.abs(d_y) < 1.E-5)
-        assert np.all(np.abs(d_z) < 1.E-5)
+        assert_difference_tol(ecf_x, ecf_x2)
+        assert_difference_tol(ecf_y, ecf_y2)
+        assert_difference_tol(ecf_z, ecf_z2)
 
         return
 
@@ -153,21 +152,13 @@ class TestTransformations():
         idx, = np.where(elong2 < 0)
         elong2[idx] += 360.
 
-        d_lat = lat - self.lats
-        d_long = elong - self.longs
-        d_alt = alt - self.alts
+        assert_difference_tol(lat, self.lats)
+        assert_difference_tol(elong, self.longs)
+        assert_difference_tol(alt, self.alts)
 
-        assert np.all(np.abs(d_lat) < 1.E-5)
-        assert np.all(np.abs(d_long) < 1.E-5)
-        assert np.all(np.abs(d_alt) < 1.E-5)
-
-        d_lat = lat2 - self.lats
-        d_long = elong2 - self.longs
-        d_alt = alt2 - self.alts
-
-        assert np.all(np.abs(d_lat) < 1.E-5)
-        assert np.all(np.abs(d_long) < 1.E-5)
-        assert np.all(np.abs(d_alt) < 1.E-5)
+        assert_difference_tol(lat2, self.lats)
+        assert_difference_tol(elong2, self.longs)
+        assert_difference_tol(alt2, self.alts)
 
         return
 
@@ -186,13 +177,9 @@ class TestTransformations():
             idx, = np.where(elong < 0)
             elong[idx] += 360.
 
-            d_lat = lat - self.lats
-            d_long = elong - self.longs
-            d_alt = alt - self.alts
-
-            assert np.all(np.abs(d_lat) < 1.E-5)
-            assert np.all(np.abs(d_long) < 1.E-5)
-            assert np.all(np.abs(d_alt) < 1.E-5)
+            assert_difference_tol(lat, self.lats)
+            assert_difference_tol(elong, self.longs)
+            assert_difference_tol(alt, self.alts)
 
         return
 
@@ -216,16 +203,13 @@ class TestTransformations():
         idx, = np.where(elong < 0)
         elong[idx] += 360.
 
-        d_lat = lat - self.lats
-        d_long = elong - self.longs
-        d_alt = alt - self.alts
+        assert_difference_tol(lat, self.lats)
+        assert_difference_tol(elong, self.longs)
+        assert_difference_tol(alt, self.alts)
 
-        assert np.all(np.abs(d_lat) < 1.E-5)
-        assert np.all(np.abs(d_long) < 1.E-5)
-        assert np.all(np.abs(d_alt) < 1.E-5)
-        assert np.all(np.abs(ecf_x - ecfs_x) < 1.E-5)
-        assert np.all(np.abs(ecf_y - ecfs_y) < 1.E-5)
-        assert np.all(np.abs(ecf_z - ecfs_z) < 1.E-5)
+        assert_difference_tol(ecf_x, ecfs_x)
+        assert_difference_tol(ecf_y, ecfs_y)
+        assert_difference_tol(ecf_z, ecfs_z)
 
         return
 
@@ -248,13 +232,9 @@ class TestTransformations():
             if (elong < 0):
                 elong = elong + 360.
 
-            d_lat = lat - geo_lat
-            d_long = elong - geo_lon
-            d_alt = alt - geo_alt
-
-            assert np.all(np.abs(d_lat) < 1.E-5)
-            assert np.all(np.abs(d_long) < 1.E-5)
-            assert np.all(np.abs(d_alt) < 1.E-5)
+            assert_difference_tol(lat, geo_lat)
+            assert_difference_tol(elong, geo_lon)
+            assert_difference_tol(alt, geo_alt)
 
         return
 
