@@ -1,7 +1,12 @@
 import numpy as np
 import warnings
 
-from OMMBV import earth_geo_radius, earth_b, earth_a
+# Parameters used to define Earth ellipsoid, WGS84 parameters
+earth_a = 6378.1370
+earth_b = 6356.75231424518
+
+# Standard geocentric Earth radius, average radius of Earth in km.
+earth_geo_radius = 6371.
 
 try:
     import OMMBV.fortran_coords

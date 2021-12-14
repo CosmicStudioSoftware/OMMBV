@@ -20,12 +20,6 @@ import OMMBV.trans as trans
 import OMMBV.utils
 from OMMBV import vector
 
-# Parameters used to define Earth ellipsoid, WGS84 parameters
-earth_a = 6378.1370
-earth_b = 6356.75231424518
-
-# Standard geocentric Earth radius, average radius of Earth in km.
-earth_geo_radius = 6371.
 
 
 def field_line_trace(init, date, direction, height, steps=None,
@@ -1845,7 +1839,7 @@ def geocentric_to_ecef(latitude, longitude, altitude):
     return trans.geocentric_to_ecef(latitude, longitude, altitude)
 
 
-def ecef_to_geocentric(x, y, z, ref_height=earth_geo_radius):
+def ecef_to_geocentric(x, y, z, ref_height=trans.earth_geo_radius):
     """Convert ECEF into geocentric coordinates
 
     .. deprecated:: 0.5.6
@@ -1862,7 +1856,7 @@ def ecef_to_geocentric(x, y, z, ref_height=earth_geo_radius):
         ECEF-Z in km
     ref_height : float or array_like
         Reference radius used for calculating height in km.
-        (default=earth_geo_radius)
+        (default=trans.earth_geo_radius)
 
     Returns
     -------
