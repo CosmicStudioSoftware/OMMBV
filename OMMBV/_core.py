@@ -492,24 +492,24 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 
     # Prepare parameters for field line trace
     max_steps = 100
-    _apex_coarse_steps = np.arange(max_steps + 1)
+    apex_coarse_steps = np.arange(max_steps + 1)
 
     # High resolution trace parameters
-    _apex_fine_steps = np.arange(fine_max_steps + 1)
+    apex_fine_steps = np.arange(fine_max_steps + 1)
 
     # Prepare output
-    _apex_out_x = np.full(len(ecef_xs), np.nan, dtype=np.float64)
-    _apex_out_y = np.full(len(ecef_xs), np.nan, dtype=np.float64)
-    _apex_out_z = np.full(len(ecef_xs), np.nan, dtype=np.float64)
+    apex_out_x = np.full(len(ecef_xs), np.nan, dtype=np.float64)
+    apex_out_y = np.full(len(ecef_xs), np.nan, dtype=np.float64)
+    apex_out_z = np.full(len(ecef_xs), np.nan, dtype=np.float64)
 
     i = 0
     for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, dates):
 
         # Ensure starting location is valid
         if np.any(np.isnan([ecef_x, ecef_y, ecef_z])):
-            _apex_out_x[i] = np.nan
-            _apex_out_y[i] = np.nan
-            _apex_out_z[i] = np.nan
+            apex_out_x[i] = np.nan
+            apex_out_y[i] = np.nan
+            apex_out_z[i] = np.nan
             i += 1
             continue
 
@@ -518,7 +518,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         trace = full_field_line(np.array([ecef_x, ecef_y, ecef_z],
                                          dtype=np.float64),
                                 date, 0.,
-                                steps=_apex_coarse_steps,
+                                steps=apex_coarse_steps,
                                 step_size=step_size,
                                 max_steps=max_steps)
 
@@ -530,14 +530,25 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         max_idx = np.argmax(talt)
 
         # Repeat using a high resolution trace one big step size each
-        # direction around identified max.
-        new_step = step_size
+        # direction around identified max. It is possible internal functions
+        # had to increase step size. Get step estimate from trace.
+        if max_idx > 0:
+            new_step = np.sqrt((trace[max_idx, 0] - trace[max_idx - 1, 0])**2
+                               + (trace[max_idx, 1] - trace[max_idx - 1, 1])**2
+                               + (trace[max_idx, 2] - trace[max_idx - 1, 2])**2)
+        elif max_idx < len(talt) - 1:
+            new_step = np.sqrt((trace[max_idx, 0] - trace[max_idx + 1, 0])**2
+                               + (trace[max_idx, 1] - trace[max_idx + 1, 1])**2
+                               + (trace[max_idx, 2] - trace[max_idx + 1, 2])**2)
+        else:
+            new_step = step_size
+
         while new_step > fine_step_size:
             new_step /= 2.
 
             # Setting recurse False ensures only max_steps are taken.
             trace = full_field_line(trace[max_idx, :], date, 0.,
-                                    steps=_apex_fine_steps,
+                                    steps=apex_fine_steps,
                                     step_size=new_step,
                                     max_steps=fine_max_steps,
                                     recurse=False)
@@ -550,17 +561,17 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
             max_idx = np.argmax(talt)
 
         # Collect outputs
-        _apex_out_x[i] = trace[max_idx, 0]
-        _apex_out_y[i] = trace[max_idx, 1]
-        _apex_out_z[i] = trace[max_idx, 2]
+        apex_out_x[i] = trace[max_idx, 0]
+        apex_out_y[i] = trace[max_idx, 1]
+        apex_out_z[i] = trace[max_idx, 2]
         i += 1
 
     if return_geodetic:
-        glat, glon, alt = trans.ecef_to_geodetic(_apex_out_x, _apex_out_y,
-                                                 _apex_out_z)
-        return _apex_out_x, _apex_out_y, _apex_out_z, glat, glon, alt
+        glat, glon, alt = trans.ecef_to_geodetic(apex_out_x, apex_out_y,
+                                                 apex_out_z)
+        return apex_out_x, apex_out_y, apex_out_z, glat, glon, alt
     else:
-        return _apex_out_x, _apex_out_y, _apex_out_z
+        return apex_out_x, apex_out_y, apex_out_z
 
 
 def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):

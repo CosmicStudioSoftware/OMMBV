@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.5.6] - 2021-12-13
+## [0.6.0] - 2021-12-13
 - Reduced uncertainty in scaling parameters for multipole fields.
 - Improved robustness of calculation at higher latitudes.
 - Deprecated `scalar` input for basis vectors.
@@ -15,6 +15,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Removed unit tests from release code.
 - Added `utils.datetimes_to_doubles` a method to calculate year and 
   fractional day of year for IGRF calls.
+- Improved robustness of `apex_location_info` to unreported changes in step_size
 
 ## [0.5.5] - 2021-06-16
 - Updated setup.py
