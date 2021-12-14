@@ -638,12 +638,12 @@ class TestUnitVectors():
                 print ('collecting ', i, p_lat)
                 # collect output
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pending.pop(0).get()
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                        [p_lat] * len(p_longs), p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                                     [p_lat] * len(p_longs), p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                                     [p_lat] * len(p_longs), p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz,
+                                                                                 [p_lat] * len(p_longs), p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu(tbx, tby, tbz,
+                                                                              [p_lat] * len(p_longs), p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz,
+                                                                              [p_lat] * len(p_longs), p_longs)
 
                 # pull out info about the vector generation
                 grad_zon[i, :-1], grad_mer[i, :-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
@@ -655,29 +655,29 @@ class TestUnitVectors():
                 dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dzx, dzy, dzz,
-                                                                                              [p_lat] * len(p_longs), p_longs)
+                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
+                                                                                       [p_lat] * len(p_longs), p_longs)
                 dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dzx, dzy, dzz,
-                                                                                                 [p_lat] * len(p_longs),
-                                                                                                 p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dfx, dfy, dfz,
-                                                                                              [p_lat] * len(p_longs), p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dmx, dmy, dmz,
-                                                                                           [p_lat] * len(p_longs), p_longs)
+                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
+                                                                                          [p_lat] * len(p_longs),
+                                                                                          p_longs)
+                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.vector.ecef_to_enu(dfx, dfy, dfz,
+                                                                                       [p_lat] * len(p_longs), p_longs)
+                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
+                                                                                    [p_lat] * len(p_longs), p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dmx, dmy, dmz,
-                                                                                              [p_lat] * len(p_longs), p_longs)
+                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
+                                                                                       [p_lat] * len(p_longs), p_longs)
 
                 ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
                 efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
                 emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
-                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(ezx, ezy, ezz,
-                                                                                              [p_lat] * len(p_longs), p_longs)
-                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(efx, efy, efz,
-                                                                                              [p_lat] * len(p_longs), p_longs)
-                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(emx, emy, emz,
-                                                                                           [p_lat] * len(p_longs), p_longs)
+                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(ezx, ezy, ezz,
+                                                                                       [p_lat] * len(p_longs), p_longs)
+                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.vector.ecef_to_enu(efx, efy, efz,
+                                                                                       [p_lat] * len(p_longs), p_longs)
+                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.vector.ecef_to_enu(emx, emy, emz,
+                                                                                    [p_lat] * len(p_longs), p_longs)
 
         else:
             for i, p_lat in enumerate(p_lats):
@@ -687,12 +687,12 @@ class TestUnitVectors():
                                                                                         p_alts, [date]*len(p_longs),
                                                                                         full_output=True,
                                                                                         include_debug=True)
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                        [p_lat] * len(p_longs), p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                                     [p_lat] * len(p_longs), p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                                     [p_lat] * len(p_longs), p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz,
+                                                                                 [p_lat] * len(p_longs), p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu(tbx, tby, tbz,
+                                                                              [p_lat] * len(p_longs), p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz,
+                                                                              [p_lat] * len(p_longs), p_longs)
                 # pull out info about the vector generation
                 grad_zon[i, :-1], grad_mer[i, :-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
                 tol_zon[i, :-1], tol_mer[i, :-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
@@ -703,36 +703,36 @@ class TestUnitVectors():
                 dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
                 dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
                 dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dzx, dzy, dzz,
-                                                                                              [p_lat] * len(p_longs),
-                                                                                              p_longs)
+                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
+                                                                                       [p_lat] * len(p_longs),
+                                                                                       p_longs)
                 dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dzx, dzy, dzz,
-                                                                                                 [p_lat] * len(p_longs),
-                                                                                                 p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dfx, dfy, dfz,
-                                                                                              [p_lat] * len(p_longs),
-                                                                                              p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dmx, dmy, dmz,
-                                                                                           [p_lat] * len(p_longs),
-                                                                                           p_longs)
+                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
+                                                                                          [p_lat] * len(p_longs),
+                                                                                          p_longs)
+                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.vector.ecef_to_enu(dfx, dfy, dfz,
+                                                                                       [p_lat] * len(p_longs),
+                                                                                       p_longs)
+                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
+                                                                                    [p_lat] * len(p_longs),
+                                                                                    p_longs)
                 dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(dmx, dmy, dmz,
-                                                                                              [p_lat] * len(p_longs),
-                                                                                              p_longs)
+                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
+                                                                                       [p_lat] * len(p_longs),
+                                                                                       p_longs)
 
                 ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
                 efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
                 emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
-                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(ezx, ezy, ezz,
-                                                                                              [p_lat] * len(p_longs),
-                                                                                              p_longs)
-                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(efx, efy, efz,
-                                                                                              [p_lat] * len(p_longs),
-                                                                                              p_longs)
-                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(emx, emy, emz,
-                                                                                           [p_lat] * len(p_longs),
-                                                                                           p_longs)
+                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(ezx, ezy, ezz,
+                                                                                       [p_lat] * len(p_longs),
+                                                                                       p_longs)
+                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.vector.ecef_to_enu(efx, efy, efz,
+                                                                                       [p_lat] * len(p_longs),
+                                                                                       p_longs)
+                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.vector.ecef_to_enu(emx, emy, emz,
+                                                                                    [p_lat] * len(p_longs),
+                                                                                    p_longs)
 
         # account for periodicity
         zvx[:, -1] = zvx[:, 0]
@@ -1519,21 +1519,21 @@ class TestUnitVectors():
     #             dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
     #             dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
     #             dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-    #             d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
+    #             d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu(dzx, dzy, dzz,
     #                                                                                    [p_lat]*len(p_longs),
     #                                                                                    p_longs)
     #             dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-    #             d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
+    #             d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu(dzx, dzy, dzz,
     #                                                                                       [p_lat]*len(p_longs),
     #                                                                                       p_longs)
-    #             d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
+    #             d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu(dfx, dfy, dfz,
     #                                                                                    [p_lat]*len(p_longs),
     #                                                                                    p_longs)
-    #             d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
+    #             d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu(dmx, dmy, dmz,
     #                                                                                 [p_lat]*len(p_longs),
     #                                                                                 p_longs)
     #             dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-    #             d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
+    #             d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu(dmx, dmy, dmz,
     #                                                                                    [p_lat]*len(p_longs),
     #                                                                                    p_longs)
     #
@@ -1552,18 +1552,18 @@ class TestUnitVectors():
     #             dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
     #             dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
     #             dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-    #             d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
+    #             d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.ecef_to_enu(dzx, dzy, dzz,
     #                                                                                    [p_lat]*len(p_longs), p_longs)
     #             dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-    #             d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu_vector(dzx, dzy, dzz,
+    #             d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.ecef_to_enu(dzx, dzy, dzz,
     #                                                                                       [p_lat]*len(p_longs),
     #                                                                                       p_longs)
-    #             d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu_vector(dfx, dfy, dfz,
+    #             d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.ecef_to_enu(dfx, dfy, dfz,
     #                                                                                    [p_lat]*len(p_longs), p_longs)
-    #             d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
+    #             d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.ecef_to_enu(dmx, dmy, dmz,
     #                                                                                 [p_lat]*len(p_longs), p_longs)
     #             dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-    #             d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu_vector(dmx, dmy, dmz,
+    #             d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.ecef_to_enu(dmx, dmy, dmz,
     #                                                                                    [p_lat]*len(p_longs), p_longs)
     #
     #     # account for periodicity
@@ -1698,30 +1698,30 @@ class TestUnitVectors():
                 print('collecting ', i, p_lat)
                 # collect output from first run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                        [p_lat] * len(p_longs),
-                                                                                        p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                                     [p_lat] * len(p_longs),
-                                                                                     p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                                     [p_lat] * len(p_longs),
-                                                                                     p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz,
+                                                                                 [p_lat] * len(p_longs),
+                                                                                 p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu(tbx, tby, tbz,
+                                                                              [p_lat] * len(p_longs),
+                                                                              p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz,
+                                                                              [p_lat] * len(p_longs),
+                                                                              p_longs)
                 # collect output from second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = pending.pop(0).get()
-                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a)  # /zvx[i,:-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b)  # /zvy[i,:-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c)  # /zvz[i,:-1]
 
-                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a)  # /bx[i,:-1]
                 by[i, :-1] = (by[i, :-1] - _b)  # /by[i,:-1]
                 bz[i, :-1] = (bz[i, :-1] - _c)  # /bz[i,:-1]
 
-                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a)  # /mx[i,:-1]
                 my[i, :-1] = (my[i, :-1] - _b)  # /my[i,:-1]
@@ -1734,34 +1734,34 @@ class TestUnitVectors():
                                                                         [p_lat]*len(p_longs), p_longs,
                                                                         p_alts, [date]*len(p_longs),
                                                                         step_size=1.)
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz,
-                                                                                        [p_lat] * len(p_longs),
-                                                                                        p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz,
-                                                                                     [p_lat] * len(p_longs),
-                                                                                     p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz,
-                                                                                     [p_lat] * len(p_longs),
-                                                                                     p_longs)
+                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz,
+                                                                                 [p_lat] * len(p_longs),
+                                                                                 p_longs)
+                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu(tbx, tby, tbz,
+                                                                              [p_lat] * len(p_longs),
+                                                                              p_longs)
+                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz,
+                                                                              [p_lat] * len(p_longs),
+                                                                              p_longs)
 
                 # second run
                 tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs),
                     step_size=2.)
-                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 zvx[i, :-1] = (zvx[i, :-1] - _a)  # /zvx[i,:-1]
                 zvy[i, :-1] = (zvy[i, :-1] - _b)  # /zvy[i,:-1]
                 zvz[i, :-1] = (zvz[i, :-1] - _c)  # /zvz[i,:-1]
 
-                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu(tbx, tby, tbz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 bx[i, :-1] = (bx[i, :-1] - _a)  # /bx[i,:-1]
                 by[i, :-1] = (by[i, :-1] - _b)  # /by[i,:-1]
                 bz[i, :-1] = (bz[i, :-1] - _c)  # /bz[i,:-1]
 
-                _a, _b, _c = OMMBV.vector.ecef_to_enu_vector(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
+                _a, _b, _c = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz, [p_lat] * len(p_longs), p_longs)
                 # take difference with first run
                 mx[i, :-1] = (mx[i, :-1] - _a)  # /mx[i,:-1]
                 my[i, :-1] = (my[i, :-1] - _b)  # /my[i,:-1]

@@ -63,9 +63,9 @@ class TestComparison():
         zx, zy, zz, fx, fy, fz, mx, my, mz = out
 
         # convert into north, east, and up system
-        ze, zn, zu = OMMBV.vector.ecef_to_enu_vector(zx, zy, zz, eq_lat, eq_long)
-        fe, fn, fu = OMMBV.vector.ecef_to_enu_vector(fx, fy, fz, eq_lat, eq_long)
-        me, mn, mu = OMMBV.vector.ecef_to_enu_vector(mx, my, mz, eq_lat, eq_long)
+        ze, zn, zu = OMMBV.vector.ecef_to_enu(zx, zy, zz, eq_lat, eq_long)
+        fe, fn, fu = OMMBV.vector.ecef_to_enu(fx, fy, fz, eq_lat, eq_long)
+        me, mn, mu = OMMBV.vector.ecef_to_enu(mx, my, mz, eq_lat, eq_long)
 
         # create inputs straight from IGRF
         igrf_n = []

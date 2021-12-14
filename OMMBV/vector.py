@@ -5,7 +5,7 @@ Supporting routines for vector operations usd within OMMBV.
 import numpy as np
 
 
-def enu_to_ecef_vector(east, north, up, glat, glong):
+def enu_to_ecef(east, north, up, glat, glong):
     """Convert vector from East, North, Up components to ECEF
 
     Position of vector in geospace may be specified in either
@@ -45,7 +45,7 @@ def enu_to_ecef_vector(east, north, up, glat, glong):
     return x, y, z
 
 
-def ecef_to_enu_vector(x, y, z, glat, glong):
+def ecef_to_enu(x, y, z, glat, glong):
     """Convert vector from ECEF X,Y,Z components to East, North, Up
 
     Position of vector in geospace may be specified in either

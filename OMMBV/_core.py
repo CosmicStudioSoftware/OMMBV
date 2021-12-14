@@ -339,7 +339,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     south_z = south_z - ecef_z
     south_x, south_y, south_z = vector.normalize(south_x, south_y, south_z)
     # calculate magnetic unit vector
-    bx, by, bz = enu_to_ecef_vector(be, bn, -bd, geo_lat, geo_long)
+    bx, by, bz = vector.enu_to_ecef(be, bn, -bd, geo_lat, geo_long)
     bx, by, bz = vector.normalize(bx, by, bz)
 
     # take cross product of southward and northward vectors to get the zonal vector
@@ -427,7 +427,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
     bm = np.array(bm, dtype=np.float64)
 
     # Convert to ECEF basis
-    bx, by, bz = enu_to_ecef_vector(be, bn, -bd, latitudes, longitudes)
+    bx, by, bz = vector.enu_to_ecef(be, bn, -bd, latitudes, longitudes)
 
     if normalize:
         bx /= bm
@@ -836,12 +836,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
     # If magnetic field is pointed purely upward, then full basis can't
     # be calculated. Check for this condition and store locations.
-    be, bn, bu = vector.ecef_to_enu_vector(bx, by, bz, latitude, longitude)
+    be, bn, bu = vector.ecef_to_enu(bx, by, bz, latitude, longitude)
     null_idx, = np.where(np.abs(bu) > 1. - pole_tol)
 
     # To start, need a vector perpendicular to mag field. There are infinitely
     # many, thus, let's use the east vector as a start.
-    tzx, tzy, tzz = enu_to_ecef_vector(np.ones(len(bx)), np.zeros(len(bx)),
+    tzx, tzy, tzz = vector.enu_to_ecef(np.ones(len(bx)), np.zeros(len(bx)),
                                        np.zeros(len(bx)), latitude, longitude)
     init_type = np.zeros(len(bx)) - 1
 
@@ -1994,7 +1994,7 @@ def enu_to_ecef_vector(east, north, up, glat, glong):
                            "wrapper will be removed in OMMBV 0.6+"]),
                   DeprecationWarning, stacklevel=2)
 
-    return OMMBV.vector.enu_to_ecef_vector(east, north, up, glat, glong)
+    return OMMBV.vector.enu_to_ecef(east, north, up, glat, glong)
 
 
 def ecef_to_enu_vector(x, y, z, glat, glong):
@@ -2032,7 +2032,7 @@ def ecef_to_enu_vector(x, y, z, glat, glong):
                            "wrapper will be removed in OMMBV 0.6+"]),
                   DeprecationWarning, stacklevel=2)
 
-    return OMMBV.vector.ecef_to_enu_vector(x, y, z, glat, glong)
+    return OMMBV.vector.ecef_to_enu(x, y, z, glat, glong)
 
 
 def project_ECEF_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):

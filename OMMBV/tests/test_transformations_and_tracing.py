@@ -223,15 +223,15 @@ class TestTracing():
                 # ensure that zonal vector is generally eastward
                 ones = np.ones(len(self.inst.data.index))
                 zeros = np.zeros(len(self.inst.data.index))
-                ex, ey, ez = OMMBV.vector.enu_to_ecef_vector(ones, zeros, zeros,
-                                                             self.inst['latitude'],
-                                                             self.inst['longitude'])
-                nx, ny, nz = OMMBV.vector.enu_to_ecef_vector(zeros, ones, zeros,
-                                                             self.inst['latitude'],
-                                                             self.inst['longitude'])
-                ux, uy, uz = OMMBV.vector.enu_to_ecef_vector(zeros, zeros, ones,
-                                                             self.inst['latitude'],
-                                                             self.inst['longitude'])
+                ex, ey, ez = OMMBV.vector.enu_to_ecef(ones, zeros, zeros,
+                                                      self.inst['latitude'],
+                                                      self.inst['longitude'])
+                nx, ny, nz = OMMBV.vector.enu_to_ecef(zeros, ones, zeros,
+                                                      self.inst['latitude'],
+                                                      self.inst['longitude'])
+                ux, uy, uz = OMMBV.vector.enu_to_ecef(zeros, zeros, ones,
+                                                      self.inst['latitude'],
+                                                      self.inst['longitude'])
 
                 dot1 = self.inst['unit_zon_x'] * ex\
                        + self.inst['unit_zon_y'] * ey\

@@ -16,6 +16,9 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Added `utils.datetimes_to_doubles` a method to calculate year and 
   fractional day of year for IGRF calls.
 - Improved robustness of `apex_location_info` to unreported changes in step_size
+- Moved vector functions to `OMMBV.vector`
+- Moved transformation functions to `OMMBV.trans`
+- 
 
 ## [0.5.5] - 2021-06-16
 - Updated setup.py
