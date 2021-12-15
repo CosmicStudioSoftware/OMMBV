@@ -72,7 +72,7 @@ def ecef_to_enu(x, y, z, glat, glong):
 
     """
 
-    # convert lat and lon in degrees to radians
+    # Convert lat and lon in degrees to radians
     rlat = np.radians(glat)
     rlon = np.radians(glong)
 
