@@ -5,6 +5,7 @@ import numpy as np
 import OMMBV
 import pysat
 
+import OMMBV.heritage
 import OMMBV.vector
 from OMMBV.tests.test_core import gen_plot_grid_fixed_alt
 from OMMBV.tests.test_core import dview, dc
@@ -51,9 +52,9 @@ class TestIntegratedMethods():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef, [p_lat]*len(p_longs),
+                    dview.apply_async(OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef, [p_lat] * len(p_longs),
                                       p_longs,
-                                      p_alts, [date]*len(p_longs),
+                                      p_alts, [date] * len(p_longs),
                                       steps=None, max_steps=10000, step_size=10.,
                                       ref_height=120.))
             for i, p_lat in enumerate(p_lats):
@@ -72,7 +73,7 @@ class TestIntegratedMethods():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=10000, step_size=10.,
@@ -517,15 +518,15 @@ class TestIntegratedMethods():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef, [p_lat]*len(p_longs),
+                    dview.apply_async(OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef, [p_lat] * len(p_longs),
                                       p_longs,
-                                      p_alts, [date]*len(p_longs),
+                                      p_alts, [date] * len(p_longs),
                                       steps=None, max_steps=10000, step_size=10.,
                                       ref_height=120.))
                 pending.append(
-                    dview.apply_async(OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef, [p_lat]*len(p_longs),
+                    dview.apply_async(OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef, [p_lat] * len(p_longs),
                                       p_longs,
-                                      p_alts, [date]*len(p_longs),
+                                      p_alts, [date] * len(p_longs),
                                       steps=None, max_steps=1000, step_size=100.,
                                       ref_height=120.))
 
@@ -565,7 +566,7 @@ class TestIntegratedMethods():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=10000, step_size=10.,
@@ -581,7 +582,7 @@ class TestIntegratedMethods():
                                                                               p_longs)
 
                 # second run
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=1000, step_size=100.,
@@ -813,17 +814,17 @@ class TestIntegratedMethods():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef,
-                                      [p_lat]*len(p_longs),
+                    dview.apply_async(OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef,
+                                      [p_lat] * len(p_longs),
                                       p_longs,
-                                      p_alts, [date]*len(p_longs),
+                                      p_alts, [date] * len(p_longs),
                                       steps=None, max_steps=1000, step_size=10.,
                                       ref_height=240.))
                 pending.append(
-                    dview.apply_async(OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef,
-                                      [p_lat]*len(p_longs),
+                    dview.apply_async(OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef,
+                                      [p_lat] * len(p_longs),
                                       p_longs,
-                                      p_alts, [date]*len(p_longs),
+                                      p_alts, [date] * len(p_longs),
                                       steps=None, max_steps=1000, step_size=10.,
                                       ref_height=0.))
 
@@ -863,7 +864,7 @@ class TestIntegratedMethods():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=10000, step_size=10.,
@@ -879,7 +880,7 @@ class TestIntegratedMethods():
                                                                               p_longs)
 
                 # second run
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs),
                     steps=None, max_steps=10000, step_size=10.,
@@ -1107,10 +1108,10 @@ class TestIntegratedMethods():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef,
-                                      [p_lat]*len(p_longs),
+                    dview.apply_async(OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef,
+                                      [p_lat] * len(p_longs),
                                       p_longs,
-                                      p_alts, [date]*len(p_longs)))
+                                      p_alts, [date] * len(p_longs)))
                 pending.append(
                     dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef,
                                       [p_lat]*len(p_longs), p_longs,
@@ -1152,7 +1153,7 @@ class TestIntegratedMethods():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.calculate_integrated_mag_drift_unit_vectors_ecef(
+                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz = OMMBV.heritage.calculate_integrated_mag_drift_unit_vectors_ecef(
                     [p_lat]*len(p_longs), p_longs,
                     p_alts, [date]*len(p_longs))
                 zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz,
@@ -1395,9 +1396,9 @@ class TestIntegratedMethods():
                 print (i, p_lat)
                 dview.targets = next(targets)
                 pending.append(
-                    dview.apply_async(OMMBV.heritage_scalars_for_mapping_ion_drifts,
-                                      [p_lat]*len(p_longs), p_longs,
-                                      p_alts, [date]*len(p_longs)))
+                    dview.apply_async(OMMBV.heritage.heritage_scalars_for_mapping_ion_drifts,
+                                      [p_lat] * len(p_longs), p_longs,
+                                      p_alts, [date] * len(p_longs)))
             for i, p_lat in enumerate(p_lats):
                 print ('collecting ', i, p_lat)
                 # collect output
@@ -1418,8 +1419,8 @@ class TestIntegratedMethods():
         else:
             for i, p_lat in enumerate(p_lats):
                 print (i, p_lat)
-                scalars = OMMBV.heritage_scalars_for_mapping_ion_drifts([p_lat]*len(p_longs), p_longs,
-                                                                       p_alts, [date]*len(p_longs))
+                scalars = OMMBV.heritage.heritage_scalars_for_mapping_ion_drifts([p_lat] * len(p_longs), p_longs,
+                                                                                 p_alts, [date] * len(p_longs))
                 north_zonal[i, :-1] = scalars['north_mer_fields_scalar']
                 north_mer[i, :-1] = scalars['north_zon_fields_scalar']
                 south_zonal[i, :-1] = scalars['south_mer_fields_scalar']

@@ -23,5 +23,6 @@ from OMMBV import vector
 from OMMBV import _core
 from OMMBV._core import *
 
+from OMMBV import heritage
 
 __all__ = ['satellite', 'trans', 'utils', 'vector']
