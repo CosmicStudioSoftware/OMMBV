@@ -19,7 +19,6 @@ import shlex
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
 
 # mock fortran library so it compiles on read the docs
@@ -35,7 +34,6 @@ class Mock(MagicMock):
 # sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 import OMMBV
-
 
 #added by RS, trying to get __init__ method documented
 autoclass_content = 'both'
