@@ -9,12 +9,12 @@ package metadata stored in setup.cfg
 """
 
 import os
-from setuptools import setup
 
 version = '0.5.5'
 
 # Include extensions only when not on readthedocs.org
 if os.environ.get('READTHEDOCS', None) == 'True':
+    from setuptools import setup
     extensions = []
 else:
     from numpy.distutils.core import Extension
@@ -42,6 +42,7 @@ setup(name='OMMBV',
       # Author details
       author='Russell Stoneback',
       author_email='russell@stoneris.com',
+
       # data_files=[('OMMBV', )],
       # include_package_data=True,
       classifiers=[
