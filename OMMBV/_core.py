@@ -1,19 +1,18 @@
-"""
-Primary functions for calculating magnetic basis vectors.
-"""
+"""Primary functions for calculating magnetic basis vectors."""
 
+import datetime as dt
+import numpy as np
 import scipy
 import scipy.integrate
-import numpy as np
-import datetime as dt
 import warnings
 
 
 # Import reference IGRF fortran code within the package if not on RTD
 try:
     from OMMBV import igrf as igrf
-except:
-    pass
+except Exception:
+    estr = 'Unable to import Fortran IGRF code.'
+    warnings.warn(estr, ImportWarning)
 
 import OMMBV.trans as trans
 import OMMBV.utils
@@ -24,9 +23,6 @@ def field_line_trace(init, date, direction, height, steps=None,
                      max_steps=1E4, step_size=10., recursive_loop_count=None,
                      recurse=True, min_check_flag=False):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
-
-    After 500 recursive iterations this method will increase the step size by
-    3% every subsequent iteration.
 
     Parameters
     ----------
@@ -67,9 +63,12 @@ def field_line_trace(init, date, direction, height, steps=None,
         [:,0] is the x positions over the integration.
         Positions are reported in ECEF (km).
 
+    Note
+    ----
+    After 500 recursive iterations this method will increase the step size by
+    3% every subsequent iteration.
 
     """
-
     if recursive_loop_count is None:
         recursive_loop_count = 0
 
@@ -109,7 +108,7 @@ def field_line_trace(init, date, direction, height, steps=None,
 
     # Fortran integration gets close to target height
     loop_step = step_size
-    if recurse & (z > check_height*1.000001):
+    if recurse & (z > check_height * 1.000001):
         if recursive_loop_count > 500:
             loop_step *= 1.03
         if recursive_loop_count < 1000:
@@ -117,10 +116,11 @@ def field_line_trace(init, date, direction, height, steps=None,
             # field_line_trace again by taking check value as init.
             # Recursive call.
             recursive_loop_count = recursive_loop_count + 1
+            rlc = recursive_loop_count
             trace_north1 = field_line_trace(check, date, direction, height,
                                             step_size=loop_step,
                                             max_steps=max_steps,
-                                            recursive_loop_count=recursive_loop_count,
+                                            recursive_loop_count=rlc,
                                             steps=steps)
         else:
             estr = "After 1000 iterations couldn't reach target altitude"
@@ -215,12 +215,16 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
     return trace
 
 
-def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitude, datetimes,
-                                                     steps=None, max_steps=1000, step_size=100.,
-                                                     ref_height=120., filter_zonal=True):
-    """Calculates field line integrated geomagnetic basis vectors.
+def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude,
+                                                     altitude, datetimes,
+                                                     steps=None,
+                                                     max_steps=1000,
+                                                     step_size=100.,
+                                                     ref_height=120.,
+                                                     filter_zonal=True):
+    """Calculate field line integrated geomagnetic basis vectors.
 
-     Unit vectors are expressed in ECEF coordinates.
+    Unit vectors are expressed in ECEF coordinates.
 
     Parameters
     ----------
@@ -265,19 +269,20 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     longitude = np.array(longitude)
     altitude = np.array(altitude)
 
-    # calculate satellite position in ECEF coordinates
+    # Calculate satellite position in ECEF coordinates
     ecef_x, ecef_y, ecef_z = trans.geodetic_to_ecef(latitude, longitude,
                                                     altitude)
-    # also get position in geocentric coordinates
+    # Also get position in geocentric coordinates
     geo_lat, geo_long, geo_alt = trans.ecef_to_geocentric(ecef_x, ecef_y,
                                                           ecef_z,
                                                           ref_height=0.)
     # geo_lat, geo_long, geo_alt = trans.ecef_to_geodetic(ecef_x, ecef_y,
     # ecef_z)
 
-    # filter longitudes (could use pysat's function here)
+    # Filter longitudes (could use pysat's function here)
     idx, = np.where(geo_long < 0)
     geo_long[idx] = geo_long[idx] + 360.
+
     # prepare output lists
     north_x = []
     north_y = []
@@ -292,22 +297,22 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     ddates = OMMBV.utils.datetimes_to_doubles(datetimes)
 
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z,
-                                                altitude, np.deg2rad(90. - latitude),
+                                                altitude,
+                                                np.deg2rad(90. - latitude),
                                                 np.deg2rad(longitude), ddates):
         init = np.array([x, y, z], dtype=np.float64)
         trace = full_field_line(init, time, ref_height, step_size=step_size,
                                 max_steps=max_steps,
                                 steps=steps)
-        # store final location, full trace goes south to north
+        # Store final location, full trace goes south to north
         trace_north = trace[-1, :]
         trace_south = trace[0, :]
 
-        # get IGRF field components
-        # tbn, tbe, tbd, tbmag are in nT
-        # geodetic input
+        # Get IGRF field components. tbn, tbe, tbd, tbmag are in nT.
+        # Geodetic input.
         tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, time, 1, alt, colat, elong)
 
-        # collect outputs
+        # Collect outputs
         south_x.append(trace_south[0])
         south_y.append(trace_south[1])
         south_z.append(trace_south[2])
@@ -315,8 +320,8 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
         north_y.append(trace_north[1])
         north_z.append(trace_north[2])
 
-        bn.append(tbn);
-        be.append(tbe);
+        bn.append(tbn)
+        be.append(tbe)
         bd.append(tbd)
 
     north_x = np.array(north_x)
@@ -329,7 +334,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     be = np.array(be)
     bd = np.array(bd)
 
-    # calculate vector from satellite to northern/southern footpoints
+    # Calculate vector from satellite to northern/southern footpoints
     north_x = north_x - ecef_x
     north_y = north_y - ecef_y
     north_z = north_z - ecef_z
@@ -338,29 +343,29 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
     south_y = south_y - ecef_y
     south_z = south_z - ecef_z
     south_x, south_y, south_z = vector.normalize(south_x, south_y, south_z)
-    # calculate magnetic unit vector
+
+    # Calculate magnetic unit vector
     bx, by, bz = vector.enu_to_ecef(be, bn, -bd, geo_lat, geo_long)
     bx, by, bz = vector.normalize(bx, by, bz)
 
-    # take cross product of southward and northward vectors to get the zonal vector
+    # Take cross product of southward/northward vectors to get the zonal vector
     zvx_foot, zvy_foot, zvz_foot = OMMBV.vector.cross_product(south_x, south_y,
                                                               south_z, north_x,
                                                               north_y, north_z)
-    # normalize the vectors
+    # Normalize the vectors
     norm_foot = np.sqrt(zvx_foot**2 + zvy_foot**2 + zvz_foot**2)
 
-    # calculate zonal vector
-    zvx = zvx_foot/norm_foot
-    zvy = zvy_foot/norm_foot
-    zvz = zvz_foot/norm_foot
+    # Calculate zonal vector
+    zvx = zvx_foot / norm_foot
+    zvy = zvy_foot / norm_foot
+    zvz = zvz_foot / norm_foot
 
     if filter_zonal:
-        # print ("Making magnetic vectors orthogonal")
-        # remove any field aligned component to the zonal vector
-        dot_fa = zvx*bx + zvy*by + zvz*bz
-        zvx -= dot_fa*bx
-        zvy -= dot_fa*by
-        zvz -= dot_fa*bz
+        # Remove any field aligned component to the zonal vector
+        dot_fa = zvx * bx + zvy * by + zvz * bz
+        zvx -= dot_fa * bx
+        zvy -= dot_fa * by
+        zvz -= dot_fa * bz
         zvx, zvy, zvz = vector.normalize(zvx, zvy, zvz)
 
     # Compute meridional vector
@@ -372,7 +377,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude, altitu
 
 
 def magnetic_vector(x, y, z, dates, normalize=False):
-    """Uses IGRF to calculate geomagnetic field.
+    """Use IGRF to calculate geomagnetic field.
 
     Parameters
     ----------
@@ -391,7 +396,6 @@ def magnetic_vector(x, y, z, dates, normalize=False):
         Magnetic field along ECEF directions
 
     """
-
     # Prepare output lists
     bn = []
     be = []
@@ -482,7 +486,6 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         Geodetic Altitude (km)
 
     """
-
     # Use input location and convert to ECEF
     if ecef_input:
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
@@ -532,23 +535,23 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         # direction around identified max. It is possible internal functions
         # had to increase step size. Get step estimate from trace.
         if max_idx > 0:
-            new_step = np.sqrt((trace[max_idx, 0] - trace[max_idx - 1, 0])**2
-                               + (trace[max_idx, 1] - trace[max_idx - 1, 1])**2
-                               + (trace[max_idx, 2] - trace[max_idx - 1, 2])**2)
+            nstep = np.sqrt((trace[max_idx, 0] - trace[max_idx - 1, 0])**2
+                            + (trace[max_idx, 1] - trace[max_idx - 1, 1])**2
+                            + (trace[max_idx, 2] - trace[max_idx - 1, 2])**2)
         elif max_idx < len(talt) - 1:
-            new_step = np.sqrt((trace[max_idx, 0] - trace[max_idx + 1, 0])**2
-                               + (trace[max_idx, 1] - trace[max_idx + 1, 1])**2
-                               + (trace[max_idx, 2] - trace[max_idx + 1, 2])**2)
+            nstep = np.sqrt((trace[max_idx, 0] - trace[max_idx + 1, 0])**2
+                            + (trace[max_idx, 1] - trace[max_idx + 1, 1])**2
+                            + (trace[max_idx, 2] - trace[max_idx + 1, 2])**2)
         else:
-            new_step = step_size
+            nstep = step_size
 
-        while new_step > fine_step_size:
-            new_step /= 2.
+        while nstep > fine_step_size:
+            nstep /= 2.
 
             # Setting recurse False ensures only max_steps are taken.
             trace = full_field_line(trace[max_idx, :], date, 0.,
                                     steps=apex_fine_steps,
-                                    step_size=new_step,
+                                    step_size=nstep,
                                     max_steps=fine_max_steps,
                                     recurse=False)
 
@@ -576,10 +579,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 
 
 def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
-    """Calculates local geomagnetic basis vectors and mapping scalars.
-
-    Thin wrapper around calculate_mag_drift_unit_vectors_ecef set
-    to default parameters and with more organization of the outputs.
+    """Calculate local geomagnetic basis vectors and mapping scalars.
 
     Parameters
     ----------
@@ -615,8 +615,12 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
         e_mer_x (y,z) : E meridional vector components. ECEF X, Y, and Z.
         e_fa_x (y,z) : E field aligned vector components. ECEF X, Y, and Z.
 
-    """
+    Note
+    ----
+        Thin wrapper around `calculate_mag_drift_unit_vectors_ecef` set
+        to default parameters and with more organization of the outputs.
 
+    """
     (zx, zy, zz,
      fx, fy, fz,
      mx, my, mz,
