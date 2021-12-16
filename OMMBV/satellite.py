@@ -470,69 +470,69 @@ def add_mag_drifts(inst):
 
     """
 
-    inst['iv_zon'] = {
-        'data': inst['unit_zon_x'] * inst['iv_x']
-                + inst['unit_zon_y'] * inst['iv_y']
-                + inst['unit_zon_z'] * inst['iv_z'],
-        'units': 'm/s',
-        'long_name': 'Zonal ion velocity',
-        'notes': ('Ion velocity relative to co-rotation along the magnetic '
-                  'zonal direction, normal to local magnetic meridional plane '
-                  'and the geomagnetic field (positive east). '
-                  'The local zonal vector maps to purely horizontal at the '
-                  'magnetic equator. Velocity obtained using ion velocities '
-                  'relative to co-rotation in the instrument frame along '
-                  'with the corresponding unit vectors expressed in '
-                  'the instrument frame to express the observed vector along a '
-                  'geomagnetic basis. '),
-        'label': 'Zonal Ion Velocity',
-        'axis': 'Zonal Ion Velocity',
-        'desc': 'Zonal ion velocity',
-        'scale': 'Linear',
-        'value_min': -500.,
-        'value_max': 500.}
+    info = {'data': inst['unit_zon_x'] * inst['iv_x']
+                    + inst['unit_zon_y'] * inst['iv_y']
+                    + inst['unit_zon_z'] * inst['iv_z'],
+            'units': 'm/s',
+            'long_name': 'Zonal ion velocity',
+            'notes': ('Ion velocity relative to co-rotation along the magnetic '
+                      'zonal direction, normal to local magnetic meridional '
+                      'plane and the geomagnetic field (positive east). '
+                      'The local zonal vector maps to purely horizontal at the '
+                      'magnetic equator. Velocity obtained using ion '
+                      'velocities relative to co-rotation in the instrument '
+                      'frame along with the corresponding unit vectors '
+                      'expressed in the instrument frame to express the '
+                      'observed vector along a geomagnetic basis. '),
+            'label': 'Zonal Ion Velocity',
+            'axis': 'Zonal Ion Velocity',
+            'desc': 'Zonal ion velocity',
+            'scale': 'Linear',
+            'value_min': -500.,
+            'value_max': 500.}
+    inst['iv_zon'] = info
 
-    inst['iv_fa'] = {
-        'data': inst['unit_fa_x'] * inst['iv_x']
-                + inst['unit_fa_y'] * inst['iv_y']
-                + inst['unit_fa_z'] * inst['iv_z'],
-        'units': 'm/s',
-        'long_name': 'Field-Aligned ion velocity',
-        'notes': ('Ion velocity relative to co-rotation along geomagnetic '
-                  'field lines. Positive along the main field vector. ',
-                  'Velocity obtained using ion velocities relative '
-                  'to co-rotation in the instrument frame along '
-                  'with the corresponding unit vectors expressed in '
-                  'the instrument frame to express the observed vector along a '
-                  'geomagnetic basis. '),
-        'label': 'Field-Aligned Ion Velocity',
-        'axis': 'Field-Aligned Ion Velocity',
-        'desc': 'Field-Aligned Ion Velocity',
-        'scale': 'Linear',
-        'value_min': -500.,
-        'value_max': 500.}
+    info = {'data': inst['unit_fa_x'] * inst['iv_x']
+                     + inst['unit_fa_y'] * inst['iv_y']
+                     + inst['unit_fa_z'] * inst['iv_z'],
+            'units': 'm/s',
+            'long_name': 'Field-Aligned ion velocity',
+            'notes': ('Ion velocity relative to co-rotation along geomagnetic '
+                      'field lines. Positive along the main field vector. ',
+                      'Velocity obtained using ion velocities relative '
+                      'to co-rotation in the instrument frame along '
+                      'with the corresponding unit vectors expressed in '
+                      'the instrument frame to express the observed vector '
+                      'along a geomagnetic basis. '),
+            'label': 'Field-Aligned Ion Velocity',
+            'axis': 'Field-Aligned Ion Velocity',
+            'desc': 'Field-Aligned Ion Velocity',
+            'scale': 'Linear',
+            'value_min': -500.,
+            'value_max': 500.}
+    inst['iv_fa'] = info
 
-    inst['iv_mer'] = {
-        'data': inst['unit_mer_x'] * inst['iv_x']
-                + inst['unit_mer_y'] * inst['iv_y']
-                + inst['unit_mer_z'] * inst['iv_z'],
-        'units': 'm/s',
-        'long_name': 'Meridional ion velocity',
-        'notes': ('Ion velocity along local magnetic meridional direction, '
-                  'perpendicular to geomagnetic field and within local '
-                  'magnetic meridional plane. The local meridional vector maps '
-                  'to vertical at the magnetic equator, positive is up. ',
-                  'Velocity obtained using ion velocities relative '
-                  'to co-rotation in the instrument frame along '
-                  'with the corresponding unit vectors expressed in '
-                  'the instrument frame to express the observed vector along a '
-                  'geomagnetic basis. '),
-        'label': 'Meridional Ion Velocity',
-        'axis': 'Meridional Ion Velocity',
-        'desc': 'Meridional Ion Velocity',
-        'scale': 'Linear',
-        'value_min': -500.,
-        'value_max': 500.}
+    info = {'data': (inst['unit_mer_x'] * inst['iv_x']
+                     + inst['unit_mer_y'] * inst['iv_y']
+                     + inst['unit_mer_z'] * inst['iv_z'][0]),
+            'units': 'm/s',
+            'long_name': 'Meridional ion velocity',
+            'notes': ('Ion velocity along local magnetic meridional direction, '
+                      'perpendicular to geomagnetic field and within local '
+                      'magnetic meridional plane. The local meridional vector '
+                      'maps to vertical at the magnetic equator, positive is '
+                      'up. Velocity obtained using ion velocities relative '
+                      'to co-rotation in the instrument frame along '
+                      'with the corresponding unit vectors expressed in '
+                      'the instrument frame to express the observed vector '
+                      'along a geomagnetic basis. '),
+            'label': 'Meridional Ion Velocity',
+            'axis': 'Meridional Ion Velocity',
+            'desc': 'Meridional Ion Velocity',
+            'scale': 'Linear',
+            'value_min': -500.,
+            'value_max': 500.}
+    inst['iv_mer'] = info
 
     return
 
@@ -749,7 +749,7 @@ def add_footpoint_and_equatorial_drifts(inst,
             'value_max': 500.}
     inst['north_footpoint_mer_drift'] = info
 
-    info = {'data': inst[north_zon_scalar]*inst[zon_drift],
+    info = {'data': inst[north_zon_scalar] * inst[zon_drift],
             'units': 'm/s',
             'long_name': 'Northern zonal ion velocity',
             'notes': ('Velocity along local magnetic zonal direction, '
