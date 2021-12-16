@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
+"""Setup routine for OMMBV.
+
+Note
+----
+package metadata stored in setup.cfg
+
+"""
 
 import os
-from setuptools import setup, find_packages
+from setuptools import setup
 
 version = '0.5.5'
 
@@ -10,16 +17,15 @@ version = '0.5.5'
 if os.environ.get('READTHEDOCS', None) == 'True':
     extensions = []
 else:
-    from numpy.distutils.core import setup, Extension
+    from numpy.distutils.core import Extension
+    from numpy.distutils.core import setup
 
+    extra_args = ['--std=legacy', '-Wno-line-truncation', '-Wno-conversion',
+                  '-Wno-unused-variable', '-Wno-maybe-uninitialized',
+                  '-Wno-unused-dummy-argument']
     extensions = [Extension(name='OMMBV.igrf',
                             sources=[os.path.join('OMMBV', 'igrf13.f')],
-                            extra_f77_compile_args=['--std=legacy',
-                                                    '-Wno-line-truncation',
-                                                    '-Wno-conversion',
-                                                    '-Wno-unused-variable',
-                                                    '-Wno-maybe-uninitialized',
-                                                    '-Wno-unused-dummy-argument']),
+                            extra_f77_compile_args=extra_args),
                   Extension(name='OMMBV.fortran_coords',
                             sources=[os.path.join('OMMBV', '_coords.f')])]
 

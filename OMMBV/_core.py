@@ -677,7 +677,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                           ref_height=None, steps=None,
                                           pole_tol=1.E-5,
                                           location_info=apex_location_info):
-    """Calculates local geomagnetic basis vectors and mapping scalars.
+    """Calculate local geomagnetic basis vectors and mapping scalars.
 
     Zonal - Generally Eastward (+East); surface of constant apex height
     Field Aligned - Generally Northward (+North); points along geomagnetic field
@@ -745,7 +745,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
     Returns
     -------
-    zon_x, zon_y, zon_z, fa_x, fa_y, fa_z, mer_x, mer_y, mer_z, (optional dictionary)
+    zon_x, zon_y, zon_z, fa_x, fa_y, fa_z, mer_x, mer_y, mer_z,
+    (optional dictionary)
 
     Optional output dictionary
     --------------------------
@@ -826,7 +827,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
         # Calculate satellite position in ECEF coordinates
         ecef_x, ecef_y, ecef_z = trans.geodetic_to_ecef(latitude, longitude,
-                                                  altitude)
+                                                        altitude)
 
     # Check for reasonable user inputs
     if len(latitude) != len(longitude) != len(altitude) != len(datetimes):
@@ -992,8 +993,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                      ecef_y + dstep_size * zy,
                                      ecef_z + dstep_size * zz)
         # Corresponding apex location
-        t_x1, t_y1, t_z1, _, _, apex_z = location_info(ecef_xz, ecef_yz, ecef_zz,
-                                                       datetimes,
+        t_x1, t_y1, t_z1, _, _, apex_z = location_info(ecef_xz, ecef_yz,
+                                                       ecef_zz, datetimes,
                                                        return_geodetic=True,
                                                        ecef_input=True)
 
@@ -1008,13 +1009,14 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                         ecef_input=True)
 
         # Basis vectors at apex location
-        (azx, azy, azz, _, _, _,
-         amx, amy, amz) = calculate_mag_drift_unit_vectors_ecef(a_x, a_y, a_z,
-                                                                datetimes,
-                                                                ecef_input=True,
-                                                                step_size=step_size,
-                                                                tol=tol,
-                                                                tol_zonal_apex=tol_zonal_apex)
+        tolza = tol_zonal_apex
+        (azx, azy, azz,
+         _, _, _, amx, amy, amz
+         ) = calculate_mag_drift_unit_vectors_ecef(a_x, a_y, a_z, datetimes,
+                                                   ecef_input=True,
+                                                   step_size=step_size,
+                                                   tol=tol,
+                                                   tol_zonal_apex=tolza)
 
         # Get distance between apex points along apex zonal direction
         dist = (t_x1 - t_x2) * azx + (t_y1 - t_y2) * azy + (t_z1 - t_z2) * azz
@@ -1088,9 +1090,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
             # Calculate meridional gradient using latest vectors
             # Positive step
-            ecef_xm, ecef_ym, ecef_zm = (ecef_x + dstep_size*mx,
-                                         ecef_y + dstep_size*my,
-                                         ecef_z + dstep_size*mz)
+            ecef_xm, ecef_ym, ecef_zm = (ecef_x + dstep_size * mx,
+                                         ecef_y + dstep_size * my,
+                                         ecef_z + dstep_size * mz)
             t_x1, t_y1, t_z1 = location_info(ecef_xm, ecef_ym, ecef_zm,
                                              datetimes, ecef_input=True)
 
@@ -1102,7 +1104,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                              datetimes, ecef_input=True)
 
             # Get distance between apex locations along meridional vector
-            diff_apex_m = (t_x1 - t_x2) * amx + (t_y1 - t_y2) * amy + (t_z1 - t_z2) * amz
+            diff_apex_m = (t_x1 - t_x2) * amx + (t_y1 - t_y2) * amy \
+                          + (t_z1 - t_z2) * amz
 
             # Apex height gradient
             grad_apex = diff_apex_m / (2. * dstep_size)
@@ -1113,9 +1116,10 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                             grad_apex * mz)
 
             # Zonal to complete set
-            d_zon2_x, d_zon2_y, d_zon2_z = vector.cross_product(d_fa_x, d_fa_y,
-                                                                d_fa_z, d_mer2_x,
-                                                                d_mer2_y, d_mer2_z)
+            (d_zon2_x,
+             d_zon2_y,
+             d_zon2_z) = vector.cross_product(d_fa_x, d_fa_y, d_fa_z,
+                                              d_mer2_x, d_mer2_y, d_mer2_z)
             mag = d_zon2_x**2 + d_zon2_y**2 + d_zon2_z**2
             d_zon2_x, d_zon2_y, d_zon2_z = (d_zon2_x / mag, d_zon2_y / mag,
                                             d_zon2_z / mag)
@@ -1142,15 +1146,13 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     return zx, zy, zz, bx, by, bz, mx, my, mz
 
 
-def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
-                               step_size=25., scalar=None):
-    """
-    Move along 'lines' formed by following the magnetic unit vector directions.
+def step_along_mag_unit_vector(x, y, z, date, direction, num_steps=1,
+                               step_size=25., scalar=1):
+    """Move by following specified magnetic unit vector direction.
 
     Moving along the field is effectively the same as a field line trace though
-    extended movement along a field should use the specific field_line_trace
+    extended movement along a field should use the specific `field_line_trace`
     method.
-
 
     Parameters
     ----------
@@ -1162,16 +1164,16 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
         Location to step from in ECEF (km).
     date : list-like of datetimes
         Date and time for magnetic field
-    direction : string
+    direction : str
         String identifier for which unit vector direction to move along.
         Supported inputs, 'meridional', 'zonal', 'aligned'
     num_steps : int
-        Number of steps to take along unit vector direction
+        Number of steps to take along unit vector direction (default=1)
     step_size : float
         Distance taken for each step (km) (default=25.)
     scalar : int
         Scalar modifier for step size distance. Input a -1 to move along
-        negative unit vector direction.
+        negative unit vector direction. (default=1)
 
     Returns
     -------
@@ -1179,18 +1181,15 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
         [x, y, z] of ECEF location after taking num_steps along direction,
         each step_size long.
 
-    Notes
-    -----
-        centered_diff=True is passed along to calculate_mag_drift_unit_vectors_ecef
-        when direction='meridional', while centered_diff=False is used
-        for the 'zonal' direction. This ensures that when moving along the
-        zonal direction there is a minimal change in apex height.
+    Note
+    ----
+        `centered_diff=True` is passed along to
+        `calculate_mag_drift_unit_vectors_ecef` when direction='meridional',
+        while `centered_diff=False` is used for the 'zonal' direction.
+        This ensures that when moving along the zonal direction there is a
+        minimal change in apex height.
 
     """
-
-    if scalar is not None:
-        estr = 'Scalar has been deprecated'
-        warnings.warn(estr, DeprecationWarning)
 
     if direction == 'meridional':
         centered_diff = True
@@ -1198,14 +1197,14 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
         centered_diff = False
 
     for i in np.arange(num_steps):
-        # x, y, z in ECEF
-        # get unit vector directions
+        # Get unit vector directions; x, y, z in ECEF
         (zvx, zvy, zvz,
          bx, by, bz,
-         mx, my, mz) = calculate_mag_drift_unit_vectors_ecef(x, y, z, date,
-                                                             step_size=step_size,
-                                                             ecef_input=True,
-                                                             centered_diff=centered_diff)
+         mx, my, mz
+         ) = calculate_mag_drift_unit_vectors_ecef(x, y, z, date,
+                                                   step_size=step_size,
+                                                   ecef_input=True,
+                                                   centered_diff=centered_diff)
         # Pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
@@ -1214,10 +1213,10 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
         elif direction == 'aligned':
             ux, uy, uz = bx, by, bz
 
-        # Take steps along direction
-        x = x + step_size * ux
-        y = y + step_size * uy
-        z = z + step_size * uz
+        # Take step along direction
+        x = x + step_size * ux * scalar
+        y = y + step_size * uy * scalar
+        z = z + step_size * uz * scalar
 
     return x, y, z
 
@@ -1225,7 +1224,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction=None, num_steps=1.,
 def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
                             num_steps=1000, return_geodetic=False,
                             ecef_input=False):
-    """Return ECEF location of footpoints in Northern/Southern hemisphere
+    """Return ECEF location of footpoints in Northern/Southern hemisphere.
 
     Parameters
     ----------
