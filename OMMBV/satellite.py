@@ -356,7 +356,7 @@ def add_mag_drift_unit_vectors(inst, lat_label='latitude',
             'notes': ('The field-aligned vector points along the '
                       'geomagnetic field, with positive values '
                       'along the field direction. '
-                      'The unit vector is expressed here in the IVM coordinate ' 
+                      'The unit vector is expressed here in the IVM coordinate '
                       'system, where Y = Z x X, nominally southward when '
                       'in standard pointing, X along ram. '
                       'Calculated using the corresponding unit vector '

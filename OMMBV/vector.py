@@ -1,12 +1,10 @@
-"""
-Supporting routines for vector operations usd within OMMBV.
-"""
+"""Supporting routines for vector operations usd within OMMBV."""
 
 import numpy as np
 
 
 def enu_to_ecef(east, north, up, glat, glong):
-    """Convert vector from East, North, Up components to ECEF
+    """Convert vector from East, North, Up components to ECEF.
 
     Position of vector in geospace may be specified in either
     geocentric or geodetic coordinates, with corresponding expression
@@ -46,7 +44,7 @@ def enu_to_ecef(east, north, up, glat, glong):
 
 
 def ecef_to_enu(x, y, z, glat, glong):
-    """Convert vector from ECEF X,Y,Z components to East, North, Up
+    """Convert vector from ECEF X,Y,Z components to East, North, Up.
 
     Position of vector in geospace may be specified in either
     geocentric or geodetic coordinates, with corresponding expression
@@ -77,7 +75,7 @@ def ecef_to_enu(x, y, z, glat, glong):
     rlon = np.radians(glong)
 
     east = -x * np.sin(rlon) + y * np.cos(rlon)
-    north = -x * np.cos(rlon)*np.sin(rlat) - y * np.sin(rlon) * np.sin(rlat)\
+    north = -x * np.cos(rlon) * np.sin(rlat) - y * np.sin(rlon) * np.sin(rlat)\
             + z * np.cos(rlat)
     up = x * np.cos(rlon) * np.cos(rlat) + y * np.sin(rlon) * np.cos(rlat)\
          + z * np.sin(rlat)
@@ -86,7 +84,7 @@ def ecef_to_enu(x, y, z, glat, glong):
 
 
 def project_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
-    """Project vector onto different basis
+    """Project vector onto different basis.
 
     Parameters
     ----------
@@ -118,8 +116,7 @@ def project_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
 
 
 def normalize(x, y, z):
-    """
-    Normalize vector to produce a unit vector.
+    """Normalize vector to produce a unit vector.
 
     Parameters
     ----------
@@ -146,8 +143,7 @@ def normalize(x, y, z):
 
 
 def cross_product(x1, y1, z1, x2, y2, z2):
-    """
-    Cross product of two vectors, v1 x v2
+    """Cross product of two vectors, v1 x v2.
 
     Parameters
     ----------

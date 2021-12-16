@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""init routine for OMMBV."""
+
 import os
 import warnings
 

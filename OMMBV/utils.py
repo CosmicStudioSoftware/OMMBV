@@ -1,4 +1,4 @@
-"""General utilities needed to support OMMBV"""
+"""General utilities needed to support OMMBV."""
 
 import datetime as dt
 import numpy as np
