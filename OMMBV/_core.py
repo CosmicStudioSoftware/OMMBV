@@ -621,8 +621,8 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
      fx, fy, fz,
      mx, my, mz,
      info) = calculate_mag_drift_unit_vectors_ecef(latitude, longitude,
-                                                     altitude, datetimes,
-                                                     full_output=True)
+                                                   altitude, datetimes,
+                                                   full_output=True)
 
     d_zon_mag = np.sqrt(info['d_zon_x']**2 + info['d_zon_y']**2
                         + info['d_zon_z']**2)
@@ -654,8 +654,10 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
              'e_fa_z': info['e_fa_z'],
              'e_mer_x': info['e_mer_x'], 'e_mer_y': info['e_mer_y'],
              'e_mer_z': info['e_mer_z'],
-             'd_zon_mag': d_zon_mag, 'd_fa_mag': d_fa_mag, 'd_mer_mag': d_mer_mag,
-             'e_zon_mag': e_zon_mag, 'e_fa_mag': e_fa_mag, 'e_mer_mag': e_mer_mag}
+             'd_zon_mag': d_zon_mag, 'd_fa_mag': d_fa_mag,
+             'd_mer_mag': d_mer_mag,
+             'e_zon_mag': e_zon_mag, 'e_fa_mag': e_fa_mag,
+             'e_mer_mag': e_mer_mag}
 
     return out_d
 
