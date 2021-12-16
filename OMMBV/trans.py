@@ -20,7 +20,7 @@ try:
     # geocentric Earth.
     # ecef_to_geodetic = trans.ecef_to_geocentric
 
-except (AttributeError, NameError):
+except (AttributeError, NameError, ModuleNotFoundError):
     estr = ''.join(['Unable to use Fortran version of ecef_to_geodetic.',
                     ' Please check installation.'])
     warnings.warn(estr)
