@@ -1535,7 +1535,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
                                    **kwargs):
     """Translate ion drifts and electric fields to equator and footpoints.
 
-
     Parameters
     ----------
     glats : list-like of floats (degrees)
@@ -1864,7 +1863,7 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
 
 
 def geocentric_to_ecef(latitude, longitude, altitude):
-    """Convert geocentric coordinates into ECEF
+    """Convert geocentric coordinates into ECEF.
 
     .. deprecated:: 0.6.0
        Function moved to `OMMBV.trans.geocentric_to_ecef`, this wrapper will
@@ -1894,7 +1893,7 @@ def geocentric_to_ecef(latitude, longitude, altitude):
 
 
 def ecef_to_geocentric(x, y, z, ref_height=trans.earth_geo_radius):
-    """Convert ECEF into geocentric coordinates
+    """Convert ECEF into geocentric coordinates.
 
     .. deprecated:: 0.6.0
        Function moved to `OMMBV.trans.ecef_to_geocentric`, this wrapper will
@@ -1927,7 +1926,7 @@ def ecef_to_geocentric(x, y, z, ref_height=trans.earth_geo_radius):
 
 
 def geodetic_to_ecef(latitude, longitude, altitude):
-    """Convert WGS84 geodetic coordinates into ECEF
+    """Convert WGS84 geodetic coordinates into ECEF.
 
     .. deprecated:: 0.6.0
        Function moved to `OMMBV.trans.geodetic_to_ecef`, this wrapper will
@@ -1999,7 +1998,7 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
 
 
 def enu_to_ecef_vector(east, north, up, glat, glong):
-    """Convert vector from East, North, Up components to ECEF
+    """Convert vector from East, North, Up components to ECEF.
 
     .. deprecated:: 0.6.0
        Function moved to `OMMBV.vector.enu_to_ecef`, this wrapper will
@@ -2037,7 +2036,7 @@ def enu_to_ecef_vector(east, north, up, glat, glong):
 
 
 def ecef_to_enu_vector(x, y, z, glat, glong):
-    """Convert vector from ECEF X,Y,Z components to East, North, Up
+    """Convert vector from ECEF X,Y,Z components to East, North, Up.
 
     .. deprecated:: 0.6.0
        Function moved to `OMMBV.vector.ecef_to_enu`, this wrapper will
@@ -2075,7 +2074,7 @@ def ecef_to_enu_vector(x, y, z, glat, glong):
 
 
 def project_ECEF_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
-    """Project vector onto different basis
+    """Project vector onto different basis.
 
     .. deprecated:: 0.6.0
        Function moved to `OMMBV.vector.project_onto_basis`, this wrapper will
@@ -2112,8 +2111,7 @@ def project_ECEF_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
 
 
 def normalize_vector(x, y, z):
-    """
-    Normalize vector to produce a unit vector.
+    """Normalize vector to produce a unit vector.
 
     .. deprecated:: 0.6.0
        Function moved to `OMMBV.vector.normalize`, this wrapper will
@@ -2143,8 +2141,7 @@ def normalize_vector(x, y, z):
 
 
 def cross_product(x1, y1, z1, x2, y2, z2):
-    """
-    Cross product of two vectors, v1 x v2
+    """Cross product of two vectors, v1 x v2.
 
     .. deprecated:: 0.6.0
        Function moved to `OMMBV.vector.cross_product`, this wrapper will
