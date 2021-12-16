@@ -15,7 +15,7 @@ from OMMBV.tests.test_core import dview, dc
 
 class TestMaxApexHeight():
 
-    def test_plot_apex_heights(self):
+    def test_apex_heights(self):
         """Check meridional vector along max in apex height gradient"""
         date = dt.datetime(2010, 1, 1)
 
@@ -64,8 +64,8 @@ class TestMaxApexHeight():
         except:
             pass
 
-        # make sure meridional direction is correct
-        assert np.all(np.max(output_max) == nominal_max)
+        # Make sure meridional direction is correct
+        assert np.all(np.abs(np.max(output_max) - nominal_max) < 1.E-3)
 
 
 class TestApex():
@@ -189,40 +189,19 @@ class TestApex():
         # set the date
         date = dt.datetime(2000, 1, 1)
         # memory for results
-        apex_lat = np.zeros((len(p_lats), len(p_longs) + 1))
-        apex_lon = np.zeros((len(p_lats), len(p_longs) + 1))
-        apex_alt = np.zeros((len(p_lats), len(p_longs) + 1))
+        apex_lat = np.zeros((len(p_lats), len(p_longs)))
+        apex_lon = np.zeros((len(p_lats), len(p_longs)))
+        apex_alt = np.zeros((len(p_lats), len(p_longs)))
 
-        # set up multi
-        if self.dc is not None:
-            import itertools
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            for i, p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                # iterate through target cyclicly and run commands
-                dview.targets = next(targets)
-                pending.append(dview.apply_async(OMMBV.apex_location_info, [p_lat] * len(p_longs), p_longs,
-                                                 p_alts, [date] * len(p_longs),
-                                                 return_geodetic=True))
-            for i, p_lat in enumerate(p_lats):
-                print ('collecting ', i, p_lat)
-                # collect output
-                x, y, z, olat, olon, oalt = pending.pop(0).get()
-                apex_lat[i, :-1] = olat
-                apex_lon[i, :-1] = olon
-                apex_alt[i, :-1] = oalt
-
-        else:
-            # single processor case
-            for i, p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                x, y, z, olat, olon, oalt = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
-                                                                     p_alts, [date] * len(p_longs),
-                                                                     return_geodetic=True)
-                apex_lat[i, :-1] = olat
-                apex_lon[i, :-1] = olon
-                apex_alt[i, :-1] = oalt
+        # single processor case
+        for i, p_lat in enumerate(p_lats):
+            print (i, p_lat)
+            x, y, z, olat, olon, oalt = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
+                                                                 p_alts, [date] * len(p_longs),
+                                                                 return_geodetic=True)
+            apex_lat[i, :-1] = olat
+            apex_lon[i, :-1] = olon
+            apex_alt[i, :-1] = oalt
 
         # calculate difference between apex longitude and original longitude
         # values for apex long are -180 to 180, shift to 0 to 360
@@ -237,50 +216,7 @@ class TestApex():
         idx, idy, = np.where(apex_lon <= -180.)
         apex_lon[idx, idy] += 360.
 
-        # account for periodicity
-        apex_lat[:, -1] = apex_lat[:, 0]
-        apex_lon[:, -1] = apex_lon[:, 0]
-        apex_alt[:, -1] = apex_alt[:, 0]
-
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1]) * (len(p_lats) - 1)
-        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1]) * len(p_longs)
-        ytickvals = ['-25', '-12.5', '0', '12.5', '25']
-
-        try:
-            fig = plt.figure()
-            plt.imshow(apex_lat, origin='lower')
-            plt.colorbar(label='Degrees')
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Apex Latitude at 120 km')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_lat.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(apex_lon, origin='lower')
-            plt.colorbar(label='Degrees')
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Apex Longitude Difference at 120 km')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_lon.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_alt), origin='lower')
-            plt.colorbar(label='km')
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Altitude at 120 km')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_alt.pdf')
-            plt.close()
-        except:
-            pass
+        return
 
     def test_apex_diff_plots(self):
         """Uncertainty of apex location determination at default fine_step_size"""
@@ -294,129 +230,35 @@ class TestApex():
         p_alts = [p_alts[0]] * len(p_longs)
         # set the date
         date = dt.datetime(2000, 1, 1)
+
         # memory for results
-        apex_lat = np.zeros((len(p_lats), len(p_longs) + 1))
-        apex_lon = np.zeros((len(p_lats), len(p_longs) + 1))
-        apex_alt = np.zeros((len(p_lats), len(p_longs) + 1))
-        apex_z = np.zeros((len(p_lats), len(p_longs) + 1))
-        norm_alt = np.zeros((len(p_lats), len(p_longs) + 1))
+        apex_lat = np.zeros((len(p_lats), len(p_longs)))
+        apex_lon = np.zeros((len(p_lats), len(p_longs)))
+        apex_alt = np.zeros((len(p_lats), len(p_longs)))
+        apex_z = np.zeros((len(p_lats), len(p_longs)))
+        norm_alt = np.zeros((len(p_lats), len(p_longs)))
 
-        # set up multi
-        if self.dc is not None:
-            import itertools
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            for i, p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                # iterate through target cyclicly and run commands
-                dview.targets = next(targets)
-                pending.append(dview.apply_async(OMMBV.apex_location_info, [p_lat] * len(p_longs), p_longs,
-                                                 p_alts, [date] * len(p_longs),
-                                                 fine_step_size=1.E-5,
-                                                 return_geodetic=True))
-                pending.append(dview.apply_async(OMMBV.apex_location_info, [p_lat] * len(p_longs), p_longs,
-                                                 p_alts, [date] * len(p_longs),
-                                                 fine_step_size=5.E-6,
-                                                 return_geodetic=True))
-            for i, p_lat in enumerate(p_lats):
-                print ('collecting ', i, p_lat)
-                # collect output
-                x, y, z, _, _, h = pending.pop(0).get()
-                x2, y2, z2, _, _, h2 = pending.pop(0).get()
-                apex_lat[i, :-1] = np.abs(x2 - x)
-                apex_lon[i, :-1] = np.abs(y2 - y)
-                apex_z[i, :-1] = np.abs(z2 - z)
-                apex_alt[i, :-1] = np.abs(h2 - h)
-
-        else:
-            # single processor case
-            for i, p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                x, y, z, _, _, h = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
+        # single processor case
+        for i, p_lat in enumerate(p_lats):
+            print (i, p_lat)
+            x, y, z, _, _, h = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
+                                                        p_alts, [date] * len(p_longs),
+                                                        fine_step_size=1.E-5, return_geodetic=True)
+            x2, y2, z2, _, _, h2 = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
                                                             p_alts, [date] * len(p_longs),
-                                                            fine_step_size=1.E-5, return_geodetic=True)
-                x2, y2, z2, _, _, h2 = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
-                                                                p_alts, [date] * len(p_longs),
-                                                                fine_step_size=5.E-6, return_geodetic=True)
+                                                            fine_step_size=5.E-6, return_geodetic=True)
 
-                norm_alt[i, :-1] = h
-                apex_lat[i, :-1] = np.abs(x2 - x)
-                apex_lon[i, :-1] = np.abs(y2 - y)
-                apex_z[i, :-1] = np.abs(z2 - z)
-                apex_alt[i, :-1] = np.abs(h2 - h)
-
-        # account for periodicity
-        apex_lat[:, -1] = apex_lat[:, 0]
-        apex_lon[:, -1] = apex_lon[:, 0]
-        apex_z[:, -1] = apex_z[:, 0]
-        apex_alt[:, -1] = apex_alt[:, 0]
-        norm_alt[:, -1] = norm_alt[:, 0]
+            norm_alt[i, :] = h
+            apex_lat[i, :] = np.abs(x2 - x)
+            apex_lon[i, :] = np.abs(y2 - y)
+            apex_z[i, :] = np.abs(z2 - z)
+            apex_alt[i, :] = np.abs(h2 - h)
 
         idx, idy, = np.where(apex_lat > 10.)
         print('Locations with large apex x (ECEF) location differences.', p_lats[idx], p_longs[idx])
 
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1]) * (len(p_lats) - 1)
-        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1]) * len(p_longs)
-        ytickvals = ['-50', '-25', '0', '25', '50']
-
-        try:
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_lat), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Location Difference (ECEF-x km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_loc_diff_x.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_lon), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Location Difference (ECEF-y km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_loc_diff_y.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_z), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Location Difference (ECEF-z km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_loc_diff_z.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_alt / norm_alt), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Altitude Normalized Difference (km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_norm_loc_diff_h.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_alt), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Altitude Difference (km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_loc_diff_h.pdf')
-            plt.close()
-
-        except:
-            pass
+        # add tests here
+        return
 
     def test_apex_fine_max_step_diff_plots(self):
         """Test apex location info for sensitivity to fine_steps parameters"""
@@ -431,128 +273,34 @@ class TestApex():
         # set the date
         date = dt.datetime(2000, 1, 1)
         # memory for results
-        apex_lat = np.zeros((len(p_lats), len(p_longs) + 1))
-        apex_lon = np.zeros((len(p_lats), len(p_longs) + 1))
-        apex_alt = np.zeros((len(p_lats), len(p_longs) + 1))
-        apex_z = np.zeros((len(p_lats), len(p_longs) + 1))
-        norm_alt = np.zeros((len(p_lats), len(p_longs) + 1))
+        apex_lat = np.zeros((len(p_lats), len(p_longs)))
+        apex_lon = np.zeros((len(p_lats), len(p_longs)))
+        apex_alt = np.zeros((len(p_lats), len(p_longs)))
+        apex_z = np.zeros((len(p_lats), len(p_longs)))
+        norm_alt = np.zeros((len(p_lats), len(p_longs)))
 
-        # set up multi
-        if self.dc is not None:
-            import itertools
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            for i, p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                # iterate through target cyclicly and run commands
-                dview.targets = next(targets)
-                pending.append(dview.apply_async(OMMBV.apex_location_info, [p_lat] * len(p_longs), p_longs,
-                                                 p_alts, [date] * len(p_longs),
-                                                 fine_max_steps=5,
-                                                 return_geodetic=True))
-                pending.append(dview.apply_async(OMMBV.apex_location_info, [p_lat] * len(p_longs), p_longs,
-                                                 p_alts, [date] * len(p_longs),
-                                                 fine_max_steps=10,
-                                                 return_geodetic=True))
-            for i, p_lat in enumerate(p_lats):
-                print ('collecting ', i, p_lat)
-                # collect output
-                x, y, z, _, _, h = pending.pop(0).get()
-                x2, y2, z2, _, _, h2 = pending.pop(0).get()
-                apex_lat[i, :-1] = np.abs(x2 - x)
-                apex_lon[i, :-1] = np.abs(y2 - y)
-                apex_z[i, :-1] = np.abs(z2 - z)
-                apex_alt[i, :-1] = np.abs(h2 - h)
-
-        else:
-            # single processor case
-            for i, p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                x, y, z, _, _, h = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
+        # single processor case
+        for i, p_lat in enumerate(p_lats):
+            print (i, p_lat)
+            x, y, z, _, _, h = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
+                                                        p_alts, [date] * len(p_longs),
+                                                        fine_max_steps=5, return_geodetic=True)
+            x2, y2, z2, _, _, h2 = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
                                                             p_alts, [date] * len(p_longs),
-                                                            fine_max_steps=5, return_geodetic=True)
-                x2, y2, z2, _, _, h2 = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
-                                                                p_alts, [date] * len(p_longs),
-                                                                fine_max_steps=10, return_geodetic=True)
+                                                            fine_max_steps=10, return_geodetic=True)
 
-                norm_alt[i, :-1] = h
-                apex_lat[i, :-1] = np.abs(x2 - x)
-                apex_lon[i, :-1] = np.abs(y2 - y)
-                apex_z[i, :-1] = np.abs(z2 - z)
-                apex_alt[i, :-1] = np.abs(h2 - h)
-
-        # account for periodicity
-        apex_lat[:, -1] = apex_lat[:, 0]
-        apex_lon[:, -1] = apex_lon[:, 0]
-        apex_z[:, -1] = apex_z[:, 0]
-        apex_alt[:, -1] = apex_alt[:, 0]
-        norm_alt[:, -1] = norm_alt[:, 0]
+            norm_alt[i, :] = h
+            apex_lat[i, :] = np.abs(x2 - x)
+            apex_lon[i, :] = np.abs(y2 - y)
+            apex_z[i, :] = np.abs(z2 - z)
+            apex_alt[i, :] = np.abs(h2 - h)
 
         idx, idy, = np.where(apex_lat > 10.)
         print('Locations with large apex x (ECEF) location differences.', p_lats[idx], p_longs[idx])
 
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1]) * (len(p_lats) - 1)
-        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1]) * len(p_longs)
-        ytickvals = ['-50', '-25', '0', '25', '50']
+        # add tests here
 
-        try:
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_lat), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Location Difference (ECEF-x km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_loc_max_steps_diff_x.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_lon), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Location Difference (ECEF-y km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_loc_max_steps_diff_y.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_z), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Location Difference (ECEF-z km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_loc_max_steps_diff_z.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_alt / norm_alt), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Altitude Normalized Difference (km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_norm_loc_max_steps_diff_h.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(apex_alt), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ytickvals)
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Apex Altitude Normalized Difference (km)')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.savefig('apex_loc_max_steps_diff_h.pdf')
-            plt.close()
-
-        except:
-            pass
+        return
 
     def test_ecef_geodetic_apex_diff_plots(self):
         """Characterize uncertainty of ECEF and Geodetic transformations"""
