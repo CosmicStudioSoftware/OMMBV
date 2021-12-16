@@ -1400,7 +1400,7 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
                                           ftpnts[:, 2], dates,
                                           direction=vector_direction,
                                           num_steps=edge_steps,
-                                          step_size=edge_length/edge_steps)
+                                          step_size=edge_length / edge_steps)
 
     (plus_apex_x,
      plus_apex_y,
@@ -1415,7 +1415,7 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
                                            ftpnts[:, 2], dates,
                                            direction=vector_direction,
                                            scalar=-1, num_steps=edge_steps,
-                                           step_size=edge_length/edge_steps)
+                                           step_size=edge_length / edge_steps)
     (minus_apex_x,
      minus_apex_y,
      minus_apex_z) = apex_location_info(minus_x, minus_y, minus_z, dates,
@@ -1423,9 +1423,9 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
                                         steps=steps)
 
     # Take difference in apex locations
-    apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2 +
-                               (plus_apex_y - minus_apex_y)**2 +
-                               (plus_apex_z - minus_apex_z)**2)
+    apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2
+                               + (plus_apex_y - minus_apex_y)**2
+                               + (plus_apex_z - minus_apex_z)**2)
 
     return apex_edge_length
 
@@ -1488,7 +1488,7 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
      plus_z) = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
                                           direction=vector_direction,
                                           num_steps=edge_steps,
-                                          step_size=edge_length/edge_steps)
+                                          step_size=edge_length / edge_steps)
 
     # Take step along + vector direction, then get the apex location.
     (minus_x,
@@ -1496,7 +1496,7 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
      minus_z) = step_along_mag_unit_vector(ecef_xs, ecef_ys, ecef_zs, dates,
                                            direction=vector_direction,
                                            scalar=-1, num_steps=edge_steps,
-                                           step_size=edge_length/edge_steps)
+                                           step_size=edge_length / edge_steps)
 
     # Get apex locations
     if return_geodetic:
@@ -1519,9 +1519,9 @@ def apex_distance_after_local_step(glats, glons, alts, dates,
                                        ecef_input=True)
 
     # take difference in apex locations
-    apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2 +
-                               (plus_apex_y - minus_apex_y)**2 +
-                               (plus_apex_z - minus_apex_z)**2)
+    apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2
+                               + (plus_apex_y - minus_apex_y)**2
+                               + (plus_apex_z - minus_apex_z)**2)
 
     if return_geodetic:
         return apex_edge_length, plus_h - minus_h
@@ -1533,10 +1533,8 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
                                    max_steps=None, e_field_scaling_only=None,
                                    edge_length=None, edge_steps=None,
                                    **kwargs):
-    """
-    Translates ion drifts and electric fields to equator and footpoints.
+    """Translate ion drifts and electric fields to equator and footpoints.
 
-    All inputs are assumed to be 1D arrays.
 
     Parameters
     ----------
@@ -1573,72 +1571,120 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     if edge_steps is not None:
         raise DeprecationWarning('edge_steps no longer supported.')
 
-    # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
-    # get footpoint location information
-    north_ftpnt, south_ftpnt = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs,
-                                                       dates, ecef_input=True)
+    # Get footpoint location information
+    north_ftpnt, south_ftpnt = footpoint_location_info(ecef_xs, ecef_ys,
+                                                       ecef_zs, dates,
+                                                       ecef_input=True)
 
-    # prepare output memory
+    # Prepare output memory
     out = {}
 
-    # D and E vectors at user supplied location
-    # good for mapping to magnetic equator
-    _, _, _, _, _, _, _, _, _, infod = calculate_mag_drift_unit_vectors_ecef(ecef_xs, ecef_ys, ecef_zs, dates,
-                                                                             full_output=True,
-                                                                             include_debug=True,
-                                                                             ecef_input=True,
-                                                                             **kwargs)
+    # D and E vectors at user supplied location. Good for mapping to
+    # magnetic equator.
+    (_, _, _, _, _, _, _, _, _,
+     infod) = calculate_mag_drift_unit_vectors_ecef(ecef_xs, ecef_ys, ecef_zs,
+                                                    dates, full_output=True,
+                                                    include_debug=True,
+                                                    ecef_input=True, **kwargs)
 
-    out['equator_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
-    out['equator_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2 + infod['e_mer_y']**2 + infod['e_mer_z']**2)
+    out['equator_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2
+                                               + infod['e_zon_y']**2
+                                               + infod['e_zon_z']**2)
+    out['equator_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2
+                                               + infod['e_mer_y']**2
+                                               + infod['e_mer_z']**2)
 
-    out['equator_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2 + infod['d_zon_y']**2 + infod['d_zon_z']**2)
-    out['equator_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2 + infod['d_mer_y']**2 + infod['d_mer_z']**2)
+    out['equator_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2
+                                               + infod['d_zon_y']**2
+                                               + infod['d_zon_z']**2)
+    out['equator_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2
+                                               + infod['d_mer_y']**2
+                                               + infod['d_mer_z']**2)
 
     # D and E vectors at northern footpoint
-    _, _, _, _, _, _, _, _, _, northd = calculate_mag_drift_unit_vectors_ecef(north_ftpnt[:, 0], north_ftpnt[:, 1],
-                                                                              north_ftpnt[:, 2], dates,
-                                                                              full_output=True,
-                                                                              include_debug=True,
-                                                                              ecef_input=True,
-                                                                              **kwargs)
+    (_, _, _, _, _, _, _, _, _,
+     northd) = calculate_mag_drift_unit_vectors_ecef(north_ftpnt[:, 0],
+                                                     north_ftpnt[:, 1],
+                                                     north_ftpnt[:, 2], dates,
+                                                     full_output=True,
+                                                     include_debug=True,
+                                                     ecef_input=True, **kwargs)
 
     # D and E vectors at northern footpoint
-    _, _, _, _, _, _, _, _, _, southd = calculate_mag_drift_unit_vectors_ecef(south_ftpnt[:, 0], south_ftpnt[:, 1],
-                                                                              south_ftpnt[:, 2], dates,
-                                                                              full_output=True,
-                                                                              include_debug=True,
-                                                                              ecef_input=True,
-                                                                              **kwargs)
+    (_, _, _, _, _, _, _, _, _,
+     southd) = calculate_mag_drift_unit_vectors_ecef(south_ftpnt[:, 0],
+                                                     south_ftpnt[:, 1],
+                                                     south_ftpnt[:, 2], dates,
+                                                     full_output=True,
+                                                     include_debug=True,
+                                                     ecef_input=True, **kwargs)
 
-    # prepare output
-    # to map fields from r1 to r2, (E dot e1) d2
-    out['north_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2 + infod['e_mer_y']**2 + infod['e_mer_z']**2)
-    out['north_mer_fields_scalar'] *= np.sqrt(northd['d_mer_x']**2 + northd['d_mer_y']**2 + northd['d_mer_z']**2)
-    # to map drifts from r1 to r2, (v dot d1) e2
-    out['north_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2 + infod['d_mer_y']**2 + infod['d_mer_z']**2)
-    out['north_mer_drifts_scalar'] *= np.sqrt(northd['e_mer_x']**2 + northd['e_mer_y']**2 + northd['e_mer_z']**2)
-    # to map fields from r1 to r2, (E dot e1) d2
-    out['north_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
-    out['north_zon_fields_scalar'] *= np.sqrt(northd['d_zon_x']**2 + northd['d_zon_y']**2 + northd['d_zon_z']**2)
-    # to map drifts from r1 to r2, (v dot d1) e2
-    out['north_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2 + infod['d_zon_y']**2 + infod['d_zon_z']**2)
-    out['north_zon_drifts_scalar'] *= np.sqrt(northd['e_zon_x']**2 + northd['e_zon_y']**2 + northd['e_zon_z']**2)
+    # Prepare output.
+    # To map fields from r1 to r2, (E dot e1) d2
+    out['north_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2
+                                             + infod['e_mer_y']**2
+                                             + infod['e_mer_z']**2)
+    out['north_mer_fields_scalar'] *= np.sqrt(northd['d_mer_x']**2
+                                              + northd['d_mer_y']**2
+                                              + northd['d_mer_z']**2)
 
-    # to map fields from r1 to r2, (E dot e1) d2
-    out['south_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2 + infod['e_mer_y']**2 + infod['e_mer_z']**2)
-    out['south_mer_fields_scalar'] *= np.sqrt(southd['d_mer_x']**2 + southd['d_mer_y']**2 + southd['d_mer_z']**2)
-    # to map drifts from r1 to r2, (v dot d1) e2
-    out['south_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2 + infod['d_mer_y']**2 + infod['d_mer_z']**2)
-    out['south_mer_drifts_scalar'] *= np.sqrt(southd['e_mer_x']**2 + southd['e_mer_y']**2 + southd['e_mer_z']**2)
-    # to map fields from r1 to r2, (E dot e1) d2
-    out['south_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2 + infod['e_zon_y']**2 + infod['e_zon_z']**2)
-    out['south_zon_fields_scalar'] *= np.sqrt(southd['d_zon_x']**2 + southd['d_zon_y']**2 + southd['d_zon_z']**2)
-    # to map drifts from r1 to r2, (v dot d1) e2
-    out['south_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2 + infod['d_zon_y']**2 + infod['d_zon_z']**2)
-    out['south_zon_drifts_scalar'] *= np.sqrt(southd['e_zon_x']**2 + southd['e_zon_y']**2 + southd['e_zon_z']**2)
+    # To map drifts from r1 to r2, (v dot d1) e2
+    out['north_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2
+                                             + infod['d_mer_y']**2
+                                             + infod['d_mer_z']**2)
+    out['north_mer_drifts_scalar'] *= np.sqrt(northd['e_mer_x']**2
+                                              + northd['e_mer_y']**2
+                                              + northd['e_mer_z']**2)
+
+    # To map fields from r1 to r2, (E dot e1) d2
+    out['north_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2
+                                             + infod['e_zon_y']**2
+                                             + infod['e_zon_z']**2)
+    out['north_zon_fields_scalar'] *= np.sqrt(northd['d_zon_x']**2
+                                              + northd['d_zon_y']**2
+                                              + northd['d_zon_z']**2)
+
+    # To map drifts from r1 to r2, (v dot d1) e2
+    out['north_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2
+                                             + infod['d_zon_y']**2
+                                             + infod['d_zon_z']**2)
+    out['north_zon_drifts_scalar'] *= np.sqrt(northd['e_zon_x']**2
+                                              + northd['e_zon_y']**2
+                                              + northd['e_zon_z']**2)
+
+    # To map fields from r1 to r2, (E dot e1) d2
+    out['south_mer_fields_scalar'] = np.sqrt(infod['e_mer_x']**2
+                                             + infod['e_mer_y']**2
+                                             + infod['e_mer_z']**2)
+    out['south_mer_fields_scalar'] *= np.sqrt(southd['d_mer_x']**2
+                                              + southd['d_mer_y']**2
+                                              + southd['d_mer_z']**2)
+
+    # To map drifts from r1 to r2, (v dot d1) e2
+    out['south_mer_drifts_scalar'] = np.sqrt(infod['d_mer_x']**2
+                                             + infod['d_mer_y']**2
+                                             + infod['d_mer_z']**2)
+    out['south_mer_drifts_scalar'] *= np.sqrt(southd['e_mer_x']**2
+                                              + southd['e_mer_y']**2
+                                              + southd['e_mer_z']**2)
+
+    # To map fields from r1 to r2, (E dot e1) d2
+    out['south_zon_fields_scalar'] = np.sqrt(infod['e_zon_x']**2
+                                             + infod['e_zon_y']**2
+                                             + infod['e_zon_z']**2)
+    out['south_zon_fields_scalar'] *= np.sqrt(southd['d_zon_x']**2
+                                              + southd['d_zon_y']**2
+                                              + southd['d_zon_z']**2)
+
+    # To map drifts from r1 to r2, (v dot d1) e2
+    out['south_zon_drifts_scalar'] = np.sqrt(infod['d_zon_x']**2
+                                             + infod['d_zon_y']**2
+                                             + infod['d_zon_z']**2)
+    out['south_zon_drifts_scalar'] *= np.sqrt(southd['e_zon_x']**2
+                                              + southd['e_zon_y']**2
+                                              + southd['e_zon_z']**2)
 
     return out
 
@@ -1651,7 +1697,7 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     """
     Heritage technique for mapping ion drifts and electric fields.
 
-    Use scalars_for_mapping_ion_drifts instead.
+    Use `scalars_for_mapping_ion_drifts` instead.
 
     Parameters
     ----------
@@ -1678,7 +1724,8 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     Note
     ----
         Directions refer to the ion motion direction e.g. the zonal
-        scalar applies to zonal ion motions (meridional E field assuming ExB ion motion)
+        scalar applies to zonal ion motions (meridional E field
+        assuming ExB ion motion)
 
     """
 
@@ -1688,87 +1735,63 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
         max_steps = 1000
     steps = np.arange(max_steps + 1)
 
-    # use spacecraft location to get ECEF
     ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     # double edge length, used later
     double_edge = 2.*edge_length
 
-    # prepare output
-    eq_zon_drifts_scalar = []
-    eq_mer_drifts_scalar = []
-    # magnetic field info
-    north_mag_scalar = []
-    south_mag_scalar = []
-    eq_mag_scalar = []
+    # Prepare output
     out = {}
-    # meridional e-field scalar map, can also be
-    # zonal ion drift scalar map
-    north_zon_drifts_scalar = apex_distance_after_footpoint_step(ecef_xs, ecef_ys, ecef_zs,
-                                                                 dates, 'north',
-                                                                 'meridional',
-                                                                 step_size=step_size,
-                                                                 max_steps=max_steps,
-                                                                 edge_length=edge_length,
-                                                                 edge_steps=edge_steps,
-                                                                 steps=steps,
-                                                                 ecef_input=True,
-                                                                 **kwargs)
 
-    north_mer_drifts_scalar = apex_distance_after_footpoint_step(ecef_xs, ecef_ys, ecef_zs,
-                                                                 dates, 'north',
-                                                                 'zonal',
-                                                                 step_size=step_size,
-                                                                 max_steps=max_steps,
-                                                                 edge_length=edge_length,
-                                                                 edge_steps=edge_steps,
-                                                                 steps=steps,
-                                                                 ecef_input=True,
-                                                                 **kwargs)
+    # Meridional e-field scalar map, can also be zonal ion drift scalar map
+    adafs = apex_distance_after_footpoint_step
+    north_zon_drifts_scalar = adafs(ecef_xs, ecef_ys, ecef_zs, dates, 'north',
+                                    'meridional', step_size=step_size,
+                                    max_steps=max_steps,
+                                    edge_length=edge_length,
+                                    edge_steps=edge_steps, steps=steps,
+                                    ecef_input=True, **kwargs)
 
-    south_zon_drifts_scalar = apex_distance_after_footpoint_step(ecef_xs, ecef_ys, ecef_zs,
-                                                                 dates, 'south',
-                                                                 'meridional',
-                                                                 step_size=step_size,
-                                                                 max_steps=max_steps,
-                                                                 edge_length=edge_length,
-                                                                 edge_steps=edge_steps,
-                                                                 steps=steps,
-                                                                 ecef_input=True,
-                                                                 **kwargs)
+    north_mer_drifts_scalar = adafs(ecef_xs, ecef_ys, ecef_zs, dates, 'north',
+                                    'zonal', step_size=step_size,
+                                    max_steps=max_steps,
+                                    edge_length=edge_length,
+                                    edge_steps=edge_steps, steps=steps,
+                                    ecef_input=True, **kwargs)
 
-    south_mer_drifts_scalar = apex_distance_after_footpoint_step(ecef_xs, ecef_ys, ecef_zs,
-                                                                 dates, 'south',
-                                                                 'zonal',
-                                                                 step_size=step_size,
-                                                                 max_steps=max_steps,
-                                                                 edge_length=edge_length,
-                                                                 edge_steps=edge_steps,
-                                                                 steps=steps,
-                                                                 ecef_input=True,
-                                                                 **kwargs)
+    south_zon_drifts_scalar = adafs(ecef_xs, ecef_ys, ecef_zs, dates, 'south',
+                                    'meridional', step_size=step_size,
+                                    max_steps=max_steps,
+                                    edge_length=edge_length,
+                                    edge_steps=edge_steps, steps=steps,
+                                    ecef_input=True, **kwargs)
 
-    eq_zon_drifts_scalar = apex_distance_after_local_step(ecef_xs, ecef_ys, ecef_zs, dates,
-                                                          'meridional',
-                                                          edge_length=edge_length,
-                                                          edge_steps=edge_steps,
-                                                          ecef_input=True)
-    eq_mer_drifts_scalar = apex_distance_after_local_step(ecef_xs, ecef_ys, ecef_zs, dates,
-                                                          'zonal',
-                                                          edge_length=edge_length,
-                                                          edge_steps=edge_steps,
-                                                          ecef_input=True)
-    # ratio of apex height difference to step_size across footpoints
+    south_mer_drifts_scalar = adafs(ecef_xs, ecef_ys, ecef_zs, dates, 'south',
+                                    'zonal', step_size=step_size,
+                                    max_steps=max_steps,
+                                    edge_length=edge_length,
+                                    edge_steps=edge_steps, steps=steps,
+                                    ecef_input=True, **kwargs)
+
+    adals = apex_distance_after_local_step
+    eq_zon_drifts_scalar = adals(ecef_xs, ecef_ys, ecef_zs, dates,
+                                 'meridional', edge_length=edge_length,
+                                 edge_steps=edge_steps, ecef_input=True)
+    eq_mer_drifts_scalar = adals(ecef_xs, ecef_ys, ecef_zs, dates, 'zonal',
+                                 edge_length=edge_length, edge_steps=edge_steps,
+                                 ecef_input=True)
+
+    # Ratio of apex height difference to step_size across footpoints
     # scales from equator to footpoint
-    north_zon_drifts_scalar = north_zon_drifts_scalar/double_edge
-    south_zon_drifts_scalar = south_zon_drifts_scalar/double_edge
-    north_mer_drifts_scalar = north_mer_drifts_scalar/double_edge
-    south_mer_drifts_scalar = south_mer_drifts_scalar/double_edge
+    north_zon_drifts_scalar = north_zon_drifts_scalar / double_edge
+    south_zon_drifts_scalar = south_zon_drifts_scalar / double_edge
+    north_mer_drifts_scalar = north_mer_drifts_scalar / double_edge
+    south_mer_drifts_scalar = south_mer_drifts_scalar / double_edge
 
-    # equatorial
-    # scale from s/c to equator
-    eq_zon_drifts_scalar = double_edge/eq_zon_drifts_scalar
-    eq_mer_drifts_scalar = double_edge/eq_mer_drifts_scalar
+    # Equatorial
+    # Scale from s/c to equator
+    eq_zon_drifts_scalar = double_edge / eq_zon_drifts_scalar
+    eq_mer_drifts_scalar = double_edge / eq_mer_drifts_scalar
 
     # change scaling from equator to footpoint, to s/c to footpoint
     # via s/c to equator
@@ -1777,7 +1800,7 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     north_mer_drifts_scalar *= eq_mer_drifts_scalar
     south_mer_drifts_scalar *= eq_mer_drifts_scalar
 
-    # prepare output
+    # Prepare output
     out['north_mer_fields_scalar'] = north_zon_drifts_scalar
     out['south_mer_fields_scalar'] = south_zon_drifts_scalar
     out['north_zon_fields_scalar'] = north_mer_drifts_scalar
@@ -1791,41 +1814,45 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
         # onward and upward
         # figure out scaling for drifts based upon change in magnetic field
         # strength
-        north_ftpnt = np.empty((len(ecef_xs), 3))
-        south_ftpnt = np.empty((len(ecef_xs), 3))
-        # get location of apex for s/c field line
-        apex_xs, apex_ys, apex_zs = apex_location_info(ecef_xs, ecef_ys, ecef_zs,
+
+        # Get location of apex for s/c field line
+        apex_xs, apex_ys, apex_zs = apex_location_info(ecef_xs, ecef_ys,
+                                                       ecef_zs,
                                                        dates, ecef_input=True)
 
-        # magnetic field values at spacecraft
+        # Magnetic field values at spacecraft
         _, _, _, b_sc = magnetic_vector(ecef_xs, ecef_ys, ecef_zs, dates)
-        # magnetic field at apex
+        # Magnetic field at apex
         _, _, _, b_apex = magnetic_vector(apex_xs, apex_ys, apex_zs, dates)
 
         north_ftpnt, south_ftpnt = footpoint_location_info(apex_xs, apex_ys,
                                                            apex_zs, dates,
                                                            ecef_input=True)
 
-        # magnetic field at northern footpoint
+        # Magnetic field at northern footpoint
         _, _, _, b_nft = magnetic_vector(north_ftpnt[:, 0], north_ftpnt[:, 1],
                                          north_ftpnt[:, 2], dates)
 
-        # magnetic field at southern footpoint
+        # Magnetic field at southern footpoint
         _, _, _, b_sft = magnetic_vector(south_ftpnt[:, 0], south_ftpnt[:, 1],
                                          south_ftpnt[:, 2], dates)
-        # scalars account for change in magnetic field between locations
-        south_mag_scalar = b_sc/b_sft
-        north_mag_scalar = b_sc/b_nft
-        eq_mag_scalar = b_sc/b_apex
-        # apply to electric field scaling to get ion drift values
-        north_zon_drifts_scalar = north_zon_drifts_scalar*north_mag_scalar
-        south_zon_drifts_scalar = south_zon_drifts_scalar*south_mag_scalar
-        north_mer_drifts_scalar = north_mer_drifts_scalar*north_mag_scalar
-        south_mer_drifts_scalar = south_mer_drifts_scalar*south_mag_scalar
-        # equatorial
-        eq_zon_drifts_scalar = eq_zon_drifts_scalar*eq_mag_scalar
-        eq_mer_drifts_scalar = eq_mer_drifts_scalar*eq_mag_scalar
-        # output
+
+        # Scalars account for change in magnetic field between locations
+        south_mag_scalar = b_sc / b_sft
+        north_mag_scalar = b_sc / b_nft
+        eq_mag_scalar = b_sc / b_apex
+
+        # Apply to electric field scaling to get ion drift values
+        north_zon_drifts_scalar = north_zon_drifts_scalar * north_mag_scalar
+        south_zon_drifts_scalar = south_zon_drifts_scalar * south_mag_scalar
+        north_mer_drifts_scalar = north_mer_drifts_scalar * north_mag_scalar
+        south_mer_drifts_scalar = south_mer_drifts_scalar * south_mag_scalar
+
+        # Equatorial
+        eq_zon_drifts_scalar = eq_zon_drifts_scalar * eq_mag_scalar
+        eq_mer_drifts_scalar = eq_mer_drifts_scalar * eq_mag_scalar
+
+        # Output
         out['north_zonal_drifts_scalar'] = north_zon_drifts_scalar
         out['south_zonal_drifts_scalar'] = south_zon_drifts_scalar
         out['north_mer_drifts_scalar'] = north_mer_drifts_scalar
