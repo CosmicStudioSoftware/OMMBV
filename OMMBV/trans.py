@@ -162,8 +162,8 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
     # Cylindrical radius
     p = np.sqrt(x**2 + y**2)
 
-    # Closed form solution
-    # http://www.epsg.org/Portals/0/373-07-2.pdf, page 96 section 2.2.1
+    # Closed form solution (link broken now... :( )
+    # ht://www.epsg.org/Portals/0/373-07-2.pdf, page 96 section 2.2.1
     if method == 'closed':
         e_prime = np.sqrt((earth_a**2 - earth_b**2) / earth_b**2)
         theta = np.arctan2(z * earth_a, p * earth_b)
