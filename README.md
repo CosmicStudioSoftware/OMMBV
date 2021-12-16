@@ -1,6 +1,6 @@
 <div align="center">
         <img height="0" width="0px">
-        <img width="20%" src="/docs/images/logo_high_res.pdf" alt="OMMBV" title="OMMBV"</img>
+        <img width="20%" src="/docs/images/logo_high_res.png" alt="OMMBV" title="OMMBV"</img>
 </div>
 
 # Orthogonal Multi-pole Magnetic Basis Vectors (OMMBV)

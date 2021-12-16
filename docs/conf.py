@@ -158,7 +158,7 @@ html_theme_path = ["_themes", ]
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = os.path.join(os.path.abspath('.'), 'images', 'logo_high_res.pdf')
+html_logo = os.path.join(os.path.abspath('.'), 'images', 'logo_high_res.png')
 html_theme_options = {'logo_only': True}
 
 # The name of an image file (within the static path) to use as favicon of the
