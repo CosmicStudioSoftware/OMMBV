@@ -25,17 +25,35 @@ else:
 
 setup(name='OMMBV',
       version=version,
-      packages=['OMMBV'],
+      license='BSD-3-Clause',
+      packages=['OMMBV', 'OMMBV.satellite', 'OMMBV.trans', 'OMMBV.utils',
+                'OMMBV.vector'],
       description=' '.join(('Orthogonal geomagnetic vector basis and',
                             'field-line mapping for multipole magnetic',
                             'fields.')),
-      url='http://github.com/rstoneback/OMMBV',
+      url='https://github.com/rstoneback/OMMBV',
 
       # Author details
       author='Russell Stoneback',
-      author_email='rstoneba@utdallas.edu',
-      data_files=[('OMMBV', ['OMMBV/version.txt'])],
-      include_package_data=True,
+      author_email='russell@stoneris.com',
+      # data_files=[('OMMBV', )],
+      # include_package_data=True,
+      classifiers=[
+          # complete classifier list:
+          # http://pypi.python.org/pypi?%3Aaction=list_classifiers
+          'Development Status :: 5 - Production/Stable',
+          'Intended Audience :: Science/Research',
+          'License :: OSI Approved :: BSD-3-Clause License',
+          'Operating System :: Unix',
+          'Operating System :: POSIX',
+          'Operating System :: Microsoft :: Windows',
+          'Operating System :: MacOS :: MacOS X',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: Implementation :: CPython',
+          'Topic :: Scientific/Engineering :: Physics',
+          'Topic :: Utilities',
+      ],
 
       # Required modules
       install_requires=['numpy', 'scipy'],
