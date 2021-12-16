@@ -1,6 +1,4 @@
-"""
-Supporting routines for coordinate transformations used by OMMBV.
-"""
+"""Supporting routines for coordinate transformations used by OMMBV."""
 
 import numpy as np
 import warnings
@@ -27,7 +25,7 @@ except (AttributeError, NameError, ModuleNotFoundError):
 
 
 def geocentric_to_ecef(latitude, longitude, altitude):
-    """Convert geocentric coordinates into ECEF
+    """Convert geocentric coordinates into ECEF.
 
     Parameters
     ----------
@@ -44,7 +42,6 @@ def geocentric_to_ecef(latitude, longitude, altitude):
         x, y, z ECEF locations in km
 
     """
-
     r = earth_geo_radius + np.asarray(altitude)
     x = r * np.cos(np.deg2rad(latitude)) * np.cos(np.deg2rad(longitude))
     y = r * np.cos(np.deg2rad(latitude)) * np.sin(np.deg2rad(longitude))
@@ -54,7 +51,7 @@ def geocentric_to_ecef(latitude, longitude, altitude):
 
 
 def ecef_to_geocentric(x, y, z, ref_height=earth_geo_radius):
-    """Convert ECEF into geocentric coordinates
+    """Convert ECEF into geocentric coordinates.
 
     Parameters
     ----------
@@ -75,7 +72,6 @@ def ecef_to_geocentric(x, y, z, ref_height=earth_geo_radius):
         altitude above `reference_height` in km.
 
     """
-
     # Deal with float or array-like inputs
     x = np.asarray(x)
     y = np.asarray(y)
@@ -93,7 +89,7 @@ def ecef_to_geocentric(x, y, z, ref_height=earth_geo_radius):
 
 
 def geodetic_to_ecef(latitude, longitude, altitude):
-    """Convert WGS84 geodetic coordinates into ECEF
+    """Convert WGS84 geodetic coordinates into ECEF.
 
     Parameters
     ----------
@@ -110,7 +106,6 @@ def geodetic_to_ecef(latitude, longitude, altitude):
         x, y, z ECEF locations in km
 
     """
-
     # Convert to radians for calculations
     latitude = np.deg2rad(latitude)
     longitude = np.deg2rad(longitude)
@@ -142,7 +137,8 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
         Supports 'iterative' or 'closed' to select method of conversion.
         'closed' for mathematical solution (page 96 section 2.2.1,
         http://www.epsg.org/Portals/0/373-07-2.pdf) or 'iterative'
-        (http://www.oc.nps.edu/oc2902w/coord/coordcvt.pdf). (default = 'closed')
+        (http://www.oc.nps.edu/oc2902w/coord/coordcvt.pdf).
+        (default = 'closed')
 
     Returns
     -------
@@ -151,7 +147,6 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
         altitude above WGS84 (km)
 
     """
-
     # Quick notes on ECEF to Geodetic transformations
     # (http://danceswithcode.net/engineeringnotes/geodetic_to_ecef/
     # geodetic_to_ecef.html)
