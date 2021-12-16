@@ -5,9 +5,11 @@ __version__ = '0.5.5'
 
 on_rtd = os.environ.get('ONREADTHEDOCS') == 'True'
 
-if not on_rtd:
+try:
     from OMMBV import igrf
-else:
+except ImportError:
+    print("ERROR: igrf module could not be imported. " +
+          "OMMBV probably won't work")
     igrf = None
 
 from OMMBV import satellite
