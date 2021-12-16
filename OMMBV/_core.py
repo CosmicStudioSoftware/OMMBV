@@ -1738,7 +1738,7 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     # double edge length, used later
-    double_edge = 2.*edge_length
+    double_edge = 2. * edge_length
 
     # Prepare output
     out = {}
