@@ -3,6 +3,7 @@
 import datetime as dt
 import numpy as np
 import scipy
+import scipy.integrate
 import warnings
 
 # Import reference IGRF fortran code within the package if not on RTD
@@ -317,6 +318,13 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         else:
             nstep = step_size
 
+        # # Don't want `nstep` to get smaller than `step_size`. Using a binary
+        # # search to locate the max so part of method assumption. Well, having
+        # # a different step length helps ensure that a greater variety of
+        # # points are checked.
+        # if nstep < step_size:
+        #     nstep = step_size
+
         while nstep > fine_step_size:
             nstep /= 2.
 
@@ -327,12 +335,11 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
                                     max_steps=fine_max_steps,
                                     recurse=False)
 
-            # Convert all locations to geodetic coordinates
+            # Convert all locations to geodetic coordinates.
             tlat, tlon, talt = trans.ecef_to_geodetic(trace[:, 0], trace[:, 1],
                                                       trace[:, 2])
 
-            # Determine location that is highest with respect to the
-            # geodetic Earth.
+            # Determine location that is highest with respect to geodetic Earth.
             max_idx = np.argmax(talt)
 
         # Collect outputs
