@@ -1,3 +1,5 @@
+"""Unit tests for `OMMBV.vector`."""
+
 import numpy as np
 import pytest
 

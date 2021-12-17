@@ -1,13 +1,13 @@
+"""Unit tests for `OMMBV.trace.apex_location_info`."""
+
 import datetime as dt
 import numpy as np
 import pandas as pds
 import pytest
 
-import OMMBV
 import pysat
 
-import OMMBV.trace
-import OMMBV.trans
+import OMMBV
 from OMMBV.tests.test_core import gen_trace_data_fixed_alt
 
 
