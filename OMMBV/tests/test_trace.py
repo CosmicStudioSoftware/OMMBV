@@ -87,16 +87,14 @@ class TestTracing(object):
 
             # Construct ECEF unit vector connecting each point of field line
             # trace to the next.
-
             tx, ty, tz = OMMBV.vector.normalize(np.diff(trace[:, 0]),
                                                 np.diff(trace[:, 1]),
                                                 np.diff(trace[:, 2]))
 
+            # Downselect positions where movement along field line is positive
             diff_mag = np.sqrt(np.diff(trace[:, 0])**2
                                + np.diff(trace[:, 1])**2
                                + np.diff(trace[:, 2])**2)
-
-            # Downselect positions where movement along field line is positive
             idx, = np.where(diff_mag > 1.)
 
             # Magnetic field unit vector
