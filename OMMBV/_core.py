@@ -7,8 +7,7 @@ import warnings
 from OMMBV.trace import apex_location_info
 from OMMBV.trace import footpoint_location_info
 from OMMBV.trace import magnetic_vector
-import OMMBV.trans as trans
-import OMMBV.utils
+from OMMBV import trans
 from OMMBV import vector
 
 
@@ -984,7 +983,7 @@ def enu_to_ecef_vector(east, north, up, glat, glong):
                            "wrapper will be removed in OMMBV 0.6+"]),
                   DeprecationWarning, stacklevel=2)
 
-    return OMMBV.vector.enu_to_ecef(east, north, up, glat, glong)
+    return vector.enu_to_ecef(east, north, up, glat, glong)
 
 
 def ecef_to_enu_vector(x, y, z, glat, glong):
@@ -1022,7 +1021,7 @@ def ecef_to_enu_vector(x, y, z, glat, glong):
                            "wrapper will be removed in OMMBV 0.6+"]),
                   DeprecationWarning, stacklevel=2)
 
-    return OMMBV.vector.ecef_to_enu(x, y, z, glat, glong)
+    return vector.ecef_to_enu(x, y, z, glat, glong)
 
 
 def project_ECEF_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
@@ -1058,8 +1057,8 @@ def project_ECEF_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
                            "wrapper will be removed in OMMBV 0.6+"]),
                   DeprecationWarning, stacklevel=2)
 
-    return OMMBV.vector.project_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz,
-                                           zx, zy, zz)
+    return vector.project_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz,
+                                     zx, zy, zz)
 
 
 def normalize_vector(x, y, z):
@@ -1089,7 +1088,7 @@ def normalize_vector(x, y, z):
                            "wrapper will be removed in OMMBV 0.6+"]),
                   DeprecationWarning, stacklevel=2)
 
-    return OMMBV.vector.normalize(x, y, z)
+    return vector.normalize(x, y, z)
 
 
 def cross_product(x1, y1, z1, x2, y2, z2):
