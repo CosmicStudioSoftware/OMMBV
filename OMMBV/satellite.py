@@ -1,7 +1,6 @@
 """Provide support for adding OMMBV to NASA Ionospheric Connections Explorer."""
 
-import OMMBV as OMMBV
-import OMMBV.vector
+import OMMBV
 
 
 def add_mag_drift_unit_vectors_ecef(inst, lat_label='latitude',

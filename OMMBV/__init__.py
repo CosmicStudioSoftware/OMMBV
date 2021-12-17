@@ -16,6 +16,7 @@ except ImportError:
 
 
 from OMMBV import satellite
+from OMMBV import trace
 from OMMBV import trans
 from OMMBV import utils
 from OMMBV import vector

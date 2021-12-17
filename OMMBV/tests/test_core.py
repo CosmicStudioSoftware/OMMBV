@@ -10,6 +10,7 @@ import datetime
 import functools
 
 import OMMBV as OMMBV
+import OMMBV.trace
 import OMMBV.trans
 import OMMBV.vector
 from OMMBV import igrf
@@ -2005,12 +2006,12 @@ class TestUnitVectors():
                 dview.targets = next(targets)
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = OMMBV.ecef_to_geodetic(x[i, :-1], y[i, :-1], z[i, :-1])
-                pending.append(dview.apply_async(OMMBV.apex_location_info,
+                pending.append(dview.apply_async(OMMBV.trace.apex_location_info,
                                                  tlat, tlon, talt, dates,
                                                  return_geodetic=True))
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = OMMBV.ecef_to_geodetic(x2[i, :-1], y2[i, :-1], z2[i, :-1])
-                pending.append(dview.apply_async(OMMBV.apex_location_info,
+                pending.append(dview.apply_async(OMMBV.trace.apex_location_info,
                                                  tlat, tlon, talt, dates,
                                                  return_geodetic=True))
             for i, p_lat in enumerate(p_lats):
@@ -2041,12 +2042,12 @@ class TestUnitVectors():
             for i, p_lat in enumerate(p_lats):
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = OMMBV.ecef_to_geodetic(x[i, :-1], y[i, :-1], z[i, :-1])
-                x[i, :-1], y[i, :-1], z[i, :-1], _, _, h[i, :-1] = OMMBV.apex_location_info(tlat, tlon, talt, dates,
-                                                                                           return_geodetic=True)
+                x[i, :-1], y[i, :-1], z[i, :-1], _, _, h[i, :-1] = OMMBV.trace.apex_location_info(tlat, tlon, talt, dates,
+                                                                                                  return_geodetic=True)
                 # convert all locations to geodetic coordinates
                 tlat, tlon, talt = OMMBV.ecef_to_geodetic(x2[i, :-1], y2[i, :-1], z2[i, :-1])
-                x2[i, :-1], y2[i, :-1], z2[i, :-1], _, _, h2[i, :-1] = OMMBV.apex_location_info(tlat, tlon, talt, dates,
-                                                                                               return_geodetic=True)
+                x2[i, :-1], y2[i, :-1], z2[i, :-1], _, _, h2[i, :-1] = OMMBV.trace.apex_location_info(tlat, tlon, talt, dates,
+                                                                                                      return_geodetic=True)
             # take difference in locations
             normx = x.copy()
             normy = y.copy()

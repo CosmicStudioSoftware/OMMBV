@@ -6,6 +6,7 @@ import pandas as pds
 import OMMBV
 import pysat
 
+import OMMBV.trace
 import OMMBV.trans
 from OMMBV.tests.test_core import gen_data_fixed_alt, gen_trace_data_fixed_alt
 from OMMBV.tests.test_core import gen_plot_grid_fixed_alt
@@ -28,12 +29,12 @@ class TestMaxApexHeight():
                                                                                      [date], ecef_input=True)
 
         # get apex height for step along meridional directions, then around that direction
-        _, _, _, _, _, nominal_max = OMMBV.apex_location_info(ecef_x + delta * mx,
-                                                              ecef_y + delta * my,
-                                                              ecef_z + delta * mz,
-                                                              [date],
-                                                              ecef_input=True,
-                                                              return_geodetic=True)
+        _, _, _, _, _, nominal_max = OMMBV.trace.apex_location_info(ecef_x + delta * mx,
+                                                                    ecef_y + delta * my,
+                                                                    ecef_z + delta * mz,
+                                                                    [date],
+                                                                    ecef_input=True,
+                                                                    return_geodetic=True)
 
         steps = (np.arange(101) - 50.) * delta / 10000.
         output_max = []
@@ -45,12 +46,12 @@ class TestMaxApexHeight():
             del_x /= norm
             del_y /= norm
             del_z /= norm
-            _, _, _, _, _, loop_h = OMMBV.apex_location_info(ecef_x + del_x,
-                                                             ecef_y + del_y,
-                                                             ecef_z + del_z,
-                                                             [date],
-                                                             ecef_input=True,
-                                                             return_geodetic=True)
+            _, _, _, _, _, loop_h = OMMBV.trace.apex_location_info(ecef_x + del_x,
+                                                                   ecef_y + del_y,
+                                                                   ecef_z + del_z,
+                                                                   [date],
+                                                                   ecef_input=True,
+                                                                   return_geodetic=True)
             output_max.append(loop_h)
 
         try:
@@ -110,7 +111,7 @@ class TestApex():
                 for steps in fine_steps_goal:
                     # iterate through target cyclicly and run commands
                     dview.targets = next(targets)
-                    pending.append(dview.apply_async(OMMBV.apex_location_info, [lat],
+                    pending.append(dview.apply_async(OMMBV.trace.apex_location_info, [lat],
                                                      [lon], [alt], [date], fine_step_size=steps,
                                                      return_geodetic=True))
                 out = []
@@ -129,9 +130,9 @@ class TestApex():
             for lat, lon, alt in zip(lats, longs, alts):
                 out = []
                 for steps in fine_steps_goal:
-                    x, y, z, _, _, apex_height = OMMBV.apex_location_info([lat], [lon], [alt], [date],
-                                                                          fine_step_size=steps,
-                                                                          return_geodetic=True)
+                    x, y, z, _, _, apex_height = OMMBV.trace.apex_location_info([lat], [lon], [alt], [date],
+                                                                                fine_step_size=steps,
+                                                                                return_geodetic=True)
                     pt = [x[0], y[0], z[0], apex_height[0]]
                     out.append(pt)
 
@@ -196,9 +197,9 @@ class TestApex():
         # single processor case
         for i, p_lat in enumerate(p_lats):
             print (i, p_lat)
-            x, y, z, olat, olon, oalt = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
-                                                                 p_alts, [date] * len(p_longs),
-                                                                 return_geodetic=True)
+            x, y, z, olat, olon, oalt = OMMBV.trace.apex_location_info([p_lat] * len(p_longs), p_longs,
+                                                                       p_alts, [date] * len(p_longs),
+                                                                       return_geodetic=True)
             apex_lat[i, :-1] = olat
             apex_lon[i, :-1] = olon
             apex_alt[i, :-1] = oalt
@@ -241,12 +242,12 @@ class TestApex():
         # single processor case
         for i, p_lat in enumerate(p_lats):
             print (i, p_lat)
-            x, y, z, _, _, h = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
-                                                        p_alts, [date] * len(p_longs),
-                                                        fine_step_size=1.E-5, return_geodetic=True)
-            x2, y2, z2, _, _, h2 = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
-                                                            p_alts, [date] * len(p_longs),
-                                                            fine_step_size=5.E-6, return_geodetic=True)
+            x, y, z, _, _, h = OMMBV.trace.apex_location_info([p_lat] * len(p_longs), p_longs,
+                                                              p_alts, [date] * len(p_longs),
+                                                              fine_step_size=1.E-5, return_geodetic=True)
+            x2, y2, z2, _, _, h2 = OMMBV.trace.apex_location_info([p_lat] * len(p_longs), p_longs,
+                                                                  p_alts, [date] * len(p_longs),
+                                                                  fine_step_size=5.E-6, return_geodetic=True)
 
             norm_alt[i, :] = h
             apex_lat[i, :] = np.abs(x2 - x)
@@ -282,12 +283,12 @@ class TestApex():
         # single processor case
         for i, p_lat in enumerate(p_lats):
             print (i, p_lat)
-            x, y, z, _, _, h = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
-                                                        p_alts, [date] * len(p_longs),
-                                                        fine_max_steps=5, return_geodetic=True)
-            x2, y2, z2, _, _, h2 = OMMBV.apex_location_info([p_lat] * len(p_longs), p_longs,
-                                                            p_alts, [date] * len(p_longs),
-                                                            fine_max_steps=10, return_geodetic=True)
+            x, y, z, _, _, h = OMMBV.trace.apex_location_info([p_lat] * len(p_longs), p_longs,
+                                                              p_alts, [date] * len(p_longs),
+                                                              fine_max_steps=5, return_geodetic=True)
+            x2, y2, z2, _, _, h2 = OMMBV.trace.apex_location_info([p_lat] * len(p_longs), p_longs,
+                                                                  p_alts, [date] * len(p_longs),
+                                                                  fine_max_steps=10, return_geodetic=True)
 
             norm_alt[i, :] = h
             apex_lat[i, :] = np.abs(x2 - x)
@@ -348,11 +349,11 @@ class TestApex():
 
                 # iterate through target cyclicly and run commands
                 dview.targets = next(targets)
-                pending.append(dview.apply_async(OMMBV.apex_location_info, np.array([p_lat] * len(p_longs)), p_longs,
+                pending.append(dview.apply_async(OMMBV.trace.apex_location_info, np.array([p_lat] * len(p_longs)), p_longs,
                                                  p_alts, [date] * len(p_longs),
                                                  return_geodetic=True))
 
-                pending.append(dview.apply_async(OMMBV.apex_location_info, lat2, lon2, alt2,
+                pending.append(dview.apply_async(OMMBV.trace.apex_location_info, lat2, lon2, alt2,
                                                  [date] * len(p_longs),
                                                  return_geodetic=True))
 

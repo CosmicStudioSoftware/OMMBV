@@ -7,6 +7,7 @@ import OMMBV
 import pysat
 import apexpy
 
+import OMMBV.trace
 import OMMBV.vector
 
 
@@ -30,7 +31,7 @@ class TestComparison():
         # date of run
         date = self.inst.date
         # map to the magnetic equator
-        ecef_x, ecef_y, ecef_z, eq_lat, eq_long, eq_z = OMMBV.apex_location_info(
+        ecef_x, ecef_y, ecef_z, eq_lat, eq_long, eq_z = OMMBV.trace.apex_location_info(
             glats, glongs, alts,
             [date]*len(alts),
             return_geodetic=True)

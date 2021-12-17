@@ -4,8 +4,9 @@ import numpy as np
 
 import OMMBV.utils
 import OMMBV.vector
-from OMMBV import trans as trans, full_field_line, igrf as igrf, vector, footpoint_location_info, \
+from OMMBV import trans as trans, igrf as igrf, vector, footpoint_location_info, \
     step_along_mag_unit_vector, apex_location_info, magnetic_vector
+from OMMBV.trace import full_field_line
 
 
 def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude,

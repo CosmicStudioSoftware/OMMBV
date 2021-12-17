@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pds
 
 import OMMBV
+import OMMBV.trace
 import OMMBV.trans
 import OMMBV.vector
 import pysat
@@ -84,11 +85,11 @@ class TestTracing():
         for x, y, z in zip(ecf_x, ecf_y, ecf_z):
             # Trace north and south, take last points
             trace_n.append(
-                OMMBV.field_line_trace(np.array([x, y, z]), date, 1., 0.,
-                                       step_size=0.5, max_steps=1.E6)[-1, :])
+                OMMBV.trace.field_line_trace(np.array([x, y, z]), date, 1., 0.,
+                                             step_size=0.5, max_steps=1.E6)[-1, :])
             trace_s.append(
-                OMMBV.field_line_trace(np.array([x, y, z]), date, -1., 0.,
-                                       step_size=0.5, max_steps=1.E6)[-1, :])
+                OMMBV.trace.field_line_trace(np.array([x, y, z]), date, -1., 0.,
+                                             step_size=0.5, max_steps=1.E6)[-1, :])
         trace_n = pds.DataFrame(trace_n, columns=['x', 'y', 'z'])
         (trace_n['lat'],
          trace_n['long'],
@@ -142,12 +143,12 @@ class TestTracing():
 
             for j, (x, y, z) in enumerate(zip(ecef_x, ecef_y, ecef_z)):
                 # Perform field line traces
-                trace_n = OMMBV.field_line_trace(np.array([x, y, z]), date, 1.,
-                                                 0., step_size=.5,
-                                                 max_steps=1.E6)
-                trace_s = OMMBV.field_line_trace(np.array([x, y, z]), date, -1.,
-                                                 0., step_size=.5,
-                                                 max_steps=1.E6)
+                trace_n = OMMBV.trace.field_line_trace(np.array([x, y, z]), date, 1.,
+                                                       0., step_size=.5,
+                                                       max_steps=1.E6)
+                trace_s = OMMBV.trace.field_line_trace(np.array([x, y, z]), date, -1.,
+                                                       0., step_size=.5,
+                                                       max_steps=1.E6)
 
                 # Combine together, S/C position is first for both
                 # Reverse first array and join so plotting makes sense
