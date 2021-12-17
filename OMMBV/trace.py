@@ -191,8 +191,8 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
 
     if steps is None:
         steps = np.arange(max_steps + 1)
-    if len(steps) != max_steps + 1:
-        raise ValueError('Length of steps must be max_steps+1.')
+    elif len(steps) != max_steps + 1:
+        raise ValueError('Length of steps must be `max_steps`+1.')
 
     # trace north, then south, and combine
     trace_south = field_line_trace(init, date, -1., height,
@@ -205,8 +205,9 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
                                    step_size=step_size,
                                    max_steps=max_steps,
                                    **kwargs)
-    # order of field points is generally along the field line, south to north
-    # don't want to include the initial point twice
+
+    # Order of field points is along the field line, south to north.
+    # Don't want to include the initial point twice.
     if not np.isnan(trace_north[-1, 0]) and (not np.isnan(trace_south[-1, 0])):
         trace = np.vstack((trace_south[::-1][:-1, :], trace_north))
     else:
@@ -440,14 +441,16 @@ def magnetic_vector(x, y, z, dates, normalize=False):
 
     Parameters
     ----------
-    x : array-like
+    x : array-like of floats
         Position in ECEF (km), X
-    y : array-like
+    y : array-like of floats
         Position in ECEF (km), Y
-    z : array-like
+    z : array-like of floats
         Position in ECEF (km), Z
-    normalize : bool (False)
-        If True, return unit vector
+    dates : array-like of datetimes
+        Datetimes to calculate magnetic field
+    normalize : bool
+        If True, return unit vector. (default=False)
 
     Returns
     -------
