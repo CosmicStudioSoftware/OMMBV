@@ -12,6 +12,7 @@ class TestUtils(object):
     """Unit tests for utils."""
 
     def setup(self):
+        """Setup test environment before each function."""
 
         self.start_date = dt.datetime(2000, 1, 1)
         self.end_date = dt.datetime(2020, 12, 31)

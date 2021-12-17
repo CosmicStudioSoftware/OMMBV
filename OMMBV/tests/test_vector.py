@@ -1,151 +1,84 @@
-from nose.tools import assert_almost_equals as asseq
 import numpy as np
+import pytest
 
 import OMMBV
 from OMMBV import igrf
 from OMMBV.tests.test_core import gen_data_fixed_alt
 
 
-class TestVector():
+class TestVector(object):
+    """Unit tests for `OMMBV.vector`."""
 
-    def __init__(self):
+    def setup(self):
+        """Setup test environment before each function."""
 
         # Locations to perform tests at
         self.lats, self.longs, self.alts = gen_data_fixed_alt(550.)
 
+        # self.start_date = dt.datetime(2000, 1, 1)
+        # self.end_date = dt.datetime(2020, 12, 31)
+        # self.dates = pysat.utils.time.create_date_range(self.start_date,
+        #                                                 self.end_date)
         return
 
-    def test_basic_ecef_to_enu_rotations(self):
+    def teardown(self):
+        """Clean up test environment after each function."""
+
+        del self.lats, self.longs, self.alts
+        # del self.start_date, self.end_date, self.dates
+        return
+
+    @pytest.mark.parametrize("input,output",
+                             [([0., 1., 0., 0., 0.], [1.0, 0., 0.]),
+                              ([1., 0., 0., 0., 0.], [0., 0., 1.]),
+                              ([0., 0., 1., 0., 0.], [0., 1., 0.]),
+                              ([1., 0., 0., 0., 90.], [-1., 0., 0.]),
+                              ([0., 1., 0., 0., 90.], [0., 0., 1.]),
+                              ([0., 0., 1., 0., 90.], [0., 1., 0.]),
+                              ([0., 1., 0., 0., 180.], [-1., 0., 0.]),
+                              ([1., 0., 0., 0., 180.], [0., 0., -1.]),
+                              ([0., 0., 1., 0., 180.], [0., 1., 0.]),
+                              ([0., 1., 0., 45., 0.], [1., 0., 0.]),
+                              ([1., 0., 0., 45., 0.], [0., -np.cos(np.pi / 4),
+                                                       np.cos(np.pi / 4)]),
+                              ([0., 0., 1., 45., 0.], [0., np.cos(np.pi / 4),
+                                                       np.cos(np.pi / 4)])])
+    def test_basic_ecef_to_enu_rotations(self, input, output):
         """Test ECEF to ENU Vector Rotations"""
-        # vector pointing along ecef y at 0, 0 is east
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(0., 1., 0., 0., 0.)
-        asseq(ve, 1.0, 9)
-        asseq(vn, 0, 9)
-        asseq(vu, 0, 9)
 
-        # vector pointing along ecef x at 0, 0 is up
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(1., 0., 0., 0., 0.)
-        asseq(ve, 0.0, 9)
-        asseq(vn, 0.0, 9)
-        asseq(vu, 1.0, 9)
+        ve, vn, vu = OMMBV.vector.ecef_to_enu(*input)
 
-        # vector pointing along ecef z at 0, 0 is north
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(0., 0., 1., 0., 0.)
-        asseq(ve, 0.0, 9)
-        asseq(vn, 1.0, 9)
-        asseq(vu, 0.0, 9)
-
-        # vector pointing along ecef x at 0, 90 long is west
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(1., 0., 0., 0., 90.)
-        asseq(ve, -1.0, 9)
-        asseq(vn, 0.0, 9)
-        asseq(vu, 0.0, 9)
-
-        # vector pointing along ecef y at 0, 90 long is up
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(0., 1., 0., 0., 90.)
-        asseq(ve, 0.0, 9)
-        asseq(vn, 0.0, 9)
-        asseq(vu, 1.0, 9)
-
-        # vector pointing along ecef z at 0, 90 long is north
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(0., 0., 1., 0., 90.)
-        asseq(ve, 0.0, 9)
-        asseq(vn, 1.0, 9)
-        asseq(vu, 0.0, 9)
-
-        # vector pointing along ecef y at 0, 180 is west
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(0., 1., 0., 0., 180.)
-        asseq(ve, -1.0, 9)
-        asseq(vn, 0.0, 9)
-        asseq(vu, 0.0, 9)
-
-        # vector pointing along ecef x at 0, 180 is down
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(1., 0., 0., 0., 180.)
-        asseq(ve, 0.0, 9)
-        asseq(vn, 0.0, 9)
-        asseq(vu, -1.0, 9)
-
-        # vector pointing along ecef z at 0, 0 is north
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(0., 0., 1., 0., 180.)
-        asseq(ve, 0.0, 9)
-        asseq(vn, 1.0, 9)
-        asseq(vu, 0.0, 9)
-
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(0., 1., 0., 45., 0.)
-        asseq(ve, 1.0, 9)
-        asseq(vn, 0, 9)
-        asseq(vu, 0, 9)
-
-        # vector pointing along ecef x at 0, 0 is south/up
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(1., 0., 0., 45., 0.)
-        asseq(ve, 0.0, 9)
-        asseq(vn, -np.cos(np.pi / 4), 9)
-        asseq(vu, np.cos(np.pi / 4), 9)
-
-        # vector pointing along ecef z at 45, 0 is north/up
-        ve, vn, vu = OMMBV.vector.ecef_to_enu(0., 0., 1., 45., 0.)
-        asseq(ve, 0.0, 9)
-        asseq(vn, np.cos(np.pi / 4), 9)
-        asseq(vu, np.cos(np.pi / 4), 9)
-
+        np.testing.assert_allclose(ve, output[0], atol=1E-9)
+        np.testing.assert_allclose(vn, output[1], atol=1E-9)
+        np.testing.assert_allclose(vu, output[2], atol=1E-9)
         return
 
-    def test_basic_enu_to_ecef_rotations(self):
+    @pytest.mark.parametrize("input,output", [([1., 0., 0., 0., 0.],
+                                               [0., 1., 0.]),
+                                              ([0., 0., 1., 0., 0.],
+                                               [1., 0., 0.]),
+                                              ([0., 1., 0., 0., 0.],
+                                               [0., 0., 1.]),
+                                              ([1., 0., 0., 0., 90.],
+                                               [-1., 0., 0.]),
+                                              ([0., 0., 1., 0., 90.],
+                                               [0., 1., 0.]),
+                                              ([0., 1., 0., 0., 90.],
+                                               [0., 0., 1.]),
+                                              ([1., 0., 0., 0., 180.],
+                                               [0., -1., 0.]),
+                                              ([0., 0., 1., 0., 180.],
+                                               [-1., 0., 0.]),
+                                              ([0., 1., 0., 0., 180.],
+                                               [0., 0., 1.])])
+    def test_basic_enu_to_ecef_rotations(self, input, output):
         """Test ENU to ECEF rotations"""
 
-        # vector pointing east at 0, 0 is along y
-        vx, vy, vz = OMMBV.vector.enu_to_ecef(1., 0., 0., 0., 0.)
-        asseq(vx, 0.0, 9)
-        asseq(vy, 1.0, 9)
-        asseq(vz, 0.0, 9)
+        vx, vy, vz = OMMBV.vector.enu_to_ecef(*input)
 
-        # vector pointing up at 0, 0 is along x
-        vx, vy, vz = OMMBV.vector.enu_to_ecef(0., 0., 1., 0., 0.)
-        asseq(vx, 1.0, 9)
-        asseq(vy, 0.0, 9)
-        asseq(vz, 0.0, 9)
-
-        # vector pointing north at 0, 0 is along z
-        vx, vy, vz = OMMBV.vector.enu_to_ecef(0., 1., 0., 0., 0.)
-        asseq(vx, 0.0, 9)
-        asseq(vy, 0.0, 9)
-        asseq(vz, 1.0, 9)
-
-        # east vector at 0, 90 long points along -x
-        vx, vy, vz = OMMBV.vector.enu_to_ecef(1., 0., 0., 0., 90.)
-        asseq(vx, -1.0, 9)
-        asseq(vy, 0.0, 9)
-        asseq(vz, 0.0, 9)
-
-        # vector pointing up at 0, 90 is along y
-        vx, vy, vz = OMMBV.vector.enu_to_ecef(0., 0., 1., 0., 90.)
-        asseq(vx, 0.0, 9)
-        asseq(vy, 1.0, 9)
-        asseq(vz, 0.0, 9)
-
-        # vector pointing north at 0, 90 is along z
-        vx, vy, vz = OMMBV.vector.enu_to_ecef(0., 1., 0., 0., 90.)
-        asseq(vx, 0.0, 9)
-        asseq(vy, 0.0, 9)
-        asseq(vz, 1.0, 9)
-
-        # vector pointing east at 0, 0 is along y
-        vx, vy, vz = OMMBV.vector.enu_to_ecef(1., 0., 0., 0., 180.)
-        asseq(vx, 0.0, 9)
-        asseq(vy, -1.0, 9)
-        asseq(vz, 0.0, 9)
-
-        # vector pointing up at 0, 180 is along -x
-        vx, vy, vz = OMMBV.vector.enu_to_ecef(0., 0., 1., 0., 180.)
-        asseq(vx, -1.0, 9)
-        asseq(vy, 0.0, 9)
-        asseq(vz, 0.0, 9)
-
-        # vector pointing north at 0, 180 is along z
-        vx, vy, vz = OMMBV.vector.enu_to_ecef(0., 1., 0., 0., 180.)
-        asseq(vx, 0.0, 9)
-        asseq(vy, 0.0, 9)
-        asseq(vz, 1.0, 9)
+        np.testing.assert_allclose(vx, output[0], atol=1E-9)
+        np.testing.assert_allclose(vy, output[1], atol=1E-9)
+        np.testing.assert_allclose(vz, output[2], atol=1E-9)
 
         return
 
@@ -160,9 +93,9 @@ class TestVector():
                                                      lon)
             vxx, vyy, vzz = OMMBV.vector.enu_to_ecef(vxx, vyy, vzz, lat,
                                                      lon)
-            asseq(vx, vxx, 9)
-            asseq(vy, vyy, 9)
-            asseq(vz, vzz, 9)
+            np.testing.assert_allclose(vx, vxx, atol=1E-9)
+            np.testing.assert_allclose(vy, vyy, atol=1E-9)
+            np.testing.assert_allclose(vz, vzz, atol=1E-9)
 
         return
 
@@ -177,9 +110,9 @@ class TestVector():
                                                      lon)
             vxx, vyy, vzz = OMMBV.vector.ecef_to_enu(vxx, vyy, vzz, lat,
                                                      lon)
-            asseq(vx, vxx, 9)
-            asseq(vy, vyy, 9)
-            asseq(vz, vzz, 9)
+            np.testing.assert_allclose(vx, vxx, atol=1E-9)
+            np.testing.assert_allclose(vy, vyy, atol=1E-9)
+            np.testing.assert_allclose(vz, vzz, atol=1E-9)
 
         return
 
@@ -200,17 +133,18 @@ class TestVector():
             vx2, vy2, vz2 = OMMBV.vector.enu_to_ecef(vx, vy, -vz, lat,
                                                      lon)
 
-            asseq(vxx, vx2, 9)
-            asseq(vyy, vy2, 9)
-            asseq(vzz, vz2, 9)
+            np.testing.assert_allclose(vxx, vx2, atol=1E-9)
+            np.testing.assert_allclose(vyy, vy2, atol=1E-9)
+            np.testing.assert_allclose(vzz, vz2, atol=1E-9)
 
             vxx, vyy, vzz = OMMBV.vector.ecef_to_enu(vxx, vyy, vzz, lat,
                                                      lon)
             # Convert upward component back to down
             vzz = -vzz
+
             # Compare original inputs to outputs
-            asseq(vx, vxx, 9)
-            asseq(vy, vyy, 9)
-            asseq(vz, vzz, 9)
+            np.testing.assert_allclose(vx, vxx, atol=1E-9)
+            np.testing.assert_allclose(vy, vyy, atol=1E-9)
+            np.testing.assert_allclose(vz, vzz, atol=1E-9)
 
         return
