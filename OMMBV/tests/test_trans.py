@@ -1,4 +1,4 @@
-from nose.tools import assert_almost_equals as asseq
+"""Unit tests for `OMMBV.trans`."""
 
 import numpy as np
 
@@ -30,13 +30,19 @@ def assert_difference_tol(data, data2, tol=1.E-5):
     return
 
 
-class TestTransformations():
+class TestTransformations(object):
 
-    def __init__(self):
+    def setup(self):
+        """Setup test environment before each function."""
 
         # Locations to perform tests at
         self.lats, self.longs, self.alts = gen_data_fixed_alt(550.)
+        return
 
+    def teardown(self):
+        """Clean up test environment after each function."""
+
+        del self.lats, self.longs, self.alts
         return
 
     def test_geocentric_to_ecef_to_geocentric(self):
