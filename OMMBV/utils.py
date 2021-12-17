@@ -13,7 +13,7 @@ def datetimes_to_doubles(dates):
 
     Returns
     -------
-    ddates : list of np.float64
+    ddates : np.array, dtype=np.float64
       Dates cast as year.fractional_year
 
     """
@@ -34,6 +34,6 @@ def datetimes_to_doubles(dates):
                      for time in dates], dtype=np.float64)
 
     # Create double variable for time
-    ddates = years + (doy + time) / (num_doy_year + 1)
+    ddates = years + (doy + time) / (num_doy_year + 1.)
 
     return ddates
