@@ -1,4 +1,4 @@
-"""Supporting routines for vector operations usd within OMMBV."""
+"""Supporting routines for vector operations used within OMMBV."""
 
 import numpy as np
 

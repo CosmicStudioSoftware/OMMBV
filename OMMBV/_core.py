@@ -4,83 +4,12 @@ import numpy as np
 import warnings
 
 
-# Import reference IGRF fortran code within the package if not on RTD
-try:
-    from OMMBV import igrf as igrf
-except Exception:
-    estr = 'Unable to import Fortran IGRF code.'
-    warnings.warn(estr, ImportWarning)
-
 from OMMBV.trace import apex_location_info
 from OMMBV.trace import footpoint_location_info
+from OMMBV.trace import magnetic_vector
 import OMMBV.trans as trans
 import OMMBV.utils
 from OMMBV import vector
-
-
-def magnetic_vector(x, y, z, dates, normalize=False):
-    """Use IGRF to calculate geomagnetic field.
-
-    Parameters
-    ----------
-    x : array-like
-        Position in ECEF (km), X
-    y : array-like
-        Position in ECEF (km), Y
-    z : array-like
-        Position in ECEF (km), Z
-    normalize : bool (False)
-        If True, return unit vector
-
-    Returns
-    -------
-    array, array, array
-        Magnetic field along ECEF directions
-
-    """
-    # Prepare output lists
-    bn = []
-    be = []
-    bd = []
-    bm = []
-
-    # Need a double variable for time.
-    ddates = OMMBV.utils.datetimes_to_doubles(dates)
-
-    # Use geocentric coordinates for calculating magnetic field since
-    # transformation between it and ECEF is robust. The geodetic translations
-    # introduce error.
-    latitudes, longitudes, altitudes = trans.ecef_to_geocentric(x, y, z,
-                                                                ref_height=0.)
-
-    # Calculate magnetic field value for all user provided locations
-    colats = np.deg2rad(90. - latitudes)
-    longs = np.deg2rad(longitudes)
-    for colat, elong, alt, date in zip(colats, longs, altitudes, ddates):
-        # tbn, tbe, tbd, tbmag are in nT
-        tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, date, 2, alt, colat, elong)
-
-        # Collect outputs
-        bn.append(tbn)
-        be.append(tbe)
-        bd.append(tbd)
-        bm.append(tbmag)
-
-    # Repackage
-    bn = np.array(bn, dtype=np.float64)
-    be = np.array(be, dtype=np.float64)
-    bd = np.array(bd, dtype=np.float64)
-    bm = np.array(bm, dtype=np.float64)
-
-    # Convert to ECEF basis
-    bx, by, bz = vector.enu_to_ecef(be, bn, -bd, latitudes, longitudes)
-
-    if normalize:
-        bx /= bm
-        by /= bm
-        bz /= bm
-
-    return bx, by, bz, bm
 
 
 def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
