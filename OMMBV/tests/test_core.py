@@ -1,35 +1,19 @@
+"""Unit tests for OMMBV core vector basis functions."""
+
 import datetime as dt
-import itertools
-import os
-
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pds
-import datetime
-
 import functools
+import itertools
+import numpy as np
+import os
+import pandas as pds
+import pytest
 
 import OMMBV as OMMBV
 import OMMBV.trace
 import OMMBV.trans
 import OMMBV.vector
-from OMMBV import igrf
 
 import pysat
-
-# multiprocessing boolean flag
-multiproc = True
-if multiproc:
-    # get remote instances
-    import ipyparallel
-    print('parallel in')
-    dc = ipyparallel.Client()
-    dview = dc[:]
-    print('parallel out')
-else:
-    # nothing to set
-    dc = None
-    dview = None
 
 
 # Methods to generate data sets used by testing routines.
@@ -147,1328 +131,1028 @@ def gen_plot_grid_fixed_alt(alt):
     return lat_dim, long_dim, alt_dim
 
 
-################## UNIT VECTOR TESTS ###############################
-class TestUnitVectors():
+class TestUnitVectors(object):
 
-    def __init__(self):
-        # placeholder for data management features
+    def setup(self):
+        """Setup test environment before each function."""
         self.inst = pysat.Instrument('pysat', 'testing')
         self.inst.yr = 2010.
         self.inst.doy = 1.
-        self.dview = dview
-        self.dc = dc
 
+        self.date = dt.datetime(2000, 1, 1)
+
+        self.map_labels = ['d_zon_x', 'd_zon_y', 'd_zon_z',
+                           'd_mer_x', 'd_mer_y', 'd_mer_z',
+                           'e_zon_x', 'e_zon_y', 'e_zon_z',
+                           'e_mer_x', 'e_mer_y', 'e_mer_z',
+                           'd_fa_x', 'd_fa_y', 'd_fa_z',
+                           'e_fa_x', 'e_fa_y', 'e_fa_z']
+        return
+
+    def teardown(self):
+        """Clean up test environment after each function."""
+
+        del self.inst, self.date, self.map_labels
         return
 
     def test_vectors_at_pole(self):
         """Ensure np.nan returned at magnetic pole for scalars and vectors."""
         out = OMMBV.calculate_mag_drift_unit_vectors_ecef([80.97], [250.],
                                                           [550.],
-                                                          [dt.datetime(2000, 1, 1)],
+                                                          [self.date],
                                                           full_output=True,
                                                           pole_tol=1.E-4)
         # Confirm vectors are np.nan
         assert np.all(np.isnan(out[0:3]))
         assert np.all(np.isnan(out[6:9]))
 
-        items = ['d_zon_x', 'd_zon_y', 'd_zon_z', 'd_mer_x', 'd_mer_y',
-                 'd_mer_z', 'e_zon_x', 'e_zon_y', 'e_zon_z', 'e_mer_x',
-                 'e_mer_y', 'e_mer_z', 'd_fa_x', 'd_fa_y', 'd_fa_z', 'e_fa_x',
-                 'e_fa_y', 'e_fa_z']
-        for item in items:
+        for item in self.map_labels:
             assert np.isnan(out[-1][item])
 
         return
 
-
-    def test_unit_vector_step_size_sensitivity(self):
-        """Test sensitivity of unit vectors as step_size decreased"""
+    @pytest.mark.parametrize("param,vals", [('step_size', [1., 0.5], 1.E-4,
+                                             1.E-4, 1.E-5),
+                                            ('dstep_size', [1., 0.5], 1.E-4,
+                                             1.E-4, 1.E-5),
+                                            ('tol', [1.E-5], 1.E-5, 1.E-4,
+                                             1.E-5),
+                                            ('tol_zonal_apex', [1.E-5],
+                                             1.E-4, 1.E-5, 1.E-5)
+                                            ])
+    def test_basis_sensitivity(self, param, param_vals, unit_tol, apex_tol,
+                               map_tol, orth_tol):
+        """Test sensitivity of vector basis as param varied."""
         p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
         # data returned are the locations along each direction
         # the full range of points obtained by iterating over all
         # recasting alts into a more convenient form for later calculation
         p_alts = [p_alts[0]]*len(p_longs)
 
-        # step size to be tried
-        steps_goal = np.arange(7)
-        steps_goal = 16. / 2.**steps_goal
-
-        date = dt.datetime(2000, 1, 1)
-        dzx = []
-        dzy = []
-        dzz = []
-        dmx = []
-        dmy = []
-        dmz = []
-
-        # set up multi
-        if self.dc is not None:
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            steps_out = []
-            for steps in steps_goal:
-                out = []
-                for lat in p_lats:
-                    lats = [lat]*len(p_longs)
-                    # iterate through target cyclicly and run commands
-                    dview.targets = next(targets)
-                    pending.append(dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef, lats,
-                                                     p_longs, p_alts, [date]*len(p_longs), step_size=steps))
-                for lat in p_lats:
-                    # collect output
-                    zx, zy, zz, _, _, _, mx, my, mz = pending.pop(0).get()
-                    pt = {'zx': zx,
-                          'zy': zy,
-                          'zz': zz,
-                          'mx': mx,
-                          'my': my,
-                          'mz': mz}
-                    out.append(pds.DataFrame(pt))
-                    # merge all values for single step size together
-                out = pds.concat(out)
-                steps_out.append(out)
-
-            for i in np.arange(len(steps_out) - 1):
-                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i + 1]['zx'].values))
-                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i + 1]['zy'].values))
-                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i + 1]['zz'].values))
-                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i + 1]['mx'].values))
-                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i + 1]['my'].values))
-                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i + 1]['mz'].values))
-        else:
-            steps_out = []
-            for steps in steps_goal:
-                out = []
-                for lat in p_lats:
-                    lats = [lat]*len(p_longs)
-                    zx, zy, zz, _, _, _, mx, my, mz = OMMBV.calculate_mag_drift_unit_vectors_ecef(lats,
-                                                                                                 p_longs, p_alts,
-                                                                                                 [date]*len(p_longs),
-                                                                                                 step_size=steps)
-                    pt = {'zx': zx,
-                          'zy': zy,
-                          'zz': zz,
-                          'mx': mx,
-                          'my': my,
-                          'mz': mz}
-                    out.append(pds.DataFrame(pt))
-                # merge all values for single step size together
-                out = pds.concat(out)
-                steps_out.append(out)
-
-            for i in np.arange(len(steps_out) - 1):
-                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i + 1]['zx'].values))
-                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i + 1]['zy'].values))
-                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i + 1]['zz'].values))
-                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i + 1]['mx'].values))
-                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i + 1]['my'].values))
-                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i + 1]['mz'].values))
-
-        dzx = pds.DataFrame(dzx)
-        dzy = pds.DataFrame(dzy)
-        dzz = pds.DataFrame(dzz)
-        dmx = pds.DataFrame(dmx)
-        dmy = pds.DataFrame(dmy)
-        dmz = pds.DataFrame(dmz)
-
-        try:
-            plt.figure()
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=1)),
-                     label='x')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=1)),
-                     label='y')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=1)),
-                     label='z')
-            plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in Vector Component')
-            plt.title("Change in Zonal Unit Vector (ECEF)")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('overall_zonal_diff_vs_step_size.pdf')
-            plt.close()
-
-            plt.figure()
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=1)),
-                     label='x')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=1)),
-                     label='y')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=1)),
-                     label='z')
-            plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in Vector Component')
-            plt.title("Change in Meridional Unit Vector (ECEF)")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('overall_mer_diff_vs_step_size.pdf')
-            plt.close()
-
-        except:
-            pass
-
-    def test_D_vector_step_size_sensitivity(self):
-        """Test sensitivity of D vectors as step_size decreased"""
-        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
-        # data returned are the locations along each direction
-        # the full range of points obtained by iterating over all
-        # recasting alts into a more convenient form for later calculation
-        p_alts = [p_alts[0]]*len(p_longs)
-
-        # step size to be tried
-        steps_goal = np.arange(7)
-        steps_goal =16. / 2.**steps_goal
-
-        date = dt.datetime(2000, 1, 1)
-        dzx = []
-        dzy = []
-        dzz = []
-        dmx = []
-        dmy = []
-        dmz = []
-
-        # set up multi
-        if self.dc is not None:
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            steps_out = []
-            for steps in steps_goal:
-                print('testing step_size ', steps)
-                out = []
-                for lat in p_lats:
-                    lats = [lat]*len(p_longs)
-                    # iterate through target cyclicly and run commands
-                    dview.targets = next(targets)
-                    pending.append(dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef, lats,
-                                                     p_longs, p_alts, [date]*len(p_longs), step_size=steps,
-                                                     dstep_size=steps, full_output=True))
-                for lat in p_lats:
-                    # collect output
-                    zx, zy, zz, _, _, _, mx, my, mz, d = pending.pop(0).get()
-                    pt = {'zx': d['d_zon_x'],
-                          'zy': d['d_zon_y'],
-                          'zz': d['d_zon_z'],
-                          'mx': d['d_mer_x'],
-                          'my': d['d_mer_y'],
-                          'mz': d['d_mer_z']}
-                    out.append(pds.DataFrame(pt))
-                    # merge all values for single step size together
-                out = pds.concat(out)
-                steps_out.append(out)
-
-            for i in np.arange(len(steps_out) - 1):
-                dzx.append(np.abs(steps_out[i]['zx'].values
-                                  - steps_out[i + 1]['zx'].values))
-                dzy.append(np.abs(steps_out[i]['zy'].values
-                                  - steps_out[i + 1]['zy'].values))
-                dzz.append(np.abs(steps_out[i]['zz'].values
-                                  - steps_out[i + 1]['zz'].values))
-                dmx.append(np.abs(steps_out[i]['mx'].values
-                                  - steps_out[i + 1]['mx'].values))
-                dmy.append(np.abs(steps_out[i]['my'].values
-                                  - steps_out[i + 1]['my'].values))
-                dmz.append(np.abs(steps_out[i]['mz'].values
-                                  - steps_out[i + 1]['mz'].values))
-        else:
-            steps_out = []
-            for steps in steps_goal:
-                out = []
-                for lat in p_lats:
-                    lats = [lat]*len(p_longs)
-                    zx, zy, zz, _, _, _, mx, my, mz, d = OMMBV.calculate_mag_drift_unit_vectors_ecef(lats,
-                                                                                                    p_longs, p_alts,
-                                                                                                    [date]*len(p_longs),
-                                                                                                    step_size=steps,
-                                                                                                    dstep_size=steps,
-                                                                                                    full_output=True)
-                    pt = {'zx': d['d_zon_x'],
-                          'zy': d['d_zon_y'],
-                          'zz': d['d_zon_z'],
-                          'mx': d['d_mer_x'],
-                          'my': d['d_mer_y'],
-                          'mz': d['d_mer_z']}
-                    out.append(pds.DataFrame(pt))
-                # merge all values for single step size together
-                out = pds.concat(out)
-                steps_out.append(out)
-
-            for i in np.arange(len(steps_out) - 1):
-                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i + 1]['zx'].values))
-                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i + 1]['zy'].values))
-                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i + 1]['zz'].values))
-                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i + 1]['mx'].values))
-                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i + 1]['my'].values))
-                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i + 1]['mz'].values))
-
-        dzx = pds.DataFrame(dzx)
-        dzy = pds.DataFrame(dzy)
-        dzz = pds.DataFrame(dzz)
-        dmx = pds.DataFrame(dmx)
-        dmy = pds.DataFrame(dmy)
-        dmz = pds.DataFrame(dmz)
-
-        try:
-            plt.figure()
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=1)),
-                     label='x')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=1)),
-                     label='y')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=1)),
-                     label='z')
-            plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in D Vector Component')
-            plt.title("Change in D Zonal Vector (ECEF)")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('overall_D_zonal_diff_vs_step_size.pdf')
-            plt.close()
-
-            plt.figure()
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=1)),
-                     label='x')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=1)),
-                     label='y')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=1)),
-                     label='z')
-            plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in Vector Component')
-            plt.title("Change in Meridional D Vector (ECEF)")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('overall_D_mer_diff_vs_step_size.pdf')
-            plt.close()
-
-        except:
-            pass
-
-    def test_E_vector_step_size_sensitivity(self):
-        """Test sensitivity of E vectors as step_size decreased"""
-        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
-        # data returned are the locations along each direction
-        # the full range of points obtained by iterating over all
-        # recasting alts into a more convenient form for later calculation
-        p_alts = [p_alts[0]]*len(p_longs)
-
-        # step size to be tried
-        steps_goal = np.arange(7)
-        steps_goal = 16. / 2.**steps_goal
-
-        date = dt.datetime(2000, 1, 1)
-        dzx = []
-        dzy = []
-        dzz = []
-        dmx = []
-        dmy = []
-        dmz = []
-
-        # set up multi
-        if self.dc is not None:
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            steps_out = []
-            for steps in steps_goal:
-                out = []
-                for lat in p_lats:
-                    lats = [lat]*len(p_longs)
-                    # iterate through target cyclicly and run commands
-                    dview.targets = next(targets)
-                    pending.append(dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef, lats,
-                                                     p_longs, p_alts, [date]*len(p_longs), step_size=steps,
-                                                     dstep_size=steps, full_output=True))
-                for lat in p_lats:
-                    # collect output
-                    zx, zy, zz, _, _, _, mx, my, mz, d = pending.pop(0).get()
-                    pt = {'zx': d['e_zon_x'],
-                          'zy': d['e_zon_y'],
-                          'zz': d['e_zon_z'],
-                          'mx': d['e_mer_x'],
-                          'my': d['e_mer_y'],
-                          'mz': d['e_mer_z']}
-                    out.append(pds.DataFrame(pt))
-                    # merge all values for single step size together
-                out = pds.concat(out)
-                steps_out.append(out)
-
-            for i in np.arange(len(steps_out) - 1):
-                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i + 1]['zx'].values))
-                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i + 1]['zy'].values))
-                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i + 1]['zz'].values))
-                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i + 1]['mx'].values))
-                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i + 1]['my'].values))
-                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i + 1]['mz'].values))
-        else:
-            steps_out = []
-            for steps in steps_goal:
-                out = []
-                for lat in p_lats:
-                    lats = [lat]*len(p_longs)
-                    zx, zy, zz, _, _, _, mx, my, mz, d = OMMBV.calculate_mag_drift_unit_vectors_ecef(lats,
-                                                                                                    p_longs, p_alts,
-                                                                                                    [date]*len(p_longs),
-                                                                                                    step_size=steps,
-                                                                                                    dstep_size=steps,
-                                                                                                    full_output=True)
-                    pt = {'zx': d['e_zon_x'],
-                          'zy': d['e_zon_y'],
-                          'zz': d['e_zon_z'],
-                          'mx': d['e_mer_x'],
-                          'my': d['e_mer_y'],
-                          'mz': d['e_mer_z']}
-                    out.append(pds.DataFrame(pt))
-                # merge all values for single step size together
-                out = pds.concat(out)
-                steps_out.append(out)
-
-            for i in np.arange(len(steps_out) - 1):
-                dzx.append(np.abs(steps_out[i]['zx'].values - steps_out[i + 1]['zx'].values))
-                dzy.append(np.abs(steps_out[i]['zy'].values - steps_out[i + 1]['zy'].values))
-                dzz.append(np.abs(steps_out[i]['zz'].values - steps_out[i + 1]['zz'].values))
-                dmx.append(np.abs(steps_out[i]['mx'].values - steps_out[i + 1]['mx'].values))
-                dmy.append(np.abs(steps_out[i]['my'].values - steps_out[i + 1]['my'].values))
-                dmz.append(np.abs(steps_out[i]['mz'].values - steps_out[i + 1]['mz'].values))
-
-        dzx = pds.DataFrame(dzx)
-        dzy = pds.DataFrame(dzy)
-        dzz = pds.DataFrame(dzz)
-        dmx = pds.DataFrame(dmx)
-        dmy = pds.DataFrame(dmy)
-        dmz = pds.DataFrame(dmz)
-
-        try:
-            plt.figure()
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dzx.mean(axis=1)),
-                     label='x')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dzy.mean(axis=1)),
-                     label='y')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dzz.mean(axis=1)),
-                     label='z')
-            plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in E Vector Component')
-            plt.title("Change in E Zonal Vector (ECEF)")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('overall_E_zonal_diff_vs_step_size.pdf')
-            plt.close()
-
-            plt.figure()
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dmx.mean(axis=1)),
-                     label='x')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dmy.mean(axis=1)),
-                     label='y')
-            plt.plot(np.log10(steps_goal[1:]), np.log10(dmz.mean(axis=1)),
-                     label='z')
-            plt.xlabel('Log Step Size (km)')
-            plt.ylabel('Change in Vector Component')
-            plt.title("Change in Meridional E Vector (ECEF)")
-            plt.legend()
-            plt.tight_layout()
-            plt.savefig('overall_E_mer_diff_vs_step_size.pdf')
-            plt.close()
-
-        except:
-            pass
-
-    def test_unit_vector_component_plots(self):
-        """Ensure unit vector generation satisfies tolerance and gradient goals.
-
-        Produces variety of plots."""
-        import matplotlib.pyplot as plt
-
-        p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
-        # data returned are the locations along each direction
-        # the full range of points obtained by iterating over all
-        # recasting alts into a more convenient form for later calculation
-        p_alts = [p_alts[0]]*len(p_longs)
-        zvx = np.zeros((len(p_lats), len(p_longs) + 1))
-        zvy = zvx.copy()
-        zvz = zvx.copy()
-        mx = zvx.copy()
-        my = zvx.copy()
-        mz = zvx.copy()
-        bx = zvx.copy()
-        by = zvx.copy()
-        bz = zvx.copy()
-
-        grad_zon = zvx.copy()
-        grad_mer = zvx.copy()
-        tol_zon = zvx.copy()
-        tol_mer = zvx.copy()
-        init_type = zvx.copy()
-        num_loops = zvx.copy()
-
-        d_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
-        d_zvy = d_zvx.copy()
-        d_zvz = d_zvx.copy()
-        d2_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
-        d2_zvy = d_zvx.copy()
-        d2_zvz = d_zvx.copy()
-        d_mx = d_zvx.copy()
-        d_my = d_zvx.copy()
-        d_mz = d_zvx.copy()
-        d_fax = d_zvx.copy()
-        d_fay = d_zvx.copy()
-        d_faz = d_zvx.copy()
-        d2_mx = d_zvx.copy()
-        d2_my = d_zvx.copy()
-        d2_mz = d_zvx.copy()
-
-        e_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
-        e_zvy = d_zvx.copy()
-        e_zvz = d_zvx.copy()
-        e_mx = d_zvx.copy()
-        e_my = d_zvx.copy()
-        e_mz = d_zvx.copy()
-        e_fax = d_zvx.copy()
-        e_fay = d_zvx.copy()
-        e_faz = d_zvx.copy()
-
-        date = dt.datetime(2000, 1, 1)
-        # set up multi
-        if self.dc is not None:
-            targets = itertools.cycle(dc.ids)
-            pending = []
-            for i, p_lat in enumerate(p_lats):
-                # iterate through target cyclicly and run commands
-                print (i, p_lat)
-                dview.targets = next(targets)
-                pending.append(
-                    dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef,
-                                      [p_lat]*len(p_longs), p_longs,
-                                      p_alts, [date]*len(p_longs),
-                                      full_output=True,
-                                      include_debug=True))
-            for i, p_lat in enumerate(p_lats):
-                print ('collecting ', i, p_lat)
-                # collect output
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pending.pop(0).get()
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz,
-                                                                                 [p_lat] * len(p_longs), p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu(tbx, tby, tbz,
-                                                                              [p_lat] * len(p_longs), p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz,
-                                                                              [p_lat] * len(p_longs), p_longs)
-
-                # pull out info about the vector generation
-                grad_zon[i, :-1], grad_mer[i, :-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
-                tol_zon[i, :-1], tol_mer[i, :-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
-                init_type[i, :-1] = infod['vector_seed_type']
-                num_loops[i, :-1] = infod['loops']
-
-                # collect outputs on E and D vectors
-                dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
-                dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
-                dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
-                                                                                       [p_lat] * len(p_longs), p_longs)
-                dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
-                                                                                          [p_lat] * len(p_longs),
-                                                                                          p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.vector.ecef_to_enu(dfx, dfy, dfz,
-                                                                                       [p_lat] * len(p_longs), p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
-                                                                                    [p_lat] * len(p_longs), p_longs)
-                dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
-                                                                                       [p_lat] * len(p_longs), p_longs)
-
-                ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
-                efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
-                emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
-                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(ezx, ezy, ezz,
-                                                                                       [p_lat] * len(p_longs), p_longs)
-                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.vector.ecef_to_enu(efx, efy, efz,
-                                                                                       [p_lat] * len(p_longs), p_longs)
-                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.vector.ecef_to_enu(emx, emy, emz,
-                                                                                    [p_lat] * len(p_longs), p_longs)
-
-        else:
-            for i, p_lat in enumerate(p_lats):
-                print (i, p_lat)
-                tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = OMMBV.calculate_mag_drift_unit_vectors_ecef(
-                                                                                        [p_lat]*len(p_longs), p_longs,
-                                                                                        p_alts, [date]*len(p_longs),
-                                                                                        full_output=True,
-                                                                                        include_debug=True)
-                zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz,
-                                                                                 [p_lat] * len(p_longs), p_longs)
-                bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu(tbx, tby, tbz,
-                                                                              [p_lat] * len(p_longs), p_longs)
-                mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz,
-                                                                              [p_lat] * len(p_longs), p_longs)
-                # pull out info about the vector generation
-                grad_zon[i, :-1], grad_mer[i, :-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
-                tol_zon[i, :-1], tol_mer[i, :-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
-                init_type[i, :-1] = infod['vector_seed_type']
-                num_loops[i, :-1] = infod['loops']
-
-                # collect outputs on E and D vectors
-                dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
-                dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
-                dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
-                d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
-                                                                                       [p_lat] * len(p_longs),
-                                                                                       p_longs)
-                dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
-                d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
-                                                                                          [p_lat] * len(p_longs),
-                                                                                          p_longs)
-                d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.vector.ecef_to_enu(dfx, dfy, dfz,
-                                                                                       [p_lat] * len(p_longs),
-                                                                                       p_longs)
-                d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
-                                                                                    [p_lat] * len(p_longs),
-                                                                                    p_longs)
-                dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
-                d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
-                                                                                       [p_lat] * len(p_longs),
-                                                                                       p_longs)
-
-                ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
-                efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
-                emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
-                e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(ezx, ezy, ezz,
-                                                                                       [p_lat] * len(p_longs),
-                                                                                       p_longs)
-                e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.vector.ecef_to_enu(efx, efy, efz,
-                                                                                       [p_lat] * len(p_longs),
-                                                                                       p_longs)
-                e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.vector.ecef_to_enu(emx, emy, emz,
-                                                                                    [p_lat] * len(p_longs),
-                                                                                    p_longs)
-
-        # account for periodicity
-        zvx[:, -1] = zvx[:, 0]
-        zvy[:, -1] = zvy[:, 0]
-        zvz[:, -1] = zvz[:, 0]
-        bx[:, -1] = bx[:, 0]
-        by[:, -1] = by[:, 0]
-        bz[:, -1] = bz[:, 0]
-        mx[:, -1] = mx[:, 0]
-        my[:, -1] = my[:, 0]
-        mz[:, -1] = mz[:, 0]
-        grad_zon[:, -1] = grad_zon[:, 0]
-        grad_mer[:, -1] = grad_mer[:, 0]
-        tol_zon[:, -1] = tol_zon[:, 0]
-        tol_mer[:, -1] = tol_mer[:, 0]
-        init_type[:, -1] = init_type[:, 0]
-        num_loops[:, -1] = num_loops[:, 0]
-
-        d_zvx[:, -1] = d_zvx[:, 0]
-        d_zvy[:, -1] = d_zvy[:, 0]
-        d_zvz[:, -1] = d_zvz[:, 0]
-        d2_zvx[:, -1] = d2_zvx[:, 0]
-        d2_zvy[:, -1] = d2_zvy[:, 0]
-        d2_zvz[:, -1] = d2_zvz[:, 0]
-        d_fax[:, -1] = d_fax[:, 0]
-        d_fay[:, -1] = d_fay[:, 0]
-        d_faz[:, -1] = d_faz[:, 0]
-        d_mx[:, -1] = d_mx[:, 0]
-        d_my[:, -1] = d_my[:, 0]
-        d_mz[:, -1] = d_mz[:, 0]
-        d2_mx[:, -1] = d2_mx[:, 0]
-        d2_my[:, -1] = d2_my[:, 0]
-        d2_mz[:, -1] = d2_mz[:, 0]
-
-        e_zvx[:, -1] = e_zvx[:, 0]
-        e_zvy[:, -1] = e_zvy[:, 0]
-        e_zvz[:, -1] = e_zvz[:, 0]
-        e_fax[:, -1] = e_fax[:, 0]
-        e_fay[:, -1] = e_fay[:, 0]
-        e_faz[:, -1] = e_faz[:, 0]
-        e_mx[:, -1] = e_mx[:, 0]
-        e_my[:, -1] = e_my[:, 0]
-        e_mz[:, -1] = e_mz[:, 0]
-
-        ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats) - 1)
-        xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
-
-        try:
-            fig = plt.figure()
-            plt.imshow(zvx, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('zonal_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(zvy, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('zonal_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(zvz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Zonal Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('zonal_up.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(bx, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Field-Aligned Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('fa_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(by, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Field-Aligned Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('fa_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(bz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Field-Aligned Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('fa_up.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(mx, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Meridional Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('mer_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(my, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Meridional Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('mer_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(mz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Meridional Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('mer_up.pdf')
-            plt.close()
-
-            # D Vectors
-            fig = plt.figure()
-            plt.imshow(np.sqrt(d_zvx ** 2 + d_zvy ** 2 + d_zvz ** 2), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Field Aligned Magnitude')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_zon.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(d_zvx, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Zonal Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_zonal_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(d_zvy, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Zonal Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_zonal_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(d_zvz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Zonal Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_zonal_up.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.sqrt(d_fax ** 2 + d_fay ** 2 + d_faz ** 2), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Field Aligned Magnitude')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_fa.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(d_fax, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Field Aligned Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_fa_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(d_fay, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Field Aligned Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_fa_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(d_faz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Field Aligned Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_fa_up.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.sqrt(d_mx ** 2 + d_my ** 2 + d_mz ** 2), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Meridional Magnitude')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_mer.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(d_mx, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Meridional Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_mer_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(d_my, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Meridional Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_mer_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(d_mz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('D Meridional Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_mer_up.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            dmag = np.sqrt(d_mx ** 2 + d_my ** 2 + d_mz ** 2)
-            dmag2 = np.sqrt(d2_mx ** 2 + d2_my ** 2 + d2_mz ** 2)
-            plt.imshow(np.log10(np.abs(dmag - dmag2) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Meridional Vector Normalized Difference')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_mer_norm.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            dmag = np.sqrt(d_mx ** 2 + d_my ** 2 + d_mz ** 2)
-            plt.imshow(np.log10(np.abs(d2_mx - d_mx)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Meridional Vector Difference - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_mer_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_mx - d_mx) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Meridional Vector Difference - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_mer_east_norm.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_my - d_my)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Meridional Vector Difference - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_mer_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_my - d_my) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Meridional Vector Difference - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_mer_north_norm.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_mz - d_mz)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Meridional Vector Difference - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_mer_up.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_mz - d_mz) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Meridional Vector Difference - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_mer_up_norm.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            dmag = np.sqrt(d_zvx ** 2 + d_zvy ** 2 + d_zvz ** 2)
-            dmag2 = np.sqrt(d2_zvx ** 2 + d2_zvy ** 2 + d2_zvz ** 2)
-            plt.imshow(np.log10(np.abs(dmag2 - dmag) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Zonal Vector Normalized Difference')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_zon_norm.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            dmag = np.sqrt(d_zvx ** 2 + d_zvy ** 2 + d_zvz ** 2)
-            plt.imshow(np.log10(np.abs(d2_zvx - d_zvx)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Zonal Vector Difference - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_zon_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_zvy - d_zvy)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Zonal Vector Difference - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_zon_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_zvz - d_zvz)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Zonal Vector Difference - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_zon_up.pdf')
-            plt.close()
-
-            plt.imshow(np.log10(np.abs(d2_zvx - d_zvx) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Zonal Vector Difference - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_zon_east_norm.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_zvy - d_zvy) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Zonal Vector Difference - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_zon_north_norm.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(d2_zvz - d_zvz) / dmag), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log D Zonal Vector Difference - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('d_diff_zon_up_norm.pdf')
-            plt.close()
-
-            # E Vectors
-            fig = plt.figure()
-            plt.imshow(np.sqrt(e_zvx ** 2 + e_zvy ** 2 + e_zvz ** 2), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Field Aligned Magnitude')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_zon.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(e_zvx, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Zonal Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_zonal_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(e_zvy, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Zonal Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_zonal_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(e_zvz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Zonal Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_zonal_up.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.sqrt(e_fax ** 2 + e_fay ** 2 + e_faz ** 2), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Field Aligned Magnitude')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_fa.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(e_fax, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Field Aligned Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_fa_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(e_fay, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Field Aligned Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_fa_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(e_faz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Field Aligned Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_fa_up.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.sqrt(e_mx ** 2 + e_my ** 2 + e_mz ** 2), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Meridional Magnitude')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_mer.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(e_mx, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Meridional Unit Vector - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_mer_east.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(e_my, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Meridional Unit Vector - Northward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_mer_north.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(e_mz, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('E Meridional Unit Vector - Upward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('e_mer_up.pdf')
-            plt.close()
-
-            # Kroenecker Delta Vectors
-            fig = plt.figure()
-            plt.imshow(np.log10(e_zvx*d_zvx + e_zvy*d_zvy + e_zvz*d_zvz), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('ED Zonal - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('ed_dot_zonal.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(e_fax*d_fax + e_fay*d_fay + e_faz*d_faz), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('ED Field Aligned - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('ed_dot_fa.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(e_mx*d_mx + e_my*d_my + e_mz*d_mz), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('ED Meridional - Eastward')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('ed_dot_mer.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(grad_zon)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Gradient in Apex Height (km/km) - Zonal')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('unit_vector_grad_zonal.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(grad_mer)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Gradient in Apex Height (km/km) - Meridional')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('unit_vector_grad_meridional.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(tol_zon)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Achieved Tolerance - Zonal Unit Vector')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('unit_vector_tol_zonal.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(np.log10(np.abs(tol_mer)), origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Log Achieved Tolerance - Meridional')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('unit_vector_tol_meridional.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(init_type, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Initial Seed Vector Type')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('unit_vector_seed_vector_type.pdf')
-            plt.close()
-
-            fig = plt.figure()
-            plt.imshow(num_loops, origin='lower')
-            plt.colorbar()
-            plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
-            plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
-            plt.title('Number of Iterative Loops')
-            plt.xlabel('Geodetic Longitude (Degrees)')
-            plt.ylabel('Geodetic Latitude (Degrees)')
-            plt.tight_layout()
-            plt.savefig('unit_vector_num_loops.pdf')
-            plt.close()
-
-
-        except:
-            pass
-
-        assert np.all(np.abs(tol_zon) <= 1.E-4)
-        assert np.all(np.abs(tol_mer) <= 1.E-4)
-        assert np.all(np.abs(grad_zon) <= 1.E-4)
+        cmduv = OMMBV.calculate_mag_drift_unit_vectors_ecef
+
+        dvl = {'d_zon2_x': 'd_zon_x', 'd_zon2_y': 'd_zon_y',
+               'd_zon2_z': 'd_zon_z', 'd_mer2_x': 'd_mer_x',
+               'd_mer2_y': 'd_mer_y',
+               'd_mer2_z': 'd_mer_z'}
+        unit_vector_labels = ['zx', 'zy', 'zz',
+                              'fx', 'fy', 'fz',
+                              'mx', 'my', 'mz']
+
+        out = []
+        dates = [self.date]*len(p_longs)
+        for lat in p_lats:
+            lats = [lat] * len(p_longs)
+            for val in param_vals:
+                kwargs = {param: val}
+
+                (zx, zy, zz,
+                 fx, fy, fz,
+                 mx, my, mz,
+                 infod) = cmduv(lats, p_longs, p_alts, dates,
+                                full_output=True, include_debug=True,
+                                **kwargs)
+                ddict = {'zx': zx, 'zy': zy, 'zz': zz,
+                         'fx': fx, 'fy': fy, 'fz': fz,
+                         'mx': mx, 'my': my, 'mz': mz}
+
+                # Check internally calculated achieved tolerance
+                assert infod['diff_zonal_vec'] < unit_tol
+                assert infod['diff_mer_vec'] < unit_tol
+
+                # Check internally calculated apex height gradient
+                assert infod['grad_zonal_apex'] < apex_tol
+                
+                # Ensure generated basis is the same for both covariant
+                # and contra-variant forms.
+                for key in dvl.keys():
+                    np.testing.assert_allclose(ddict[key], ddict[dvl[key]],
+                                               rtol=orth_tol)
+
+                # Collect D, E vector data
+                for key in self.map_labels:
+                    ddict[key] = infod[key]
+                out.append(pds.DataFrame(ddict))
+
+            if len(param_vals) > 1:
+                pt1 = out[0]
+                pt2 = out[1]
+
+                # Check unit vectors
+                for var in unit_vector_labels:
+                    assert np.testing.assert_allclose(pt2[var], pt1[var],
+                                                      atol=unit_tol)
+                # Check D, E vectors
+                for var in self.map_labels:
+                    assert np.testing.assert_allclose(pt2[var], pt1[var],
+                                                      rtol=map_tol)
+
+        return
+
+
+    # def test_unit_vector_component_plots(self):
+    #     """Ensure unit vector generation satisfies tolerance and gradient goals.
+    #
+    #     Produces variety of plots."""
+    #     import matplotlib.pyplot as plt
+    #
+    #     p_lats, p_longs, p_alts = gen_plot_grid_fixed_alt(550.)
+    #     # data returned are the locations along each direction
+    #     # the full range of points obtained by iterating over all
+    #     # recasting alts into a more convenient form for later calculation
+    #     p_alts = [p_alts[0]]*len(p_longs)
+    #     zvx = np.zeros((len(p_lats), len(p_longs) + 1))
+    #     zvy = zvx.copy()
+    #     zvz = zvx.copy()
+    #     mx = zvx.copy()
+    #     my = zvx.copy()
+    #     mz = zvx.copy()
+    #     bx = zvx.copy()
+    #     by = zvx.copy()
+    #     bz = zvx.copy()
+    #
+    #     grad_zon = zvx.copy()
+    #     grad_mer = zvx.copy()
+    #     tol_zon = zvx.copy()
+    #     tol_mer = zvx.copy()
+    #     init_type = zvx.copy()
+    #     num_loops = zvx.copy()
+    #
+    #     d_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
+    #     d_zvy = d_zvx.copy()
+    #     d_zvz = d_zvx.copy()
+    #     d2_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
+    #     d2_zvy = d_zvx.copy()
+    #     d2_zvz = d_zvx.copy()
+    #     d_mx = d_zvx.copy()
+    #     d_my = d_zvx.copy()
+    #     d_mz = d_zvx.copy()
+    #     d_fax = d_zvx.copy()
+    #     d_fay = d_zvx.copy()
+    #     d_faz = d_zvx.copy()
+    #     d2_mx = d_zvx.copy()
+    #     d2_my = d_zvx.copy()
+    #     d2_mz = d_zvx.copy()
+    #
+    #     e_zvx = np.zeros((len(p_lats), len(p_longs) + 1))
+    #     e_zvy = d_zvx.copy()
+    #     e_zvz = d_zvx.copy()
+    #     e_mx = d_zvx.copy()
+    #     e_my = d_zvx.copy()
+    #     e_mz = d_zvx.copy()
+    #     e_fax = d_zvx.copy()
+    #     e_fay = d_zvx.copy()
+    #     e_faz = d_zvx.copy()
+    #
+    #     date = dt.datetime(2000, 1, 1)
+    #     # set up multi
+    #     if self.dc is not None:
+    #         targets = itertools.cycle(dc.ids)
+    #         pending = []
+    #         for i, p_lat in enumerate(p_lats):
+    #             # iterate through target cyclicly and run commands
+    #             print (i, p_lat)
+    #             dview.targets = next(targets)
+    #             pending.append(
+    #                 dview.apply_async(OMMBV.calculate_mag_drift_unit_vectors_ecef,
+    #                                   [p_lat]*len(p_longs), p_longs,
+    #                                   p_alts, [date]*len(p_longs),
+    #                                   full_output=True,
+    #                                   include_debug=True))
+    #         for i, p_lat in enumerate(p_lats):
+    #             print ('collecting ', i, p_lat)
+    #             # collect output
+    #             tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = pending.pop(0).get()
+    #             zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz,
+    #                                                                              [p_lat] * len(p_longs), p_longs)
+    #             bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu(tbx, tby, tbz,
+    #                                                                           [p_lat] * len(p_longs), p_longs)
+    #             mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz,
+    #                                                                           [p_lat] * len(p_longs), p_longs)
+    #
+    #             # pull out info about the vector generation
+    #             grad_zon[i, :-1], grad_mer[i, :-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
+    #             tol_zon[i, :-1], tol_mer[i, :-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
+    #             init_type[i, :-1] = infod['vector_seed_type']
+    #             num_loops[i, :-1] = infod['loops']
+    #
+    #             # collect outputs on E and D vectors
+    #             dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
+    #             dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
+    #             dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
+    #             d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
+    #                                                                                    [p_lat] * len(p_longs), p_longs)
+    #             dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
+    #             d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
+    #                                                                                       [p_lat] * len(p_longs),
+    #                                                                                       p_longs)
+    #             d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.vector.ecef_to_enu(dfx, dfy, dfz,
+    #                                                                                    [p_lat] * len(p_longs), p_longs)
+    #             d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
+    #                                                                                 [p_lat] * len(p_longs), p_longs)
+    #             dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
+    #             d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
+    #                                                                                    [p_lat] * len(p_longs), p_longs)
+    #
+    #             ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
+    #             efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
+    #             emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
+    #             e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(ezx, ezy, ezz,
+    #                                                                                    [p_lat] * len(p_longs), p_longs)
+    #             e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.vector.ecef_to_enu(efx, efy, efz,
+    #                                                                                    [p_lat] * len(p_longs), p_longs)
+    #             e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.vector.ecef_to_enu(emx, emy, emz,
+    #                                                                                 [p_lat] * len(p_longs), p_longs)
+    #
+    #     else:
+    #         for i, p_lat in enumerate(p_lats):
+    #             print (i, p_lat)
+    #             tzx, tzy, tzz, tbx, tby, tbz, tmx, tmy, tmz, infod = OMMBV.calculate_mag_drift_unit_vectors_ecef(
+    #                                                                                     [p_lat]*len(p_longs), p_longs,
+    #                                                                                     p_alts, [date]*len(p_longs),
+    #                                                                                     full_output=True,
+    #                                                                                     include_debug=True)
+    #             zvx[i, :-1], zvy[i, :-1], zvz[i, :-1] = OMMBV.vector.ecef_to_enu(tzx, tzy, tzz,
+    #                                                                              [p_lat] * len(p_longs), p_longs)
+    #             bx[i, :-1], by[i, :-1], bz[i, :-1] = OMMBV.vector.ecef_to_enu(tbx, tby, tbz,
+    #                                                                           [p_lat] * len(p_longs), p_longs)
+    #             mx[i, :-1], my[i, :-1], mz[i, :-1] = OMMBV.vector.ecef_to_enu(tmx, tmy, tmz,
+    #                                                                           [p_lat] * len(p_longs), p_longs)
+    #             # pull out info about the vector generation
+    #             grad_zon[i, :-1], grad_mer[i, :-1] = infod['diff_zonal_apex'], infod['diff_mer_apex']
+    #             tol_zon[i, :-1], tol_mer[i, :-1] = infod['diff_zonal_vec'], infod['diff_mer_vec']
+    #             init_type[i, :-1] = infod['vector_seed_type']
+    #             num_loops[i, :-1] = infod['loops']
+    #
+    #             # collect outputs on E and D vectors
+    #             dzx, dzy, dzz = infod['d_zon_x'], infod['d_zon_y'], infod['d_zon_z']
+    #             dfx, dfy, dfz = infod['d_fa_x'], infod['d_fa_y'], infod['d_fa_z']
+    #             dmx, dmy, dmz = infod['d_mer_x'], infod['d_mer_y'], infod['d_mer_z']
+    #             d_zvx[i, :-1], d_zvy[i, :-1], d_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
+    #                                                                                    [p_lat] * len(p_longs),
+    #                                                                                    p_longs)
+    #             dzx, dzy, dzz = infod['d_zon2_x'], infod['d_zon2_y'], infod['d_zon2_z']
+    #             d2_zvx[i, :-1], d2_zvy[i, :-1], d2_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(dzx, dzy, dzz,
+    #                                                                                       [p_lat] * len(p_longs),
+    #                                                                                       p_longs)
+    #             d_fax[i, :-1], d_fay[i, :-1], d_faz[i, :-1] = OMMBV.vector.ecef_to_enu(dfx, dfy, dfz,
+    #                                                                                    [p_lat] * len(p_longs),
+    #                                                                                    p_longs)
+    #             d_mx[i, :-1], d_my[i, :-1], d_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
+    #                                                                                 [p_lat] * len(p_longs),
+    #                                                                                 p_longs)
+    #             dmx, dmy, dmz = infod['d_mer2_x'], infod['d_mer2_y'], infod['d_mer2_z']
+    #             d2_mx[i, :-1], d2_my[i, :-1], d2_mz[i, :-1] = OMMBV.vector.ecef_to_enu(dmx, dmy, dmz,
+    #                                                                                    [p_lat] * len(p_longs),
+    #                                                                                    p_longs)
+    #
+    #             ezx, ezy, ezz = infod['e_zon_x'], infod['e_zon_y'], infod['e_zon_z']
+    #             efx, efy, efz = infod['e_fa_x'], infod['e_fa_y'], infod['e_fa_z']
+    #             emx, emy, emz = infod['e_mer_x'], infod['e_mer_y'], infod['e_mer_z']
+    #             e_zvx[i, :-1], e_zvy[i, :-1], e_zvz[i, :-1] = OMMBV.vector.ecef_to_enu(ezx, ezy, ezz,
+    #                                                                                    [p_lat] * len(p_longs),
+    #                                                                                    p_longs)
+    #             e_fax[i, :-1], e_fay[i, :-1], e_faz[i, :-1] = OMMBV.vector.ecef_to_enu(efx, efy, efz,
+    #                                                                                    [p_lat] * len(p_longs),
+    #                                                                                    p_longs)
+    #             e_mx[i, :-1], e_my[i, :-1], e_mz[i, :-1] = OMMBV.vector.ecef_to_enu(emx, emy, emz,
+    #                                                                                 [p_lat] * len(p_longs),
+    #                                                                                 p_longs)
+    #
+    #     # account for periodicity
+    #     zvx[:, -1] = zvx[:, 0]
+    #     zvy[:, -1] = zvy[:, 0]
+    #     zvz[:, -1] = zvz[:, 0]
+    #     bx[:, -1] = bx[:, 0]
+    #     by[:, -1] = by[:, 0]
+    #     bz[:, -1] = bz[:, 0]
+    #     mx[:, -1] = mx[:, 0]
+    #     my[:, -1] = my[:, 0]
+    #     mz[:, -1] = mz[:, 0]
+    #     grad_zon[:, -1] = grad_zon[:, 0]
+    #     grad_mer[:, -1] = grad_mer[:, 0]
+    #     tol_zon[:, -1] = tol_zon[:, 0]
+    #     tol_mer[:, -1] = tol_mer[:, 0]
+    #     init_type[:, -1] = init_type[:, 0]
+    #     num_loops[:, -1] = num_loops[:, 0]
+    #
+    #     d_zvx[:, -1] = d_zvx[:, 0]
+    #     d_zvy[:, -1] = d_zvy[:, 0]
+    #     d_zvz[:, -1] = d_zvz[:, 0]
+    #     d2_zvx[:, -1] = d2_zvx[:, 0]
+    #     d2_zvy[:, -1] = d2_zvy[:, 0]
+    #     d2_zvz[:, -1] = d2_zvz[:, 0]
+    #     d_fax[:, -1] = d_fax[:, 0]
+    #     d_fay[:, -1] = d_fay[:, 0]
+    #     d_faz[:, -1] = d_faz[:, 0]
+    #     d_mx[:, -1] = d_mx[:, 0]
+    #     d_my[:, -1] = d_my[:, 0]
+    #     d_mz[:, -1] = d_mz[:, 0]
+    #     d2_mx[:, -1] = d2_mx[:, 0]
+    #     d2_my[:, -1] = d2_my[:, 0]
+    #     d2_mz[:, -1] = d2_mz[:, 0]
+    #
+    #     e_zvx[:, -1] = e_zvx[:, 0]
+    #     e_zvy[:, -1] = e_zvy[:, 0]
+    #     e_zvz[:, -1] = e_zvz[:, 0]
+    #     e_fax[:, -1] = e_fax[:, 0]
+    #     e_fay[:, -1] = e_fay[:, 0]
+    #     e_faz[:, -1] = e_faz[:, 0]
+    #     e_mx[:, -1] = e_mx[:, 0]
+    #     e_my[:, -1] = e_my[:, 0]
+    #     e_mz[:, -1] = e_mz[:, 0]
+    #
+    #     ytickarr = np.array([0, 0.25, 0.5, 0.75, 1])*(len(p_lats) - 1)
+    #     xtickarr = np.array([0, 0.2, 0.4, 0.6, 0.8, 1])*len(p_longs)
+    #
+    #     try:
+    #         fig = plt.figure()
+    #         plt.imshow(zvx, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Zonal Unit Vector - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('zonal_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(zvy, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Zonal Unit Vector - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('zonal_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(zvz, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Zonal Unit Vector - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('zonal_up.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(bx, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Field-Aligned Unit Vector - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('fa_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(by, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Field-Aligned Unit Vector - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('fa_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(bz, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Field-Aligned Unit Vector - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('fa_up.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(mx, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Meridional Unit Vector - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('mer_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(my, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Meridional Unit Vector - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('mer_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(mz, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Meridional Unit Vector - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('mer_up.pdf')
+    #         plt.close()
+    #
+    #         # D Vectors
+    #         fig = plt.figure()
+    #         plt.imshow(np.sqrt(d_zvx ** 2 + d_zvy ** 2 + d_zvz ** 2), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Field Aligned Magnitude')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_zon.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(d_zvx, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Zonal Unit Vector - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_zonal_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(d_zvy, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Zonal Unit Vector - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_zonal_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(d_zvz, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Zonal Unit Vector - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_zonal_up.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.sqrt(d_fax ** 2 + d_fay ** 2 + d_faz ** 2), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Field Aligned Magnitude')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_fa.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(d_fax, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Field Aligned Unit Vector - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_fa_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(d_fay, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Field Aligned Unit Vector - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_fa_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(d_faz, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Field Aligned Unit Vector - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_fa_up.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.sqrt(d_mx ** 2 + d_my ** 2 + d_mz ** 2), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Meridional Magnitude')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_mer.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(d_mx, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Meridional Unit Vector - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_mer_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(d_my, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Meridional Unit Vector - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_mer_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(d_mz, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('D Meridional Unit Vector - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_mer_up.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         dmag = np.sqrt(d_mx ** 2 + d_my ** 2 + d_mz ** 2)
+    #         dmag2 = np.sqrt(d2_mx ** 2 + d2_my ** 2 + d2_mz ** 2)
+    #         plt.imshow(np.log10(np.abs(dmag - dmag2) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Meridional Vector Normalized Difference')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_mer_norm.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         dmag = np.sqrt(d_mx ** 2 + d_my ** 2 + d_mz ** 2)
+    #         plt.imshow(np.log10(np.abs(d2_mx - d_mx)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Meridional Vector Difference - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_mer_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(d2_mx - d_mx) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Meridional Vector Difference - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_mer_east_norm.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(d2_my - d_my)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Meridional Vector Difference - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_mer_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(d2_my - d_my) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Meridional Vector Difference - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_mer_north_norm.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(d2_mz - d_mz)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Meridional Vector Difference - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_mer_up.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(d2_mz - d_mz) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Meridional Vector Difference - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_mer_up_norm.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         dmag = np.sqrt(d_zvx ** 2 + d_zvy ** 2 + d_zvz ** 2)
+    #         dmag2 = np.sqrt(d2_zvx ** 2 + d2_zvy ** 2 + d2_zvz ** 2)
+    #         plt.imshow(np.log10(np.abs(dmag2 - dmag) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Zonal Vector Normalized Difference')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_zon_norm.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         dmag = np.sqrt(d_zvx ** 2 + d_zvy ** 2 + d_zvz ** 2)
+    #         plt.imshow(np.log10(np.abs(d2_zvx - d_zvx)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Zonal Vector Difference - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_zon_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(d2_zvy - d_zvy)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Zonal Vector Difference - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_zon_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(d2_zvz - d_zvz)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Zonal Vector Difference - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_zon_up.pdf')
+    #         plt.close()
+    #
+    #         plt.imshow(np.log10(np.abs(d2_zvx - d_zvx) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Zonal Vector Difference - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_zon_east_norm.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(d2_zvy - d_zvy) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Zonal Vector Difference - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_zon_north_norm.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(d2_zvz - d_zvz) / dmag), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log D Zonal Vector Difference - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('d_diff_zon_up_norm.pdf')
+    #         plt.close()
+    #
+    #         # E Vectors
+    #         fig = plt.figure()
+    #         plt.imshow(np.sqrt(e_zvx ** 2 + e_zvy ** 2 + e_zvz ** 2), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Field Aligned Magnitude')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_zon.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(e_zvx, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Zonal Unit Vector - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_zonal_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(e_zvy, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Zonal Unit Vector - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_zonal_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(e_zvz, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Zonal Unit Vector - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_zonal_up.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.sqrt(e_fax ** 2 + e_fay ** 2 + e_faz ** 2), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Field Aligned Magnitude')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_fa.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(e_fax, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Field Aligned Unit Vector - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_fa_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(e_fay, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Field Aligned Unit Vector - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_fa_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(e_faz, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Field Aligned Unit Vector - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_fa_up.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.sqrt(e_mx ** 2 + e_my ** 2 + e_mz ** 2), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Meridional Magnitude')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_mer.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(e_mx, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Meridional Unit Vector - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_mer_east.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(e_my, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Meridional Unit Vector - Northward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_mer_north.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(e_mz, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('E Meridional Unit Vector - Upward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('e_mer_up.pdf')
+    #         plt.close()
+    #
+    #         # Kroenecker Delta Vectors
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(e_zvx*d_zvx + e_zvy*d_zvy + e_zvz*d_zvz), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('ED Zonal - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('ed_dot_zonal.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(e_fax*d_fax + e_fay*d_fay + e_faz*d_faz), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('ED Field Aligned - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('ed_dot_fa.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(e_mx*d_mx + e_my*d_my + e_mz*d_mz), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('ED Meridional - Eastward')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('ed_dot_mer.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(grad_zon)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log Gradient in Apex Height (km/km) - Zonal')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('unit_vector_grad_zonal.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(grad_mer)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log Gradient in Apex Height (km/km) - Meridional')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('unit_vector_grad_meridional.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(tol_zon)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log Achieved Tolerance - Zonal Unit Vector')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('unit_vector_tol_zonal.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(np.log10(np.abs(tol_mer)), origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Log Achieved Tolerance - Meridional')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('unit_vector_tol_meridional.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(init_type, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Initial Seed Vector Type')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('unit_vector_seed_vector_type.pdf')
+    #         plt.close()
+    #
+    #         fig = plt.figure()
+    #         plt.imshow(num_loops, origin='lower')
+    #         plt.colorbar()
+    #         plt.yticks(ytickarr, ['-50', '-25', '0', '25', '50'])
+    #         plt.xticks(xtickarr, ['0', '72', '144', '216', '288', '360'])
+    #         plt.title('Number of Iterative Loops')
+    #         plt.xlabel('Geodetic Longitude (Degrees)')
+    #         plt.ylabel('Geodetic Latitude (Degrees)')
+    #         plt.tight_layout()
+    #         plt.savefig('unit_vector_num_loops.pdf')
+    #         plt.close()
+    #
+    #
+    #     except:
+    #         pass
+    #
+    #     assert np.all(np.abs(tol_zon) <= 1.E-4)
+    #     assert np.all(np.abs(tol_mer) <= 1.E-4)
+    #     assert np.all(np.abs(grad_zon) <= 1.E-4)
 
     # # Edge steps currently not code effective. Skipping.
     # def test_unit_vector_component_plots_edge_steps(self):
@@ -1947,6 +1631,7 @@ class TestUnitVectors():
         except:
             print('Skipping plots due to error.')
 
+    # Should be moved to test_heritage
     def step_along_mag_unit_vector_sensitivity_plots(self, direction=None):
         """Characterize the uncertainty associated with obtaining the apex location of neighboring field lines"""
         import matplotlib.pyplot as plt
