@@ -78,6 +78,12 @@ class TestApexAccuracy(object):
         self.date = dt.datetime(2000, 1, 1)
         return
 
+    def teardown(self):
+        """Clean up test environment after each function."""
+
+        del self.inst
+        return
+
     @pytest.mark.parametrize("param,vals", [('fine_step_size', [1.E-5, 5.E-6]),
                                              ('fine_max_steps', [5., 10.]),
                                             ('step_size', [100., 50.])])
@@ -85,10 +91,8 @@ class TestApexAccuracy(object):
         """Test accuracy of `apex_location_info` for `fine_step_size`."""
 
         lats, longs, alts = gen_trace_data_fixed_alt(550.)
-        ecf_x, ecf_y, ecf_z = OMMBV.trans.geodetic_to_ecef(lats, longs, alts)
 
         out = []
-
         for val in vals:
             kwargs = {param: val}
             (x, y, z, _, _, apex_height
@@ -103,7 +107,7 @@ class TestApexAccuracy(object):
         pt2 = out[1]
 
         for var in pt1.columns:
-            np.all(np.abs(pt2[var] - pt1[var]) < 1.E-5)
+            assert np.all(np.abs(pt2[var] - pt1[var]) < 1.E-5)
 
         np.testing.assert_allclose(pt1['h'], pt2['h'], rtol=1.E-9)
 
