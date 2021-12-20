@@ -10,8 +10,19 @@ import warnings
 try:
     from OMMBV import igrf
     from OMMBV import sources
+    ommbv_mag_fcn = igrf.igrf13syn
+    ommbv_step_fcn = sources.igrf_step
+
 except Exception:
-    estr = 'Unable to import Fortran IGRF code.'
+    def field_fcn():
+        """Magnetic field model function stub."""
+        return
+    def step_fcn():
+        """Magnetic field step function stub."""
+        return
+    ommbv_mag_fcn = field_fcn
+    ommbv_step_fcn = step_fcn
+    estr = 'Unable to import Fortran IGRF or OMMBV.sources code.'
     warnings.warn(estr, ImportWarning)
 
 from OMMBV import trans
@@ -21,7 +32,8 @@ from OMMBV import vector
 
 def field_line_trace(init, date, direction, height, steps=None,
                      max_steps=1E4, step_size=10., recursive_loop_count=None,
-                     recurse=True, min_check_flag=False):
+                     recurse=True, min_check_flag=False,
+                     step_fcn=ommbv_step_fcn):
     """Perform field line tracing using IGRF and scipy.integrate.odeint.
 
     Parameters
@@ -55,6 +67,9 @@ def field_line_trace(init, date, direction, height, steps=None,
         If True, performs an additional check that the field line
         tracing reached the target altitude. Removes any redundant
         steps below the target altitude. (default=False)
+    step_fcn : function
+        Function used by `scipy.integrate.odeint` to step along
+        the magnetic field. (default=`OMMBV.sources.igrf_step`)
 
     Returns
     -------
@@ -87,7 +102,7 @@ def field_line_trace(init, date, direction, height, steps=None,
         check_height = height
 
     # Perform trace
-    trace_north, messg = scipy.integrate.odeint(sources.igrf_step,
+    trace_north, messg = scipy.integrate.odeint(step_fcn,
                                                 init.copy(),
                                                 steps,
                                                 args=(date, step_size,
@@ -180,6 +195,8 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
             steps=np.arange(max_steps+1).
         Two traces are made, one north, the other south, thus the output array
         could have double max_steps, or more via recursion.
+    **kwargs : Additional keywords
+        Passed to `trace.field_line_trace`.
 
     Returns
     -------
@@ -219,7 +236,8 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
 
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
                        fine_step_size=1.E-5, fine_max_steps=5,
-                       return_geodetic=False, ecef_input=False):
+                       return_geodetic=False, ecef_input=False,
+                       **kwargs):
     """Determine apex location for the field line passing through input point.
 
     Employs a two stage method. A broad step (`step_size`) field line trace
@@ -251,6 +269,8 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     ecef_input : bool
         If True, glats, glons, and alts are treated as x, y, z (ECEF).
         (default=False)
+    **kwargs : Additional keywords
+        Passed to `trace.full_field_line`.
 
     Returns
     -------
@@ -298,7 +318,8 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
                                 date, 0.,
                                 steps=apex_coarse_steps,
                                 step_size=step_size,
-                                max_steps=max_steps)
+                                max_steps=max_steps,
+                                **kwargs)
 
         # Convert all locations to geodetic coordinates
         tlat, tlon, talt = trans.ecef_to_geodetic(trace[:, 0], trace[:, 1],
@@ -336,7 +357,8 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
                                     steps=apex_fine_steps,
                                     step_size=nstep,
                                     max_steps=fine_max_steps,
-                                    recurse=False)
+                                    recurse=False,
+                                    **kwargs)
 
             # Convert all locations to geodetic coordinates.
             tlat, tlon, talt = trans.ecef_to_geodetic(trace[:, 0], trace[:, 1],
@@ -362,7 +384,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 
 def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
                             num_steps=1000, return_geodetic=False,
-                            ecef_input=False):
+                            ecef_input=False, **kwargs):
     """Return ECEF location of footpoints in Northern/Southern hemisphere.
 
     Parameters
@@ -383,6 +405,8 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
         If True, glats, glons, and alts are treated as x, y, z (ECEF).
     return_geodetic : bool
         If True, footpoint locations returned as lat, long, alt.
+    **kwargs : Additional keywords
+        Passed to `trace.field_line_trace`.
 
     Returns
     -------
@@ -412,12 +436,14 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
         trace_north = field_line_trace(root, date, 1., 120.,
                                        steps=steps,
                                        step_size=step_size,
-                                       max_steps=num_steps)
+                                       max_steps=num_steps,
+                                       **kwargs)
         # Southern tracing
         trace_south = field_line_trace(root, date, -1., 120.,
                                        steps=steps,
                                        step_size=step_size,
-                                       max_steps=num_steps)
+                                       max_steps=num_steps,
+                                       **kwargs)
         # Footpoint location
         north_ftpnt[i, :] = trace_north[-1, :]
         south_ftpnt[i, :] = trace_south[-1, :]
@@ -438,7 +464,7 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     return north_ftpnt, south_ftpnt
 
 
-def magnetic_vector(x, y, z, dates, normalize=False):
+def magnetic_vector(x, y, z, dates, normalize=False, mag_fcn=ommbv_mag_fcn):
     """Use IGRF to calculate geomagnetic field.
 
     Parameters
@@ -453,6 +479,10 @@ def magnetic_vector(x, y, z, dates, normalize=False):
         Datetimes to calculate magnetic field
     normalize : bool
         If True, return unit vector. (default=False)
+    mag_fcn : function
+        Function that returns magnetic field from a model.
+        The call signature must match that of `igrf.igrf13syn`.
+        (default=OMMBV.igrf.igrf13syn)
 
     Returns
     -------
@@ -480,7 +510,7 @@ def magnetic_vector(x, y, z, dates, normalize=False):
     longs = np.deg2rad(longitudes)
     for colat, elong, alt, date in zip(colats, longs, altitudes, ddates):
         # tbn, tbe, tbd, tbmag are in nT
-        tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, date, 2, alt, colat, elong)
+        tbn, tbe, tbd, tbmag = mag_fcn(0, date, 2, alt, colat, elong)
 
         # Collect outputs
         bn.append(tbn)

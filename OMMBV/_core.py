@@ -3,7 +3,6 @@
 import numpy as np
 import warnings
 
-
 from OMMBV.trace import apex_location_info
 from OMMBV.trace import footpoint_location_info
 from OMMBV.trace import magnetic_vector
@@ -109,7 +108,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                           dstep_size=0.5, max_steps=None,
                                           ref_height=None, steps=None,
                                           pole_tol=1.E-5,
-                                          location_info=apex_location_info):
+                                          location_info=apex_location_info,
+                                          mag_fcn=None, step_fcn=None):
     """Calculate local geomagnetic basis vectors and mapping scalars.
 
     Zonal - Generally Eastward (+East); surface of constant apex height
@@ -175,6 +175,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         When upward component of magnetic is within `pole_tol` of 1, the
         system will treat location as a pole and will not attempt to
         calculate unit vectors and scalars. (default=1.E-5)
+    mag_fcn : function
+        Function used to get information on local magnetic field. If None,
+        uses default functions for IGRF. (default=None).
+    step_fcn : function
+        Function used to step along magnetic field. If None,
+        uses default functions for IGRF. (default=None).
 
     Returns
     -------
@@ -232,6 +238,16 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     if edge_steps is not None:
         warnings.warn('edge_steps is no longer supported.', DeprecationWarning)
 
+    # Account for potential alternate magnetic field and step functions
+    if mag_fcn is not None:
+        mag_kwargs = {'mag_fcn': mag_fcn}
+    else:
+        mag_kwargs = {}
+    if step_fcn is not None:
+        step_kwargs = {'step_fcn': step_fcn}
+    else:
+        step_kwargs = {}
+
     # Check for reasonable user inputs
     if step_size <= 0:
         raise ValueError('Step Size must be greater than 0.')
@@ -272,7 +288,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
     # Magnetic field at root location
     bx, by, bz, bm = magnetic_vector(ecef_x, ecef_y, ecef_z, datetimes,
-                                     normalize=True)
+                                     normalize=True, **mag_kwargs)
 
     # If magnetic field is pointed purely upward, then full basis can't
     # be calculated. Check for this condition and store locations.
@@ -304,7 +320,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     a_x, a_y, a_z, _, _, apex_root = location_info(ecef_x, ecef_y, ecef_z,
                                                    datetimes,
                                                    return_geodetic=True,
-                                                   ecef_input=True)
+                                                   ecef_input=True,
+                                                   **step_kwargs)
 
     # Initialize loop variables
     loop_num = 0
@@ -323,7 +340,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         _, _, _, _, _, apex_z = location_info(ecef_xz, ecef_yz, ecef_zz,
                                               datetimes,
                                               return_geodetic=True,
-                                              ecef_input=True)
+                                              ecef_input=True,
+                                              **step_kwargs)
         if centered_diff:
             # Negative step
             ecef_xz2, ecef_yz2, ecef_zz2 = (ecef_x - step_size * tzx,
@@ -332,7 +350,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
             _, _, _, _, _, apex_z2 = location_info(ecef_xz2, ecef_yz2, ecef_zz2,
                                                    datetimes,
                                                    return_geodetic=True,
-                                                   ecef_input=True)
+                                                   ecef_input=True,
+                                                   **step_kwargs)
             # Gradient in apex height
             diff_apex_z = apex_z - apex_z2
             diff_apex_z /= 2. * step_size
@@ -348,7 +367,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         _, _, _, _, _, apex_m = location_info(ecef_xm, ecef_ym, ecef_zm,
                                               datetimes,
                                               return_geodetic=True,
-                                              ecef_input=True)
+                                              ecef_input=True,
+                                              **step_kwargs)
 
         # Meridional gradient in apex height
         diff_apex_m = apex_m - apex_root
@@ -429,7 +449,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         t_x1, t_y1, t_z1, _, _, apex_z = location_info(ecef_xz, ecef_yz,
                                                        ecef_zz, datetimes,
                                                        return_geodetic=True,
-                                                       ecef_input=True)
+                                                       ecef_input=True,
+                                                       **step_kwargs)
 
         # Negative zonal step
         ecef_xz2, ecef_yz2, ecef_zz2 = (ecef_x - dstep_size * zx,
@@ -439,7 +460,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         (t_x2, t_y2, t_z2,
          _, _, apex_z2) = location_info(ecef_xz2, ecef_yz2, ecef_zz2,
                                         datetimes, return_geodetic=True,
-                                        ecef_input=True)
+                                        ecef_input=True,
+                                        **step_kwargs)
 
         # Basis vectors at apex location
         tolza = tol_zonal_apex
@@ -449,7 +471,9 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                                    ecef_input=True,
                                                    step_size=step_size,
                                                    tol=tol,
-                                                   tol_zonal_apex=tolza)
+                                                   tol_zonal_apex=tolza,
+                                                   mag_fcn=mag_fcn,
+                                                   step_fcn=step_fcn)
 
         # Get distance between apex points along apex zonal direction
         dist = (t_x1 - t_x2) * azx + (t_y1 - t_y2) * azy + (t_z1 - t_z2) * azz
@@ -463,7 +487,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
         # Get magnitude of magnetic field at root apex location
         bax, bay, baz, bam = magnetic_vector(a_x, a_y, a_z, datetimes,
-                                             normalize=True)
+                                             normalize=True,
+                                             **mag_kwargs)
 
         # d vectors
         # Field-Aligned
@@ -527,14 +552,16 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                          ecef_y + dstep_size * my,
                                          ecef_z + dstep_size * mz)
             t_x1, t_y1, t_z1 = location_info(ecef_xm, ecef_ym, ecef_zm,
-                                             datetimes, ecef_input=True)
+                                             datetimes, ecef_input=True,
+                                             **step_kwargs)
 
             # Negative step
             ecef_xm2, ecef_ym2, ecef_zm2 = (ecef_x - dstep_size * mx,
                                             ecef_y - dstep_size * my,
                                             ecef_z - dstep_size * mz)
             t_x2, t_y2, t_z2 = location_info(ecef_xm2, ecef_ym2, ecef_zm2,
-                                             datetimes, ecef_input=True)
+                                             datetimes, ecef_input=True,
+                                             **step_kwargs)
 
             # Get distance between apex locations along meridional vector
             diff_apex_m = (t_x1 - t_x2) * amx + (t_y1 - t_y2) * amy \
@@ -580,7 +607,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
 
 def step_along_mag_unit_vector(x, y, z, date, direction, num_steps=1,
-                               step_size=25., scalar=1):
+                               step_size=25., scalar=1, **kwargs):
     """Move by following specified magnetic unit vector direction.
 
     Moving along the field is effectively the same as a field line trace though
@@ -607,6 +634,8 @@ def step_along_mag_unit_vector(x, y, z, date, direction, num_steps=1,
     scalar : int
         Scalar modifier for step size distance. Input a -1 to move along
         negative unit vector direction. (default=1)
+    **kwargs : Additional keywords
+        Passed to `calculate_mag_drift_unit_vectors_ecef`.
 
     Returns
     -------
@@ -637,7 +666,8 @@ def step_along_mag_unit_vector(x, y, z, date, direction, num_steps=1,
          ) = calculate_mag_drift_unit_vectors_ecef(x, y, z, date,
                                                    step_size=step_size,
                                                    ecef_input=True,
-                                                   centered_diff=centered_diff)
+                                                   centered_diff=centered_diff,
+                                                   **kwargs)
         # Pull out the direction we need
         if direction == 'meridional':
             ux, uy, uz = mx, my, mz
@@ -674,6 +704,9 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     max_steps : Deprecated
     edge_length : Deprecated
     edge_steps : Deprecated
+    **kwargs : Additional keywords
+        Passed to `calculate_mag_drift_unit_vectors_ecef`. `step_fcn`, if
+        present, is also passed to `footpoint_location_info`.
 
     Returns
     -------
@@ -697,10 +730,15 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
 
     ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
-    # Get footpoint location information
+    # Get footpoint location information, passing along relevant kwargs
+    if 'step_fcn' in kwargs:
+        flid = {'step_fcn': kwargs['step_fcn']}
+    else:
+        flid = {}
     north_ftpnt, south_ftpnt = footpoint_location_info(ecef_xs, ecef_ys,
                                                        ecef_zs, dates,
-                                                       ecef_input=True)
+                                                       ecef_input=True,
+                                                       **flid)
 
     # Prepare output memory
     out = {}

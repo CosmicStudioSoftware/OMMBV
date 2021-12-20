@@ -234,7 +234,7 @@ Cf2py intent(in) colat, elong, r
       return
       end
 
-      subroutine poles (isv,date,itype,alt,colat,elong,flag,x,y,z,f)
+      subroutine poles (flag,isv,date,itype,alt,colat,elong,x,y,z,f)
       ! Generate magnetic field for testing purposes
       ! Function signature needs to mostly match that of igrfsyn
       ! flag indicates which magnetic field source to produce.
@@ -251,7 +251,7 @@ Cf2py intent(in) colat, elong, r
       integer isv, itype, flag
 
 C following added by RStoneback
-Cf2py intent(in) isv,date,itype,alt,colat,elong,mflag
+Cf2py intent(in) flag,isv,date,itype,alt,colat,elong
 Cf2py intent(out) x,y,z,f
 
       ! Convert inputs to ECEF
@@ -337,7 +337,7 @@ Cf2py intent(out) x,y,z,f
       end
 
 
-      subroutine gen_step(out,pos,t,date,step,dir,height,mflag,gflag)
+      subroutine gen_step(mflag,gflag,out,pos,t,date,step,dir,height)
       ! Generalized integrand field-line step function for testing
 
       ! IGRF call
@@ -368,7 +368,7 @@ Cf2py intent(out) x,y,z,f
       ! position values
       real*8 r, colat, elong, h, latitude
 
-cf2py intent(in) pos,t,date,step,dir,height,mflag,gflag
+cf2py intent(in) mflag,gflag,pos,t,date,step,dir,height
 Cf2py intent(out) out
 
       ! Calculate longitude, colatitude, and altitude from ECEF position
@@ -382,7 +382,7 @@ Cf2py intent(out) out
         call igrf13syn(0,date,2,r,colat,elong,bn,be,bd,bm)
       else
         ! Use a physically specified dipole + higher order poles
-        call poles(0,date,2,r,colat,elong,mflag,bn,be,bd,bm)
+        call poles(mflag,0,date,2,r,colat,elong,bn,be,bd,bm)
       end if
 
       ! Convert the mag field in spherical unit vectors to ECEF vectors
