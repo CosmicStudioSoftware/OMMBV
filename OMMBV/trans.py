@@ -10,18 +10,49 @@ earth_b = 6356.75231424518
 # Standard geocentric Earth radius, average radius of Earth in km.
 earth_geo_radius = 6371.
 
+_stored_funcs = {}
+
 try:
     import OMMBV.fortran_coords
     ecef_to_geodetic = OMMBV.fortran_coords.ecef_to_geodetic
-
-    # Temporarily replace geodetic calls with geocentric to test performance of
-    # geocentric Earth.
-    # ecef_to_geodetic = trans.ecef_to_geocentric
 
 except (AttributeError, NameError, ModuleNotFoundError):
     estr = ''.join(['Unable to use Fortran version of ecef_to_geodetic.',
                     ' Please check installation.'])
     warnings.warn(estr)
+
+
+def configure_geocentric_earth(test_mode=True):
+    """Engage test configuration where Earth treated as geocentric.
+
+    Parameters
+    ----------
+    test_mode : bool
+        If True, test mode will be engaged and `geodetic` calls
+        are replaced with `geocentric` calls. If False, the original
+        functions are restored. Test mode persists until disabled.
+
+    """
+
+    global ecef_to_geodetic
+    global python_ecef_to_geodetic
+    global geodetic_to_ecef
+    global _stored_funcs
+
+    if test_mode:
+        _stored_funcs = [ecef_to_geodetic, python_ecef_to_geodetic,
+                         geodetic_to_ecef]
+        ecef_to_geodetic = ecef_to_geocentric
+        python_ecef_to_geodetic = ecef_to_geocentric
+        geodetic_to_ecef = geocentric_to_ecef
+    else:
+        if len(_stored_funcs) > 0:
+            ecef_to_geodetic = _stored_funcs[0]
+            python_ecef_to_geodetic = _stored_funcs[1]
+            geodetic_to_ecef = _stored_funcs[2]
+            _stored_funcs = []
+
+    return
 
 
 def geocentric_to_ecef(latitude, longitude, altitude):
