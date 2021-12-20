@@ -9,6 +9,7 @@ import warnings
 # Import reference IGRF fortran code within the package if not on RTD
 try:
     from OMMBV import igrf
+    from OMMBV import sources
 except Exception:
     estr = 'Unable to import Fortran IGRF code.'
     warnings.warn(estr, ImportWarning)
@@ -86,7 +87,8 @@ def field_line_trace(init, date, direction, height, steps=None,
         check_height = height
 
     # Perform trace
-    trace_north, messg = scipy.integrate.odeint(igrf.igrf_step, init.copy(),
+    trace_north, messg = scipy.integrate.odeint(sources.igrf_step,
+                                                init.copy(),
                                                 steps,
                                                 args=(date, step_size,
                                                       direction, height),

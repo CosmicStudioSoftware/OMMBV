@@ -9,12 +9,13 @@ package metadata stored in setup.cfg
 """
 
 import os
+from setuptools import setup
 
 version = '0.5.5'
 
 # Include extensions only when not on readthedocs.org
 if os.environ.get('READTHEDOCS', None) == 'True':
-    from setuptools import setup
+
     extensions = []
 else:
     from numpy.distutils.core import Extension
@@ -26,14 +27,17 @@ else:
     extensions = [Extension(name='OMMBV.igrf',
                             sources=[os.path.join('OMMBV', 'igrf13.f')],
                             extra_f77_compile_args=extra_args),
+                  Extension(name='OMMBV.sources',
+                            sources=[os.path.join('OMMBV', 'sources.f'),
+                                     os.path.join('OMMBV', 'igrf13.f')],
+                            extra_f77_compile_args=extra_args),
                   Extension(name='OMMBV.fortran_coords',
                             sources=[os.path.join('OMMBV', '_coords.f')])]
 
 setup(name='OMMBV',
       version=version,
       license='BSD-3-Clause',
-      packages=['OMMBV', 'OMMBV.heritage', 'OMMBV.satellite', 'OMMBV.trans',
-                'OMMBV.trace', 'OMMBV.utils', 'OMMBV.vector'],
+      packages=['OMMBV'],
       description=' '.join(('Orthogonal geomagnetic vector basis and',
                             'field-line mapping for multipole magnetic',
                             'fields.')),
