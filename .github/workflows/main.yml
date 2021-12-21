@@ -45,15 +45,15 @@ jobs:
         mkdir pysatData
         python -c "import pysat; pysat.params['data_dirs'] = 'pysatData'"
 
-    - name: Run OMMBV setup.py
-      run: |
-        python setup.py develop
-
     - name: Test PEP8 compliance
       run: flake8 . --count --select=D,E,F,H,W --show-source --statistics
 
     - name: Evaluate complexity
       run: flake8 . --count --exit-zero --max-complexity=10 --statistics
+
+    - name: Run OMMBV setup.py
+      run: |
+        python setup.py develop
 
     - name: Run unit and integration tests
       run: pytest --cov=OMMBV/
