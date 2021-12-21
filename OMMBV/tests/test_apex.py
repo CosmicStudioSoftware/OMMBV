@@ -1,6 +1,9 @@
 """Unit tests for `OMMBV.trace.apex_location_info`."""
 
 import datetime as dt
+import itertools
+import os
+
 import numpy as np
 import pandas as pds
 import pytest
@@ -8,7 +11,6 @@ import pytest
 import pysat
 
 import OMMBV
-from OMMBV.tests.test_core import gen_trace_data_fixed_alt
 
 
 class TestMaxApexHeight(object):
@@ -416,3 +418,41 @@ class TestApexAccuracy(object):
     #
     #     except:
     #         pass
+
+
+def gen_trace_data_fixed_alt(alt, step_long=80., step_lat=25.):
+    """Generate grid data between -50 and 50 degrees latitude.
+
+    Parameters
+    ----------
+    alt : float
+        Fixed altitude to use over longitude latitude grid
+    step_long : float (80. degrees)
+        Step size used when generating longitudes
+    step_lat : float (25. degrees)
+        Step size used when generating latitudes
+
+    Returns
+    -------
+    np.array, np.array, np.array
+        Lats, longs, and altitudes.
+
+
+    """
+    # generate test data set
+    on_travis = os.environ.get('ONTRAVIS') == 'True'
+    if on_travis:
+        # reduced resolution on the test server
+        long_dim = np.arange(0., 361., 180.)
+        lat_dim = np.arange(-50., 51., 50.)
+    else:
+        long_dim = np.arange(0., 361., step_long)
+        lat_dim = np.arange(-50., 51., step_lat)
+
+    alt_dim = alt
+    locs = np.array(list(itertools.product(long_dim, lat_dim)))
+    # pull out lats and longs
+    lats = locs[:, 1]
+    longs = locs[:, 0]
+    alts = longs*0 + alt_dim
+    return lats, longs, alts
