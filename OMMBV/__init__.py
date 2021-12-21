@@ -6,13 +6,13 @@ import warnings
 
 __version__ = '0.5.5'
 
-on_rtd = os.environ.get('ONREADTHEDOCS') == 'True'
-
 try:
     from OMMBV import igrf
+    from OMMBV import sources
 except ImportError:
     warnings.warn("igrf module could not be imported.", ImportWarning)
     igrf = None
+    sources = None
 
 
 from OMMBV import satellite
