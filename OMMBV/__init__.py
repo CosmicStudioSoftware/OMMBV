@@ -8,6 +8,7 @@ __version__ = '0.5.5'
 
 try:
     from OMMBV import igrf
+    from OMMBV import fortran_coords
     from OMMBV import sources
 except ImportError:
     warnings.warn("igrf module could not be imported.", ImportWarning)

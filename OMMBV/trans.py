@@ -13,10 +13,10 @@ earth_geo_radius = 6371.
 _stored_funcs = {}
 
 try:
-    import OMMBV.fortran_coords
-    ecef_to_geodetic = OMMBV.fortran_coords.ecef_to_geodetic
+    from OMMBV import fortran_coords
+    ecef_to_geodetic = fortran_coords.ecef_to_geodetic
 
-except (AttributeError, NameError, ModuleNotFoundError):
+except (AttributeError, NameError, ModuleNotFoundError, ImportError):
     estr = ''.join(['Unable to use Fortran version of ecef_to_geodetic.',
                     ' Please check installation.'])
     warnings.warn(estr)
