@@ -12,9 +12,9 @@ except Exception:
 
 from OMMBV import step_along_mag_unit_vector
 from OMMBV.trace import apex_location_info
-from OMMBV.trace import magnetic_vector
 from OMMBV.trace import footpoint_location_info
 from OMMBV.trace import full_field_line
+from OMMBV.trace import magnetic_vector
 import OMMBV.trans as trans
 import OMMBV.utils
 from OMMBV import vector
