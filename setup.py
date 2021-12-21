@@ -19,7 +19,7 @@ if os.environ.get('READTHEDOCS', None) == 'True':
     extensions = []
 else:
     from numpy.distutils.core import Extension
-    from numpy.distutils.core import setup
+    from numpy.distutils.core import setup  # noqa: F811
 
     extra_args = ['--std=legacy', '-Wno-line-truncation', '-Wno-conversion',
                   '-Wno-unused-variable', '-Wno-maybe-uninitialized',

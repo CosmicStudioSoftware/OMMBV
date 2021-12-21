@@ -402,7 +402,6 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         # Take biggest difference
         diff = np.nanmax([diff_z, diff_m])
 
-
         # Check if we are done
         if np.isnan(diff):
             repeat_flag = False
@@ -430,7 +429,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
             estr = ''.join((str(len(idx)), ' locations did not converge.',
                             ' Setting to NaN.'))
             warnings.warn(estr)
-            repeat_flag = False
+            break
 
     # Store temp arrays into output
     zx, zy, zz = tzx, tzy, tzz

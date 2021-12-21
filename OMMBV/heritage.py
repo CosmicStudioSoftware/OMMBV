@@ -1,12 +1,23 @@
-import warnings
+"""Heritage functions for OMMBV. Will be removed in v2.0.0."""
 
 import numpy as np
+import warnings
 
-import OMMBV.utils
-import OMMBV.vector
-from OMMBV import trans as trans, igrf as igrf, vector, footpoint_location_info, \
-    step_along_mag_unit_vector, apex_location_info, magnetic_vector
+# Import reference IGRF fortran code, if possible. RTD doesn't support Fortran.
+try:
+    from OMMBV import igrf
+except Exception:
+    estr = 'Unable to import Fortran IGRF or OMMBV.sources code.'
+    warnings.warn(estr, ImportWarning)
+
+from OMMBV import step_along_mag_unit_vector
+from OMMBV.trace import apex_location_info
+from OMMBV.trace import magnetic_vector
+from OMMBV.trace import footpoint_location_info
 from OMMBV.trace import full_field_line
+import OMMBV.trans as trans
+import OMMBV.utils
+from OMMBV import vector
 
 
 def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude,
@@ -174,12 +185,12 @@ def apex_edge_lengths_via_footpoint(*args, **kwargs):
     """Calculate distance between apex locations.
 
     .. deprecated:: 0.6.0
-       Function moved to `OMMBV.trans.geocentric_to_ecef`, this wrapper will
-       be removed in 0.7.0
+       Function moved to `apex_distance_after_footpoint_step`,
+       this wrapper will be removed in 0.7.0
 
     """
     estr = 'This method now called `apex_distance_after_footpoint_step`.'
-    warnings.warn(estr, DeprecationWarning)
+    warnings.warn(estr, DeprecationWarning, stacklevel=2)
     apex_distance_after_footpoint_step(*args, **kwargs)
     return
 
@@ -408,7 +419,9 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     """
     Heritage technique for mapping ion drifts and electric fields.
 
-    Use `scalars_for_mapping_ion_drifts` instead.
+    .. deprecated:: 0.6.0
+       Use `OMMBV.scalars_for_mapping_ion_drifts` instead. Will be removed
+       after 1.0.0.
 
     Parameters
     ----------
@@ -439,6 +452,9 @@ def heritage_scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
         assuming ExB ion motion)
 
     """
+
+    warnings.warn("Use `OMMBV.scalars_for_mapping_ion_drifts` instead.",
+                  DeprecationWarning, stacklevel=2)
 
     if step_size is None:
         step_size = 100.
