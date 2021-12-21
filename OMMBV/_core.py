@@ -402,23 +402,25 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         # Take biggest difference
         diff = np.nanmax([diff_z, diff_m])
 
-        # Store info into calculation vectors to refine next loop
-        tzx, tzy, tzz = tzx2, tzy2, tzz2
-        tmx, tmy, tmz = tmx2, tmy2, tmz2
 
         # Check if we are done
         if np.isnan(diff):
             repeat_flag = False
 
-        if (diff < tol) & (np.nanmax(np.abs(diff_apex_z))
-                           < tol_zonal_apex) & (loop_num > 1):
+        if (diff < tol) & (np.nanmax(np.abs(diff_apex_z)) < tol_zonal_apex) \
+                & (loop_num > 1):
+            # Reached terminating conditions
             repeat_flag = False
+        else:
+            # Store info into calculation vectors to refine next loop
+            tzx, tzy, tzz = tzx2, tzy2, tzz2
+            tmx, tmy, tmz = tmx2, tmy2, tmz2
 
         loop_num += 1
-        if loop_num > max_loops:
+        if loop_num >= max_loops:
             # Identify all locations with tolerance failure
             idx1, = np.where(diff_m >= tol)
-            idx2, = np.where(diff_apex_z >= tol_zonal_apex)
+            idx2, = np.where(np.abs(diff_apex_z) >= tol_zonal_apex)
             idx = np.hstack((idx1, idx2))
 
             # Assign nan to vectors
@@ -428,6 +430,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
             estr = ''.join((str(len(idx)), ' locations did not converge.',
                             ' Setting to NaN.'))
             warnings.warn(estr)
+            repeat_flag = False
 
     # Store temp arrays into output
     zx, zy, zz = tzx, tzy, tzz
@@ -584,8 +587,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
             d_zon2_x, d_zon2_y, d_zon2_z = (d_zon2_x / mag, d_zon2_y / mag,
                                             d_zon2_z / mag)
 
-            tempd = {'diff_zonal_apex': grad_zonal,
-                     'diff_mer_apex': grad_apex,
+            tempd = {'grad_zonal_apex': grad_zonal,
+                     'grad_mer_apex': grad_apex,
                      'loops': loop_num,
                      'vector_seed_type': init_type,
                      'diff_zonal_vec': diff_z,
@@ -942,6 +945,22 @@ def geodetic_to_ecef(latitude, longitude, altitude):
                   DeprecationWarning, stacklevel=2)
 
     return trans.geodetic_to_ecef(latitude, longitude, altitude)
+
+
+def ecef_to_geodetic(*args, **kwargs):
+    """Convert ECEF into Geodetic WGS84 coordinates.
+
+    .. deprecated:: 0.6.0
+       Function moved to `OMMBV.trans.geodetic_to_ecef`, this wrapper will
+       be removed in 0.7.0
+
+    """
+
+    warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
+                           "wrapper will be removed in OMMBV 0.7+"]),
+                  DeprecationWarning, stacklevel=2)
+
+    return trans.ecef_to_geodetic(*args, **kwargs)
 
 
 def python_ecef_to_geodetic(x, y, z, method='closed'):
