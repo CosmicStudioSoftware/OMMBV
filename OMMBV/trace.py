@@ -137,7 +137,8 @@ def field_line_trace(init, date, direction, height, steps=None,
                                             step_size=loop_step,
                                             max_steps=max_steps,
                                             recursive_loop_count=rlc,
-                                            steps=steps)
+                                            steps=steps,
+                                            step_fcn=step_fcn)
         else:
             estr = "After 1000 iterations couldn't reach target altitude"
             warnings.warn(estr)
@@ -188,7 +189,7 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
         Maximum number of steps along each direction that should be taken
     step_size : float
         Distance in km for each large integration step. Multiple substeps
-        are taken as determined by scipy.integrate.odeint
+        are taken as determined by `scipy.integrate.odeint`.
     steps : array-like of ints or floats
         Number of steps along field line when field line trace positions should
         be reported. By default, each step is reported, plus origin;
@@ -244,8 +245,8 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     spanning Northern/Southern footpoints is used to find the location with
     the largest geodetic (WGS84) height. A binary search higher resolution
     trace is then used to get a better fix on this location. Each loop,
-    the step_size halved. Greatest geodetic height is once
-    again selected once the step_size is below `fine_step_size`.
+    the `step_size` halved. Greatest geodetic height is once
+    again selected once the `step_size` is below `fine_step_size`.
 
     Parameters
     ----------
@@ -289,7 +290,9 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     # Prepare parameters for field line trace
-    max_steps = 100
+    max_steps = 10000. // step_size
+    # Ensure at least 100
+    max_steps = max_steps if max_steps >= 100 else 100
     apex_coarse_steps = np.arange(max_steps + 1)
 
     # High resolution trace parameters
@@ -400,7 +403,7 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     step_size : float (100. km)
         Step size (km) used for tracing coarse field line
     num_steps : int (1.E-5 km)
-        Number of steps passed along to field_line_trace as max_steps.
+        Number of steps passed along to `field_line_trace` as max_steps.
     ecef_input : bool
         If True, glats, glons, and alts are treated as x, y, z (ECEF).
     return_geodetic : bool
