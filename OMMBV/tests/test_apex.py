@@ -109,7 +109,7 @@ class TestApexAccuracy(object):
         pt2 = out[1]
 
         for var in pt1.columns:
-            np.testing.assert_allclose(pt2[var], pt1[var], rtol=1.E-5)
+            np.testing.assert_allclose(pt2[var], pt1[var], rtol=1.E-4)
 
         np.testing.assert_allclose(pt1['h'], pt2['h'], rtol=1.E-9)
 
