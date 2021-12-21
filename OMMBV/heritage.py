@@ -265,15 +265,11 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
     if direction == 'north':
         ftpnts, _ = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs, dates,
                                             ecef_input=True,
-                                            step_size=step_size,
-                                            max_steps=max_steps,
-                                            steps=steps)
+                                            step_size=step_size)
     elif direction == 'south':
         _, ftpnts = footpoint_location_info(ecef_xs, ecef_ys, ecef_zs, dates,
                                             ecef_input=True,
-                                            step_size=step_size,
-                                            max_steps=max_steps,
-                                            steps=steps)
+                                            step_size=step_size)
 
     # Take step from footpoint along + vector direction
     (plus_x,
@@ -287,8 +283,7 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
     (plus_apex_x,
      plus_apex_y,
      plus_apex_z) = apex_location_info(plus_x, plus_y, plus_z, dates,
-                                       ecef_input=True, step_size=step_size,
-                                       steps=steps)
+                                       ecef_input=True, step_size=step_size)
 
     # Take half step from first footpoint along - vector direction
     (minus_x,
@@ -301,8 +296,7 @@ def apex_distance_after_footpoint_step(glats, glons, alts, dates, direction,
     (minus_apex_x,
      minus_apex_y,
      minus_apex_z) = apex_location_info(minus_x, minus_y, minus_z, dates,
-                                        ecef_input=True, step_size=step_size,
-                                        steps=steps)
+                                        ecef_input=True, step_size=step_size)
 
     # Take difference in apex locations
     apex_edge_length = np.sqrt((plus_apex_x - minus_apex_x)**2

@@ -12,8 +12,6 @@ import OMMBV.trace
 import OMMBV.trans
 import OMMBV.vector
 
-import pysat
-
 
 def mstp(field, surf):
     """Return dict with appropriate `mag_fcn` and `step_fcn`.
@@ -112,9 +110,6 @@ class TestUnitVectors(object):
 
     def setup(self):
         """Setup test environment before each function."""
-        self.inst = pysat.Instrument('pysat', 'testing')
-        self.inst.yr = 2010.
-        self.inst.doy = 1.
 
         self.date = dt.datetime(2000, 1, 1)
 
@@ -133,7 +128,8 @@ class TestUnitVectors(object):
     def teardown(self):
         """Clean up test environment after each function."""
 
-        del self.inst, self.date, self.map_labels
+        del self.date, self.map_labels, self.lats, self.longs
+        del self.alts
         return
 
     def test_vectors_at_pole(self):

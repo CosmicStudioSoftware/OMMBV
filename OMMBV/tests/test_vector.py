@@ -5,6 +5,7 @@ import pytest
 
 import OMMBV
 from OMMBV import igrf
+from OMMBV import sources
 from OMMBV.tests.test_core import gen_data_fixed_alt
 
 
@@ -123,9 +124,9 @@ class TestVector(object):
         for lat, lon, alt in zip(self.lats, self.longs, self.alts):
             # Input here is co-latitude, not latitude.
             # Inputs to fortran are in radians.
-            vxx, vyy, vzz = igrf.end_vector_to_ecef(vx, vy, vz,
-                                                    np.deg2rad(90. - lat),
-                                                    np.deg2rad(lon))
+            vxx, vyy, vzz = sources.end_vector_to_ecef(vx, vy, vz,
+                                                       np.deg2rad(90. - lat),
+                                                       np.deg2rad(lon))
             vx2, vy2, vz2 = OMMBV.vector.enu_to_ecef(vx, vy, -vz, lat,
                                                      lon)
 

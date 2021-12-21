@@ -87,7 +87,7 @@ class TestApexAccuracy(object):
         return
 
     @pytest.mark.parametrize("param,vals", [('fine_step_size', [1.E-5, 5.E-6]),
-                                             ('fine_max_steps', [5., 10.]),
+                                            ('fine_max_steps', [5., 10.]),
                                             ('step_size', [100., 50.])])
     def test_apex_info_accuracy(self, param, vals):
         """Test accuracy of `apex_location_info` for `fine_step_size`."""
@@ -109,7 +109,7 @@ class TestApexAccuracy(object):
         pt2 = out[1]
 
         for var in pt1.columns:
-            assert np.all(np.abs(pt2[var] - pt1[var]) < 1.E-5)
+            np.testing.assert_allclose(pt2[var], pt1[var], rtol=1.E-5)
 
         np.testing.assert_allclose(pt1['h'], pt2['h'], rtol=1.E-9)
 

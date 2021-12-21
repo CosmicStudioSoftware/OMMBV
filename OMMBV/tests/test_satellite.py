@@ -1,6 +1,7 @@
-
+"""Test OMMBV.satellite functions"""
 import datetime as dt
 import numpy as np
+import pandas as pds
 
 import pysat
 
@@ -10,21 +11,28 @@ import OMMBV
 class TestSatellite(object):
 
     def setup(self):
+        """Setup test environment before each function."""
 
         self.inst = pysat.Instrument('pysat', 'testing', num_samples=32)
+        return
+
+    def teardown(self):
+        """Clean up test environment after each function."""
+        del self.inst
         return
 
     def test_application_add_unit_vectors(self):
         """Check application of unit_vectors to satellite data"""
         self.inst.load(2010, 365)
         self.inst['altitude'] = 550.
-        print(self.inst)
         OMMBV.satellite.add_mag_drift_unit_vectors_ecef(self.inst)
         items = ['unit_zon_ecef_x', 'unit_zon_ecef_y', 'unit_zon_ecef_z',
                  'unit_fa_ecef_x', 'unit_fa_ecef_y', 'unit_fa_ecef_z',
                  'unit_mer_ecef_x', 'unit_mer_ecef_y', 'unit_mer_ecef_z']
         for item in items:
             assert item in self.inst.data
+
+        return
 
     def test_application_add_mag_drifts(self):
         """Check application of unit vectors to drift measurements"""
