@@ -92,8 +92,6 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude,
     be = []
     bd = []
 
-    ddates = OMMBV.utils.datetimes_to_doubles(datetimes)
-
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z,
                                                 altitude,
                                                 np.deg2rad(90. - latitude),
