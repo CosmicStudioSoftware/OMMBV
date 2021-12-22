@@ -112,3 +112,97 @@ class TestDeprecations(object):
         eval_warnings(war, self.warn_msgs)
 
         return
+
+
+class TestCoreDeprecations(object):
+    """Unit tests for deprecated core functions."""
+
+    def setup(self):
+        """Setup test environment before each function."""
+        warnings.simplefilter("always", DeprecationWarning)
+
+        self.date = dt.datetime(2020, 1, 1)
+        self.warn_msgs = ''
+
+        return
+
+    def teardown(self):
+        """Clean up test environment after each function."""
+        del self.warn_msgs, self.date
+        return
+
+    @pytest.mark.parametrize("func", (OMMBV.geocentric_to_ecef,
+                                      OMMBV.ecef_to_geocentric,
+                                      OMMBV.ecef_to_geodetic,
+                                      OMMBV.geodetic_to_ecef,
+                                      OMMBV.python_ecef_to_geodetic))
+    def test_core_trans_functions_deprecated(self, func):
+        """Test deprecated wrapped functions."""
+
+        self.warn_msgs = ["".join(["Function moved to `OMMBV.trans`, "
+                                   "deprecated wrapper will be removed after ",
+                                   "OMMBV v1.0.0."])]
+        self.warn_msgs = np.array(self.warn_msgs)
+
+        # Catch the warnings.
+        with warnings.catch_warnings(record=True) as war:
+            func(np.array([0.]), np.array([0.]), np.array([550.]))
+
+        # Ensure the minimum number of warnings were raised.
+        assert len(war) >= len(self.warn_msgs)
+
+        # Test the warning messages, ensuring each attribute is present.
+        eval_warnings(war, self.warn_msgs)
+
+        return
+
+    def test_core_trans_kwargs_deprecated(self):
+        """Test deprecated keywords in wrapped transformation functions."""
+
+        self.warn_msgs = ["".join(["`method` must be a string value in ",
+                                   "v1.0.0+. Setting to function default."])]
+        self.warn_msgs = np.array(self.warn_msgs)
+
+        # Catch the warnings.
+        with warnings.catch_warnings(record=True) as war:
+            OMMBV.python_ecef_to_geodetic(np.array([0.]), np.array([0.]),
+                                          np.array([550.]), method=None)
+
+        # Ensure the minimum number of warnings were raised.
+        assert len(war) >= len(self.warn_msgs)
+
+        # Test the warning messages, ensuring each attribute is present.
+        eval_warnings(war, self.warn_msgs)
+
+        return
+
+    @pytest.mark.parametrize("func,args", ([OMMBV.enu_to_ecef_vector,
+                                            (1., 0., 0., 0., 0.)],
+                                           [OMMBV.ecef_to_enu_vector,
+                                            (1., 0., 0., 0., 0.)],
+                                           [OMMBV.project_ECEF_vector_onto_basis,
+                                            (1., 0., 0., 1., 0., 0., 0., 1.,
+                                             0., 0., 0., 1.)],
+                                           [OMMBV.normalize_vector,
+                                            (1., 0., 0.)],
+                                           [OMMBV.cross_product,
+                                            (0., 0., 1., 1., 0., 0.)]))
+    def test_core_vect_functions_deprecated(self, func, args):
+        """Test deprecated wrapped functions."""
+
+        self.warn_msgs = ["".join(["Function moved to `OMMBV.vector`, ",
+                                   "deprecated wrapper will be removed after ",
+                                   "OMMBV v1.0.0."])]
+        self.warn_msgs = np.array(self.warn_msgs)
+
+        # Catch the warnings.
+        with warnings.catch_warnings(record=True) as war:
+            func(*args)
+
+        # Ensure the minimum number of warnings were raised.
+        assert len(war) >= len(self.warn_msgs)
+
+        # Test the warning messages, ensuring each attribute is present.
+        eval_warnings(war, self.warn_msgs)
+
+        return
