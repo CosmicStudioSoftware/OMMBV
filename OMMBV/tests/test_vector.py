@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 
 import OMMBV
-from OMMBV import igrf
 from OMMBV import sources
 from OMMBV.tests.test_core import gen_data_fixed_alt
 
