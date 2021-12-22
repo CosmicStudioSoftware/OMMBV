@@ -11,11 +11,8 @@ try:
     from OMMBV import fortran_coords
     from OMMBV import sources
 except ImportError:
-    warnings.warn("igrf module could not be imported.", ImportWarning)
-    igrf = None
-    sources = None
-    fortran_coords = None
-
+    warnings.warn("Fortran module could not be imported.", ImportWarning)
+    igrf, sources, fortran_coords = None, None, None
 
 from OMMBV import satellite
 from OMMBV import trace

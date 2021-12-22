@@ -14,18 +14,12 @@ try:
     ommbv_step_fcn = sources.igrf_step
 
 except Exception:
-    def field_fcn():
-        """Magnetic field model function stub."""
-        return
-
-    def step_fcn():
+    def stub_fcn():
         """Magnetic field step function stub."""
         return
 
-    ommbv_mag_fcn = field_fcn
-    ommbv_step_fcn = step_fcn
-    estr = 'Unable to import Fortran IGRF or OMMBV.sources code.'
-    warnings.warn(estr, ImportWarning)
+    ommbv_mag_fcn, ommbv_step_fcn = stub_fcn, stub_fcn
+    warnings.warn('Fortran module could not be imported.', ImportWarning)
 
 from OMMBV import trans
 import OMMBV.utils
@@ -133,6 +127,7 @@ def field_line_trace(init, date, direction, height, steps=None,
             # When we have not reached the reference height, call
             # field_line_trace again by taking check value as init.
             # Recursive call.
+            print('recurse!')
             recursive_loop_count = recursive_loop_count + 1
             rlc = recursive_loop_count
             trace_north1 = field_line_trace(check, date, direction, height,

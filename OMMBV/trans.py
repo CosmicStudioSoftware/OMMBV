@@ -17,9 +17,7 @@ try:
     ecef_to_geodetic = fortran_coords.ecef_to_geodetic
 
 except (AttributeError, NameError, ModuleNotFoundError, ImportError):
-    estr = ''.join(['Unable to use Fortran version of ecef_to_geodetic.',
-                    ' Please check installation.'])
-    warnings.warn(estr)
+    warnings.warn('Fortran module could not be imported.', ImportWarning)
 
 
 def configure_geocentric_earth(test_mode=True):
@@ -220,8 +218,3 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
         h = p / np.cos(latitude) - r_n
 
     return np.rad2deg(latitude), np.rad2deg(longitude), h
-
-# Temporarily replace geodetic calls with geocentric to test performance of
-# geocentric Earth.
-# python_ecef_to_geodetic = trans.ecef_to_geocentric
-# geodetic_to_ecef = trans.geocentric_to_ecef

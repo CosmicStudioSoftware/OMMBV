@@ -1,6 +1,7 @@
 """Unit tests for `OMMBV.trace`."""
 
 import datetime as dt
+import functools
 import numpy as np
 import pytest
 
@@ -8,7 +9,9 @@ from OMMBV.tests.test_core import gen_data_fixed_alt
 import OMMBV.trans
 import OMMBV.trace as trace
 
+
 class TestTracing(object):
+    """Test `OMMBV.trace` functions."""
 
     def setup(self):
         """Setup test environment before each function."""
@@ -111,9 +114,27 @@ class TestTracing(object):
 
         return
 
+    def test_field_line_trace_max_recursion(self):
+        """Test recursion limit code in `field_line_trace`."""
+
+        # Configure a pure dipole field, spherical earth. Pick a
+        # location very close to Southern magnetic pole, a very small
+        # step size, and then try to integrate towards northern hemisphere.
+        # It will not make it.
+        step_fcn = functools.partial(OMMBV.sources.gen_step, 0, 1)
+        out = trace.field_line_trace([1., 0., -7000.],
+                                     self.date, 1, 10., step_size=1.E-5,
+                                     step_fcn=step_fcn)
+
+        assert len(out) == 1
+        assert len(out[0]) == 3
+        assert np.all(np.isnan(out[0]))
+
+        return
+
     @pytest.mark.parametrize('height', (120., 240.))
-    def test_alternate_inputs_footpoint(self, height):
-        """Test `footpoint_location_info` with geodetic inputs/outputs."""
+    def test_footpoint_target_altitude(self, height):
+        """Test `footpoint_location_info` terminating altitude."""
 
         dates = [self.date] * len(self.alts)
         north, south = trace.footpoint_location_info(self.lats, self.longs,
