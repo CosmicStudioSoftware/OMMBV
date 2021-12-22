@@ -131,7 +131,7 @@ class TestTracing(object):
                       & (np.abs(south[:, 1]) >= 0.))
 
         # Altitude check
-        np.testing.assert_allclose(north[:, 2], height, atol=1.)
-        np.testing.assert_allclose(south[:, 2], height, atol=1.)
+        np.testing.assert_allclose(north[:, 2], height, atol=1.E-3)
+        np.testing.assert_allclose(south[:, 2], height, atol=1.E-3)
 
         return
