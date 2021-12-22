@@ -1,5 +1,6 @@
 import datetime as dt
 import numpy as np
+import pytest
 
 import OMMBV
 import OMMBV.heritage
@@ -62,7 +63,7 @@ class TestIntegratedMethods(object):
         # Zonal generally eastward
         assert np.all(zvx > 0.7)
 
-        # Meridional generall not eastward
+        # Meridional generally not eastward
         assert np.all(mx < 0.4)
 
         return
@@ -144,7 +145,8 @@ class TestIntegratedMethods(object):
 
         return
 
-    def test_heritage_geomag_efield_scalars(self):
+    @pytest.mark.parametrize("e_field_scaling", (True, False))
+    def test_heritage_geomag_efield_scalars(self, e_field_scaling):
         """Test heritage code path for scaling electric fields/ion drifts."""
 
         data = {}
@@ -152,7 +154,8 @@ class TestIntegratedMethods(object):
         for i, p_lat in enumerate(self.lats):
             templ = [p_lat] * len(self.longs)
             tempd = [self.date] * len(self.longs)
-            scalars = fcn(templ, self.longs, self.alts, tempd)
+            scalars = fcn(templ, self.longs, self.alts, tempd,
+                          e_field_scaling_only=e_field_scaling)
             for scalar in scalars:
                 if scalar not in data:
                     data[scalar] = np.full((len(self.lats), len(self.longs)),
@@ -160,9 +163,30 @@ class TestIntegratedMethods(object):
 
                 data[scalar][i, :] = scalars[scalar]
 
-        assert len(scalars.keys()) == 12
+        if e_field_scaling:
+            assert len(scalars.keys()) == 6
+        else:
+            assert len(scalars.keys()) == 12
 
         for scalar in scalars:
             assert np.all(np.isfinite(scalars[scalar]))
+
+        return
+
+    @pytest.mark.parametrize("direction", ('zonal', 'meridional', 'aligned'))
+    def test_apex_distance_local_step(self, direction):
+        """Test heritage code path for apex distance after local step."""
+
+        fcn = OMMBV.heritage.apex_distance_after_local_step
+        for i, p_lat in enumerate(self.lats):
+            templ = [p_lat] * len(self.longs)
+            tempd = [self.date] * len(self.longs)
+            dist = fcn(templ, self.longs, self.alts, tempd,
+                       direction, ecef_input=False,
+                       return_geodetic=True)
+            assert np.all(np.isfinite(dist))
+
+            if direction == 'aligned':
+                np.testing.assert_allclose(dist, 0., atol=1.E-2)
 
         return

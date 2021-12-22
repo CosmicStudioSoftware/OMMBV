@@ -206,3 +206,28 @@ class TestCoreDeprecations(object):
         eval_warnings(war, self.warn_msgs)
 
         return
+
+    def test_heritage_functions_deprecated(self):
+        """Test deprecated wrapped `OMMBV.heritage` functions."""
+
+        self.warn_msgs = [''.join(['This method now called `apex_distance_',
+                                   'after_footpoint_step`. Wrapper will be ',
+                                   'removed after OMMBV v1.0.0.'])]
+        self.warn_msgs = np.array(self.warn_msgs)
+
+        # Catch the warnings.
+        with warnings.catch_warnings(record=True) as war:
+            OMMBV.heritage.apex_edge_lengths_via_footpoint(np.array([0.]),
+                                                           np.array([0.]),
+                                                           np.array([550.]),
+                                                           [self.date],
+                                                           'north',
+                                                           'zonal')
+
+        # Ensure the minimum number of warnings were raised.
+        assert len(war) >= len(self.warn_msgs)
+
+        # Test the warning messages, ensuring each attribute is present.
+        eval_warnings(war, self.warn_msgs)
+
+        return

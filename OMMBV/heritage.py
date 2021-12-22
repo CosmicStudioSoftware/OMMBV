@@ -7,8 +7,7 @@ import warnings
 try:
     from OMMBV import igrf
 except Exception:
-    estr = 'Unable to import Fortran IGRF or OMMBV.sources code.'
-    warnings.warn(estr, ImportWarning)
+    warnings.warn('Fortran module could not be imported.', ImportWarning)
 
 from OMMBV import step_along_mag_unit_vector
 from OMMBV.trace import apex_location_info
@@ -184,12 +183,14 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude,
 def apex_edge_lengths_via_footpoint(*args, **kwargs):
     """Calculate distance between apex locations.
 
-    .. deprecated:: 0.6.0
+    .. deprecated:: 1.0.0
        Function moved to `apex_distance_after_footpoint_step`,
-       this wrapper will be removed in 0.7.0
+       this wrapper will be removed after v1.0.0.
 
     """
-    estr = 'This method now called `apex_distance_after_footpoint_step`.'
+    estr = ''.join(['This method now called `apex_distance_after_',
+                    'footpoint_step`. Wrapper will be removed after OMMBV ',
+                    'v1.0.0.'])
     warnings.warn(estr, DeprecationWarning, stacklevel=2)
     apex_distance_after_footpoint_step(*args, **kwargs)
     return
