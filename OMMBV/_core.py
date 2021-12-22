@@ -227,35 +227,36 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     """
 
     # Check for deprecated inputs
-    if max_steps is not None:
-        warnings.warn('max_steps is no longer supported.', DeprecationWarning)
-    if ref_height is not None:
-        warnings.warn('ref_height is no longer supported.', DeprecationWarning)
-    if steps is not None:
-        warnings.warn('steps is no longer supported.', DeprecationWarning)
-    if scalar is not None:
-        warnings.warn('scalar is no longer supported.', DeprecationWarning)
-    if edge_steps is not None:
-        warnings.warn('edge_steps is no longer supported.', DeprecationWarning)
+    depd = {'max_steps': max_steps, 'ref_height': ref_height,
+            'steps': steps, 'scalar': scalar, 'edge_steps': edge_steps}
+    for key in depd.keys():
+        if depd[key] is not None:
+            wstr = " ".join([key, "is deprecated, non-functional,",
+                             "and will be removed after OMMBV v1.0.0."])
+            warnings.warn(wstr, DeprecationWarning, stacklevel=2)
 
-    # Account for potential alternate magnetic field and step functions
-    if mag_fcn is not None:
-        mag_kwargs = {'mag_fcn': mag_fcn}
-    else:
-        mag_kwargs = {}
-    if step_fcn is not None:
-        step_kwargs = {'step_fcn': step_fcn}
-    else:
-        step_kwargs = {}
+    # Account for potential alternate magnetic field and step functions.
+    # Functions aren't assigned as default in function definition since they
+    # are Fortran functions and places like RTD don't support Fortran easily.
+    mag_kwargs = {} if mag_fcn is None else {'mag_fcn': mag_fcn}
+    step_kwargs = {} if step_fcn is None else {'step_fcn': step_fcn}
 
     # Check for reasonable user inputs
     if step_size <= 0:
-        raise ValueError('Step Size must be greater than 0.')
+        raise ValueError('`step_size` must be greater than 0.')
+
+    # Check for reasonable user inputs
+    checks = [longitude, altitude, datetimes]
+    for item in checks:
+        if len(latitude) != len(item):
+            estr = ''.join(['All inputs (latitude, longitude, altitude, ',
+                            'datetimes) must have the same length.'])
+            raise ValueError(estr)
 
     if ecef_input:
         ecef_x, ecef_y, ecef_z = latitude, longitude, altitude
-        # lat and long needed for initial zonal and meridional vector
-        # generation later on
+        # Latitude and longitude position needed later for initial zonal and
+        # meridional vector generation.
         latitude, longitude, altitude = trans.ecef_to_geodetic(ecef_x, ecef_y,
                                                                ecef_z)
     else:
@@ -266,23 +267,16 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         # Ensure latitude reasonable
         idx, = np.where(np.abs(latitude) > 90.)
         if len(idx) > 0:
-            raise RuntimeError('Latitude out of bounds [-90., 90.].')
+            raise ValueError('Latitude out of bounds [-90., 90.].')
 
         # Ensure longitude reasonable
         idx, = np.where((longitude < -180.) | (longitude > 360.))
         if len(idx) > 0:
-            print('Out of spec :', longitude[idx])
-            raise RuntimeError('Longitude out of bounds [-180., 360.].')
+            raise ValueError('Longitude out of bounds [-180., 360.].')
 
         # Calculate satellite position in ECEF coordinates
         ecef_x, ecef_y, ecef_z = trans.geodetic_to_ecef(latitude, longitude,
                                                         altitude)
-
-    # Check for reasonable user inputs
-    if len(latitude) != len(longitude) != len(altitude) != len(datetimes):
-        estr = ''.join(['All inputs (latitude, longitude, altitude, datetimes)',
-                        ' must have the same length.'])
-        raise ValueError(estr)
 
     # Begin method calculation.
 
@@ -428,7 +422,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
             estr = ''.join((str(len(idx)), ' locations did not converge.',
                             ' Setting to NaN.'))
-            warnings.warn(estr)
+            warnings.warn(estr, RuntimeWarning)
             break
 
     # Store temp arrays into output
@@ -721,22 +715,21 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
 
     """
 
-    if e_field_scaling_only is not None:
-        raise DeprecationWarning('e_field_scaling_only no longer supported.')
-    if max_steps is not None:
-        raise DeprecationWarning('max_steps no longer supported.')
-    if edge_length is not None:
-        raise DeprecationWarning('edge_length no longer supported.')
-    if edge_steps is not None:
-        raise DeprecationWarning('edge_steps no longer supported.')
+
+    # Check for deprecated inputs
+    depd = {'e_field_scaling_only': e_field_scaling_only,
+            'max_steps': max_steps, 'edge_length': edge_length,
+            'edge_steps': edge_steps}
+    for key in depd.keys():
+        if depd[key] is not None:
+            wstr = " ".join([key, "is deprecated, non-functional,",
+                             "and will be removed after OMMBV v1.0.0."])
+            warnings.warn(wstr, DeprecationWarning, stacklevel=2)
 
     ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
 
     # Get footpoint location information, passing along relevant kwargs
-    if 'step_fcn' in kwargs:
-        flid = {'step_fcn': kwargs['step_fcn']}
-    else:
-        flid = {}
+    flid = {'step_fcn': kwargs['step_fcn']} if 'step_fcn' in kwargs else {}
     north_ftpnt, south_ftpnt = footpoint_location_info(ecef_xs, ecef_ys,
                                                        ecef_zs, dates,
                                                        ecef_input=True,
