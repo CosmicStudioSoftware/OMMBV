@@ -3,12 +3,6 @@
 import numpy as np
 import warnings
 
-# Import reference IGRF fortran code, if possible. RTD doesn't support Fortran.
-try:
-    from OMMBV import igrf
-except Exception:
-    warnings.warn('Fortran module could not be imported.', ImportWarning)
-
 from OMMBV import step_along_mag_unit_vector
 from OMMBV.trace import apex_location_info
 from OMMBV.trace import footpoint_location_info
@@ -103,7 +97,8 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude,
     for x, y, z, alt, colat, elong, time in zip(ecef_x, ecef_y, ecef_z,
                                                 altitude,
                                                 np.deg2rad(90. - latitude),
-                                                np.deg2rad(longitude), ddates):
+                                                np.deg2rad(longitude),
+                                                datetimes):
         init = np.array([x, y, z], dtype=np.float64)
         trace = full_field_line(init, time, ref_height, step_size=step_size,
                                 max_steps=max_steps,
@@ -114,7 +109,13 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude,
 
         # Get IGRF field components. tbn, tbe, tbd, tbmag are in nT.
         # Geodetic input.
-        tbn, tbe, tbd, tbmag = igrf.igrf13syn(0, time, 1, alt, colat, elong)
+        tbx, tby, tbz, tbmag = OMMBV.trace.magnetic_vector([x], [y], [z],
+                                                           [time])
+
+        lat = -np.rad2deg(colat + np.pi/2)
+        lon = np.rad2deg(elong)
+        tbe, tbn, tbd = OMMBV.vector.ecef_to_enu(tbx, tby, tbz, lat, lon)
+        tbn, tbe, tbd = tbn[0], tbe[0], -tbd[0]
 
         # Collect outputs
         south_x.append(trace_south[0])
