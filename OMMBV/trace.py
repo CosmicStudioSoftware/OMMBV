@@ -77,7 +77,7 @@ def field_line_trace(init, date, direction, height, steps=None,
     Note
     ----
     After 500 recursive iterations this method will increase the step size by
-    3% every subsequent iteration.
+    3% every subsequent iteration. Fails at 900 iterations.
 
     """
     if recursive_loop_count is None:
@@ -123,11 +123,10 @@ def field_line_trace(init, date, direction, height, steps=None,
     if recurse & (z > check_height * 1.000001):
         if recursive_loop_count > 500:
             loop_step *= 1.03
-        if recursive_loop_count < 1000:
+        if recursive_loop_count < 900:
             # When we have not reached the reference height, call
-            # field_line_trace again by taking check value as init.
+            # `field_line_trace` again by taking check value as init.
             # Recursive call.
-            print('recurse!')
             recursive_loop_count = recursive_loop_count + 1
             rlc = recursive_loop_count
             trace_north1 = field_line_trace(check, date, direction, height,
@@ -149,15 +148,12 @@ def field_line_trace(init, date, direction, height, steps=None,
             return np.vstack((trace_north, trace_north1))
 
     else:
-        # return results if we make it to the target altitude
 
-        # filter points to terminate at point closest to target height
-        # code also introduces a variable length return, though I suppose
-        # that already exists with the recursive functionality
-        # while this check is done internally within Fortran integrand, if
-        # that steps out early, the output we receive would be problematic.
+        # Optionally filter points to terminate at point closest to target
+        # height. While this check is done internally within Fortran integrand,
+        # if that steps out early, the output we receive could be problematic.
         # Steps below provide an extra layer of security that output has some
-        # semblance to expectations
+        # semblance to expectations.
         if min_check_flag:
             x, y, z = trans.ecef_to_geodetic(trace_north[:, 0],
                                              trace_north[:, 1],
