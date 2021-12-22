@@ -112,7 +112,7 @@ def calculate_integrated_mag_drift_unit_vectors_ecef(latitude, longitude,
         tbx, tby, tbz, tbmag = OMMBV.trace.magnetic_vector([x], [y], [z],
                                                            [time])
 
-        lat = -np.rad2deg(colat + np.pi/2)
+        lat = -np.rad2deg(colat + np.pi / 2.)
         lon = np.rad2deg(elong)
         tbe, tbn, tbd = OMMBV.vector.ecef_to_enu(tbx, tby, tbz, lat, lon)
         tbn, tbe, tbd = tbn[0], tbe[0], -tbd[0]
