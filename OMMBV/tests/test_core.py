@@ -6,6 +6,10 @@ import itertools
 import numpy as np
 import pandas as pds
 import pytest
+import warnings
+
+import pysat
+from pysat.utils import testing
 
 import OMMBV
 import OMMBV.trace
@@ -19,6 +23,7 @@ def mstp(field, surf):
     Parameters
     ----------
     field : int
+       -1 - IGRF
         0 - Dipole,
         1 - Dipole + Linear Quadrupole, +Z,
         2 - Dipole + Linear Quadrupole, +X
@@ -34,9 +39,14 @@ def mstp(field, surf):
         `mag_fcn` and `step_fcn` keys with functions.
 
     """
-
-    out = {'mag_fcn': functools.partial(OMMBV.sources.poles, field),
-           'step_fcn': functools.partial(OMMBV.sources.gen_step, field, surf)}
+    if field != -1:
+        out = {'mag_fcn': functools.partial(OMMBV.sources.poles, field),
+               'step_fcn': functools.partial(OMMBV.sources.gen_step, field,
+                                             surf)}
+    else:
+        out = {'mag_fcn': OMMBV.igrf.igrf13syn,
+               'step_fcn': functools.partial(OMMBV.sources.gen_step, field,
+                                             surf)}
 
     return out
 
@@ -278,8 +288,66 @@ class TestUnitVectors(object):
 
         return
 
+    def test_bad_step_size_basis_ecef(self):
+        """Ensure proper errors raised for negative step_size."""
+        cmduv = OMMBV.calculate_mag_drift_unit_vectors_ecef
+        with pytest.raises(ValueError) as verr:
+            cmduv(self.lats[:1], self.longs[:1], self.alts[:1], [self.date],
+                  step_size=-10.)
+
+        estr = '`step_size` must be greater than 0.'
+        assert str(verr).find(estr) > 0
+
+        return
+
+    @pytest.mark.parametrize('lat,long', [([100.], [100.]), ([0.], [365.])])
+    def test_out_of_bounds_input_basis_ecef(self, lat, long):
+        """Ensure proper errors raised for out of bounds input positions."""
+
+        cmduv = OMMBV.calculate_mag_drift_unit_vectors_ecef
+        with pytest.raises(ValueError) as verr:
+            cmduv(lat, long, self.alts[:1], [self.date])
+
+        estr = 'out of bounds'
+        assert str(verr).find(estr) > 0
+        return
+
+    @pytest.mark.parametrize('lat,long,alt,date', [(2, 1, 1, 1),
+                                                   (1, 2, 1, 1),
+                                                   (1, 1, 2, 1),
+                                                   (1, 1, 1, 2)])
+    def test_unequal_lengths_input_basis_ecef(self, lat, long, alt, date):
+        """Ensure proper errors raised for out of bounds input positions."""
+
+        cmduv = OMMBV.calculate_mag_drift_unit_vectors_ecef
+        with pytest.raises(ValueError) as verr:
+            cmduv(self.lats[:lat], self.longs[:long], self.alts[:alt],
+                  [self.date] * date)
+
+        estr = 'must have the same length.'
+        assert str(verr).find(estr) > 0
+        return
+
+    def test_nonconvergence_basis_ecef(self):
+        """Ensure proper warning when basis does not converge."""
+        self.warn_msgs = ['locations did not converge']
+        self.warn_msgs = np.array(self.warn_msgs)
+
+        cmduv = OMMBV.calculate_mag_drift_unit_vectors_ecef
+        with warnings.catch_warnings(record=True) as war:
+            cmduv(self.lats[:1], self.longs[:1], self.alts[:1], [self.date],
+                  max_loops=0.)
+
+        # Ensure the minimum number of warnings were raised.
+        assert len(war) >= len(self.warn_msgs)
+
+        # Test the warning messages, ensuring each attribute is present.
+        testing.eval_warnings(war, self.warn_msgs, RuntimeWarning)
+
+        return
+
     def test_simple_geomagnetic_basis_interface(self):
-        """Ensure simple geomagnetic basis interface runs"""
+        """Ensure simple geomagnetic basis interface runs."""
 
         for i, p_lat in enumerate(self.lats):
             out_d = OMMBV.calculate_geomagnetic_basis([p_lat] * len(self.longs),
