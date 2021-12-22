@@ -715,7 +715,6 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
 
     """
 
-
     # Check for deprecated inputs
     depd = {'e_field_scaling_only': e_field_scaling_only,
             'max_steps': max_steps, 'edge_length': edge_length,
