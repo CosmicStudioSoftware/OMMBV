@@ -6,20 +6,20 @@ import scipy
 import scipy.integrate
 import warnings
 
-# Import reference IGRF fortran code, if possible. RTD doesn't support Fortran.
+
 try:
+    def _stub_fcn():
+        """Magnetic field/step function stub."""
+        return
+
+    # Import reference IGRF fortran code, if possible.
+    # RTD doesn't support Fortran.
     from OMMBV import igrf
     from OMMBV import sources
     ommbv_mag_fcn = igrf.igrf13syn
     ommbv_step_fcn = sources.igrf_step
-
 except Exception:
-    def stub_fcn():
-        """Magnetic field step function stub."""
-        return
-
-    ommbv_mag_fcn, ommbv_step_fcn = stub_fcn, stub_fcn
-    warnings.warn('Fortran module could not be imported.', ImportWarning)
+    ommbv_mag_fcn, ommbv_step_fcn = _stub_fcn, _stub_fcn
 
 from OMMBV import trans
 import OMMBV.utils
