@@ -14,6 +14,7 @@ except ImportError:
     warnings.warn("igrf module could not be imported.", ImportWarning)
     igrf = None
     sources = None
+    fortran_coords = None
 
 
 from OMMBV import satellite
