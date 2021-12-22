@@ -317,6 +317,13 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
                                 max_steps=max_steps,
                                 **kwargs)
 
+        # Ensure trace is valid. trace is [[np.nan, np.nan, np.nan]] when
+        # `full_field_line` fails.
+        if np.any(np.isnan(trace[0, :])):
+            apex_out_x[i], apex_out_y[i], apex_out_z[i] = np.nan, np.nan, np.nan
+            i += 1
+            continue
+
         # Convert all locations to geodetic coordinates
         tlat, tlon, talt = trans.ecef_to_geodetic(trace[:, 0], trace[:, 1],
                                                   trace[:, 2])
@@ -326,17 +333,12 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 
         # Repeat using a high resolution trace one big step size each
         # direction around identified max. It is possible internal functions
-        # had to increase step size. Get step estimate from trace.
-        if max_idx > 0:
-            nstep = np.sqrt((trace[max_idx, 0] - trace[max_idx - 1, 0])**2
-                            + (trace[max_idx, 1] - trace[max_idx - 1, 1])**2
-                            + (trace[max_idx, 2] - trace[max_idx - 1, 2])**2)
-        elif max_idx < len(talt) - 1:
-            nstep = np.sqrt((trace[max_idx, 0] - trace[max_idx + 1, 0])**2
-                            + (trace[max_idx, 1] - trace[max_idx + 1, 1])**2
-                            + (trace[max_idx, 2] - trace[max_idx + 1, 2])**2)
-        else:
-            nstep = step_size
+        # had to increase step size. Get step estimate from trace. Note
+        # that the apex is away from the footpoints, hence it is not at the
+        # start of the trace field line array, so `max_idx` >= 1.
+        nstep = np.sqrt((trace[max_idx, 0] - trace[max_idx - 1, 0])**2
+                        + (trace[max_idx, 1] - trace[max_idx - 1, 1])**2
+                        + (trace[max_idx, 2] - trace[max_idx - 1, 2])**2)
 
         # Iteratively search for max using a smaller step size each round.
         while nstep > fine_step_size:
