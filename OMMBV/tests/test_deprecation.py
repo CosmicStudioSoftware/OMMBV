@@ -5,10 +5,46 @@ import numpy as np
 import pytest
 import warnings
 
-import pysat
-from pysat.utils import testing
-
 import OMMBV
+
+
+def eval_warnings(warns, check_msgs, warn_type=DeprecationWarning):
+    """Evaluate warnings by category and message.
+
+    Borrowed from pysat `develop` branch. Will be in the release
+    after v3.0.1.
+
+    Parameters
+    ----------
+    warns : list
+        List of warnings.WarningMessage objects
+    check_msgs : list
+        List of strings containing the expected warning messages
+    warn_type : type
+        Type for the warning messages (default=DeprecationWarning)
+
+    Raises
+    ------
+    AssertionError
+        If warning category doesn't match type or an expected message is missing
+
+    """
+
+    # Initialize the output
+    found_msgs = [False for msg in check_msgs]
+
+    # Test the warning messages, ensuring each attribute is present
+    for iwar in warns:
+        for i, msg in enumerate(check_msgs):
+            if str(iwar.message).find(msg) >= 0:
+                assert iwar.category == warn_type, \
+                    "bad warning type for message: {:}".format(msg)
+                found_msgs[i] = True
+
+    assert np.all(found_msgs), "did not find {:d} expected {:}".format(
+        len(found_msgs) - np.sum(found_msgs), repr(warn_type))
+
+    return
 
 
 class TestDeprecations(object):
@@ -30,7 +66,7 @@ class TestDeprecations(object):
     @pytest.mark.parametrize("param", ('max_steps', 'ref_height', 'steps',
                                        'scalar', 'edge_steps'))
     def test_core_geomagnetic_ecef(self, param):
-        """Test deprecated inputs."""
+        """Test deprecated inputs, `calculate_mag_drift_unit_vectors_ecef`."""
 
         self.warn_msgs = [" ".join([param, "is deprecated, non-functional,",
                                     "and will be removed after OMMBV v1.0.0."])]
@@ -48,14 +84,14 @@ class TestDeprecations(object):
         assert len(war) >= len(self.warn_msgs)
 
         # Test the warning messages, ensuring each attribute is present.
-        testing.eval_warnings(war, self.warn_msgs)
+        eval_warnings(war, self.warn_msgs)
 
         return
 
     @pytest.mark.parametrize("param", ('e_field_scaling_only', 'max_steps',
                                        'edge_length', 'edge_steps'))
     def test_core_scalars_for_mapping(self, param):
-        """Test deprecated inputs."""
+        """Test deprecated inputs, `scalars_for_mapping_ion_drifts`."""
 
         self.warn_msgs = [" ".join([param, "is deprecated, non-functional,",
                                     "and will be removed after OMMBV v1.0.0."])]
@@ -73,6 +109,6 @@ class TestDeprecations(object):
         assert len(war) >= len(self.warn_msgs)
 
         # Test the warning messages, ensuring each attribute is present.
-        testing.eval_warnings(war, self.warn_msgs)
+        eval_warnings(war, self.warn_msgs)
 
         return
