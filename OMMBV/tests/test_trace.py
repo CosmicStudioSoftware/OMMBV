@@ -6,7 +6,7 @@ import pytest
 
 from OMMBV.tests.test_core import gen_data_fixed_alt
 import OMMBV.trans
-
+import OMMBV.trace as trace
 
 class TestTracing(object):
 
@@ -108,5 +108,30 @@ class TestTracing(object):
             np.testing.assert_allclose(tx[idx], bx, atol=1.E-1)
             np.testing.assert_allclose(ty[idx], by, atol=1.E-1)
             np.testing.assert_allclose(tz[idx], bz, atol=1.E-1)
+
+        return
+
+    @pytest.mark.parametrize('height', (120., 240.))
+    def test_alternate_inputs_footpoint(self, height):
+        """Test `footpoint_location_info` with geodetic inputs/outputs."""
+
+        dates = [self.date] * len(self.alts)
+        north, south = trace.footpoint_location_info(self.lats, self.longs,
+                                                     self.alts, dates,
+                                                     height=height,
+                                                     return_geodetic=True)
+        # Latitude check
+        assert np.all(np.abs(north[:, 0]) <= 90.)
+        assert np.all(np.abs(south[:, 0]) <= 90.)
+
+        # Longitude check
+        assert np.all((np.abs(north[:, 1]) <= 360.)
+                      & (np.abs(north[:, 1]) >= 0.))
+        assert np.all((np.abs(south[:, 1]) <= 360.)
+                      & (np.abs(south[:, 1]) >= 0.))
+
+        # Altitude check
+        np.testing.assert_allclose(north[:, 2], height, atol=1.)
+        np.testing.assert_allclose(south[:, 2], height, atol=1.)
 
         return

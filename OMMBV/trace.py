@@ -347,13 +347,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         else:
             nstep = step_size
 
-        # # Don't want `nstep` to get smaller than `step_size`. Using a binary
-        # # search to locate the max so part of method assumption. Well, having
-        # # a different step length helps ensure that a greater variety of
-        # # points are checked.
-        # if nstep < step_size:
-        #     nstep = step_size
-
+        # Iteratively search for max using a smaller step size each round.
         while nstep > fine_step_size:
             nstep /= 2.
 
@@ -389,7 +383,7 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
 
 def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
                             num_steps=1000, return_geodetic=False,
-                            ecef_input=False, **kwargs):
+                            ecef_input=False, height=120., **kwargs):
     """Return ECEF location of footpoints in Northern/Southern hemisphere.
 
     Parameters
@@ -406,10 +400,12 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
         Step size (km) used for tracing coarse field line
     num_steps : int (1.E-5 km)
         Number of steps passed along to `field_line_trace` as max_steps.
-    ecef_input : bool
-        If True, glats, glons, and alts are treated as x, y, z (ECEF).
     return_geodetic : bool
         If True, footpoint locations returned as lat, long, alt.
+    ecef_input : bool
+        If True, glats, glons, and alts are treated as x, y, z (ECEF).
+    height : float
+        Geodetic altitude in km to consider footpoint. (default=120.)
     **kwargs : Additional keywords
         Passed to `trace.field_line_trace`.
 
@@ -438,13 +434,13 @@ def footpoint_location_info(glats, glons, alts, dates, step_size=100.,
     for ecef_x, ecef_y, ecef_z, date in zip(ecef_xs, ecef_ys, ecef_zs, ddates):
         root[:] = (ecef_x, ecef_y, ecef_z)
         # Trace north
-        trace_north = field_line_trace(root, date, 1., 120.,
+        trace_north = field_line_trace(root, date, 1., height,
                                        steps=steps,
                                        step_size=step_size,
                                        max_steps=num_steps,
                                        **kwargs)
         # Southern tracing
-        trace_south = field_line_trace(root, date, -1., 120.,
+        trace_south = field_line_trace(root, date, -1., height,
                                        steps=steps,
                                        step_size=step_size,
                                        max_steps=num_steps,
