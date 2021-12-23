@@ -19,6 +19,7 @@ try:
 except (AttributeError, NameError, ModuleNotFoundError, ImportError):
     warnings.warn("Fortran modules could not be imported.", ImportWarning)
 
+
 def configure_geocentric_earth(test_mode=True):
     """Engage test configuration where Earth treated as geocentric.
 

@@ -12,6 +12,7 @@ try:
         """Magnetic field/step function stub."""
         return
 
+    _stub_fcn()
     # Import reference IGRF fortran code, if possible.
     # RTD doesn't support Fortran.
     from OMMBV import igrf
