@@ -160,26 +160,30 @@ class TestUnitVectors(object):
     @pytest.mark.parametrize("".join(["param,param_vals,unit_tol,apex_tol,"
                                       "map_tol,orth_tol"]),
                              [('step_size', [1., 0.5], 1.E-4, 1.E-4, 1.E-4,
-                               2.E-5),
+                               2.E-5, False),
                               ('dstep_size', [1., 0.5], 1.E-4, 1.E-4, 1.E-4,
-                               2.E-5),
-                              ('tol', [1.E-5], 1.E-5, 1.E-4, 1.E-5, 1.E-5),
+                               2.E-5, False),
+                              ('tol', [1.E-5], 1.E-5, 1.E-4, 1.E-5, 1.E-5,
+                               False),
                               ('tol_zonal_apex', [1.E-5], 1.E-4, 1.E-5, 1.E-5,
-                               1.E-5),
+                               1.E-5, False),
                               ('dipole_spherical', [mstp(0, 1)], 1.E-4, 1.E-4,
-                               1.E-4, 2.E-5),
+                               1.E-4, 2.E-5, True),
                               ('dipole_geodetic', [mstp(0, 0)], 1.E-4, 1.E-4,
-                               1.E-4, 2.E-5),
+                               1.E-4, 2.E-5, True),
                               ('dipole_quad_z', [mstp(1, 0)], 1.E-4, 1.E-4,
-                               1.E-4, 2.E-5),
+                               1.E-4, 2.E-5, True),
                               ('dipole_quad_x', [mstp(2, 0)], 1.E-4, 1.E-4,
-                               1.E-4, 2.E-5),
+                               1.E-4, 2.E-5, True),
                               ('dipole_quad_norm', [mstp(3, 0)], 1.E-4, 1.E-4,
-                               1.E-4, 2.E-5),
+                               1.E-4, 2.E-5, True),
                               ('dipole_oct_norm',  [mstp(4, 0)], 1.E-4, 1.E-4,
-                               1.E-4, 2.E-5)])
+                               1.E-4, 2.E-5, True),
+                              ('apex_kwargs', [{'step_size': 200.},
+                                               {'step_size': 100.}],
+                               1.E-4, 1.E-4, 1.E-4, 1.E-4, False)])
     def test_basis_performance(self, param, param_vals, unit_tol, apex_tol,
-                               map_tol, orth_tol):
+                               map_tol, orth_tol, dflag):
         """Test performance of vector basis.
 
         Parameters
@@ -201,6 +205,9 @@ class TestUnitVectors(object):
         orth_tol : float
             Tolerance requirement for orthogonality, determined as
             normalized difference between the D and D' vectors.
+        dflag : bool
+            If True, ignore `param` and apply `param_vals` as keyword
+            arguments.
 
         """
         cmduv = OMMBV.calculate_mag_drift_unit_vectors_ecef
@@ -223,7 +230,7 @@ class TestUnitVectors(object):
         for lat in self.lats:
             lats = [lat] * len(self.longs)
             for val in param_vals:
-                if isinstance(val, dict):
+                if dflag:
                     kwargs = val
                 else:
                     kwargs = {param: val}
