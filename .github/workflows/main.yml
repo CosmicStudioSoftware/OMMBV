@@ -56,7 +56,7 @@ jobs:
         python setup.py develop
 
     - name: Run unit and integration tests
-      run: pytest -pyargs OMMBV
+      run: pytest --pyargs OMMBV.tests
 
     - name: Publish results to coveralls
       env:
