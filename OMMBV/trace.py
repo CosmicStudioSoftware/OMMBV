@@ -137,7 +137,7 @@ def field_line_trace(init, date, direction, height, steps=None,
                                             steps=steps,
                                             step_fcn=step_fcn)
         else:
-            estr = "After 1000 iterations couldn't reach target altitude"
+            estr = "After 900 iterations couldn't reach target altitude"
             warnings.warn(estr)
             return np.full((1, 3), np.nan)
 
