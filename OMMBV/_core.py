@@ -100,7 +100,7 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
 
 def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                           datetimes, step_size=0.5, tol=1.E-4,
-                                          tol_zonal_apex=1.E-4, max_loops=10,
+                                          tol_zonal_apex=1.E-4, max_loops=15,
                                           ecef_input=False, centered_diff=True,
                                           full_output=False,
                                           include_debug=False,
@@ -109,7 +109,8 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                           ref_height=None, steps=None,
                                           pole_tol=1.E-5,
                                           location_info=apex_location_info,
-                                          mag_fcn=None, step_fcn=None):
+                                          mag_fcn=None, step_fcn=None,
+                                          min_loops=3, apex_kwargs=None):
     """Calculate local geomagnetic basis vectors and mapping scalars.
 
     Zonal - Generally Eastward (+East); surface of constant apex height
@@ -181,6 +182,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     step_fcn : function
         Function used to step along magnetic field. If None,
         uses default functions for IGRF. (default=None).
+    min_loops : int
+        Minimum number of iterations to attempt when calculating basis.
+        (default=3)
+    apex_kwargs : dict or NoneType
+        If dict supplied, passed to `apex_location_info` as keyword arguments.
+        (default=None)
 
     Returns
     -------
@@ -240,6 +247,11 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     # are Fortran functions and places like RTD don't support Fortran easily.
     mag_kwargs = {} if mag_fcn is None else {'mag_fcn': mag_fcn}
     step_kwargs = {} if step_fcn is None else {'step_fcn': step_fcn}
+
+    # Keywords intended for `apex_location_info`
+    apex_kwargs = {} if apex_kwargs is None else apex_kwargs
+    for key in apex_kwargs.keys():
+        step_kwargs[key] = apex_kwargs[key]
 
     # Check for reasonable user inputs
     if step_size <= 0:
@@ -322,7 +334,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     repeat_flag = True
 
     # Iteratively determine the vector basis directions.
-    while repeat_flag:
+    while repeat_flag or (loop_num < min_loops):
         # Take a step along current zonal vector and calculate apex height
         # of new location. Depending upon user settings, this is either
         # a single step or steps along both positive and negative directions.
@@ -398,10 +410,12 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
 
         # Check if we are done
         if np.isnan(diff):
+            # All values are np.nan.
+            loop_num = min_loops - 1
             repeat_flag = False
 
         if (diff < tol) & (np.nanmax(np.abs(diff_apex_z)) < tol_zonal_apex) \
-                & (loop_num > 1):
+                & (loop_num + 1 >= min_loops):
             # Reached terminating conditions
             repeat_flag = False
         else:
