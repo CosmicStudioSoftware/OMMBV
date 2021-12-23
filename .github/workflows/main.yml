@@ -56,7 +56,7 @@ jobs:
         pip install -e ../OMMBV
 
     - name: Run unit and integration tests
-      run: pytest OMMBV
+      run: pytest
 
     - name: Publish results to coveralls
       env:
