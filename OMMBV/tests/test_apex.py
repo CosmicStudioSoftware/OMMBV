@@ -77,7 +77,8 @@ class TestApexAccuracy(object):
 
     @pytest.mark.parametrize("param,vals", [('fine_step_size', [1.E-5, 5.E-6]),
                                             ('fine_max_steps', [5., 10.]),
-                                            ('step_size', [100., 50.])])
+                                            ('step_size', [100., 50.]),
+                                            ('max_steps', [100., 200.])])
     def test_apex_info_accuracy(self, param, vals):
         """Test accuracy of `apex_location_info` for `fine_step_size`."""
 

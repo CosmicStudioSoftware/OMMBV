@@ -232,7 +232,8 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
                        fine_step_size=1.E-5, fine_max_steps=5,
                        return_geodetic=False, ecef_input=False,
-                       validate_input=False, **kwargs):
+                       validate_input=False, max_steps=None,
+                       **kwargs):
     """Determine apex location for the field line passing through input point.
 
     Employs a two stage method. A broad step (`step_size`) field line trace
@@ -302,12 +303,15 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         ecef_xs[idx], ecef_ys[idx], ecef_zs[idx] = np.nan, np.nan, np.nan
 
     # Prepare parameters for field line trace
-    max_steps = 10000. // step_size
-    # Ensure at least 100
-    max_steps = max_steps if max_steps >= 100 else 100
+    if max_steps is None:
+        # Auto-generate `max_steps` number via guess. Ensure at least 100.
+        max_steps = 10000. // step_size
+        max_steps = max_steps if max_steps >= 100 else 100
+
+    # Generate memory array for integration.
     apex_coarse_steps = np.arange(max_steps + 1)
 
-    # High resolution trace parameters
+    # High resolution array for integration.
     apex_fine_steps = np.arange(fine_max_steps + 1)
 
     # Prepare output
