@@ -1,6 +1,7 @@
 """Supporting routines for coordinate transformations used by OMMBV."""
 
 import numpy as np
+import warnings
 
 # Parameters used to define Earth ellipsoid, WGS84 parameters
 earth_a = 6378.1370

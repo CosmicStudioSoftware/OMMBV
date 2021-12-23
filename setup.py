@@ -11,11 +11,8 @@ package metadata stored in setup.cfg
 import os
 from setuptools import setup
 
-version = '0.5.5'
-
 # Include extensions only when not on readthedocs.org
 if os.environ.get('READTHEDOCS', None) == 'True':
-
     extensions = []
 else:
     from numpy.distutils.core import Extension
