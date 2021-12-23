@@ -53,7 +53,7 @@ jobs:
 
     - name: Run OMMBV setup.py
       run: |
-        pip install -e ./built_package
+        pip install -e ../OMMBV -t ./built_package
 
     - name: Run unit and integration tests
       run: pytest ./built_package
