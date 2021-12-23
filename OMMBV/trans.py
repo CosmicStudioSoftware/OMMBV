@@ -16,9 +16,7 @@ try:
     ecef_to_geodetic = fortran_coords.ecef_to_geodetic
 
 except (AttributeError, NameError, ModuleNotFoundError, ImportError):
-    # Warning issued at init
-    pass
-
+    warnings.warn("Fortran modules could not be imported.", ImportWarning)
 
 def configure_geocentric_earth(test_mode=True):
     """Engage test configuration where Earth treated as geocentric.

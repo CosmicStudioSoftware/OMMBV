@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 """init routine for OMMBV."""
 
-import os
-import warnings
-
 __version__ = '0.5.5'
 
 try:
@@ -11,7 +8,7 @@ try:
     from OMMBV import fortran_coords
     from OMMBV import sources
 except ImportError:
-    warnings.warn("Fortran module could not be imported.", ImportWarning)
+    # Warning about lack of import handled in trans
     igrf, sources, fortran_coords = None, None, None
 
 from OMMBV import satellite
