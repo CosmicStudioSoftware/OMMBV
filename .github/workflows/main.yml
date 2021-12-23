@@ -53,10 +53,10 @@ jobs:
 
     - name: Run OMMBV setup.py
       run: |
-        python setup.py build_ext --inplace
+        python setup.py install --user
 
     - name: Run unit and integration tests
-      run: pytest --cov=OMMBV/
+      run: pytest --cov=OMMBV
 
     - name: Publish results to coveralls
       env:
