@@ -158,7 +158,7 @@ class TestUnitVectors(object):
         return
 
     @pytest.mark.parametrize("".join(["param,param_vals,unit_tol,apex_tol,"
-                                      "map_tol,orth_tol"]),
+                                      "map_tol,orth_tol,dflag"]),
                              [('step_size', [1., 0.5], 1.E-4, 1.E-4, 1.E-4,
                                2.E-5, False),
                               ('dstep_size', [1., 0.5], 1.E-4, 1.E-4, 1.E-4,
