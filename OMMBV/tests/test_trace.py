@@ -156,3 +156,18 @@ class TestTracing(object):
         np.testing.assert_allclose(south[:, 2], height, atol=1.E-3)
 
         return
+
+    def test_failsafe_geographic_pole_apex_location(self):
+        """Confirm np.nan output when `apex_location_info` fails at pole."""
+        out = OMMBV.trace.apex_location_info([90.], [0.], [10.],
+                                             [self.date], return_geodetic=True)
+        assert np.all(np.isnan(out))
+        return
+
+    def test_failsafe_low_altitude_apex_location(self):
+        """Confirm np.nan when `apex_location_info` fails at low altitude."""
+        out = OMMBV.trace.apex_location_info([90.], [0.], [0.],
+                                             [self.date], return_geodetic=True,
+                                             validate_input=True)
+        assert np.all(np.isnan(out))
+        return

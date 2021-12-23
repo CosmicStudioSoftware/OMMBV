@@ -231,7 +231,7 @@ def full_field_line(init, date, height, step_size=100., max_steps=1000,
 def apex_location_info(glats, glons, alts, dates, step_size=100.,
                        fine_step_size=1.E-5, fine_max_steps=5,
                        return_geodetic=False, ecef_input=False,
-                       **kwargs):
+                       validate_input=False, **kwargs):
     """Determine apex location for the field line passing through input point.
 
     Employs a two stage method. A broad step (`step_size`) field line trace
@@ -263,6 +263,9 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
     ecef_input : bool
         If True, glats, glons, and alts are treated as x, y, z (ECEF).
         (default=False)
+    validate_input : bool
+        If True, will check input locations to ensure they are above
+        the surface of the Earth. (default=False)
     **kwargs : Additional keywords
         Passed to `trace.full_field_line`.
 
@@ -275,12 +278,27 @@ def apex_location_info(glats, glons, alts, dates, step_size=100.,
         Geodetic Longitude (degrees),
         Geodetic Altitude (km)
 
+    Warnings
+    --------
+    The altitude of the input point must be at least 1 km above the Earth.
+    Set `validate_input` to True to test inputs and set locations that
+    don't satisfy requirements to np.nan.
+
+    Does not work at the geographic pole due to the use of the
+    `ecef_to_geodetic` transformation.
+
     """
     # Use input location and convert to ECEF
     if ecef_input:
         ecef_xs, ecef_ys, ecef_zs = glats, glons, alts
     else:
         ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
+
+    if validate_input:
+        # Filter starting locations to those at least 1 km above the Earth.
+        tlats, tlons, talts = trans.ecef_to_geodetic(ecef_xs, ecef_ys, ecef_zs)
+        idx = np.where(talts < 1.)
+        ecef_xs[idx], ecef_ys[idx], ecef_zs[idx] = np.nan, np.nan, np.nan
 
     # Prepare parameters for field line trace
     max_steps = 10000. // step_size
