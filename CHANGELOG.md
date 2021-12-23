@@ -2,23 +2,41 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [1.0.0] - 2021-12-13
-- Reduced uncertainty in scaling parameters for multipole fields.
-- Improved robustness of calculation at higher latitudes.
-- Deprecated `scalar` input for basis vectors.
-- Corrected normalization error in `magnetic_vector`.
-- Updated docstrings.
+## [1.0.0] - 2021-12-24
+- Updated vector basis algorithm and reduced uncertainty when 
+scaling ion drifts and electric fields for multipole fields by four orders of magnitude.
+- Added support for multiple unit test magnetic fields, from dipole up to octupole. 
+- Added support for testing vector basis determination with a spherical Earth.
+- Improved tolerance checks on vector basis during iteration so outputs better
+reflect user settings.
+- Improved robustness of vector basis calculation at higher latitudes.
 - Updated IGRF step method to slow integration when reaching target altitude
   to use user provided step size.
+- Allow automatic expansion of `field_line_trace` step_size after many iterations.
+- Improved robustness of `apex_location_info` to unreported changes in 
+`field_line_trace` step_size.
 - Added `pole_tol` keyword which specifies how close to vertical local
   magnetic field must be to be considered a pole.
-- Removed unit tests from release code.
 - Added `utils.datetimes_to_doubles` a method to calculate year and 
   fractional day of year for IGRF calls.
-- Improved robustness of `apex_location_info` to unreported changes in step_size
+- Added keyword `max_steps` to `apex_location_info`
+- Corrected normalization error in `magnetic_vector`.
+- Deprecated `scalar` input for basis vectors.
+- Reduced number of allowed recursive calls for `field_line_trace`
 - Moved vector functions to `OMMBV.vector`
 - Moved transformation functions to `OMMBV.trans`
+- Moved tracing functions to `OMMBV.trace`
+- Moved older algorithms not needed for current outputs to `OMMBV.heritage`
+- Moved supporting Fortran functions from `OMMBV.igrf13` to `OMMBV.sources`
+- Improved robustness of `apex_location_info` to `full_field_line` tracing failures.
 - Added support for GitHub Workflows
+- Refactored unit testing
+- Moved to `setup.cfg`
+- Added `.zenodo.json`
+- Improved documentation
+- Updated docstrings
+- Added logo
+- Updated testing versions
 
 ## [0.5.5] - 2021-06-16
 - Updated setup.py
