@@ -1,0 +1,25 @@
+{
+    "creators": [
+      {
+        "affiliation": "Stoneris",
+        "name": "Stoneback, Russell",
+        "orcid": "0000-0001-7216-4336"
+      },
+      {
+        "affiliation": "Goddard Space Flight Center",
+        "name": "Klenzing, Jeff",
+        "orcid": "0000-0001-8321-6074"
+      },
+      {
+        "name": "Iyer, Gayatri"
+      }
+    ],
+    "keywords": [
+      "Magnetosphere",
+	  "Ionosphere",
+	  "Thermosphere",
+	  "Heliophysics",
+      "Magnetic Field",
+      "Electric Field"
+    ]
+}

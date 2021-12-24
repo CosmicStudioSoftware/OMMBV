@@ -19,8 +19,7 @@ import shlex
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0,os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('..'))
 
 # mock fortran library so it compiles on read the docs
 from unittest.mock import MagicMock
@@ -30,15 +29,11 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
         return MagicMock()
 
-MOCK_MODULES = ['OMMBV.igrf', 'OMMBV.fortran_coords', 'OMMBV.fortran_coords.ecef_to_geodetic',
-                'scipy', 'scipy.integrate', 'numpy', 'datetime', 'pysat']
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+# MOCK_MODULES = ['OMMBV.igrf', 'OMMBV.fortran_coords',
+#                 'OMMBV.fortran_coords.ecef_to_geodetic']
+# sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
-#print sys.path
 import OMMBV
-#print pysat.__path__
-
-
 
 #added by RS, trying to get __init__ method documented
 autoclass_content = 'both'
@@ -80,7 +75,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'OMMBV'
-copyright = u'2018, Russell Stoneback'
+copyright = u'2021, Russell Stoneback'
 author = u'Russell Stoneback'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -161,7 +156,8 @@ html_theme_path = ["_themes", ]
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+html_logo = os.path.join(os.path.abspath('.'), 'images', 'logo_high_res.png')
+html_theme_options = {'logo_only': True}
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
