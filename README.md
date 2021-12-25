@@ -56,14 +56,18 @@ and the National Science Foundation (NSF 1651393).
 Plasma in the ionosphere is constrained by the geomagnetic field. Motion 
 along magnetic field lines is easy while motion across field lines is 
 comparatively hard. To understand the motion of ions it is generally 
-best to do so along these directions.
+best to do so along these directions. Though there are an infinite number
+of vector pairs orthogonal to the geomagnetic field, OMMBV produces a vector
+basis optimized for ion-neutral coupling investigations, the major driver of
+the ionosphere.
 
  - Field Aligned: Along the geomagnetic field, pointing generally from south 
 to north at the equator.
 
  - Zonal: Perpendicular to the field aligned vector and points to a 
 neighboring field line that has no change in apex height at the geomagnetic
-equator.
+equator. The apex height is the highest altitude of a magnetic field
+line above a reference surface.
 
  - Meridional: Perpendicular to the zonal and field aligned directions. 
 This vector is positive upward and is vertical at the geomagnetic equator. 
