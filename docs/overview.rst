@@ -25,7 +25,7 @@ the whole magnetosphere, significantly reducing computational resources.
 
 OMMBV has been validated using a variety of test magnetic sources as well as
 via application to the Earth's magnetic field using the
-`International Geomagnetic Reference Field (IGRF) <http://www.geomag.bgs.ac.uk/research/modelling/IGRF.html>`_.
+`International Geomagnetic Reference Field (IGRF) <https://geomag.bgs.ac.uk/research/modelling/IGRF.html>`_.
 Further, OMMBV includes two paths to determine the relevant vector basis. Both
 paths will only result in the same answers if the underlying system is truly
 orthogonal. The statistical performance of OMMBV between IGRF witha geodetic

@@ -1,6 +1,6 @@
 <div align="center">
         <img height="0" width="0px">
-        <img width="20%" src="/docs/images/logo_high_res.png" alt="OMMBV" title="OMMBV"</img>
+        <img width="20%" src="docs/images/logo_high_res.png" alt="OMMBV" title="OMMBV"</img>
 </div>
 
 # Orthogonal Multipole Magnetic Basis Vectors (OMMBV)
@@ -71,6 +71,27 @@ To remain perpendicular to the field, the meridional vector has a poleward
 component when away from the magnetic equator. Note that meridional may 
 sometimes be used in other contexts to be north/south. Here, the vector 
 is generally up/down.
+
+# Performance
+OMMBV is able to characterize its uncertainty in determining an accurate
+vector basis. There are two potential calculation paths within OMMBV. The 
+default path uses information from the calculated zonal vector and field-aligned
+vector to obtain the corresponding meridional vector. Alternately, OMMBV can
+calculate the meridional vector and obtain the corresponding zonal vector.
+If the magnetic field has an underlying orthogonal vector basis, and if
+OMMBV is operating correctly, OMMBV's two calculation paths will 
+yield the same result. 
+
+The figures linked below provide direct numerical evidence that OMMBV is calculating
+a valid orthogonal vector basis. OMMBV's normalized uncertainty 
+when applied to a [pure dipole magnetic field with a spherical Earth](docs/images/dipole_uncertainty.png), and
+the uncertainty when [applied to the Earth](docs/images/igrf_uncertainty.png) using the
+[International Geomagnetic Reference Field](https://geomag.bgs.ac.uk/research/modelling/IGRF.html),
+are effectively the same. Both systems have an expected maximum uncertainty
+of around 0.0001% between +/- 50 degrees latitude. Both figures are calculated
+at an altitude of 550 km and use an OMMBV calculation step size of 5 km.
+The default step size for OMMBV and IGRF is 0.5 km which offers improved 
+performance.
 
 # Electric Field and Ion Drift Mapping
 OMMBV provides scalars for mapping ion motions or electric fields
