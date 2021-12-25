@@ -66,7 +66,7 @@ The figures linked below provide direct numerical evidence that OMMBV is calcula
 a valid orthogonal vector basis. OMMBV's normalized uncertainty 
 when applied to a [pure dipole magnetic field with a spherical Earth](docs/images/dipole_uncertainty.png), and
 the uncertainty when [applied to the Earth](docs/images/igrf_uncertainty.png) using the
-[International Geomagnetic Reference Field](http://www.geomag.bgs.ac.uk/research/modelling/IGRF.htm),
+[International Geomagnetic Reference Field](https://geomag.bgs.ac.uk/research/modelling/IGRF.html),
 are effectively the same. Both systems have an expected maximum uncertainty
 of around 0.0001% between +/- 50 degrees latitude. Both figures are calculated
 at an altitude of 550 km and use an OMMBV calculation step size of 5 km.
