@@ -52,6 +52,26 @@ funded by: National Aeronautics and Space Agency (NASA NNG12FA45C),
 National Oceanic and Atmospheric Administration (NOAA NSF AGS-1033112), 
 and the National Science Foundation (NSF 1651393).
 
+# Geomagnetic Unit Vectors
+Plasma in the ionosphere is constrained by the geomagnetic field. Motion 
+along magnetic field lines is easy while motion across field lines is 
+comparatively hard. To understand the motion of ions it is generally 
+best to do so along these directions.
+
+ - Field Aligned: Along the geomagnetic field, pointing generally from south 
+to north at the equator.
+
+ - Zonal: Perpendicular to the field aligned vector and points to a 
+neighboring field line that has no change in apex height at the geomagnetic
+equator.
+
+ - Meridional: Perpendicular to the zonal and field aligned directions. 
+This vector is positive upward and is vertical at the geomagnetic equator. 
+To remain perpendicular to the field, the meridional vector has a poleward 
+component when away from the magnetic equator. Note that meridional may 
+sometimes be used in other contexts to be north/south. Here, the vector 
+is generally up/down.
+
 # Performance
 OMMBV is able to characterize its uncertainty in determining an accurate
 vector basis. There are two potential calculation paths within OMMBV. The 
@@ -72,27 +92,6 @@ of around 0.0001% between +/- 50 degrees latitude. Both figures are calculated
 at an altitude of 550 km and use an OMMBV calculation step size of 5 km.
 The default step size for OMMBV and IGRF is 0.5 km which offers improved 
 performance.
-
-
-# Geomagnetic Unit Vectors
-Plasma in the ionosphere is constrained by the geomagnetic field. Motion 
-along magnetic field lines is easy while motion across field lines is 
-comparatively hard. To understand the motion of ions it is generally 
-best to do so along these directions.
-
- - Field Aligned: Along the geomagnetic field, pointing generally from south 
-to north at the equator.
-
- - Zonal: Perpendicular to the field aligned vector and points to a 
-neighboring field line that has no change in apex height at the geomagnetic
-equator.
-
- - Meridional: Perpendicular to the zonal and field aligned directions. 
-This vector is positive upward and is vertical at the geomagnetic equator. 
-To remain perpendicular to the field, the meridional vector has a poleward 
-component when away from the magnetic equator. Note that meridional may 
-sometimes be used in other contexts to be north/south. Here, the vector 
-is generally up/down.
 
 # Electric Field and Ion Drift Mapping
 OMMBV provides scalars for mapping ion motions or electric fields
