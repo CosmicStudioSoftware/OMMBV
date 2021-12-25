@@ -3,6 +3,8 @@
         <img width="20%" src="/docs/images/logo_high_res.png" alt="OMMBV" title="OMMBV"</img>
 </div>
 
+[OMMBV Logo]("/docs/images/logo_high_res.png)
+
 # Orthogonal Multipole Magnetic Basis Vectors (OMMBV)
 [![Build Status](https://travis-ci.com/rstoneback/OMMBV.svg?branch=main)](https://travis-ci.com/rstoneback/OMMBV)
 [![Coverage Status](https://coveralls.io/repos/github/rstoneback/OMMBV/badge.svg?branch=main)](https://coveralls.io/github/rstoneback/OMMBV?branch=main)
@@ -51,6 +53,31 @@ Previous versions of this software that provided an 'average' basis were
 funded by: National Aeronautics and Space Agency (NASA NNG12FA45C), 
 National Oceanic and Atmospheric Administration (NOAA NSF AGS-1033112), 
 and the National Science Foundation (NSF 1651393).
+
+# Performance
+OMMBV is able to characterize its uncertainty in determining an accurate
+vector basis. There are two potential calculation paths within OMMBV. The 
+default path uses information from the calculated zonal vector and field-aligned
+vector to obtain the corresponding meridional vector. Alternately, OMMBV can
+calculate the meridional vector and obtain the corresponding zonal vector.
+If the magnetic field has an underlying orthogonal vector basis, and if
+OMMBV is operating correctly, OMMBV's two calculation paths will 
+yield the same result. 
+
+The figures below provide direct numerical evidence that OMMBV is calculating
+a valid orthogonal vector basis. OMMBV's normalized uncertainty 
+when applied to a pure dipole magnetic field with a spherical Earth, and
+the uncertainty when applied to the Earth's magnetic field using the
+[International Geomagnetic Reference Field](http://www.geomag.bgs.ac.uk/research/modelling/IGRF.htm),
+are effectively the same. Both systems have an expected maximum uncertainty
+of around 0.0001% between +/- 50 degrees latitude. Both figures are calculated
+at an altitude of 550 km and use an OMMBV calculation step size of 5 km.
+The default step size for OMMBV and IGRF is 0.5 km which offers improved 
+performance.
+
+[OMMBV Uncertainty for Dipole and Spherical Earth](docs/images/dipole_uncertainty.png)
+
+[OMMBV Uncertainty for IGRF and Geodetic Earth](docs/images/igrf_uncertainty.png)
 
 # Geomagnetic Unit Vectors
 Plasma in the ionosphere is constrained by the geomagnetic field. Motion 
