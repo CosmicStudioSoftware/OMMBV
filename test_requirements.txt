@@ -1,0 +1,11 @@
+coveralls
+flake8
+flake8-docstrings
+hacking
+ipython
+m2r2
+numpydoc
+pytest-cov
+pytest-ordering
+sphinx
+sphinx_rtd_theme

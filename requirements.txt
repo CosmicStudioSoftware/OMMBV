@@ -1,0 +1,3 @@
+numpy
+pysat >= 3.0.0
+scipy
