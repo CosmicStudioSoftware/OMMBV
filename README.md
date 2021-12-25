@@ -1,9 +1,7 @@
 <div align="center">
         <img height="0" width="0px">
-        <img width="20%" src="/docs/images/logo_high_res.png" alt="OMMBV" title="OMMBV"</img>
+        <img width="20%" src="docs/images/logo_high_res.png" alt="OMMBV" title="OMMBV"</img>
 </div>
-
-[OMMBV Logo]("/docs/images/logo_high_res.png)
 
 # Orthogonal Multipole Magnetic Basis Vectors (OMMBV)
 [![Build Status](https://travis-ci.com/rstoneback/OMMBV.svg?branch=main)](https://travis-ci.com/rstoneback/OMMBV)
@@ -64,10 +62,10 @@ If the magnetic field has an underlying orthogonal vector basis, and if
 OMMBV is operating correctly, OMMBV's two calculation paths will 
 yield the same result. 
 
-The figures below provide direct numerical evidence that OMMBV is calculating
+The figures linked below provide direct numerical evidence that OMMBV is calculating
 a valid orthogonal vector basis. OMMBV's normalized uncertainty 
-when applied to a pure dipole magnetic field with a spherical Earth, and
-the uncertainty when applied to the Earth's magnetic field using the
+when applied to a [pure dipole magnetic field with a spherical Earth](docs/images/dipole_uncertainty.png), and
+the uncertainty when [applied to the Earth](docs/images/igrf_uncertainty.png) using the
 [International Geomagnetic Reference Field](http://www.geomag.bgs.ac.uk/research/modelling/IGRF.htm),
 are effectively the same. Both systems have an expected maximum uncertainty
 of around 0.0001% between +/- 50 degrees latitude. Both figures are calculated
@@ -75,9 +73,6 @@ at an altitude of 550 km and use an OMMBV calculation step size of 5 km.
 The default step size for OMMBV and IGRF is 0.5 km which offers improved 
 performance.
 
-[OMMBV Uncertainty for Dipole and Spherical Earth](docs/images/dipole_uncertainty.png)
-
-[OMMBV Uncertainty for IGRF and Geodetic Earth](docs/images/igrf_uncertainty.png)
 
 # Geomagnetic Unit Vectors
 Plasma in the ionosphere is constrained by the geomagnetic field. Motion 
