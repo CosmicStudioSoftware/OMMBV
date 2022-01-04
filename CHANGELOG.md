@@ -2,6 +2,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.1] - 2022-01-04
+- Added pyproject.toml to support systems without numpy.
+- Modified manifest.ini to include version.txt
+- Corrected bad link in build status badge
+- Corrected BSD license classifier
+
 ## [1.0.0] - 2021-12-24
 - Updated vector basis algorithm and reduced uncertainty when 
 scaling ion drifts and electric fields for multipole fields by four orders of magnitude.
