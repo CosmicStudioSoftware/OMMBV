@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """init routine for OMMBV."""
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 try:
     from OMMBV import igrf
