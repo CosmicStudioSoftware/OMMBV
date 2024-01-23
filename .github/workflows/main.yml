@@ -58,7 +58,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
-      run: coveralls --rcfile=pyproject.toml --service=github
+      run: coveralls --rcfile=setup.cfg --service=github
 
   finish:
     name: Finish Coverage Analysis
