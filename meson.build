@@ -31,7 +31,6 @@ py.extension_module('OMMBV.igrf',
     'OMMBV/igrf13.f'
   ],
   incdir_f2py / 'fortranobject.c',
-  f_args : f_flags,
   include_directories: inc_np,
   dependencies : py_dep,
   install : true
@@ -43,7 +42,6 @@ py.extension_module('OMMBV.sources',
     'OMMBV/igrf13.f'
   ],
   incdir_f2py / 'fortranobject.c',
-  f_args : f_flags,
   include_directories: inc_np,
   dependencies : py_dep,
   install : true
