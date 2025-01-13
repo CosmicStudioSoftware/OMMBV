@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.11", "3.12"]
         numpy_ver: [latest]
 
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy_ver }}
@@ -49,7 +49,7 @@ jobs:
 
     - name: Run OMMBV setup.py
       run: |
-        python setup.py develop
+        pip install -e .
 
     - name: Run unit and integration tests
       run: pytest --cov=OMMBV/
