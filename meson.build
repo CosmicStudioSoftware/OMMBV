@@ -51,7 +51,7 @@ py.extension_module('igrf',
   incdir_f2py / 'fortranobject.c',
   include_directories: inc_np,
   link_with: fortranobject_lib,
-  dependencies : [py_dep, fortranobject_dep]
+  dependencies : [py_dep, fortranobject_dep],
   install : true
 )
 
@@ -69,7 +69,7 @@ py.extension_module('sources',
   incdir_f2py / 'fortranobject.c',
   include_directories: inc_np,
   link_with: fortranobject_lib,
-  dependencies : [py_dep, fortranobject_dep]
+  dependencies : [py_dep, fortranobject_dep],
   install : true
 )
 
@@ -86,6 +86,6 @@ py.extension_module('fortran_coords',
   incdir_f2py / 'fortranobject.c',
   include_directories: inc_np,
   link_with: fortranobject_lib,
-  dependencies : [py_dep, fortranobject_dep]
+  dependencies : [py_dep, fortranobject_dep],
   install : true
 )
