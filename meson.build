@@ -34,7 +34,7 @@ igrf_source = custom_target('igrfmodule.c',
 )
 py.extension_module('igrf',
   [
-    'OMMBV/igrf13.f'
+    'OMMBV/igrf13.f',
     igrf_source
   ],
   incdir_f2py / 'fortranobject.c',
