@@ -26,7 +26,7 @@ incdir_f2py = run_command(py,
 
 inc_np = include_directories(incdir_numpy, incdir_f2py)
 
-py.extension_module('OMMBV.igrf',
+py.extension_module('igrf',
   [
     'OMMBV/igrf13.f'
   ],
@@ -36,7 +36,7 @@ py.extension_module('OMMBV.igrf',
   install : true
 )
 
-py.extension_module('OMMBV.sources',
+py.extension_module('sources',
   [
     'OMMBV/sources.f',
     'OMMBV/igrf13.f'
@@ -47,7 +47,7 @@ py.extension_module('OMMBV.sources',
   install : true
 )
 
-py.extension_module('OMMBV.fortran_coords',
+py.extension_module('fortran_coords',
   [
     'OMMBV/_coords.f'
   ],
