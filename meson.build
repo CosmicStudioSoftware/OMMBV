@@ -26,9 +26,16 @@ incdir_f2py = run_command(py,
 
 inc_np = include_directories(incdir_numpy, incdir_f2py)
 
+
+igrf_source = custom_target('igrfmodule.c',
+  input : ['OMMBV/igrf13.f'],  # .f so no F90 wrappers
+  output : ['igrfmodule.c', 'igrf-f2pywrappers.f'],
+  command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'igrf', '--lower']
+)
 py.extension_module('igrf',
   [
     'OMMBV/igrf13.f'
+    igrf_source
   ],
   incdir_f2py / 'fortranobject.c',
   include_directories: inc_np,
@@ -36,10 +43,16 @@ py.extension_module('igrf',
   install : true
 )
 
+sources_source = custom_target('sourcesmodule.c',
+  input : ['OMMBV/sources.f', 'OMMBV/igrf13.f'],  # .f so no F90 wrappers
+  output : ['sourcesmodule.c', 'sources-f2pywrappers.f'],
+  command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'igrf', '--lower']
+)
 py.extension_module('sources',
   [
     'OMMBV/sources.f',
-    'OMMBV/igrf13.f'
+    'OMMBV/igrf13.f',
+    sources_source
   ],
   incdir_f2py / 'fortranobject.c',
   include_directories: inc_np,
@@ -47,6 +60,12 @@ py.extension_module('sources',
   install : true
 )
 
+
+fcoords_source = custom_target('_coordsmodule.c',
+  input : ['OMMBV/_coords.f'],  # .f so no F90 wrappers
+  output : ['_coordsmodule.c', '_coords-f2pywrappers.f'],
+  command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'igrf', '--lower']
+)
 py.extension_module('fortran_coords',
   [
     'OMMBV/_coords.f'
