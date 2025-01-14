@@ -26,6 +26,17 @@ incdir_f2py = run_command(py,
 
 inc_np = include_directories(incdir_numpy, incdir_f2py)
 
+# Unlike distutils, meson doesn't yet include some of the f2py stuff
+fortranobject_c = incdir_f2py / 'fortranobject.c'
+
+fortranobject_lib = static_library('_fortranobject',
+  fortranobject_c,
+  dependencies: py3_dep,
+  include_directories: [incdir_numpy, incdir_f2py])
+
+fortranobject_dep = declare_dependency(
+  link_with: fortranobject_lib,
+  include_directories: [incdir_numpy, incdir_f2py])
 
 igrf_source = custom_target('igrfmodule.c',
   input : ['OMMBV/igrf13.f'],  # .f so no F90 wrappers
@@ -39,7 +50,8 @@ py.extension_module('igrf',
   ],
   incdir_f2py / 'fortranobject.c',
   include_directories: inc_np,
-  dependencies : py_dep,
+  link_with: fortranobject_lib,
+  dependencies : [py_dep, fortranobject_dep]
   install : true
 )
 
@@ -56,7 +68,8 @@ py.extension_module('sources',
   ],
   incdir_f2py / 'fortranobject.c',
   include_directories: inc_np,
-  dependencies : py_dep,
+  link_with: fortranobject_lib,
+  dependencies : [py_dep, fortranobject_dep]
   install : true
 )
 
@@ -72,6 +85,7 @@ py.extension_module('fortran_coords',
   ],
   incdir_f2py / 'fortranobject.c',
   include_directories: inc_np,
-  dependencies : py_dep,
+  link_with: fortranobject_lib,
+  dependencies : [py_dep, fortranobject_dep]
   install : true
 )
