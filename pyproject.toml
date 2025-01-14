@@ -23,7 +23,7 @@ dependencies = [
     "pysat",
     "scipy"
 ]
-readme = "README.rst"
+readme = "README.md"
 keywords = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Scientific/Engineering :: Physics",
