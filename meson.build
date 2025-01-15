@@ -53,6 +53,7 @@ py.extension_module('igrf',
   include_directories: inc_np,
   link_with: fortranobject_lib,
   dependencies : [py_dep, fortranobject_dep],
+  subdir: 'OMMBV',
   install : true
 )
 
@@ -71,6 +72,7 @@ py.extension_module('sources',
   include_directories: inc_np,
   link_with: fortranobject_lib,
   dependencies : [py_dep, fortranobject_dep],
+  subdir: 'OMMBV',
   install : true
 )
 
@@ -88,5 +90,6 @@ py.extension_module('fortran_coords',
   include_directories: inc_np,
   link_with: fortranobject_lib,
   dependencies : [py_dep, fortranobject_dep],
+  subdir: 'OMMBV',
   install : true
 )
