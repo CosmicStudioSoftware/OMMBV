@@ -4,7 +4,7 @@ project('OMMBV', 'c',
   meson_version: '>=0.64.0',
   default_options : [
     'warning_level=2',
-    'c_args=-Wno-unused-parameter -Wno-cast-function-type -Wno-missing-field-initializers'
+    'c_args=-Wno-unused-parameter -Wno-cast-function-type -Wno-missing-field-initializers',
     'fortran_args=-Wno-line-truncation -Wno-conversion -Wno-unused-variable -Wno-maybe-uninitialized -Wno-unused-dummy-argument -Wno-compare-reals',
     'fortran_std=legacy'],
 )
