@@ -85,6 +85,7 @@ fcoords_source = custom_target('fortran_coordsmodule.c',
 py.extension_module('fortran_coords',
   [
     'OMMBV/_coords.f',
+    fcoords_source,
     fortranobject_c
   ],
   include_directories: inc_np,
