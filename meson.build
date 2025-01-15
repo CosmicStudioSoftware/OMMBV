@@ -80,7 +80,7 @@ py.extension_module('sources',
 fcoords_source = custom_target('_coordsmodule.c',
   input : ['OMMBV/_coords.f'],  # .f so no F90 wrappers
   output : ['_coordsmodule.c', '_coords-f2pywrappers.f'],
-  command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', '_coords', '--lower']
+  command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'fortran_coords', '--lower']
 )
 py.extension_module('fortran_coords',
   [
