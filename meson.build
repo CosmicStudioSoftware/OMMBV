@@ -96,3 +96,17 @@ py.extension_module('fortran_coords',
   subdir: 'OMMBV',
   install : true
 )
+
+py.install_sources(
+  'OMMBV/_core.py',
+  'OMMBV/heritage.py',
+  'OMMBV/satellite.py',
+  'OMMBV/trace.py',
+  'OMMBV/trans.py',
+  'OMMBV/utils.py',
+  'OMMBV/vector.py',
+  'OMMBV/__init__.py',
+  'OMMBV/__main__.py',
+  pure: false,
+  subdir: 'OMMBV'
+)
