@@ -31,7 +31,7 @@ fortranobject_c = incdir_f2py / 'fortranobject.c'
 
 fortranobject_lib = static_library('_fortranobject',
   fortranobject_c,
-  dependencies: py3_dep,
+  dependencies: py_dep,
   include_directories: [incdir_numpy, incdir_f2py])
 
 fortranobject_dep = declare_dependency(
