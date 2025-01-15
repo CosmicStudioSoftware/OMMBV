@@ -24,7 +24,7 @@ dependencies = [
     "scipy"
 ]
 readme = "README.md"
-keywords = [
+classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Topic :: Scientific/Engineering :: Physics",
     "Intended Audience :: Science/Research",
@@ -39,7 +39,7 @@ keywords = [
     "Operating System :: POSIX",
     "Operating System :: MacOS"
 ]
-classifiers = [ " "
+keywords = [ " "
 
 ]
 
