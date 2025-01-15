@@ -7,8 +7,8 @@ __version__ = '1.0.2'
 
 
 # from OMMBV import igrf
-from OMMBV import fortran_coords
-from OMMBV import sources
+# from OMMBV import fortran_coords
+# from OMMBV import sources
 # except ImportError:
 #     # Warning about lack of import handled in trans
 #     igrf, sources, fortran_coords = None, None, None
