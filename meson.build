@@ -4,7 +4,7 @@ project('OMMBV', 'c',
   meson_version: '>=0.64.0',
   default_options : [
     'warning_level=2',
-    'c_args=-Wno-unused-parameter -Wno-cast-function-type -Wno-missing-field-initializers -fPIC',
+    'c_args=-Wno-unused-parameter -Wno-cast-function-type -Wno-missing-field-initializers',
     'fortran_args=-Wno-line-truncation -Wno-conversion -Wno-unused-variable -Wno-maybe-uninitialized -Wno-unused-dummy-argument -Wno-compare-reals',
     'fortran_std=legacy'],
 )
@@ -39,6 +39,7 @@ fortranobject_dep = declare_dependency(
   link_with: fortranobject_lib,
   include_directories: [incdir_numpy, incdir_f2py])
 
+
 igrf_source = custom_target('igrfmodule.c',
   input : ['OMMBV/igrf13.f'],  # .f so no F90 wrappers
   output : ['igrfmodule.c', 'igrf-f2pywrappers.f'],
@@ -56,6 +57,7 @@ py.extension_module('igrf',
   subdir: 'OMMBV',
   install : true
 )
+
 
 sources_source = custom_target('sourcesmodule.c',
   input : ['OMMBV/sources.f', 'OMMBV/igrf13.f'],  # .f so no F90 wrappers
