@@ -64,7 +64,7 @@ sources_source = custom_target('sourcesmodule.c',
   output : ['sourcesmodule.c', 'sources-f2pywrappers.f'],
   command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'sources', '--lower']
 )
-py.extension_module('OMMBV.sources',
+py.extension_module('sources',
   [
    'OMMBV/sources.f',
    'OMMBV/igrf13.f',
