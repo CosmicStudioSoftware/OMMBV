@@ -53,7 +53,7 @@ jobs:
 
     - name: Run unit and integration tests
       run: |
-        mdkir new_dir
+        mkdir new_dir
         cd new_dir
         pytest --cov=OMMBV/
 
