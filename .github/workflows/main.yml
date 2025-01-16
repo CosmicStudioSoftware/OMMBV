@@ -56,7 +56,6 @@ jobs:
         mkdir new_dir
         cd new_dir
         python -c "import OMMBV; print('Import went great!'); from OMMBV import sources; print(sources.colat_long_r_to_ecef(10., 10., 6350.))"
-# #       python -c "import OMMBV; print('Import went great! 2'); print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
         python -c "import OMMBV; print('Import went great! 3'); print(OMMBV.OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
         pytest --cov=OMMBV/
 
