@@ -55,6 +55,7 @@ jobs:
       run: |
         mkdir new_dir
         cd new_dir
+        python -c "import OMMBV; print('Import went great!')"
         pytest --cov=OMMBV/
 
     - name: Publish results to coveralls
