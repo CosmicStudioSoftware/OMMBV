@@ -106,7 +106,8 @@ py.install_sources(
   'OMMBV/utils.py',
   'OMMBV/vector.py',
   'OMMBV/__init__.py',
-  'OMMBV/tests/*',
+  'OMMBV/tests/__init__.py',
+  'OMMBV/tests/test_apex.py',
   pure: false,
   subdir: 'OMMBV'
 )
