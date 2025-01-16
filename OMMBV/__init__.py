@@ -24,4 +24,5 @@ from OMMBV._core import *
 
 from OMMBV import heritage
 
-__all__ = ['heritage', 'satellite', 'trace', 'trans', 'utils', 'vector']
+__all__ = ['igrf', 'fortran_coords', 'sources', 'heritage', 'satellite',
+           'trace', 'trans', 'utils', 'vector']
