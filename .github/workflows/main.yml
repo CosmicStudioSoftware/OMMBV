@@ -52,7 +52,10 @@ jobs:
         pip install .
 
     - name: Run unit and integration tests
-      run: pytest --cov=OMMBV/
+      run: |
+        mdkir new_dir
+        cd new_dir
+        pytest --cov=OMMBV/
 
     - name: Publish results to coveralls
       env:
