@@ -106,6 +106,7 @@ py.install_sources(
   'OMMBV/utils.py',
   'OMMBV/vector.py',
   'OMMBV/__init__.py',
+  'OMMBV/tests/*',
   pure: false,
   subdir: 'OMMBV'
 )
