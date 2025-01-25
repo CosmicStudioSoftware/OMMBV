@@ -54,12 +54,13 @@ jobs:
     - name: Run unit and integration tests
       run: |
         ls
-        cd ..
+        mkdir new_dir
+        cd new_dir
         python -c "import OMMBV; print('Import went great! 3'); print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
-        coverage run --source=tests -m pytest
+        coverage run --source=../tests -m pytest
         coverage report
         coverage xml
-        mv coverage.xml ./OMMBV/.
+        mv coverage.xml ../
 
     - name: Publish results to coveralls
       env:
