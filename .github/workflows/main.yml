@@ -55,10 +55,12 @@ jobs:
       run: |
         mkdir new_dir
         cd new_dir
-        coverage run -m pytest --source=../OMMBV/tests/
-        coverage report
-        coverage xml
-        mv coverage.xml OMMBV/.
+        python -c "import OMMBV; print('Import went great!'); from OMMBV import sources; print(sources.colat_long_r_to_ecef(10., 10., 6350.))"
+        python -c "import OMMBV; print('Import went great! 2'); import OMMBV.sources; print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
+        python -c "import OMMBV; print('Import went great! 3'); print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
+        pytest --cov=../OMMBV/tests/test_apex.py
+        coverage report -m
+
 
     - name: Publish results to coveralls
       env:
