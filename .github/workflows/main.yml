@@ -53,7 +53,9 @@ jobs:
 
     - name: Run unit and integration tests
       run: |
-        coverage run -m pytest -v -s
+        mkdir new_dir
+        cd new_dir
+        coverage run -m pytest --source=../OMMBV/tests/
         coverage report
         coverage xml
         mv coverage.xml OMMBV/.
