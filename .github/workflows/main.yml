@@ -57,7 +57,7 @@ jobs:
         mkdir new_dir
         cd new_dir
         python -c "import OMMBV; print('Import went great! 3'); print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
-        coverage run --source=../OMMBV -m pytest
+        coverage run --source=OMMBV/tests -m pytest
         coverage report
         coverage xml
         mv coverage.xml ../
