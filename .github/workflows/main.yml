@@ -55,7 +55,7 @@ jobs:
       run: |
         mkdir new_dir
         cd new_dir
-        coverage run -m pytest --source=../tests
+        coverage run -m pytest --source=tests
         coverage report
         coverage xml
         mv coverage.xml ../OMMBV/
