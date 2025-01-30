@@ -9,8 +9,8 @@ import pytest
 import warnings
 
 import OMMBV
-from OMMBV import tests
-import OMMBV.tests.test_deprecation as testing
+import tests
+import tests.test_deprecation as testing
 import OMMBV.trace
 import OMMBV.trans
 import OMMBV.vector

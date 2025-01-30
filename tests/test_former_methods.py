@@ -4,7 +4,7 @@ import pytest
 
 import OMMBV
 import OMMBV.heritage
-from OMMBV.tests.test_core import gen_plot_grid_fixed_alt
+from tests.test_core import gen_plot_grid_fixed_alt
 import OMMBV.vector
 
 
