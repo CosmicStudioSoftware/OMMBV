@@ -50,7 +50,9 @@ keywords = [
     "satellite",
     "electric-field-mapping",
     "ion-drift-mapping",
-    "multipole"
+    "multipole",
+    "electrodynamics",
+    "plasma"
 ]
 
 
