@@ -50,7 +50,7 @@ def eval_warnings(warns, check_msgs, warn_type=DeprecationWarning):
 class TestDeprecations(object):
     """Unit tests for deprecated inputs and functions."""
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
         warnings.simplefilter("always", DeprecationWarning)
 
@@ -58,7 +58,7 @@ class TestDeprecations(object):
         self.warn_msgs = ''
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
         del self.warn_msgs, self.date
         return
@@ -117,7 +117,7 @@ class TestDeprecations(object):
 class TestCoreDeprecations(object):
     """Unit tests for deprecated core functions."""
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
         warnings.simplefilter("always", DeprecationWarning)
 
@@ -126,7 +126,7 @@ class TestCoreDeprecations(object):
 
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
         del self.warn_msgs, self.date
         return

@@ -10,13 +10,13 @@ import OMMBV.vector
 
 class TestIntegratedMethods(object):
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
         self.lats, self.longs, self.alts = gen_plot_grid_fixed_alt(550.)
         self.date = dt.datetime(2000, 1, 1)
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
         del self.lats, self.longs, self.alts
 

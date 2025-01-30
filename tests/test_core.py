@@ -117,7 +117,7 @@ def gen_plot_grid_fixed_alt(alt):
 
 class TestUnitVectors(object):
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
 
         self.date = dt.datetime(2000, 1, 1)
@@ -134,7 +134,7 @@ class TestUnitVectors(object):
 
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
 
         del self.date, self.map_labels, self.lats, self.longs

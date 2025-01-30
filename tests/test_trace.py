@@ -13,7 +13,7 @@ import OMMBV.trace as trace
 class TestTracing(object):
     """Test `OMMBV.trace` functions."""
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
 
         self.date = dt.datetime(2020, 1, 1)
@@ -27,7 +27,7 @@ class TestTracing(object):
                                                       self.alts)
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
 
         del self.lats, self.longs, self.alts
