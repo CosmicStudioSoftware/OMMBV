@@ -58,7 +58,8 @@ jobs:
         cd ..
         pwd
         ls
-        cd ..
+        mkdir test_dir
+        cd test_dir
         pwd
         ls
         python -c "import OMMBV; print('Import went great! 3'); print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
