@@ -53,6 +53,9 @@ jobs:
 
     - name: Run unit and integration tests
       run: |
+        pwd
+        ls
+        cd ..
         ls
         cd tests
         pwd
