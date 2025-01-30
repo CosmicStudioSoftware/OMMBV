@@ -56,10 +56,9 @@ jobs:
         ls
         cd ..
         python -c "import OMMBV; print('Import went great! 3'); print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
-        coverage run -m pytest
-        coverage report
-        coverage xml
-        mv coverage.xml ../
+        pytest OMMBV/tests -v --cov
+        coveragepy-lcov --data_file_path .coverage --output_file_path lcov.info
+
 
     - name: Publish results to coveralls
       env:
