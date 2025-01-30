@@ -54,10 +54,10 @@ jobs:
     - name: Run unit and integration tests
       run: |
         ls
-        cd ../tests
+        cd tests
         pwd
         python -c "import OMMBV; print('Import went great! 3'); print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
-        pytest OMMBV -v --cov
+        pytest . -v --cov
         coveragepy-lcov --data_file_path .coverage --output_file_path lcov.info
 
 
