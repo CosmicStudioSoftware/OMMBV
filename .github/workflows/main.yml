@@ -53,12 +53,7 @@ jobs:
 
     - name: Run unit and integration tests
       run: |
-        pwd
-        rm -rf ./OMMBV 
-        ls
         cd ..
-        pwd
-        ls
         python -c "import OMMBV; print('Import went great! 3'); print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
         
         pytest ./OMMBV/tests -v --cov
