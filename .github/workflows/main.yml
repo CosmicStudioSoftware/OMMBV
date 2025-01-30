@@ -56,8 +56,8 @@ jobs:
         rm -rf ./OMMBV 
         cd ..
         python -c "import OMMBV; print('Import went great! 3'); print(OMMBV.sources.colat_long_r_to_ecef(10., 10., 6350.))"
-        
-        pytest ./OMMBV/tests -v --cov
+        coverage run -m pytest
+
         coverage report
         coverage xml
         mv coverage.xml ./OMMBV/.

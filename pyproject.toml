@@ -39,8 +39,18 @@ classifiers = [
     "Operating System :: POSIX",
     "Operating System :: MacOS"
 ]
-keywords = [ " "
-
+keywords = [
+    "vector-basis",
+    "geomagnetic-field",
+    "magnetic-fields",
+    "field-line-tracing",
+    "meridional",
+    "zonal",
+    "field-aligned",
+    "satellite",
+    "electric-field-mapping",
+    "ion-drift-mapping",
+    "multipole"
 ]
 
 
