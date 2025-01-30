@@ -58,6 +58,7 @@ jobs:
         cd ..
         pwd
         ls
+        rm -rf ./OMMBV 
         mkdir test_dir
         cd test_dir
         pwd
