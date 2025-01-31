@@ -565,6 +565,12 @@ c
      b              0.0,     0.4,     0.4,    -0.3,    -0.1,     0.4,    2027
      c              0.3,    -0.5,     0.1,    -0.6,     0.0,     0.3,    2027
      d              0.3,     0.2, 115*0.0/                               2027
+
+C following added by RStoneback
+Cf2py intent(in) isv,date,itype,alt,colat,elong
+Cf2py intent(out) x,y,z,f
+
+
 c
 c     set initial values
 c
