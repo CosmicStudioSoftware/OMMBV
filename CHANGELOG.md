@@ -7,6 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Updated coupling to coveralls
 - Updated package version for security issue in sphinx
 - Added online unit testing for Linux/MacOS/Windows
+- Updated to IGRF14
 
 ## [1.0.1] - 2022-01-04
 - Added pyproject.toml to support systems without numpy.

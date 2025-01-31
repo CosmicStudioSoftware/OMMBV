@@ -341,7 +341,7 @@ Cf2py intent(out) x,y,z,f
       ! Generalized integrand field-line step function for testing
 
       ! IGRF call
-      external :: igrf13syn
+      external :: igrf14syn
       ! pos is (x,y,z) in ECEF coordinates
       real*8, dimension(3) :: pos
       ! t is total time supplied by integration routine, ignored
@@ -379,7 +379,7 @@ Cf2py intent(out) out
       if (mflag.eq.-1) then
         ! Use IGRF. Supported to ensure reults same as operational
         ! IGRF function.
-        call igrf13syn(0,date,2,r,colat,elong,bn,be,bd,bm)
+        call igrf14syn(0,date,2,r,colat,elong,bn,be,bd,bm)
       else
         ! Use a physically specified dipole + higher order poles
         call poles(mflag,0,date,2,r,colat,elong,bn,be,bd,bm)
@@ -417,7 +417,7 @@ Cf2py intent(out) out
       subroutine igrf_step(out,pos,t,date,scalar,dir,height)
 
       ! IGRF call
-      external :: igrf13syn
+      external :: igrf14syn
 
       real*8, dimension(3) :: pos
       real*8 t, date
@@ -449,7 +449,7 @@ Cf2py intent(out) out
       ! altitude should be radial distance from center of earth
       call ecef_to_colat_long_r(pos,colat,elong,r)
 
-      call igrf13syn(0,date,2,r,colat,elong,bn,be,bd,bm)
+      call igrf14syn(0,date,2,r,colat,elong,bn,be,bd,bm)
 
       ! convert the mag field in spherical unit vectors to ECEF vectors
       call end_vector_to_ecef(be,bn,bd,colat,elong,bx,by,bz)

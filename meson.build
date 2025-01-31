@@ -41,13 +41,13 @@ fortranobject_dep = declare_dependency(
 
 
 igrf_source = custom_target('igrfmodule.c',
-  input : ['OMMBV/igrf13.f'],  # .f so no F90 wrappers
+  input : ['OMMBV/igrf14.f'],  # .f so no F90 wrappers
   output : ['igrfmodule.c', 'igrf-f2pywrappers.f'],
   command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'igrf', '--lower']
 )
 py.extension_module('igrf',
   [
-    'OMMBV/igrf13.f',
+    'OMMBV/igrf14.f',
     igrf_source,
     fortranobject_c
   ],
@@ -60,14 +60,14 @@ py.extension_module('igrf',
 
 
 sources_source = custom_target('sourcesmodule.c',
-  input : ['OMMBV/sources.f', 'OMMBV/igrf13.f'],  # .f so no F90 wrappers
+  input : ['OMMBV/sources.f', 'OMMBV/igrf14.f'],  # .f so no F90 wrappers
   output : ['sourcesmodule.c', 'sources-f2pywrappers.f'],
   command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'sources', '--lower']
 )
 py.extension_module('sources',
   [
    'OMMBV/sources.f',
-   'OMMBV/igrf13.f',
+   'OMMBV/igrf14.f',
    sources_source,
    fortranobject_c
  ],
