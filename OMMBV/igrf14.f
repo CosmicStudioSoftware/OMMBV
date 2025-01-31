@@ -14,8 +14,8 @@ c     itype = 1 if geodetic (spheroid)
 c     itype = 2 if geocentric (sphere)
 c     alt   = height in km above sea level if itype = 1
 c           = distance from centre of Earth in km if itype = 2 (>3485 km)
-c     colat = colatitude (0-180)
-c     elong = east-longitude (0-360)
+c     colat = colatitude (0-180) /changed by RS(radians)
+c     elong = east-longitude (0-360) /changed by RS(radians)
 c     alt, colat and elong must be double precision.
 c   OUTPUT
 c     x     = north component (nT) if isv = 0, nT/year if isv = 1
@@ -626,10 +626,10 @@ c
       nc    = nmx*(nmx+2)
       kmx   = (nmx+1)*(nmx+2)/2
     2 r     = alt
-      one   = colat*0.017453292
+      one   = colat !*0.017453292
       ct    = cos(one)
       st    = sin(one)
-      one   = elong*0.017453292
+      one   = elong !*0.017453292
       cl(1) = cos(one)
       sl(1) = sin(one)
       cd    = 1.0
