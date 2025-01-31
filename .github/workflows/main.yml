@@ -5,16 +5,39 @@
 
 name: Pytest with Flake8
 
-on: [pull_request, push]
+on:
+  pull_request:
+  push:
+  schedule:
+    - cron: "0 3 * * 1"  # Runs 03:00 UT on Mondays
 
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.9", "3.10", "3.11"]
-        numpy_ver: [latest]
+        os: ["ubuntu-latest", "windows-latest"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        numpy_ver: ["latest"]
+        include:
+          # Support different GA Mac environments
+          - python-version: "3.9"
+            os: "macos-13"
+            numpy_ver: "latest"
+          - python-version: "3.12"
+            os: "macos-13"
+            numpy_ver: "latest"
+          - python-version: "3.9"
+            os: "macos-latest"
+            numpy_ver: "latest"
+          - python-version: "3.12"
+            os: "macos-latest"
+            numpy_ver: "latest"
+          # NEP29 compliance settings
+          - python-version: "3.10"
+            numpy_ver: "1.25"
+            os: "ubuntu-latest"
+            test_config: "NEP29"
 
     name: Python ${{ matrix.python-version }} on ${{ matrix.os }} with numpy ${{ matrix.numpy_ver }}
     runs-on: ${{ matrix.os }}
@@ -24,6 +47,16 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Install Windows-specific dependencies for non-pip install
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: |
+           choco install ninja mingw
+           choco install rtools --no-progress
+           echo "c:\rtools40\ucrt64\bin;" >> $env:GITHUB_PATH
+           gfortran --version
+           pip install flake8 meson-python pytest pytest-cov pytest-xdist scipy
+           pip install "numpy>=1.19.5"
 
     - name: Install standard dependencies
       run: |
@@ -47,12 +80,50 @@ jobs:
     - name: Evaluate complexity
       run: flake8 . --count --exit-zero --max-complexity=10 --statistics
 
-    - name: Run OMMBV setup.py
+    - name: Install on Linux
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        python setup.py develop
+        pip install --upgrade-strategy only-if-needed .
 
-    - name: Run unit and integration tests
-      run: pytest --cov=OMMBV/
+    - name: Install on MacOS-13
+      if: ${{ matrix.os == 'macos-13' }}
+      run: |
+        brew reinstall gcc@14
+        CC=/usr/local/bin/gcc-14 pip install --upgrade-strategy only-if-needed .
+
+    - name: Install on MacOS-Latest
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: |
+        brew reinstall gcc@14
+        CC=/opt/homebrew/bin/gcc-14 pip install --upgrade-strategy only-if-needed .
+
+    - name: Install on Windows
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: |
+        meson setup build
+        ninja -j 2 -C build
+        cd build
+        meson install --destdir=${{ env.Python3_ROOT_DIR }} 
+
+    - name: Run unit and integration tests Mac/Linux
+      if: ${{ matrix.os != 'windows-latest' }}
+      run: |
+        rm -rf ./OMMBV 
+        cd ..
+        coverage run -m pytest
+        coverage report
+        coverage xml
+        mv coverage.xml ./OMMBV/.
+
+    - name: Run unit and integration tests on Windows
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: |
+        rm ./OMMBV -r -force
+        cd ..
+        coverage run -m pytest
+        coverage report
+        coverage xml
+        mv coverage.xml .\OMMBV\.
 
     - name: Publish results to coveralls
       env:

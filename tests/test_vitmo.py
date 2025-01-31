@@ -65,7 +65,7 @@ omni = pds.DataFrame(omni_list, columns=['p_alt', 'p_lat', 'p_long', 'n_lat',
 class TestTracingVitmo():
     """Test OMMBV tracing against public results hosted by NASA."""
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
 
         self.inst = pysat.Instrument('pysat', 'testing')
@@ -74,7 +74,7 @@ class TestTracingVitmo():
 
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
 
         del self.inst

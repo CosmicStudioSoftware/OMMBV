@@ -10,13 +10,13 @@ import OMMBV
 
 class TestSatellite(object):
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
 
         self.inst = pysat.Instrument('pysat', 'testing', num_samples=32)
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
         del self.inst
         return

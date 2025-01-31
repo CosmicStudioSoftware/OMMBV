@@ -10,7 +10,8 @@ from OMMBV import trans
 from OMMBV import vector
 
 
-def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
+def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes,
+                                **kwargs):
     """Calculate local geomagnetic basis vectors and mapping scalars.
 
     Parameters
@@ -58,7 +59,8 @@ def calculate_geomagnetic_basis(latitude, longitude, altitude, datetimes):
      mx, my, mz,
      info) = calculate_mag_drift_unit_vectors_ecef(latitude, longitude,
                                                    altitude, datetimes,
-                                                   full_output=True)
+                                                   full_output=True,
+                                                   **kwargs)
 
     d_zon_mag = np.sqrt(info['d_zon_x']**2 + info['d_zon_y']**2
                         + info['d_zon_z']**2)
@@ -290,6 +292,13 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
         ecef_x, ecef_y, ecef_z = trans.geodetic_to_ecef(latitude, longitude,
                                                         altitude)
 
+    # This shouldn't have been pushed to the repo
+    # idx, = np.where(np.isnan(ecef_x))
+    # if len(idx) > 0:
+    #     print("Encountered nan starting ecef locations ", ecef_x[idx],
+    #           ecef_y[idx], ecef_z[idx], latitude[idx], longitude[idx],
+    #           altitude[idx])
+
     # Begin method calculation.
 
     # Magnetic field at root location
@@ -348,6 +357,14 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                                               return_geodetic=True,
                                               ecef_input=True,
                                               **step_kwargs)
+
+        # This shouldn't be here
+        # idx, = np.where(np.isnan(tzx))
+        # if len(idx) > 0:
+        #     print("Encountered nan tzx values ", idx, ecef_x[idx],
+        #           ecef_y[idx], ecef_z[idx], tzx[idx], tzy[idx], tzz[idx],
+        #           latitude[idx], longitude[idx], altitude[idx])
+
         if centered_diff:
             # Negative step
             ecef_xz2, ecef_yz2, ecef_zz2 = (ecef_x - step_size * tzx,
@@ -418,6 +435,15 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
                 & (loop_num + 1 >= min_loops):
             # Reached terminating conditions
             repeat_flag = False
+            # print('Using position ', location_info(ecef_xz, ecef_yz, ecef_zz,
+            #                                   datetimes,
+            #                                   return_geodetic=True,
+            #                                   ecef_input=True,
+            #                                   **step_kwargs)[3:], loop_num)
+            # idx, = np.where(np.isnan(ecef_xz))
+            # if len(idx) > 0:
+            #     print("Encountered nan apex locations ", ecef_xz[idx],
+            #           ecef_yz[idx], ecef_zz[idx])
         else:
             # Store info into calculation vectors to refine next loop
             tzx, tzy, tzz = tzx2, tzy2, tzz2
@@ -665,6 +691,7 @@ def step_along_mag_unit_vector(x, y, z, date, direction, num_steps=1,
 
     if direction == 'meridional':
         centered_diff = True
+        # print("False")
     else:
         centered_diff = False
 
