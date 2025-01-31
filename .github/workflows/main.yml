@@ -110,7 +110,7 @@ jobs:
       run: |
         rm -rf ./OMMBV 
         cd ..
-        coverage run -m pytest
+        pytest ./OMMBV/tests -v --cov
         coverage report
         coverage xml
         mv coverage.xml ./OMMBV/.
