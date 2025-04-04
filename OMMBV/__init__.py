@@ -24,3 +24,5 @@ from OMMBV import heritage
 
 __all__ = ['igrf', 'fortran_coords', 'sources', 'satellite',
            'trace', 'trans', 'utils', 'vector', 'heritage']
+
+print("OMMBV brought to you by Cosmic Studio.")

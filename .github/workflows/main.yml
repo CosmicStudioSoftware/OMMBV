@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu-latest", "windows-latest"]
+        os: ["ubuntu-latest"]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
         numpy_ver: ["latest"]
         include:
@@ -109,18 +109,23 @@ jobs:
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
         rm -rf ./OMMBV 
-        cd ..
-        coverage run -m pytest
+        mkdir new_dir
+        cd new_dir
+
+        coverage run -m pytest ../
         coverage report
         coverage xml
-        mv coverage.xml ./OMMBV/.
+        ls
+        cp coverage.xml ../coverage.xml
+        cat coverage.xml
 
     - name: Run unit and integration tests on Windows
       if: ${{ matrix.os == 'windows-latest' }}
       run: |
         rm ./OMMBV -r -force
         cd ..
-        coverage run -m pytest
+        pytest ./OMMBV/tests -v --cov
+        
         coverage report
         coverage xml
         mv coverage.xml .\OMMBV\.
@@ -129,7 +134,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
-      run: coveralls --rcfile=setup.cfg --service=github
+      run: coveralls --service=github --verbose
 
   finish:
     name: Finish Coverage Analysis
@@ -141,4 +146,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         pip install --upgrade coveralls
-        coveralls --service=github --finish
+        coveralls --service=github --finish --verbose

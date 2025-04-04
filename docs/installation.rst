@@ -20,12 +20,12 @@ Prerequisites
 OMMBV uses common Python modules, as well as modules developed by and for
 the Space Physics community. pysat is an optional module, used by OMMBV
 to make it easy for satellite missions to add OMMBV results.
-This module officially supports Python 3.6+.
+This module officially supports Python 3.9+.
 
  ============== =================
  Common modules Community modules
  ============== =================
-  numpy         pysat
+  numpy         pysat (optional)
   scipy
  ============== =================
 
@@ -35,26 +35,21 @@ This module officially supports Python 3.6+.
 Installation Options
 --------------------
 
-1. Clone the git repository
-::
+A. Using pypi ::
+
+    pip install OMMBV
 
 
-   git clone https://github.com/rstoneback/OMMBV.git
+B. OMMBV may also be installed directly from the source repository on github:
+
+   1. Clone the git repository::
+
+         git clone https://github.com/CosmicStudioSoftware/OMMBV.git
 
 
-2. Install OMMBV:
-   Change directories into the repository folder and run the setup.py file.
-   There are a few ways you can do this:
 
-   A. Install on the system (root privileges required)::
+   2. Install OMMBV: ::
 
+        cd OMMBV
+        pip install --user .
 
-        sudo python3 setup.py install
-   B. Install at the user level::
-
-
-        python3 setup.py install --user
-   C. Install with the intent to develop locally::
-
-
-        python3 setup.py develop --user

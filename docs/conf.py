@@ -53,7 +53,8 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
     'numpydoc',
-    'IPython.sphinxext.ipython_console_highlighting'
+    'IPython.sphinxext.ipython_console_highlighting',
+    'm2r2'
 ]
 
 # added by RS
@@ -75,7 +76,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'OMMBV'
-copyright = u'2021, Russell Stoneback'
+copyright = u'2025, Russell Stoneback'
 author = u'Russell Stoneback'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -252,7 +253,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'OMMBV.tex', u'Python Magnetic Vectors Documentation',
+  (master_doc, 'OMMBV.tex', u'Orthogonal Multipole Magnetic Basis Vectors Documentation',
    u'Russell Stoneback', 'manual'),
 ]
 

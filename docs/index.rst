@@ -6,9 +6,9 @@
 Welcome to OMMBV's documentation!
 =================================
 
-This documentation describes the Orthogonal Multi-pole Magnetic Basis Vectors
-(OMMBV) module, which contains routines to derive a vector basis from any
-magnetic field. These vectors may be used to organize electric field
+This documentation describes the Orthogonal Multipole Magnetic Basis Vectors
+(OMMBV) module, which contains routines to derive a vector basis from multipole
+magnetic fields. These vectors may be used to organize electric field
 measurements as well as map those electric fields along magnetic field lines
 in a physically consistent manner.
 
