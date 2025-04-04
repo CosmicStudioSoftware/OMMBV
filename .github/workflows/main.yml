@@ -134,7 +134,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
-      run: coveralls --service=github --verbose
+      run: coveralls --service=github --verbose --debug
 
   finish:
     name: Finish Coverage Analysis
