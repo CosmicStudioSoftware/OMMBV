@@ -11,14 +11,14 @@ reproducibility of your presented results.
 OMMBV
 -----
 
-* Stoneback, R. A., J. H. Klenzing,  G. Iyer. (2025). Orthogonal Multipole Magnetic Basis Vectors (OMMBV) v1.0.2. Zenodo. https://doi.org/10.5281/zenodo.1299374
+* Stoneback, R. A., J. H. Klenzing,  G. Iyer. (2025). Orthogonal Multipole Magnetic Basis Vectors (OMMBV) v1.1.0. Zenodo. https://doi.org/10.5281/zenodo.1299374
 
 
 .. code-block:: latex
 
     @Misc{OMMBV,
           author = {Stoneback, R. A. and Klenzing, J. H., and Iyer, G..},
-          title  = {Orthogonal Multipole Magnetic Basis Vectors (OMMBV) v1.0.2},
+          title  = {Orthogonal Multipole Magnetic Basis Vectors (OMMBV) v1.1.0},
           year   = {2025},
           date   = {2025-04-04},
           doi    = {10.5281/zenodo.1299374},
