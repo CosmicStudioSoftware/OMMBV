@@ -114,8 +114,9 @@ jobs:
         coverage report
         coverage xml
         ls
-        cp coverage.xml ../coverage.xml
         cat coverage.xml
+        mv coverage.xml OMMBV/.
+
 
     - name: Run unit and integration tests on Windows
       if: ${{ matrix.os == 'windows-latest' }}
