@@ -60,7 +60,7 @@ py.extension_module('igrf',
 
 
 sources_source = custom_target('sourcesmodule.c',
-  input : ['ommbvfortran/sources.f', 'OMMBV/igrf14.f'],  # .f so no F90 wrappers
+  input : ['ommbvfortran/sources.f', 'ommbvfortran/igrf14.f'],  # .f so no F90 wrappers
   output : ['sourcesmodule.c', 'sources-f2pywrappers.f'],
   command : [py, '-m', 'numpy.f2py', '@INPUT@', '-m', 'sources', '--lower']
 )
