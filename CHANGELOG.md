@@ -2,7 +2,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## [1.1.0] - ?????
+## [1.1.0] - 2025-04-04
 - Switched away from distutils to Meson for build system
 - Updated coupling to coveralls
 - Updated package version for security issue in sphinx
