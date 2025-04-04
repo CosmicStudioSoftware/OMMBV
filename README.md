@@ -4,8 +4,8 @@
 </div>
 
 # Orthogonal Multipole Magnetic Basis Vectors (OMMBV)
-[![Build Status](https://github.com/rstoneback/OMMBV/actions/workflows/main.yml/badge.svg)](https://github.com/rstoneback/OMMBV/actions/workflows/main.yml/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/rstoneback/OMMBV/badge.svg?branch=main)](https://coveralls.io/github/rstoneback/OMMBV?branch=main)
+[![Build Status](https://github.com/CosmicStudioSoftware/OMMBV/actions/workflows/main.yml/badge.svg)](https://github.com/CosmicStudioSoftware/OMMBV/actions/workflows/main.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/CosmicStudioSoftware/OMMBV/badge.svg?branch=main)](https://coveralls.io/github/CosmicStudioSoftware/OMMBV?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/ommbv/badge/?version=latest)](https://ommbv.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/138220240.svg)](https://zenodo.org/badge/latestdoi/138220240)
 
