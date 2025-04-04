@@ -1,11 +1,8 @@
 datetime
 numpy
 numpydoc
-ipython
-pandas
-pysat
 readthedocs-sphinx-search==0.3.2
 scipy
 sphinx_rtd_theme==1.0.0
-sphinx==4.2.0
+sphinx
 
