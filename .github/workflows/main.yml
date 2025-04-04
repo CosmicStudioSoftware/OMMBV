@@ -109,7 +109,7 @@ jobs:
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
 
-        pytest tests
+        coverage run -m pytest
         coverage report
         coverage xml
 
@@ -124,20 +124,22 @@ jobs:
         coverage xml
         mv coverage.xml .\OMMBV\.
 
-    - name: Publish results to coveralls
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_PARALLEL: true
-      run: coveralls --service=github --verbose
+    - name: Publish results to coveralls upon success
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        flag-name: run=${{ join(matrix.*, '-') }}
+        parallel: true
+        format: cobertura
 
   finish:
     name: Finish Coverage Analysis
     needs: build
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls Finished
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        pip install --upgrade coveralls
-        coveralls --service=github --finish --verbose
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true
