@@ -17,7 +17,7 @@ as the Earth's.
 These features are fundamental for Space Science studies. Satellite measurements
 of plasma motions in-situ can now be accurately mapped along field lines
 for comparison to ground based equipment. Forcings from the neutral atmosphere
-(in say Earth's E-region Ionsophere) may now also be mapped to satellite
+(in say Earth's E-region Ionosphere) may now also be mapped to satellite
 altitudes to accurately characterize both the magnitude and direction
 of that forcing on plasma motion at satellite locations. Computer modelers
 may use OMMBV to map electric fields calculated within a single plane through
@@ -28,7 +28,7 @@ via application to the Earth's magnetic field using the
 `International Geomagnetic Reference Field (IGRF) <https://geomag.bgs.ac.uk/research/modelling/IGRF.html>`_.
 Further, OMMBV includes two paths to determine the relevant vector basis. Both
 paths will only result in the same answers if the underlying system is truly
-orthogonal. The statistical performance of OMMBV between IGRF witha geodetic
+orthogonal. The statistical performance of OMMBV between IGRF with a geodetic
 Earth and a spherical Earth with a pure dipole magnetic field is the same.
 OMMBV vectors are accurate up to 6-7 digits of precision at default calculation
 settings.
