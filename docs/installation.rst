@@ -25,7 +25,7 @@ This module officially supports Python 3.9+.
  ============== =================
  Common modules Community modules
  ============== =================
-  numpy         pysat
+  numpy         pysat (optional)
   scipy
  ============== =================
 
