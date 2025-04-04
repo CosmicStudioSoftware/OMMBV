@@ -112,8 +112,7 @@ jobs:
         mkdir new_dir
         cd new_dir
 
-#        pytest ../tests -v --cov --cov-report xml:coverage.xml
-        coverage run -m pytest --source=[../OMMBV/tests/] -v
+        coverage run -m pytest --source=[../OMMBV/tests/]
         cp coverage.xml ../coverage.xml
         cat coverage.xml
 
