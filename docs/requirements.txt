@@ -1,8 +1,9 @@
 datetime
 numpy
 numpydoc
+ipython
 readthedocs-sphinx-search==0.3.2
 scipy
-sphinx_rtd_theme==1.0.0
+sphinx_rtd_theme >= 1.2.2, < 2.0.0
 sphinx
 
