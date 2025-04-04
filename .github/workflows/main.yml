@@ -109,7 +109,7 @@ jobs:
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
         cd ..
-        coverage run -m pytest --source=OMMBV
+        coverage run -m --source=OMMBV pytest
         coverage report
         coverage xml
         mv coverage.xml OMMBV/.
