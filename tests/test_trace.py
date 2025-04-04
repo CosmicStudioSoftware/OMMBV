@@ -5,7 +5,7 @@ import functools
 import numpy as np
 import pytest
 
-from tests.test_core import gen_data_fixed_alt
+from test_core import gen_data_fixed_alt
 import OMMBV.trans
 import OMMBV.trace as trace
 

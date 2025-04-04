@@ -6,7 +6,7 @@ import OMMBV
 from OMMBV import igrf
 from OMMBV import sources
 import OMMBV.trans
-from tests.test_core import gen_data_fixed_alt
+from test_core import gen_data_fixed_alt
 
 
 # ############## TRANSFORMATIONS ############## #

@@ -8,9 +8,9 @@ import pandas as pds
 import pytest
 import warnings
 
+import pysat
+
 import OMMBV
-import tests
-import tests.test_deprecation as testing
 import OMMBV.trace
 import OMMBV.trans
 import OMMBV.vector
@@ -348,7 +348,7 @@ class TestUnitVectors(object):
         assert len(war) >= len(self.warn_msgs)
 
         # Test the warning messages, ensuring each attribute is present.
-        testing.eval_warnings(war, self.warn_msgs, RuntimeWarning)
+        pysat.utils.testing.eval_warnings(war, self.warn_msgs, RuntimeWarning)
 
         return
 
