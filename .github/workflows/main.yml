@@ -109,12 +109,12 @@ jobs:
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
 
-        cd ../..
-        coverage run -m pytest OMMBV/tests
+        cd ..
+        coverage run -m pytest ../tests
         coverage report
         coverage xml
         ls
-        cp coverage.xml OMMBV/.
+        cp coverage.xml ../coverage.xml
         cat coverage.xml
 
     - name: Run unit and integration tests on Windows
