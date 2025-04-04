@@ -69,7 +69,7 @@ class TestDeprecations(object):
         """Test deprecated inputs, `calculate_mag_drift_unit_vectors_ecef`."""
 
         self.warn_msgs = [" ".join([param, "is deprecated, non-functional,",
-                                    "and will be removed after OMMBV v1.0.0."])]
+                                    "and will be removed after OMMBV v1.2."])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Prep input
@@ -94,7 +94,7 @@ class TestDeprecations(object):
         """Test deprecated inputs, `scalars_for_mapping_ion_drifts`."""
 
         self.warn_msgs = [" ".join([param, "is deprecated, non-functional,",
-                                    "and will be removed after OMMBV v1.0.0."])]
+                                    "and will be removed after OMMBV v1.2."])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Prep input
@@ -141,7 +141,7 @@ class TestCoreDeprecations(object):
 
         self.warn_msgs = ["".join(["Function moved to `OMMBV.trans`, "
                                    "deprecated wrapper will be removed after ",
-                                   "OMMBV v1.0.0."])]
+                                   "OMMBV v1.2."])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Catch the warnings.
@@ -192,7 +192,7 @@ class TestCoreDeprecations(object):
 
         self.warn_msgs = ["".join(["Function moved to `OMMBV.vector`, ",
                                    "deprecated wrapper will be removed after ",
-                                   "OMMBV v1.0.0."])]
+                                   "OMMBV v1.2."])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Catch the warnings.
@@ -212,7 +212,7 @@ class TestCoreDeprecations(object):
 
         self.warn_msgs = [''.join(['This method now called `apex_distance_',
                                    'after_footpoint_step`. Wrapper will be ',
-                                   'removed after OMMBV v1.0.0.'])]
+                                   'removed after OMMBV v1.2.'])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Catch the warnings.
