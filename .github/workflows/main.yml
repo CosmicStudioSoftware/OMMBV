@@ -108,15 +108,13 @@ jobs:
     - name: Run unit and integration tests Mac/Linux
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
-        rm -rf ./OMMBV 
-        mkdir new_dir
-        cd new_dir
 
-        coverage run -m pytest ../tests
+        cd ..
+        coverage run -m pytest 
         coverage report
         coverage xml
         ls
-        cp coverage.xml ../coverage.xml
+        cp coverage.xml OMMBV\.
         cat coverage.xml
 
     - name: Run unit and integration tests on Windows
