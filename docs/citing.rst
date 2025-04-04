@@ -20,7 +20,7 @@ OMMBV
           author = {Stoneback, R. A. and Klenzing, J. H., and Iyer, G..},
           title  = {Orthogonal Multipole Magnetic Basis Vectors (OMMBV) v1.0.2},
           year   = {2025},
-	      date   = {2025-04-04},
+          date   = {2025-04-04},
           doi    = {10.5281/zenodo.1299374},
           url    = {https://doi.org/10.5281/zenodo.1299374}
 	  }
