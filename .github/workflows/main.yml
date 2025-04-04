@@ -108,7 +108,7 @@ jobs:
     - name: Run unit and integration tests Mac/Linux
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
-
+        rm -rf ./OMMBV 
         mkdir new_dir
         cd new_dir
 
