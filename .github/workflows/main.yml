@@ -110,7 +110,7 @@ jobs:
       run: |
 
         cd ..
-        coverage run -m pytest ../tests
+        coverage run -m pytest OMMBV/tests
         coverage report
         coverage xml
         ls
