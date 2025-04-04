@@ -4,7 +4,7 @@ flake8-docstrings
 hacking
 ipython
 m2r2
-docutil<0.21
+docutils<0.21
 numpydoc
 pytest-cov
 pytest-ordering
