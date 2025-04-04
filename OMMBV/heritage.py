@@ -184,7 +184,7 @@ def apex_edge_lengths_via_footpoint(*args, **kwargs):
 
     .. deprecated:: 1.0.0
        Function moved to `apex_distance_after_footpoint_step`,
-       this wrapper will be removed after v1.0.0.
+       this wrapper will be removed after v1.2.
 
     """
     estr = ''.join(['This method now called `apex_distance_after_',
