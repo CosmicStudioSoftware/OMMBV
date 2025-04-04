@@ -108,8 +108,9 @@ jobs:
     - name: Run unit and integration tests Mac/Linux
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
+        rm -rf ./OMMBV 
         cd ..
-        coverage run -m --source=OMMBV --omit=OMMBV/*.py pytest 
+        coverage run -m --source=OMMBV pytest 
         coverage report
         coverage xml
         mv coverage.xml OMMBV/.
