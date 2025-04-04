@@ -112,7 +112,7 @@ jobs:
         mkdir new_dir
         cd new_dir
 
-        coverage run -m pytest --source=../
+        coverage run -m pytest ../
         coverage report
         coverage xml
         cp coverage.xml ../coverage.xml
