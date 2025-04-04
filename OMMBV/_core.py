@@ -891,7 +891,7 @@ def geocentric_to_ecef(latitude, longitude, altitude):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.trans.geocentric_to_ecef`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     Parameters
     ----------
@@ -921,7 +921,7 @@ def ecef_to_geocentric(x, y, z, ref_height=trans.earth_geo_radius):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.trans.ecef_to_geocentric`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     Parameters
     ----------
@@ -954,7 +954,7 @@ def geodetic_to_ecef(latitude, longitude, altitude):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.trans.geodetic_to_ecef`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     Parameters
     ----------
@@ -984,7 +984,7 @@ def ecef_to_geodetic(*args, **kwargs):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.trans.geodetic_to_ecef`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     """
 
@@ -1000,7 +1000,7 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.trans.geodetic_to_ecef`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     Parameters
     ----------
@@ -1042,7 +1042,7 @@ def enu_to_ecef_vector(east, north, up, glat, glong):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.vector.enu_to_ecef`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     Position of vector in geospace may be specified in either
     geocentric or geodetic coordinates, with corresponding expression
@@ -1080,7 +1080,7 @@ def ecef_to_enu_vector(x, y, z, glat, glong):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.vector.ecef_to_enu`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     Position of vector in geospace may be specified in either
     geocentric or geodetic coordinates, with corresponding expression
@@ -1118,7 +1118,7 @@ def project_ECEF_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.vector.project_onto_basis`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     Parameters
     ----------
@@ -1155,7 +1155,7 @@ def normalize_vector(x, y, z):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.vector.normalize`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     Parameters
     ----------
@@ -1185,7 +1185,7 @@ def cross_product(x1, y1, z1, x2, y2, z2):
 
     .. deprecated:: 1.0.0
        Function moved to `OMMBV.vector.cross_product`, this wrapper will
-       be removed after v1.0.0.
+       be removed after v1.2.
 
     Parameters
     ----------
