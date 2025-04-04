@@ -1,6 +1,7 @@
 datetime
 numpy
 numpydoc
+m2r2
 ipython
 readthedocs-sphinx-search==0.3.2
 scipy
