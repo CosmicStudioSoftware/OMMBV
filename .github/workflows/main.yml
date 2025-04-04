@@ -130,7 +130,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_PARALLEL: true
-      run: coveralls --rcfile=setup.cfg --service=github
+      run: coveralls --rcfile=setup.cfg --service=github --verbose
 
   finish:
     name: Finish Coverage Analysis
@@ -142,4 +142,4 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         pip install --upgrade coveralls
-        coveralls --service=github --finish
+        coveralls --service=github --finish --verbose
