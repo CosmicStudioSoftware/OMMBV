@@ -112,9 +112,7 @@ jobs:
         mkdir new_dir
         cd new_dir
 
-        pytest ../tests -v --cov
-        coverage report
-        coverage xml
+        pytest ../tests -v --cov-report xml
         mv coverage.xml ../.
 
     - name: Run unit and integration tests on Windows
