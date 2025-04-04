@@ -11,16 +11,16 @@ reproducibility of your presented results.
 OMMBV
 -----
 
-* Stoneback, R. A., J. H. Klenzing,  G. Iyer. (2021). rstoneback/OMMBV:
-v0.5.5 (v0.5.5). Zenodo. https://doi.org/10.5281/zenodo.4960425
+* Stoneback, R. A., J. H. Klenzing,  G. Iyer. (2025). Orthogonal Multipole Magnetic Basis Vectors (OMMBV) v1.0.2. Zenodo. https://doi.org/10.5281/zenodo.1299374
 
 
 .. code-block:: latex
 
-    @Misc{pysatModels,
+    @Misc{OMMBV,
           author = {Stoneback, R. A. and Klenzing, J. H., and Iyer, G..},
-	  title  = {rstoneback/OMMBV: v0.5.5 (v0.5.5)},
-  	  year   = {2021},
-	  date   = {2021-06-15},
-	  url    = {https://github.com/rstoneback/OMMBV},
+          title  = {Orthogonal Multipole Magnetic Basis Vectors (OMMBV) v1.0.2},
+          year   = {2025},
+	      date   = {2025-04-04},
+          doi    = {10.5281/zenodo.1299374},
+          url    = {https://doi.org/10.5281/zenodo.1299374}
 	  }
