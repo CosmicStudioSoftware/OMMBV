@@ -75,7 +75,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'OMMBV'
-copyright = u'2021, Russell Stoneback'
+copyright = u'2025, Russell Stoneback'
 author = u'Russell Stoneback'
 
 # The version info for the project you're documenting, acts as replacement for
