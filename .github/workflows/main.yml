@@ -112,7 +112,6 @@ jobs:
         mkdir new_dir
         cd new_dir
 
-#        coverage run -m pytest --source=[../OMMBV/tests/]
         coverage run -m pytest
         coverage report
         coverage xml
