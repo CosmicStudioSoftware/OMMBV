@@ -115,6 +115,7 @@ jobs:
         coverage run -m pytest ../
         coverage report
         coverage xml
+        ls
         cp coverage.xml ../coverage.xml
         cat coverage.xml
 
