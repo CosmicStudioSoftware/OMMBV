@@ -241,7 +241,7 @@ def calculate_mag_drift_unit_vectors_ecef(latitude, longitude, altitude,
     for key in depd.keys():
         if depd[key] is not None:
             wstr = " ".join([key, "is deprecated, non-functional,",
-                             "and will be removed after OMMBV v1.0.0."])
+                             "and will be removed after OMMBV v1.2."])
             warnings.warn(wstr, DeprecationWarning, stacklevel=2)
 
     # Account for potential alternate magnetic field and step functions.
@@ -763,7 +763,7 @@ def scalars_for_mapping_ion_drifts(glats, glons, alts, dates,
     for key in depd.keys():
         if depd[key] is not None:
             wstr = " ".join([key, "is deprecated, non-functional,",
-                             "and will be removed after OMMBV v1.0.0."])
+                             "and will be removed after OMMBV v1.2."])
             warnings.warn(wstr, DeprecationWarning, stacklevel=2)
 
     ecef_xs, ecef_ys, ecef_zs = trans.geodetic_to_ecef(glats, glons, alts)
@@ -910,7 +910,7 @@ def geocentric_to_ecef(latitude, longitude, altitude):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     return trans.geocentric_to_ecef(latitude, longitude, altitude)
@@ -943,7 +943,7 @@ def ecef_to_geocentric(x, y, z, ref_height=trans.earth_geo_radius):
 
     """
     warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     return trans.ecef_to_geocentric(x, y, z, ref_height=ref_height)
@@ -973,7 +973,7 @@ def geodetic_to_ecef(latitude, longitude, altitude):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     return trans.geodetic_to_ecef(latitude, longitude, altitude)
@@ -989,7 +989,7 @@ def ecef_to_geodetic(*args, **kwargs):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     return trans.ecef_to_geodetic(*args, **kwargs)
@@ -1025,7 +1025,7 @@ def python_ecef_to_geodetic(x, y, z, method='closed'):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.trans`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     if method is None:
@@ -1069,7 +1069,7 @@ def enu_to_ecef_vector(east, north, up, glat, glong):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     return vector.enu_to_ecef(east, north, up, glat, glong)
@@ -1107,7 +1107,7 @@ def ecef_to_enu_vector(x, y, z, glat, glong):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     return vector.ecef_to_enu(x, y, z, glat, glong)
@@ -1143,7 +1143,7 @@ def project_ECEF_vector_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz, zx, zy, zz):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     return vector.project_onto_basis(x, y, z, xx, xy, xz, yx, yy, yz,
@@ -1174,7 +1174,7 @@ def normalize_vector(x, y, z):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     return vector.normalize(x, y, z)
@@ -1210,7 +1210,7 @@ def cross_product(x1, y1, z1, x2, y2, z2):
     """
 
     warnings.warn("".join(["Function moved to `OMMBV.vector`, deprecated ",
-                           "wrapper will be removed after OMMBV v1.0.0."]),
+                           "wrapper will be removed after OMMBV v1.2."]),
                   DeprecationWarning, stacklevel=2)
 
     return vector.cross_product(x1, y1, z1, x2, y2, z2)

@@ -189,7 +189,7 @@ def apex_edge_lengths_via_footpoint(*args, **kwargs):
     """
     estr = ''.join(['This method now called `apex_distance_after_',
                     'footpoint_step`. Wrapper will be removed after OMMBV ',
-                    'v1.0.0.'])
+                    'v1.2.'])
     warnings.warn(estr, DeprecationWarning, stacklevel=2)
     apex_distance_after_footpoint_step(*args, **kwargs)
     return
