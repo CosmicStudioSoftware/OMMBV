@@ -71,6 +71,7 @@ jobs:
 
     - name: Set up pysat
       run: |
+        pip install pysat
         mkdir pysatData
         python -c "import pysat; pysat.params['data_dirs'] = 'pysatData'"
 
