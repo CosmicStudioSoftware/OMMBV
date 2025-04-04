@@ -1,4 +1,5 @@
 datetime
+docutils<0.21
 numpy
 numpydoc
 m2r2
