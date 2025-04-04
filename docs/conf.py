@@ -253,7 +253,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  (master_doc, 'OMMBV.tex', u'Python Magnetic Vectors Documentation',
+  (master_doc, 'OMMBV.tex', u'Orthogonal Multipole Magnetic Basis Vectors Documentation',
    u'Russell Stoneback', 'manual'),
 ]
 
