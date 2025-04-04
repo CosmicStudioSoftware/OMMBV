@@ -114,6 +114,7 @@ jobs:
         coverage run -m --source=OMMBV pytest ../tests
         coverage report
         coverage xml
+        mkdir ../OMMBV
         mv coverage.xml ../OMMBV/coverage.xml
 
     - name: Run unit and integration tests on Windows
