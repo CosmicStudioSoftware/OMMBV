@@ -45,7 +45,8 @@ and measurements from the Communications/Navigation Outage Forecasting System
 
 The development of the multipole software has been supported, in part, by 
 multiple agencies under the following grants:
-Naval Research Laboratory N00173-19-1-G016 and NASA 80NSSC18K1203.
+Cosmic Studio, Naval Research Laboratory N00173-19-1-G016,
+and NASA 80NSSC18K1203.
 
 Previous versions of this software that provided an 'average' basis were 
 funded by: National Aeronautics and Space Agency (NASA NNG12FA45C), 
