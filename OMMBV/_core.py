@@ -668,7 +668,6 @@ def step_along_mag_unit_vector(x, y, z, date, direction, num_steps=1,
 
     if direction == 'meridional':
         centered_diff = True
-        # print("False")
     else:
         centered_diff = False
 
