@@ -9,6 +9,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Added online unit testing for Linux and MacOS
 - Updated to IGRF14
 - Updated documentation
+- Updated unit tests to latest standards
 
 ## [1.0.1] - 2022-01-04
 - Added pyproject.toml to support systems without numpy.
