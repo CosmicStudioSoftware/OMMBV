@@ -108,16 +108,14 @@ jobs:
     - name: Run unit and integration tests Mac/Linux
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
-
+        rm -rf ./OMMBV 
         mkdir new_dir
         cd new_dir
-
-        coverage run -m pytest ../tests
+        coverage run -m --source=OMMBV --omit=__init__.py pytest ../tests
         coverage report
         coverage xml
-        ls
-        cp coverage.xml ../coverage.xml
-        cat coverage.xml
+        mkdir ../OMMBV
+        mv coverage.xml ../OMMBV/coverage.xml
 
     - name: Run unit and integration tests on Windows
       if: ${{ matrix.os == 'windows-latest' }}
@@ -130,20 +128,22 @@ jobs:
         coverage xml
         mv coverage.xml .\OMMBV\.
 
-    - name: Publish results to coveralls
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_PARALLEL: true
-      run: coveralls --service=github --verbose
+    - name: Publish results to coveralls upon success
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        flag-name: run=${{ join(matrix.*, '-') }}
+        parallel: true
+        format: cobertura
 
   finish:
     name: Finish Coverage Analysis
     needs: build
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls Finished
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        pip install --upgrade coveralls
-        coveralls --service=github --finish --verbose
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true

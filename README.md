@@ -5,6 +5,7 @@
 
 # Orthogonal Multipole Magnetic Basis Vectors (OMMBV)
 [![Build Status](https://github.com/CosmicStudioSoftware/OMMBV/actions/workflows/main.yml/badge.svg)](https://github.com/CosmicStudioSoftware/OMMBV/actions/workflows/main.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/CosmicStudioSoftware/OMMBV/badge.svg?branch=main)](https://coveralls.io/github/CosmicStudioSoftware/OMMBV?branch=main)
 [![Documentation Status](https://readthedocs.org/projects/ommbv/badge/?version=latest)](https://ommbv.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/138220240.svg)](https://zenodo.org/badge/latestdoi/138220240)
 
@@ -44,7 +45,8 @@ and measurements from the Communications/Navigation Outage Forecasting System
 
 The development of the multipole software has been supported, in part, by 
 multiple agencies under the following grants:
-Naval Research Laboratory N00173-19-1-G016 and NASA 80NSSC18K1203.
+Cosmic Studio, Naval Research Laboratory N00173-19-1-G016,
+and NASA 80NSSC18K1203.
 
 Previous versions of this software that provided an 'average' basis were 
 funded by: National Aeronautics and Space Agency (NASA NNG12FA45C), 

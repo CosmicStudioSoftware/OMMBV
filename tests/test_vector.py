@@ -5,7 +5,7 @@ import pytest
 
 import OMMBV
 from OMMBV import sources
-from tests.test_core import gen_data_fixed_alt
+from test_core import gen_data_fixed_alt
 
 
 class TestVector(object):
