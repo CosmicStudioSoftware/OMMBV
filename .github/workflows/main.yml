@@ -111,7 +111,7 @@ jobs:
         rm -rf ./OMMBV 
         mkdir new_dir
         cd new_dir
-        coverage run -m --source=OMMBV pytest ../tests
+        coverage run -m --source=OMMBV omit=__init__.py pytest ../tests
         coverage report
         coverage xml
         mkdir ../OMMBV
