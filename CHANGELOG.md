@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Switched away from distutils to Meson for build system
 - Updated coupling to coveralls
 - Updated package version for security issue in sphinx
-- Added online unit testing for Linux and MacOS
+- Updated online unit testing
 - Updated to IGRF14
 - Updated documentation
 - Updated unit tests to latest standards
