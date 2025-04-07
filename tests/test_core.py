@@ -8,9 +8,9 @@ import pandas as pds
 import pytest
 import warnings
 
+import pysat
+
 import OMMBV
-from OMMBV import tests
-import OMMBV.tests.test_deprecation as testing
 import OMMBV.trace
 import OMMBV.trans
 import OMMBV.vector
@@ -117,7 +117,7 @@ def gen_plot_grid_fixed_alt(alt):
 
 class TestUnitVectors(object):
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
 
         self.date = dt.datetime(2000, 1, 1)
@@ -134,7 +134,7 @@ class TestUnitVectors(object):
 
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
 
         del self.date, self.map_labels, self.lats, self.longs
@@ -348,7 +348,7 @@ class TestUnitVectors(object):
         assert len(war) >= len(self.warn_msgs)
 
         # Test the warning messages, ensuring each attribute is present.
-        testing.eval_warnings(war, self.warn_msgs, RuntimeWarning)
+        pysat.utils.testing.eval_warnings(war, self.warn_msgs, RuntimeWarning)
 
         return
 

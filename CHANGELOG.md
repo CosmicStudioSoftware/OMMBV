@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.1.0] - 2025-04-07
+- Switched away from distutils to Meson for build system
+- Updated coupling to coveralls
+- Updated package version for security issue in sphinx
+- Updated online unit testing
+- Updated to IGRF14
+- Updated documentation
+- Updated unit tests to latest standards
+
 ## [1.0.1] - 2022-01-04
 - Added pyproject.toml to support systems without numpy.
 - Modified manifest.ini to include version.txt

@@ -50,7 +50,7 @@ def eval_warnings(warns, check_msgs, warn_type=DeprecationWarning):
 class TestDeprecations(object):
     """Unit tests for deprecated inputs and functions."""
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
         warnings.simplefilter("always", DeprecationWarning)
 
@@ -58,7 +58,7 @@ class TestDeprecations(object):
         self.warn_msgs = ''
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
         del self.warn_msgs, self.date
         return
@@ -69,7 +69,7 @@ class TestDeprecations(object):
         """Test deprecated inputs, `calculate_mag_drift_unit_vectors_ecef`."""
 
         self.warn_msgs = [" ".join([param, "is deprecated, non-functional,",
-                                    "and will be removed after OMMBV v1.0.0."])]
+                                    "and will be removed after OMMBV v1.2."])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Prep input
@@ -94,7 +94,7 @@ class TestDeprecations(object):
         """Test deprecated inputs, `scalars_for_mapping_ion_drifts`."""
 
         self.warn_msgs = [" ".join([param, "is deprecated, non-functional,",
-                                    "and will be removed after OMMBV v1.0.0."])]
+                                    "and will be removed after OMMBV v1.2."])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Prep input
@@ -117,7 +117,7 @@ class TestDeprecations(object):
 class TestCoreDeprecations(object):
     """Unit tests for deprecated core functions."""
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
         warnings.simplefilter("always", DeprecationWarning)
 
@@ -126,7 +126,7 @@ class TestCoreDeprecations(object):
 
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
         del self.warn_msgs, self.date
         return
@@ -141,7 +141,7 @@ class TestCoreDeprecations(object):
 
         self.warn_msgs = ["".join(["Function moved to `OMMBV.trans`, "
                                    "deprecated wrapper will be removed after ",
-                                   "OMMBV v1.0.0."])]
+                                   "OMMBV v1.2."])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Catch the warnings.
@@ -192,7 +192,7 @@ class TestCoreDeprecations(object):
 
         self.warn_msgs = ["".join(["Function moved to `OMMBV.vector`, ",
                                    "deprecated wrapper will be removed after ",
-                                   "OMMBV v1.0.0."])]
+                                   "OMMBV v1.2."])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Catch the warnings.
@@ -212,7 +212,7 @@ class TestCoreDeprecations(object):
 
         self.warn_msgs = [''.join(['This method now called `apex_distance_',
                                    'after_footpoint_step`. Wrapper will be ',
-                                   'removed after OMMBV v1.0.0.'])]
+                                   'removed after OMMBV v1.2.'])]
         self.warn_msgs = np.array(self.warn_msgs)
 
         # Catch the warnings.

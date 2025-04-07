@@ -6,7 +6,7 @@ import OMMBV
 from OMMBV import igrf
 from OMMBV import sources
 import OMMBV.trans
-from OMMBV.tests.test_core import gen_data_fixed_alt
+from test_core import gen_data_fixed_alt
 
 
 # ############## TRANSFORMATIONS ############## #
@@ -32,14 +32,14 @@ def assert_difference_tol(data, data2, tol=1.E-5):
 
 class TestTransformations(object):
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
 
         # Locations to perform tests at
         self.lats, self.longs, self.alts = gen_data_fixed_alt(550.)
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
 
         del self.lats, self.longs, self.alts

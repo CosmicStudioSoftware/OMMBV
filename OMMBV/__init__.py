@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """init routine for OMMBV."""
 
-__version__ = '1.0.1'
+__version__ = '1.1.0'
 
 try:
     from OMMBV import igrf
@@ -22,4 +22,7 @@ from OMMBV._core import *
 
 from OMMBV import heritage
 
-__all__ = ['heritage', 'satellite', 'trace', 'trans', 'utils', 'vector']
+__all__ = ['igrf', 'fortran_coords', 'sources', 'satellite',
+           'trace', 'trans', 'utils', 'vector', 'heritage']
+
+print("OMMBV brought to you by Cosmic Studio.")

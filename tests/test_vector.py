@@ -5,20 +5,20 @@ import pytest
 
 import OMMBV
 from OMMBV import sources
-from OMMBV.tests.test_core import gen_data_fixed_alt
+from test_core import gen_data_fixed_alt
 
 
 class TestVector(object):
     """Unit tests for `OMMBV.vector`."""
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
 
         # Locations to perform tests at
         self.lats, self.longs, self.alts = gen_data_fixed_alt(550.)
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
 
         del self.lats, self.longs, self.alts

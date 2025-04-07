@@ -22,14 +22,15 @@ else:
                   '-Wno-unused-variable', '-Wno-maybe-uninitialized',
                   '-Wno-unused-dummy-argument']
     extensions = [Extension(name='OMMBV.igrf',
-                            sources=[os.path.join('OMMBV', 'igrf13.f')],
+                            sources=[os.path.join('ommbvfortran', 'igrf14.f')],
                             extra_f77_compile_args=extra_args),
                   Extension(name='OMMBV.sources',
-                            sources=[os.path.join('OMMBV', 'sources.f'),
-                                     os.path.join('OMMBV', 'igrf13.f')],
+                            sources=[os.path.join('ommbvfortran', 'sources.f'),
+                                     os.path.join('ommbvfortran', 'igrf14.f')],
                             extra_f77_compile_args=extra_args),
                   Extension(name='OMMBV.fortran_coords',
-                            sources=[os.path.join('OMMBV', '_coords.f')])]
+                            sources=[os.path.join('ommbvfortran',
+                                                  '_coords.f')])]
 
 setup_kwargs = {'ext_modules': extensions}
 setup(**setup_kwargs)

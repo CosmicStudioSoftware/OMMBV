@@ -11,7 +11,7 @@ import OMMBV.utils as utils
 class TestUtils(object):
     """Unit tests for utils."""
 
-    def setup(self):
+    def setup_method(self):
         """Setup test environment before each function."""
 
         self.start_date = dt.datetime(2000, 1, 1)
@@ -20,7 +20,7 @@ class TestUtils(object):
                                                         self.end_date)
         return
 
-    def teardown(self):
+    def teardown_method(self):
         """Clean up test environment after each function."""
 
         del self.start_date, self.end_date, self.dates

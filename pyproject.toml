@@ -1,2 +1,58 @@
 [build-system]
-requires = ["setuptools", "wheel", "Cython", "numpy"]
+build-backend = 'mesonpy'
+requires = [
+	 "wheel",
+	 "meson-python>=0.12.0",
+	 "setuptools<60.0",  # Do not increase, 60.0 enables vendored distutils
+	 "Cython>=0.29.21",
+     "ninja",
+	 "numpy"
+]
+
+[project]
+name = "OMMBV"
+version = "1.1.0"
+license = {file = "LICENSE"}
+description = "Orthogonal geomagnetic vector basis and field-line mapping for multipole magnetic fields."
+maintainers = [
+    {name = "Russell Stoneback", email = "contact@cosmicstudio.io"}
+]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "scipy"
+]
+readme = "README.md"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS"
+]
+keywords = [
+    "vector-basis",
+    "geomagnetic-field",
+    "magnetic-fields",
+    "field-line-tracing",
+    "meridional",
+    "zonal",
+    "field-aligned",
+    "satellite",
+    "electric-field-mapping",
+    "ion-drift-mapping",
+    "multipole",
+    "electrodynamics",
+    "plasma"
+]
+
+
+

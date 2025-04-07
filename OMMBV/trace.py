@@ -17,7 +17,7 @@ try:
     # RTD doesn't support Fortran.
     from OMMBV import igrf
     from OMMBV import sources
-    ommbv_mag_fcn = igrf.igrf13syn
+    ommbv_mag_fcn = igrf.igrf14syn
     ommbv_step_fcn = sources.igrf_step
 except Exception:
     ommbv_mag_fcn, ommbv_step_fcn = _stub_fcn, _stub_fcn
@@ -498,8 +498,8 @@ def magnetic_vector(x, y, z, dates, normalize=False, mag_fcn=ommbv_mag_fcn):
         If True, return unit vector. (default=False)
     mag_fcn : function
         Function that returns magnetic field from a model.
-        The call signature must match that of `igrf.igrf13syn`.
-        (default=OMMBV.igrf.igrf13syn)
+        The call signature must match that of `igrf.igrf14syn`.
+        (default=OMMBV.igrf.igrf14syn)
 
     Returns
     -------
